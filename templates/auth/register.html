@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qrcardku.com - Create Account</title>
+    <style>
+        :root {
+            --primary-blue: #0052ff;
+            --primary-hover: #0040d2;
+            --text-dark: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg: #ffffff;
+            --btn-disabled: #d1d5db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.5;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        /* LEFT SIDE - FORM */
+        .auth-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            max-width: 50vw;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-decoration: none;
+            margin-bottom: auto;
+        }
+
+        .logo-icon {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+        }
+
+        .auth-form-wrapper {
+            max-width: 400px;
+            width: 100%;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .password-strength {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            flex: 1;
+            background-color: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .strength-bar.active {
+            background-color: #ef4444;
+        }
+
+        /* Red for demo */
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--btn-disabled);
+            color: var(--text-muted);
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: not-allowed;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .btn-submit.active {
+            background-color: var(--primary-blue);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 14px 0 rgba(0, 82, 255, 0.39);
+        }
+
+        .btn-submit.active:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .login-link {
+            font-size: 13px;
+            margin-bottom: 32px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .login-link a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 10px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .social-btn:hover {
+            background: #f9fafb;
+        }
+
+        .terms-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .terms-text a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+
+        .footer-text {
+            margin-top: auto;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        /* RIGHT SIDE - ILLUSTRATION */
+        .illustration-container {
+            flex: 1;
+            background: linear-gradient(135deg, #f8faff 0%, #edf2ff 100%);
+            border-radius: 24px;
+            margin: 16px 16px 16px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Subtle glow light coming from top */
+        .glow-light {
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.8) 0%, transparent 60%);
+            z-index: 0;
+        }
+
+        .illustration-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        /* Floating QR card */
+        .floating-qr {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin: 0 auto 40px;
+            padding: 16px;
+            transform: rotate(-5deg);
+            position: relative;
+        }
+
+        .qr-grid {
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(#cbd5e1 40%, transparent 40%);
+            background-size: 12px 12px;
+        }
+
+        /* Grid Borders */
+        .qr-grid::before,
+        .qr-grid::after,
+        .qr-grid-bottom {
+            content: "";
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 4px solid #cbd5e1;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .qr-grid::before {
+            top: 16px;
+            left: 16px;
+        }
+
+        .qr-grid::after {
+            top: 16px;
+            right: 16px;
+        }
+
+        .qr-grid-bottom {
+            bottom: 16px;
+            left: 16px;
+        }
+
+        .qr-globe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--primary-blue);
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-size: 16px;
+        }
+
+        /* The Folder below the QR */
+        .folder-wrapper {
+            position: relative;
+            width: 260px;
+            height: 160px;
+            margin: 0 auto;
+        }
+
+        .folder-back {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 140px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            transform: skewX(-5deg);
+        }
+
+        .folder-paper {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            width: 200px;
+            height: 160px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            padding: 12px;
+            transform: rotate(-2deg);
+        }
+
+        .folder-paper .qr-grid {
+            background-size: 8px 8px;
+        }
+
+        .folder-paper .qr-grid::before,
+        .folder-paper .qr-grid::after,
+        .folder-paper .qr-grid-bottom {
+            width: 16px;
+            height: 16px;
+            border-width: 3px;
+        }
+
+        .folder-paper .qr-grid::before {
+            top: 12px;
+            left: 12px;
+        }
+
+        .folder-paper .qr-grid::after {
+            top: 12px;
+            right: 12px;
+        }
+
+        .folder-paper .qr-grid-bottom {
+            bottom: 12px;
+            left: 12px;
+        }
+
+        .folder-front {
+            position: absolute;
+            bottom: -10px;
+            left: -10px;
+            width: 110%;
+            height: 130px;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0052ff 100%);
+            border-radius: 12px;
+            transform: skewX(-5deg) rotate(-2deg);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .folder-logo {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .folder-logo div {
+            background: white;
+            border-radius: 2px;
+        }
+
+        .folder-logo div:nth-child(4) {
+            background: transparent;
+        }
+
+
+        /* Text below illustration */
+        .promo-text {
+            margin-top: 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .promo-text h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .promo-text p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Carousel dots */
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #cbd5e1;
+        }
+
+        .dot.active {
+            background: var(--text-dark);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            .illustration-container {
+                display: none;
+            }
+
+            .auth-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <a href="/" class="header-logo">
+            <span class="logo-icon">QR</span> qrcardku.com
+        </a>
+
+        <div class="auth-form-wrapper">
+            <h1>Create account</h1>
+            <p class="subtitle">It's free and only takes a few seconds.</p>
+
+            {% if error_msg %}
+            <div class="error-msg" id="error-message">{{ error_msg }}</div>
+            <script>
+                setTimeout(function () {
+                    document.getElementById('error-message').style.display = 'none';
+                }, 4000);
+            </script>
+            {% endif %}
+
+            <form action="/auth/register" method="POST" id="registerForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                <div class="input-group">
+                    <span class="input-icon">✉️</span>
+                    <input type="text" name="username" id="username" placeholder="name@email.com" required
+                        oninput="checkForm()">
+                </div>
+
+                <div class="input-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="password" id="password" placeholder="Enter your password here..."
+                        required oninput="checkForm()">
+                    <span class="toggle-password" onclick="togglePwd()">👁️</span>
+                </div>
+
+                <div class="password-strength">
+                    <div class="strength-bar" id="str1"></div>
+                    <div class="strength-bar" id="str2"></div>
+                    <div class="strength-bar" id="str3"></div>
+                    <div class="strength-bar" id="str4"></div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Sign up now</button>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="/login">Log In</a>
+            </div>
+
+            <div class="divider">
+                <span>o</span>
+            </div>
+
+            <div class="social-login">
+                <a href="/auth/login/google" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/google-color.svg') }}" alt="Google" width="24"
+                        height="24">
+                </a>
+                <a href="/auth/login/linkedin" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/linkedin-color.svg') }}" alt="LinkedIn"
+                        width="24" height="24">
+                </a>
+                <a href="/auth/login/facebook" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/facebook-color.svg') }}" alt="Facebook"
+                        width="24" height="24">
+                </a>
+            </div>
+
+            <div class="terms-text">
+                By creating an account, you consent that you have read and agree to our <a href="#">terms of use and
+                    contracting</a> and the <a href="#">privacy policy</a>.
+            </div>
+        </div>
+
+        <div class="footer-text">
+            2026 &copy; qrcardku.com - 'QR card' is a trademark of DENSO WAVE INCORPORATED
+        </div>
+    </div>
+
+    <!-- Right Side Graphic -->
+    <div class="illustration-container">
+        <div class="glow-light"></div>
+        <div class="illustration-content">
+
+            <div class="floating-qr">
+                <div class="qr-grid">
+                    <div class="qr-grid-bottom"></div>
+                </div>
+                <div class="qr-globe">🌐</div>
+            </div>
+
+            <div class="folder-wrapper">
+                <div class="folder-back"></div>
+                <div class="folder-paper">
+                    <div class="qr-grid">
+                        <div class="qr-grid-bottom"></div>
+                    </div>
+                </div>
+                <!-- Sparkles -->
+                <div
+                    style="position: absolute; top: -140px; right: 20px; color: #60a5fa; font-size: 24px; z-index: 10;">
+                    ✨</div>
+
+                <div class="folder-front">
+                    <div class="folder-logo">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="promo-text">
+                <h2>Generate unlimited QR codes</h2>
+                <p>Create various types of QR in just a few clicks.</p>
+            </div>
+
+            <div class="dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkForm() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+            const str1 = document.getElementById('str1');
+
+            if (pass.length > 0) {
+                str1.classList.add('active'); // minimal strength
+            } else {
+                str1.classList.remove('active');
+            }
+
+            if (user.length > 0 && pass.length > 0) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function togglePwd() {
+            const pwd = document.getElementById('password');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+            } else {
+                pwd.type = 'password';
+            }
+        }
+    </script>
+</body>
+
+</html>

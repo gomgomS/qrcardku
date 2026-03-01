@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <!-- Required meta tags -->
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+      <!-- Meta -->
+      <meta name="description" content="Responsive Bootstrap 4 Dashboard Template" />
+      <meta name="author" content="ThemePixels" />
+      <!-- Favicon -->
+      <link rel="shortcut icon" type="image/x-icon" href=" {{ url_for('static', filename='dashforge/img/favicon.png') }}" />
+
+      <title>Kosongan</title>
+
+      {% block styles %}{% endblock %}
+
+    </head>
+
+
+  <body>
+
+    
+      {% block header %}{% endblock %}
+  
+
+      {% block content %}{% endblock %}
+  
+    
+
+    {% block scripts %}{% endblock %}
+
+  </body>
+
+  
+</html>

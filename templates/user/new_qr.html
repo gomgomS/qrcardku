@@ -1,0 +1,265 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "New QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<style>
+    .new-qr-container {
+        display: flex;
+        gap: 32px;
+        height: 100%;
+    }
+
+    .qr-types {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .qr-preview {
+        width: 340px;
+        background-color: #fafafa;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .qr-type-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .badge-tracking {
+        background-color: #bbf7d0;
+        color: #166534;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .qr-card {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .qr-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 24px;
+        margin-right: 16px;
+        background-color: #eff6ff;
+        border-radius: 8px;
+    }
+
+    .qr-info h4 {
+        margin-bottom: 4px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .qr-info p {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* Phone Preview Placeholder */
+    .phone-mockup {
+        width: 280px;
+        height: 560px;
+        background-color: white;
+        border: 12px solid #1a1a1a;
+        border-radius: 40px;
+        margin: 20px auto;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mockup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        width: 80px;
+        height: 80px;
+        opacity: 0.2;
+    }
+
+    .mockup-grid div {
+        background-color: #1a1a1a;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <span class="step-item step-active">
+            <span class="step-num">1</span>
+            <span>Type of QR card</span>
+        </span>
+        <span class="step-item step-disabled">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <span class="step-item step-disabled">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </span>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="/qr/new/web" class="btn-next">Next <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+</div>
+
+<div class="page-title" style="margin-bottom: 24px;">Select a QR type</div>
+
+<div class="new-qr-container">
+    <div class="qr-types">
+        <div class="qr-type-title">
+            <i class="fa-solid fa-chevron-down"></i> Dynamic QR <span class="badge-tracking">with tracking</span>
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 24px; padding-left: 28px;">Update content in
+            real time, without changing your code</p>
+
+        <div class="qr-grid">
+            <a href="/qr/new/web" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-solid fa-globe"></i></div>
+                    <div class="qr-info">
+                        <h4>Website</h4>
+                        <p>Open a URL</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/pdf" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-regular fa-file-pdf"></i></div>
+                    <div class="qr-info">
+                        <h4>PDF</h4>
+                        <p>Show a PDF</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/images" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-regular fa-images"></i></div>
+                    <div class="qr-info">
+                        <h4>Images</h4>
+                        <p>Show an image gallery</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/ecardname" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-regular fa-id-badge"></i></div>
+                    <div class="qr-info">
+                        <h4>eCardName</h4>
+                        <p>Share contact details</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/video" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-solid fa-play"></i></div>
+                    <div class="qr-info">
+                        <h4>Video</h4>
+                        <p>Show a video</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/links" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-solid fa-list-ul"></i></div>
+                    <div class="qr-info">
+                        <h4>Links</h4>
+                        <p>Group links</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="/qr/new/sosmed" style="text-decoration: none; color: inherit;">
+                <div class="qr-card">
+                    <div class="qr-icon"><i class="fa-regular fa-thumbs-up"></i></div>
+                    <div class="qr-info">
+                        <h4>Sosmed</h4>
+                        <p>Share your social profiles</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+            <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px;">
+                <div style="width: 32px; height: 32px; border: 1px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-chevron-right" style="font-size: 14px; color: var(--text-main);"></i>
+                </div>
+                <div>
+                    <div style="font-size: 20px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 12px;">
+                        Static QR <span style="background-color: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">no tracking</span>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-muted);">Reprint required when updating content</p>
+                </div>
+            </div>
+            <div class="qr-grid">
+                <a href="/qr/new/web-static" style="text-decoration: none; color: inherit;">
+                    <div class="qr-card">
+                        <div class="qr-icon"><i class="fa-solid fa-globe"></i></div>
+                        <div class="qr-info">
+                            <h4>Website</h4>
+                            <p>Open a URL</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="qr-preview">
+        <h3 style="color: #6b7280; font-weight: 500;">Example</h3>
+        <div class="phone-mockup">
+            <div class="mockup-grid">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div style="background: transparent;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

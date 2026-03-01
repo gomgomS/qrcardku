@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pyzw
+*.pyzwz
+pytavia_core/config.py 
+create_superadmin.py
+cookies.txt
+landingpage_explaination_section.md
+requirements.txt 
+download_libs.py 

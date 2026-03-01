@@ -1,0 +1,60 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Templates" %}
+{% set active_page = "templates" %}
+
+{% block extra_css %}
+<style>
+    .templates-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .empty-state-container {
+        border: 1px solid var(--border-color);
+        background-color: white;
+        border-radius: 8px;
+        padding: 120px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 32px;
+    }
+
+    .empty-message {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .empty-message i {
+        font-size: 20px;
+        color: #4b5563;
+    }
+
+    .create-link {
+        color: var(--primary);
+        font-weight: 500;
+        text-decoration: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="templates-header">
+    <div class="page-title" style="margin: 0;">Templates</div>
+    <button class="btn-primary"><i class="fa-solid fa-plus"></i> Create template</button>
+</div>
+
+<div class="empty-state-container">
+    <div class="empty-message">
+        <i class="fa-regular fa-file"></i>
+        Here you can manage your templates
+        <a href="#" class="create-link">Create template</a>
+    </div>
+</div>
+{% endblock %}

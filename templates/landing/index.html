@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qrcardku.com - QR card Generator</title>
+    <link href="/static/assets/vendor/css/inter-bold.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0052ff;
+            --primary-hover: #0040d2;
+            --bg-light: #f4f6fy;
+            --bg-lighter: #f8faff;
+            --text-main: #111827;
+            --text-dark: #0f172a;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --white: #ffffff;
+            --badge-bg: #e0e7ff;
+            --badge-text: #3730a3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+        }
+
+        body {
+            background-color: var(--bg-lighter);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Typography & Utilities */
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: var(--text-dark);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .mb-8 {
+            margin-bottom: 32px;
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .fw-bold {
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white);
+            box-shadow: 0 4px 14px 0 rgba(0, 82, 255, 0.39);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 82, 255, 0.23);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+        }
+
+        /* 1. Header */
+        header {
+            background: var(--white);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        /* 2. Hero & QR Tool */
+        .hero {
+            padding: 80px 0;
+            background: linear-gradient(180deg, rgba(238, 242, 255, 1) 0%, rgba(248, 250, 255, 1) 100%);
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .qr-tool {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .qr-tabs {
+            display: flex;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+            overflow-x: auto;
+            background: #fafcff;
+        }
+
+        .qr-tab {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .qr-tab.active {
+            background: var(--badge-bg);
+            color: var(--primary-color);
+        }
+
+        .qr-body {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: 32px;
+            gap: 40px;
+        }
+
+        .qr-form-group {
+            margin-bottom: 24px;
+        }
+
+        .qr-form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .qr-form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .qr-form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.1);
+        }
+
+        .qr-preview {
+            background: var(--bg-lighter);
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+
+        .qr-pattern {
+            width: 160px;
+            height: 160px;
+            background-image: radial-gradient(var(--text-main) 40%, transparent 40%);
+            background-size: 16px 16px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .qr-pattern::before,
+        .qr-pattern::after {
+            content: "";
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            border: 4px solid var(--text-main);
+            border-radius: 8px;
+            background: white;
+        }
+
+        .qr-pattern::before {
+            top: 0;
+            left: 0;
+        }
+
+        .qr-pattern::after {
+            top: 0;
+            right: 0;
+        }
+
+        .qr-pattern-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 36px;
+            height: 36px;
+            border: 4px solid var(--text-main);
+            border-radius: 8px;
+            background: white;
+        }
+
+        /* Sections padding */
+        .section {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title p {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+        }
+
+        /* 3. CTA */
+        .secondary-cta {
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .secondary-cta .btn {
+            border-radius: 50px;
+            padding: 16px 48px;
+            font-size: 1.125rem;
+        }
+
+        /* 4. How it Works */
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .how-card {
+            text-align: center;
+            position: relative;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .how-number {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid var(--bg-lighter);
+        }
+
+        .how-card h3 {
+            font-size: 1.25rem;
+            margin: 16px 0;
+        }
+
+        /* 5. QR Types */
+        .type-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .type-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            width: 140px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .type-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .type-card .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .type-card span {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* 6. Mobile Feature */
+        .mobile-section {
+            background: white;
+        }
+
+        .mobile-layout {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .mobile-text {
+            flex: 1;
+        }
+
+        .mobile-text h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-phone {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .phone-frame {
+            width: 300px;
+            height: 600px;
+            border: 12px solid #1f2937;
+            border-radius: 40px;
+            background: var(--bg-lighter);
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 25px;
+            background: #1f2937;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        /* 7. Bento */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .bento-card {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .bento-large {
+            grid-column: span 2;
+        }
+
+        .bento-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        /* 8. Uses Strategy Cards */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .strategy-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .strategy-img {
+            height: 200px;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #cbd5e1;
+        }
+
+        .strategy-body {
+            padding: 24px;
+        }
+
+        .strategy-body h3 {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+        }
+
+        /* 9. Visual Branding */
+        .branding-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .branding-section h2,
+        .branding-section p {
+            color: white;
+        }
+
+        .branding-section h2 {
+            font-size: 3rem;
+            margin-bottom: 24px;
+        }
+
+        .branding-mockup {
+            max-width: 900px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 60px auto 0;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 10. Tech Specs */
+        .tech-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .tech-img {
+            width: 100%;
+            height: 500px;
+            background: var(--badge-bg);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8rem;
+            color: var(--primary-color);
+        }
+
+        .tech-list h2 {
+            font-size: 2.5rem;
+            margin-bottom: 32px;
+        }
+
+        .tech-item {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        /* 11. FAQ */
+        .faq-section {
+            background: white;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .faq-question {
+            padding: 24px;
+            font-weight: 600;
+            font-size: 1.125rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 12. Footer */
+        footer {
+            background: #09090b;
+            color: white;
+            padding: 100px 0 40px;
+        }
+
+        .footer-cta {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .footer-cta h2 {
+            color: white;
+            font-size: 3rem;
+            margin-bottom: 32px;
+        }
+
+        .footer-dashboard {
+            max-width: 1000px;
+            height: 500px;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 24px;
+            margin: 0 auto 80px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #52525b;
+            font-size: 1.5rem;
+        }
+
+        .footer-links {
+            display: grid;
+            grid-template-columns: 2fr repeat(4, 1fr);
+            gap: 40px;
+            padding-top: 60px;
+            border-top: 1px solid #27272a;
+        }
+
+        .footer-links h4 {
+            color: #a1a1aa;
+            margin-bottom: 24px;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 16px;
+        }
+
+        .footer-links a {
+            color: #e4e4e7;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #27272a;
+            padding-top: 32px;
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
+            color: #a1a1aa;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 992px) {
+
+            .qr-body,
+            .how-grid,
+            .mobile-layout,
+            .tech-layout,
+            .strategy-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bento-large {
+                grid-column: auto;
+            }
+
+            .footer-links {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 1. Top Navigation Bar -->
+    <header>
+        <div class="container header-content">
+            <a href="/" class="logo"><span class="badge">QR</span> qrcardku.com</a>
+            <nav class="nav-links">
+                <a href="#">Products</a>
+                <a href="#">Features</a>
+                <a href="#">Solutions</a>
+                <a href="#">Support</a>
+                <a href="#">Pricing</a>
+            </nav>
+            <div class="auth-buttons">
+                <a href="/login" class="nav-links"
+                    style="text-decoration: none; color: var(--text-dark); font-weight: 600;">Log In</a>
+                <a href="/register" class="btn btn-primary">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. Hero & QR Creator Tool -->
+    <section class="hero">
+        <div class="container">
+            <h1>QR card Generator: Create your free QR card</h1>
+            <p>Create vCards, websites, texts, and much more. Customize, track, and boost your marketing with
+                qrcardku.com.</p>
+
+            <div class="qr-tool">
+                <div class="qr-tabs">
+                    <div class="qr-tab active">🌐 Website</div>
+                    <div class="qr-tab">📄 PDF</div>
+                    <div class="qr-tab">👤 vCard Plus</div>
+                    <div class="qr-tab">🖼️ Images</div>
+                    <div class="qr-tab">📝 Text</div>
+                    <div class="qr-tab">🎥 Video</div>
+                    <div class="qr-tab">📱 Apps</div>
+                </div>
+                <div class="qr-body">
+                    <div class="qr-input">
+                        <div class="qr-form-group">
+                            <label>Submit URL</label>
+                            <input type="url" placeholder="https://yourwebsite.com">
+                        </div>
+                        <p class="text-muted" style="font-size: 0.9rem;">Your QR card will be generated automatically
+                            after you enter the details.</p>
+                    </div>
+                    <div class="qr-preview">
+                        <div class="qr-placeholder">
+                            <div class="qr-pattern">
+                                <div class="qr-pattern-bottom"></div>
+                            </div>
+                        </div>
+                        <span class="fw-bold">Scan ME!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Secondary CTA -->
+            <div class="secondary-cta">
+                <a href="/register" class="btn btn-primary"
+                    style="font-size: 1.125rem; padding: 18px 48px; border-radius: 50px;">Create QR card</a>
+                <p class="text-muted" style="margin-top: 16px;">✔️ No credit card required &nbsp; ✔️ Track dynamic codes
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. How it Works -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>How to create a QR card?</h2>
+                <p>Follow these quick steps to generate, customize and export.</p>
+            </div>
+            <div class="how-grid">
+                <div class="how-card">
+                    <div class="how-number">1</div>
+                    <h3>Choose Content</h3>
+                    <p class="text-muted">Select the type of data you want to embed. From Website URLs to detailed
+                        vCards.</p>
+                </div>
+                <div class="how-card">
+                    <div class="how-number">2</div>
+                    <h3>Customize Details</h3>
+                    <p class="text-muted">Enhance your QR card with vibrant colors, a central logo, and appealing
+                        frames.</p>
+                </div>
+                <div class="how-card">
+                    <div class="how-number">3</div>
+                    <h3>Download & Print</h3>
+                    <p class="text-muted">Export in vectors (SVG/EPS) or PNG/JPG formats ready for any high-quality
+                        print.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. QR Type Selector -->
+    <section class="section" style="background: white;">
+        <div class="container">
+            <div class="section-title">
+                <h2>Generate different types of QR Codes</h2>
+                <p>Versatility for physical-to-digital connections.</p>
+            </div>
+            <div class="type-grid">
+                <div class="type-card">
+                    <div class="icon">🌐</div><span>Website</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">👤</div><span>vCard Plus</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">📄</div><span>PDF</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">🖼️</div><span>Images</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">🎥</div><span>Video</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">📜</div><span>Menu</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">🎵</div><span>Audio</span>
+                </div>
+                <div class="type-card">
+                    <div class="icon">📱</div><span>Apps</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Mobile Feature Spotlight -->
+    <section class="section mobile-section">
+        <div class="container mobile-layout">
+            <div class="mobile-text">
+                <h3>🔄 Dynamic URLs</h3>
+                <p class="text-muted mb-8" style="font-size: 1.125rem;">Update the destination link of your QR card at
+                    any time, without having to reprint it. Perfect for menus, portfolios, and evolving campaigns.</p>
+            </div>
+            <div class="mobile-phone">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div
+                        style="background: white; border-radius: 12px; padding: 20px; text-align: left; margin-top: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div style="height: 140px; background: #e2e8f0; border-radius: 8px; margin-bottom: 16px;"></div>
+                        <h4 style="margin-bottom: 8px;">Product Promotion</h4>
+                        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 16px;">Scan to view details</p>
+                        <div style="height: 36px; background: var(--primary-color); border-radius: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-text">
+                <h3>🎨 Vector Formats</h3>
+                <p class="text-muted mb-8" style="font-size: 1.125rem;">Download in SVG, PDF, and EPS for infinite
+                    scalability. Guarantee perfect scannability on billboards and business cards alike.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. All-in-One Marketing Grid -->
+    <section class="section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Your all-in-one marketing platform</h2>
+            </div>
+            <div class="bento-grid">
+                <div class="bento-card bento-large">
+                    <h3>Custom Designs & Colors</h3>
+                    <p class="text-muted">Take full control of the appearance. Choose precise hex colors, modify
+                        patterns, and seamlessly integrate your brand's unique logo right in the center.</p>
+                </div>
+                <div class="bento-card">
+                    <h3>Data Tracking</h3>
+                    <p class="text-muted">Monitor scans with precision. View analytics by location, device types,
+                        operating systems, and timestamps.</p>
+                </div>
+                <div class="bento-card">
+                    <h3>Bulk Creation</h3>
+                    <p class="text-muted">Generate hundreds of unique QR codes instantly via CSV data upload or through
+                        our comprehensive API.</p>
+                </div>
+                <div class="bento-card bento-large">
+                    <h3>Dynamic URL Routing</h3>
+                    <p class="text-muted">Fix a typo or change a campaign target on the fly. Dynamic QR codes adapt
+                        immediately without needing re-printing.</p>
+                </div>
+            </div>
+            <div class="text-center mt-8" style="margin-top: 40px;">
+                <a href="#" class="btn btn-primary" style="border-radius: 50px;">See all platform features</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. Strategy Cards -->
+    <section class="section" style="background: white;">
+        <div class="container">
+            <div class="section-title" style="max-width: 800px;">
+                <p
+                    style="color: var(--primary-color); font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">
+                    Use Cases</p>
+                <h2>Create your own QR codes to boost your marketing strategy.</h2>
+            </div>
+            <div class="strategy-grid">
+                <div class="strategy-card">
+                    <div class="strategy-img">📇</div>
+                    <div class="strategy-body">
+                        <h3>Business Cards</h3>
+                        <p class="text-muted mb-4">Allow clients to save your exact contact info instantly directly to
+                            their address book.</p>
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                            guide &rarr;</a>
+                    </div>
+                </div>
+                <div class="strategy-card">
+                    <div class="strategy-img">📄</div>
+                    <div class="strategy-body">
+                        <h3>Flyers & Posters</h3>
+                        <p class="text-muted mb-4">Turn static street marketing into trackable interactive digital
+                            experiences in seconds.</p>
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                            guide &rarr;</a>
+                    </div>
+                </div>
+                <div class="strategy-card">
+                    <div class="strategy-img">🛍️</div>
+                    <div class="strategy-body">
+                        <h3>Product Packaging</h3>
+                        <p class="text-muted mb-4">Provide manuals, warranty info, or authenticity verification straight
+                            on the box.</p>
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                            guide &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. Visual Branding Section -->
+    <section class="section branding-section">
+        <div class="container">
+            <p style="text-transform: uppercase; font-weight: 700; color: #a5b4fc; letter-spacing: 2px;">Professional
+                Setup</p>
+            <h2 style="margin-top: 16px;">Deliver your own professional QR codes</h2>
+            <div style="display: flex; gap: 16px; justify-content: center;">
+                <a href="/register" class="btn btn-primary" style="background: white; color: var(--text-dark);">Start
+                    for free</a>
+                <a href="/pricing" class="btn btn-outline"
+                    style="color: white; border-color: rgba(255,255,255,0.3);">View pricing</a>
+            </div>
+            <div class="branding-mockup">
+                Print Mockup Graphics Placeholder
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. Tech Specs -->
+    <section class="section" style="background: white;">
+        <div class="container tech-layout">
+            <div class="tech-img">📐</div>
+            <div class="tech-list">
+                <p
+                    style="color: var(--primary-color); font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">
+                    Technical Perfection</p>
+                <h2>Everything you need to know to get started</h2>
+                <div class="tech-item border-top">
+                    <span>High resolution vectors</span> <span>+</span>
+                </div>
+                <div class="tech-item">
+                    <span>Export in SVG, EPS, PDF</span> <span>+</span>
+                </div>
+                <div class="tech-item">
+                    <span>Error correction up to 30%</span> <span>+</span>
+                </div>
+                <div class="tech-item">
+                    <span>Advanced Scan Analytics</span> <span>+</span>
+                </div>
+                <div class="tech-item">
+                    <span>Bulk Generation API</span> <span>+</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. FAQ -->
+    <section class="section faq-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Do not leave with doubts</h2>
+                <div style="display: flex; justify-content: center; gap: 24px; margin-top: 24px;">
+                    <span style="font-weight: 600; color: var(--primary-color); cursor: pointer;">Platform FAQ</span>
+                    <span class="text-muted" style="cursor: pointer;">Pricing Questions</span>
+                    <span class="text-muted" style="cursor: pointer;">Account Support</span>
+                </div>
+            </div>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question"><span>What exactly is a dynamic QR card?</span> <span>+</span></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question"><span>How does the 14-day free trial work?</span> <span>+</span></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question"><span>Are the generated QR codes for commercial use?</span> <span>+</span>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question"><span>What if my printed code gets damaged?</span> <span>+</span></div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question"><span>Can I design a custom QR with my logo?</span> <span>+</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 12. Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-cta">
+                <h2>Try our QR card generator for 7 days free.</h2>
+                <a href="/register" class="btn btn-primary" style="padding: 16px 40px; font-size: 1.125rem;">Start
+                    now</a>
+            </div>
+
+            <div class="footer-dashboard">
+                Dashboard Metrics Preview
+            </div>
+
+            <div class="footer-links">
+                <div style="padding-right: 40px;">
+                    <a href="/" class="logo"
+                        style="color: white; font-size: 28px; margin-bottom: 24px; display: inline-flex;"><span
+                            class="badge">QR</span> qrcardku.com</a>
+                    <p style="color: #a1a1aa; line-height: 1.6;">The complete QR card marketing platform for modern,
+                        ambitious teams looking to connect physical and digital spaces seamlessly.</p>
+                </div>
+                <div>
+                    <h4>Products</h4>
+                    <ul>
+                        <li><a href="#">Generator</a></li>
+                        <li><a href="#">vCard Editor</a></li>
+                        <li><a href="#">Link Pages</a></li>
+                        <li><a href="#">Analytics</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Solutions</h4>
+                    <ul>
+                        <li><a href="#">Retail</a></li>
+                        <li><a href="#">Real Estate</a></li>
+                        <li><a href="#">Restaurants</a></li>
+                        <li><a href="#">Agencies</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Pricing Plan</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Cookie Details</a></li>
+                        <li><a href="#">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div>&copy; 2026 qrcardku.com. All rights reserved.</div>
+                <div style="display: flex; gap: 24px;">
+                    <a href="#" style="color: #a1a1aa; text-decoration: none;">Twitter</a>
+                    <a href="#" style="color: #a1a1aa; text-decoration: none;">LinkedIn</a>
+                    <a href="#" style="color: #a1a1aa; text-decoration: none;">YouTube</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

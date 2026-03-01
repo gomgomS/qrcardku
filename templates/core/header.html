@@ -1,0 +1,33 @@
+<!-- NAVBAR -->
+    <nav class="navbar navbar-toggleable-md mnc-top-navbar">
+        <a class="navbar-brand logo">
+           
+            <!-- <img src="{{core_display.logo_image}}" class="logo-top-navbar" alt="mnc-logo"> -->
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <button class="sidebar-toggle btn btn-flat" id="toggle-sidebar-desktop">
+                <span>
+                    <i class="fa fa-bars"></i>
+                </span>
+            </button>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <div class="dropdown menu-top-change-password">
+                        <button class="btn dropdown-toggle" type="button" id="dropdown-top-menu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <i class="fa fa-user-circle-o mnc-icon-top-right-nav"></i> &nbsp; 
+                            <span class="text-side-icon">{{ session['username'] }}</span>
+                            <span class="caret"></span>
+                        </button>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link dropdown-has-after menu-right-wellcome-admin-logout" href="/auth/logout" id="">
+						<i class="fa fa-sign-out mnc-icon-top-right-nav"></i> &nbsp;
+						<span class="text-side-icon">Logout</span>
+                    </a>
+                </li>
+            </ul>  
+        </div>
+    </nav>
+<!-- /NAVBAR -->

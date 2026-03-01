@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qrcardku.com - Log In</title>
+    <style>
+        :root {
+            --primary-blue: #0052ff;
+            --primary-hover: #0040d2;
+            --text-dark: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg: #ffffff;
+            --btn-disabled: #d1d5db;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        /* LEFT SIDE - FORM */
+        .auth-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            max-width: 50vw;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-decoration: none;
+            margin-bottom: auto;
+        }
+
+        .logo-icon {
+            background-color: var(--primary-blue);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 800;
+        }
+
+        .auth-form-wrapper {
+            max-width: 400px;
+            width: 100%;
+            margin: auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            display: block;
+        }
+
+        .forgot-password a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--btn-disabled);
+            color: var(--text-muted);
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: not-allowed;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        /* Active state for button through JS later if needed */
+        .btn-submit.active {
+            background-color: var(--primary-blue);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 14px 0 rgba(0, 82, 255, 0.39);
+        }
+
+        .btn-submit.active:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .signup-link {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .signup-link a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider span {
+            padding: 0 10px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 16px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .social-btn:hover {
+            background: #f9fafb;
+        }
+
+        .footer-text {
+            margin-top: auto;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        /* RIGHT SIDE - ILLUSTRATION */
+        .illustration-container {
+            flex: 1;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border-radius: 24px;
+            margin: 16px 16px 16px 0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Decorative background lines for illustration */
+        .illustration-bg-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(90deg,
+                    transparent,
+                    transparent 49px,
+                    rgba(255, 255, 255, 0.3) 50px);
+        }
+
+        /* Specific Illustration For Login (Padlock & QR) */
+        .padlock-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            z-index: 10;
+        }
+
+        .padlock-shackle {
+            width: 120px;
+            height: 140px;
+            border: 24px solid rgba(255, 255, 255, 0.9);
+            border-bottom: 0;
+            border-top-left-radius: 60px;
+            border-top-right-radius: 60px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(180deg, #93c5fd 0%, transparent 100%);
+            -webkit-background-clip: text;
+        }
+
+        /* Shackle gradient simulation */
+        .shackle-gradient {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 70px;
+            border-radius: 70px 70px 0 0;
+            border: 20px solid transparent;
+            border-bottom: none;
+            background: linear-gradient(180deg, #60a5fa, #bfdbfe) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            z-index: 1;
+        }
+
+        .padlock-body {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-5deg);
+            width: 220px;
+            height: 180px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .qr-placeholder {
+            width: 80%;
+            height: 80%;
+            background-image: radial-gradient(#60a5fa 40%, transparent 40%);
+            background-size: 16px 16px;
+            position: relative;
+        }
+
+        .qr-placeholder::before,
+        .qr-placeholder::after,
+        .qr-corner-bottom {
+            content: "";
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 6px solid #60a5fa;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .qr-placeholder::before {
+            top: 0;
+            left: 0;
+        }
+
+        .qr-placeholder::after {
+            top: 0;
+            right: 0;
+        }
+
+        .qr-corner-bottom {
+            bottom: 0;
+            left: 0;
+        }
+
+        .key-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1e3a8a;
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 3;
+        }
+
+        .key-icon-shape {
+            width: 40px;
+            height: 16px;
+            background: #1e3a8a;
+            position: relative;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .key-icon-shape::before {
+            content: '';
+            position: absolute;
+            left: -16px;
+            top: -4px;
+            width: 24px;
+            height: 24px;
+            border: 4px solid #1e3a8a;
+            border-radius: 4px;
+            transform: rotate(45deg);
+        }
+
+        .key-icon-teeth {
+            position: absolute;
+            bottom: -6px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background: #1e3a8a;
+            box-shadow: -10px 0 0 #1e3a8a;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            background: #fee2e2;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media (max-width: 900px) {
+            .illustration-container {
+                display: none;
+            }
+
+            .auth-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <a href="/" class="header-logo">
+            <span class="logo-icon">QR</span> qrcardku.com
+        </a>
+
+        <div class="auth-form-wrapper">
+            <h1>Welcome back!</h1>
+            <p class="subtitle">Enter with your networks or complete your data</p>
+
+            {% if error_msg %}
+            <div class="error-msg" id="error-message">{{ error_msg }}</div>
+            <script>
+                setTimeout(function () {
+                    document.getElementById('error-message').style.display = 'none';
+                }, 4000);
+            </script>
+            {% endif %}
+
+            <form action="/auth/login" method="POST" id="loginForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                <div class="input-group">
+                    <span class="input-icon">✉️</span>
+                    <input type="text" name="username" id="username" placeholder="name@email.com"
+                        value="testuser@example.com" required oninput="checkForm()">
+                </div>
+
+                <div class="input-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="password" id="password" placeholder="Enter your password here..."
+                        value="password123" required oninput="checkForm()">
+                    <span class="toggle-password" onclick="togglePwd()">👁️</span>
+                </div>
+
+                <div class="forgot-password">
+                    Have you forgotten your password? <a href="#">Click here</a>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">Log In</button>
+            </form>
+
+            <div class="signup-link">
+                Don't have an account? <a href="/register">Create an account</a>
+            </div>
+
+            <div class="divider">
+                <span>o</span>
+            </div>
+
+            <div class="social-login">
+                <a href="/auth/login/google" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/google-color.svg') }}" alt="Google" width="24"
+                        height="24">
+                </a>
+                <a href="/auth/login/linkedin" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/linkedin-color.svg') }}" alt="LinkedIn"
+                        width="24" height="24">
+                </a>
+                <a href="/auth/login/facebook" class="social-btn">
+                    <img src="{{ url_for('static', filename='assets/icons/facebook-color.svg') }}" alt="Facebook"
+                        width="24" height="24">
+                </a>
+            </div>
+        </div>
+
+        <div class="footer-text">
+            2026 &copy; qrcardku.com - 'QR card' is a trademark of DENSO WAVE INCORPORATED
+        </div>
+    </div>
+
+    <div class="illustration-container">
+        <div class="illustration-bg-lines"></div>
+        <div class="padlock-wrapper">
+            <div class="shackle-gradient"
+                style="transform: translateX(-50%) rotate(15deg); transform-origin: bottom left;"></div>
+            <div class="padlock-body">
+                <div class="qr-placeholder">
+                    <div class="qr-corner-bottom"></div>
+                </div>
+                <!-- Key Overlapping -->
+                <div style="position: absolute; top: 55%; left: 40%; transform: translate(-50%, -50%); z-index: 10;">
+                    <div class="key-icon-shape">
+                        <div class="key-icon-teeth"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkForm() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+            if (user.length > 0 && pass.length > 0) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function togglePwd() {
+            const pwd = document.getElementById('password');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+            } else {
+                pwd.type = 'password';
+            }
+        }
+    </script>
+</body>
+
+</html>

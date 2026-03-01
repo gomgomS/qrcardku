@@ -1,0 +1,180 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Stats" %}
+{% set active_page = "stats" %}
+
+{% block extra_css %}
+<style>
+    .stats-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .stats-top-banner {
+        background-color: #fef9c3;
+        border: 1px solid #fde047;
+        padding: 12px 16px;
+        border-radius: 8px;
+        color: #ca8a04;
+        font-size: 13px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .time-zone-banner {
+        background-color: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .time-zone-banner .text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        font-size: 14px;
+    }
+
+    .time-zone-banner .actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .filters-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .filter-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .stats-grid-container {
+        background: #f9fafb;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+    }
+
+    .stats-period {
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-top-banner">
+    <span><i class="fa-solid fa-circle-info"></i> You are using QRCardKu's free trial. 2 days remaining</span>
+    <button class="btn-primary" style="padding: 6px 16px; font-size: 13px;">Update</button>
+</div>
+
+<div class="stats-header">
+    <div class="page-title" style="margin: 0;">Stats</div>
+    <button class="btn-outline" style="color: var(--primary); border-color: var(--primary); font-weight: 500;">Export
+        information</button>
+</div>
+
+<div class="time-zone-banner">
+    <div class="text">
+        <i class="fa-solid fa-circle-info"></i> You can set your time zone. <span
+            style="color: #60a5fa; margin-left: 4px;">Current time zone: Asia/Jakarta</span>
+    </div>
+    <div class="actions">
+        <button class="btn-outline" style="color: var(--primary); border-color: var(--primary);">Change</button>
+        <button class="btn-primary">Accept</button>
+    </div>
+</div>
+
+<div class="filters-bar">
+    <div class="filter-item">
+        Last 7 days <i class="fa-solid fa-chevron-down" style="color: var(--text-muted); font-size: 10px;"></i>
+    </div>
+    <div class="filter-item" style="background: #f9fafb;">
+        Feb 24, 2026 - Mar 2, 2026 <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
+    </div>
+    <div class="filter-item" style="color: var(--text-muted); border: none; background: transparent;">
+        Time zone: Asia/Jakarta <i class="fa-solid fa-pen" style="font-size: 10px;"></i>
+    </div>
+
+    <div style="margin-left: auto; color: var(--text-muted); font-size: 13px; cursor: pointer;">
+        <i class="fa-solid fa-filter"></i> Filter
+    </div>
+</div>
+
+<div class="stats-grid-container">
+    <div class="stats-period">Analyzed period: <span style="font-weight: 400; color: var(--text-muted);">24-02-2026 to
+            02-03-2026</span></div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">2</div>
+            <div class="stat-label"><i class="fa-solid fa-qrcode"></i> Total QR Codes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">3</div>
+            <div class="stat-label"><i class="fa-solid fa-expand"></i> Total Scans</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">2</div>
+            <div class="stat-label"><i class="fa-solid fa-expand"></i> Total Unique Scans</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">4</div>
+            <div class="stat-label"><i class="fa-regular fa-eye"></i> Total visits</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

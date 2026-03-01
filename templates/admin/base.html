@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %}</title>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --text-color: #2b3a4a;
+            --sidebar-bg: linear-gradient(135deg, #0b132b, #1c2541);
+            --sidebar-hover: rgba(255, 255, 255, 0.1);
+            --primary: #00a896;
+            --primary-hover: #028090;
+            --danger: #ef476f;
+            --danger-hover: #d2385c;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --nav-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            letter-spacing: 1px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .sidebar-header span {
+            color: var(--primary);
+        }
+
+        .sidebar-menu {
+            list-style: None;
+            padding: 15px 10px;
+            margin: 0;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #9ab4c7;
+            text-decoration: None;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a:hover {
+            background: var(--sidebar-hover);
+            color: #fff;
+            transform: translateX(4px);
+        }
+
+        .sidebar-menu a.active {
+            background: var(--sidebar-hover);
+            color: #fff;
+            border-left: 3px solid var(--primary);
+            font-weight: 600;
+            box-shadow: inset 20px 0 20px -20px rgba(0, 168, 150, 0.5);
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-footer a {
+            color: #5f7a93;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .sidebar-footer a:hover {
+            color: var(--primary);
+        }
+
+        /* Main Content Area */
+        .main-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: var(--bg-color);
+        }
+
+        /* Topnav */
+        .topnav {
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: var(--nav-shadow);
+            z-index: 5;
+        }
+
+        .topnav .user-info {
+            margin-right: 25px;
+            font-weight: 600;
+            color: #4a5d70;
+            font-size: 0.95rem;
+        }
+
+        .topnav .logout-btn {
+            background-color: transparent;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            padding: 8px 20px;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .topnav .logout-btn:hover {
+            background-color: var(--danger);
+            color: white;
+            box-shadow: 0 4px 10px rgba(239, 71, 111, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Content Pane */
+        .content {
+            padding: 30px 40px;
+            flex-grow: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Typography */
+        h1,
+        h2,
+        h3 {
+            color: #1c2541;
+            margin-top: 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        p {
+            color: #5f7a93;
+            line-height: 1.6;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .alert-success {
+            background-color: #e3f9e5;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        /* Cards & Tables */
+        .card {
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--card-shadow);
+            padding: 25px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .card:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th,
+        td {
+            padding: 18px 20px;
+            text-align: left;
+            border-bottom: 1px solid #f0f4f8;
+        }
+
+        th {
+            background-color: #fafbfc;
+            color: #5f7a93;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr {
+            transition: var(--transition);
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Forms & Inputs */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5d70;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d1d9e6;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #2b3a4a;
+            background-color: #fafbfc;
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: var(--transition);
+            color: white;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary,
+        .btn-update {
+            background-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(0, 168, 150, 0.2);
+        }
+
+        .btn-primary:hover,
+        .btn-update:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 6px 15px rgba(0, 168, 150, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-delete {
+            background-color: var(--danger);
+            box-shadow: 0 4px 10px rgba(239, 71, 111, 0.2);
+        }
+
+        .btn-delete:hover {
+            background-color: var(--danger-hover);
+            box-shadow: 0 6px 15px rgba(239, 71, 111, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .badge-subtle {
+            background: #f0f4f8;
+            color: #5f7a93;
+            border: 1px solid #d1d9e6;
+        }
+
+        .badge-warning {
+            background: #fffcf0;
+            color: #b7791f;
+            border: 1px solid #fef08a;
+        }
+
+        .badge-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            Security<span>House</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/admin/users" class="{% if request.path == '/admin/users' %}active{% endif %}">Users Module</a>
+            </li>
+            <li><a href="/admin/karyawan" class="{% if request.path == '/admin/karyawan' %}active{% endif %}">Karyawan
+                    Module</a>
+            </li>
+            <li><a href="/admin/requests" class="{% if request.path == '/admin/requests' %}active{% endif %}">Requests
+                    Module</a></li>
+            <li><a href="/admin/ecard" class="{% if request.path.startswith('/admin/ecard') %}active{% endif %}">E-card
+                    Module</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="/" target="_blank">Landing Page ↗</a>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="topnav">
+            <!-- Ensure username is passed into context globally ideally, but typically session works in flask if passed or we pull from context if given -->
+            <span class="user-info">Welcome, Admin</span>
+            <a href="/auth/logout" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="content">
+            {% if msg %}
+            <div class="alert alert-success">{{ msg }}</div>
+            {% endif %}
+            {% if error_msg %}
+            <div class="alert alert-error">{{ error_msg }}</div>
+            {% endif %}
+
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+</body>
+
+</html>

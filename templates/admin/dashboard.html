@@ -1,0 +1,67 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Manage Requests{% endblock %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 20px;">
+    <h2 style="margin-top:0;">Service Requests</h2>
+    <p style="color: #666; margin-top: 5px;">Manage incoming security consultation requests.</p>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Service</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>{{ req.created_at }}</td>
+                <td>{{ req.name }}</td>
+                <td>{{ req.email }}<br><small>{{ req.phone }}</small></td>
+                <td>{{ req.service_type }}</td>
+                <td>{{ req.message }}</td>
+                <td>
+                <td>
+                    <span class="badge {% if req.status == 'PENDING' %}badge-warning{% else %}badge-success{% endif %}">
+                        {{ req.status }}
+                    </span>
+                </td>
+                <td>
+                    <form action="/admin/request/update" method="POST"
+                        style="display: inline-flex; gap: 8px; align-items: center; margin-bottom: 5px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="request_id" value="{{ req.request_id }}">
+                        <select name="status" style="padding: 10px; min-width: 120px; border-radius: 8px;">
+                            <option value="PENDING" {% if req.status=='PENDING' %}selected{% endif %}>PENDING</option>
+                            <option value="RESOLVED" {% if req.status=='RESOLVED' %}selected{% endif %}>RESOLVED
+                            </option>
+                        </select>
+                        <button type="submit" class="btn btn-update">Update</button>
+                    </form>
+                    <form action="/admin/request/delete" method="POST" style="display: inline-block;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input type="hidden" name="request_id" value="{{ req.request_id }}">
+                        <button type="submit" class="btn btn-delete"
+                            onclick="return confirm('Are you sure you want to delete this request?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #666;">No requests found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

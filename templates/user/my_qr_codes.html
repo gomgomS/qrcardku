@@ -1,0 +1,579 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "My QR codes" %}
+{% set active_page = "my_qr_codes" %}
+
+{% block extra_css %}
+<style>
+    .top-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .folders-section {
+        margin-bottom: 40px;
+    }
+
+    .folders-section h3 {
+        font-size: 14px;
+        margin-bottom: 12px;
+        color: var(--text-main);
+    }
+
+    .search-input {
+        width: 100%;
+        max-width: 300px;
+        padding: 8px 12px;
+        padding-left: 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        margin-bottom: 16px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 8px center;
+        background-color: white;
+    }
+
+    .empty-folders {
+        border: 1px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        color: var(--text-muted);
+        background-color: white;
+    }
+
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 16px;
+    }
+
+    .tab {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: -1px;
+    }
+
+    .tab.active {
+        color: var(--primary);
+        border-bottom: 2px solid var(--primary);
+        font-weight: 500;
+        background-color: #eff6ff;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .qr-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 80px;
+        /* added margin to ensure bottom dropdowns are reachable */
+    }
+
+    .qr-table th,
+    .qr-table td {
+        padding: 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+    }
+
+    .qr-table th {
+        background-color: #f9fafb;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #dcfce7;
+        color: #166534;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+
+    .dropdown-content.show {
+        display: block !important;
+    }
+
+    .dropdown-content button:hover,
+    .dropdown-content a:hover {
+        background-color: #f3f4f6 !important;
+    }
+
+    /* QR scan icon: hover ring + tooltip */
+    .qr-scan-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        color: var(--text-muted);
+        cursor: pointer;
+        position: relative;
+        transition: box-shadow 0.2s, color 0.2s;
+    }
+    .qr-scan-trigger:hover {
+        box-shadow: 0 0 0 2px #22c55e;
+        color: #16a34a;
+    }
+    .qr-scan-trigger .fa-qrcode {
+        font-size: 24px;
+    }
+    .qr-scan-trigger[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 100%;
+        margin-bottom: 6px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        color: white;
+        background: #22c55e;
+        border-radius: 4px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+    .qr-scan-trigger:hover::after {
+        opacity: 1;
+    }
+
+    /* Scan QR modal */
+    .scan-qr-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .scan-qr-overlay.show {
+        display: flex;
+    }
+    .scan-qr-modal {
+        background: white;
+        border-radius: 12px;
+        max-width: 440px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    .scan-qr-modal .modal-header {
+        padding: 20px 24px 12px;
+        position: relative;
+    }
+    .scan-qr-modal .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+    }
+    .scan-qr-modal .modal-close:hover {
+        color: var(--text-main);
+    }
+    .scan-qr-modal .modal-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 12px;
+    }
+    .scan-qr-modal .modal-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .scan-qr-modal .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .scan-qr-modal .tag-type { background: #eff6ff; color: var(--primary); }
+    .scan-qr-modal .tag-active { background: #dcfce7; color: #166534; }
+    .scan-qr-modal .modal-link-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--primary);
+        margin-bottom: 20px;
+    }
+    .scan-qr-modal .modal-link-row a { color: inherit; text-decoration: none; }
+    .scan-qr-modal .copy-btn {
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+    .scan-qr-modal .copy-btn:hover { color: var(--primary); }
+    .scan-qr-modal .qr-section-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 12px;
+    }
+    .scan-qr-modal .qr-image-wrap {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 16px;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+    .scan-qr-modal .qr-image-wrap img {
+        display: block;
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
+    }
+    .scan-qr-modal .preview-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+    }
+    .scan-qr-modal .modal-actions {
+        display: flex;
+        gap: 12px;
+        padding: 0 24px 24px;
+    }
+    .scan-qr-modal .modal-actions .btn-outline {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .scan-qr-modal .modal-actions .btn-primary {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: none;
+        background: var(--primary);
+        color: white;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .scan-qr-modal .modal-actions .btn-primary:hover { background: var(--primary-hover); }
+</style>
+
+<script>
+    function toggleDropdown(event, btn) {
+        // Prevent click from bubbling up to window
+        event.stopPropagation();
+
+        var content = btn.nextElementSibling;
+        var wasShow = content.classList.contains('show');
+
+        // Close all dropdowns
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            dropdowns[i].classList.remove('show');
+        }
+
+        // Toggle this specific one
+        if (!wasShow) {
+            content.classList.add('show');
+        }
+    }
+
+    // Close the dropdowns if the user clicks anywhere else on the page
+    window.onclick = function (event) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            dropdowns[i].classList.remove('show');
+        }
+    }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script>
+(function () {
+    var overlay = document.getElementById('scan-qr-overlay');
+    var closeBtn = document.getElementById('scan-qr-close');
+    var imgEl = document.getElementById('scan-qr-image');
+    var currentDataUrl = null;
+
+    function normUrl(url) {
+        if (!url) return '';
+        url = String(url).trim();
+        if (url && !/^https?:\/\//i.test(url)) return 'https://' + url;
+        return url;
+    }
+
+    function typeLabel(qrType) {
+        if (qrType === 'web') return '<i class="fa-solid fa-globe"></i> Website';
+        if (qrType === 'web-static') return '<i class="fa-solid fa-globe"></i> Website (static)';
+        if (qrType === 'vcard') return '<i class="fa-regular fa-id-badge"></i> vCard Plus';
+        return '<i class="fa-solid fa-qrcode"></i> ' + (qrType ? String(qrType).charAt(0).toUpperCase() + String(qrType).slice(1) : '');
+    }
+
+    document.querySelectorAll('.qr-scan-trigger').forEach(function (trigger) {
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var name = trigger.getAttribute('data-name') || 'QR card';
+            var qrType = trigger.getAttribute('data-qr-type') || 'web';
+            var status = trigger.getAttribute('data-status') || 'Active';
+            var url = normUrl(trigger.getAttribute('data-url') || '');
+            var shortCode = trigger.getAttribute('data-short-code') || '';
+            var editUrl = trigger.getAttribute('data-edit-url') || '#';
+
+            var displayUrl = url;
+            if (qrType === 'web' && shortCode) {
+                displayUrl = window.location.origin + '/p/' + shortCode;
+            }
+
+            document.getElementById('scan-qr-title').textContent = name;
+            document.getElementById('scan-qr-type-tag').innerHTML = typeLabel(qrType);
+            document.getElementById('scan-qr-status-tag').textContent = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+            document.getElementById('scan-qr-url').href = displayUrl;
+            document.getElementById('scan-qr-url').textContent = displayUrl || '—';
+            document.getElementById('scan-qr-preview-text').textContent = displayUrl || 'Link to QR url here';
+            document.getElementById('scan-qr-edit-btn').href = editUrl;
+
+            imgEl.src = '';
+            currentDataUrl = null;
+            overlay.classList.add('show');
+            overlay.setAttribute('aria-hidden', 'false');
+
+            var content = displayUrl || url || 'https://qrcardku.com';
+            if (typeof QRCode !== 'undefined') {
+                QRCode.toDataURL(content, { width: 400, margin: 2 })
+                    .then(function (dataUrl) {
+                        imgEl.src = dataUrl;
+                        currentDataUrl = dataUrl;
+                    })
+                    .catch(function (err) { console.error('QR generate error:', err); });
+            }
+        });
+    });
+
+    function closeModal() {
+        overlay.classList.remove('show');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) closeModal();
+    });
+
+    document.getElementById('scan-qr-copy-url').addEventListener('click', function () {
+        var a = document.getElementById('scan-qr-url');
+        var url = a.href;
+        if (url && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function () { /* optional: show toast */ });
+        }
+    });
+
+    document.getElementById('scan-qr-copy-preview').addEventListener('click', function () {
+        var text = document.getElementById('scan-qr-preview-text').textContent;
+        if (text && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {});
+        }
+    });
+
+    document.getElementById('scan-qr-download-btn').addEventListener('click', function () {
+        if (!currentDataUrl) return;
+        var a = document.createElement('a');
+        a.href = currentDataUrl;
+        a.download = (document.getElementById('scan-qr-title').textContent || 'qr-code').replace(/[^a-z0-9-_]/gi, '-') + '.png';
+        a.click();
+    });
+})();
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="top-actions">
+    <div class="page-title" style="margin: 0;">My QR codes</div>
+    <button class="btn-primary"><i class="fa-solid fa-plus"></i> Create New</button>
+</div>
+
+<div class="folders-section">
+    <h3>My folders</h3>
+    <input type="text" class="search-input" placeholder="Search...">
+    <div class="empty-folders">
+        <i class="fa-regular fa-folder" style="font-size: 24px; margin-bottom: 8px;"></i><br>
+        Here you can manage your folders. <a href="#" style="color: var(--primary); text-decoration: none;">Create
+            folder</a>
+    </div>
+</div>
+
+<div class="tabs">
+    <div class="tab active">All</div>
+    <div class="tab">Static</div>
+    <div class="tab">Dynamic</div>
+    <div class="tab">Favorites</div>
+    <div class="tab">Scheduled</div>
+</div>
+
+<div class="table-controls" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+    <div>
+        <span style="font-size: 13px; color: var(--text-muted);">Filters applied</span>
+        <div
+            style="display: inline-block; background: #eff6ff; padding: 4px 12px; border-radius: 16px; margin-left: 8px; font-size: 13px; color: var(--primary);">
+            1 QR card status <i class="fa-solid fa-xmark" style="margin-left: 8px; cursor: pointer;"></i>
+        </div>
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted);">
+        <i class="fa-solid fa-filter"></i> Filter &nbsp;&nbsp;
+        <i class="fa-solid fa-sort"></i> Sort by: Most recent
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px; background-color: #fef9c3; border-color: #fde047; padding: 12px 16px;">
+    <span style="color: #ca8a04; font-size: 13px;">
+        <i class="fa-solid fa-circle-info"></i> You are using QRCardKu's free trial. 2 days remaining
+    </span>
+    <button class="btn-primary" style="float: right; padding: 4px 12px; font-size: 12px;">Update</button>
+</div>
+
+<table class="qr-table">
+    <thead>
+        <tr>
+            <th width="40"><input type="checkbox"></th>
+            <th>Name</th>
+            <th>QR Type</th>
+            <th>Created</th>
+            <th>Edited</th>
+            <th>State</th>
+            <th>Scans</th>
+            <th width="80"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if qr_list %}
+        {% for qr in qr_list %}
+        <tr>
+            <td><input type="checkbox"></td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span class="qr-scan-trigger" data-tooltip="Click to scan"
+                        data-name="{{ qr.name }}"
+                        data-qr-type="{{ qr.qr_type }}"
+                        data-status="{{ qr.status }}"
+                        data-url="{{ qr.url_content }}"
+                        data-short-code="{{ qr.short_code or '' }}"
+                        data-edit-url="/qr/update/{{ qr.qrcard_id }}"
+                        role="button"
+                        aria-label="Click to scan QR card"><i class="fa-solid fa-qrcode"></i></span>
+                    <div>{{ qr.name }}</div>
+                </div>
+            </td>
+            <td><span style="color: var(--primary);">
+                    {% if qr.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
+                    {% elif qr.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
+                    {% elif qr.qr_type == 'vcard' %}<i class="fa-regular fa-id-badge"></i> vCard Plus
+                    {% else %}<i class="fa-solid fa-qrcode"></i> {{ qr.qr_type | capitalize }}{% endif %}
+                </span></td>
+            <td>{{ qr.created_at[:10] }}</td>
+            <td>-</td>
+            <td><span class="status-active">{{ qr.status | capitalize }}</span></td>
+            <td>{{ qr.stats.scan_count }}</td>
+            <td>
+                <div style="position: relative; display: inline-block;" class="dropdown-wrapper">
+                    <button style="border:1px solid #ddd; background:white; padding: 4px 8px; border-radius:4px;"
+                        onclick="toggleDropdown(event, this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    <div class="dropdown-content"
+                        style="display: none; position: absolute; right: 0; background-color: #fff; min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; margin-top: 4px;">
+                        <a href="/qr/update/{{ qr.qrcard_id }}"
+                            style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--text-main); font-size: 13px; display: block; text-decoration: none;"><i
+                                class="fa-solid fa-pen"></i> Edit</a>
+                        <form method="POST" action="/qr/delete/{{ qr.qrcard_id }}" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <button type="submit"
+                                style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: #dc2626; font-size: 13px;"
+                                onclick="return confirm('Are you sure you want to delete this QR card?');"><i
+                                    class="fa-solid fa-trash"></i> Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                No QR codes created yet. <br><br>
+                <a href="/qr/new" class="btn-primary" style="text-decoration:none; display: inline-block;">Create
+                    your first QR card</a>
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- Scan QR modal (one shared modal, filled by JS) -->
+<div id="scan-qr-overlay" class="scan-qr-overlay" aria-hidden="true">
+    <div class="scan-qr-modal" role="dialog" aria-labelledby="scan-qr-title">
+        <div class="modal-header">
+            <button type="button" class="modal-close" id="scan-qr-close" aria-label="Close">&times;</button>
+            <h2 id="scan-qr-title" class="modal-title"></h2>
+            <div class="modal-tags">
+                <span class="tag tag-type" id="scan-qr-type-tag"></span>
+                <span class="tag tag-active" id="scan-qr-status-tag"></span>
+            </div>
+            <div class="modal-link-row">
+                <i class="fa-solid fa-infinity"></i>
+                <a id="scan-qr-url" href="#" target="_blank" rel="noopener"></a>
+                <button type="button" class="copy-btn" id="scan-qr-copy-url" aria-label="Copy URL"><i class="fa-regular fa-copy"></i></button>
+            </div>
+            <div class="qr-section-title">Scan the QR card</div>
+            <div class="qr-image-wrap">
+                <img id="scan-qr-image" src="" alt="QR card" width="200" height="200">
+            </div>
+            <div class="qr-section-title">Preview</div>
+            <div class="preview-row">
+                <i class="fa-solid fa-infinity"></i>
+                <span id="scan-qr-preview-text">Link to QR url here</span>
+                <button type="button" class="copy-btn" id="scan-qr-copy-preview" aria-label="Copy"><i class="fa-regular fa-copy"></i></button>
+            </div>
+            <div class="modal-actions">
+                <a href="#" id="scan-qr-edit-btn" class="btn-outline"><i class="fa-solid fa-pen"></i> Edit QR</a>
+                <button type="button" id="scan-qr-download-btn" class="btn-primary"><i class="fa-solid fa-download"></i> Download QR</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
