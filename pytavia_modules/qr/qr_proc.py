@@ -125,7 +125,7 @@ class qr_proc:
                 pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                               "pdf_title_font", "pdf_title_color", "pdf_text_font",
                               "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                              "pdf_website", "pdf_btn_text", "welcome_time"]
+                              "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color", "welcome_img_url"]
                 for f in pdf_fields:
                     qrcard_rec[f] = params.get(f, "")
             
@@ -198,7 +198,7 @@ class qr_proc:
             pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                           "pdf_title_font", "pdf_title_color", "pdf_text_font",
                           "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                          "pdf_website", "pdf_btn_text", "welcome_time"]
+                          "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color", "welcome_img_url"]
             for f in pdf_fields:
                 if f in params:
                     update_data[f] = params.get(f)

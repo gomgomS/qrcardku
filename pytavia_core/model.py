@@ -398,6 +398,8 @@ db = {
         "pdf_website"               : "",
         "pdf_btn_text"              : "See PDF",
         "welcome_time"              : "5.0",
+        "welcome_bg_color"          : "#2F6BFD",  # background color of welcome screen overlay
+        "welcome_img_url"           : "",       # URL to welcome screen image shown before PDF (e.g. /static/uploads/pdf/<id>/welcome.jpg)
         "pdf_files"                 : [],
         # ---------------------------
 

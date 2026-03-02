@@ -5,6 +5,9 @@
 {% set hide_top_nav = true %}
 
 {% block extra_css %}
+{% if qr_type == 'pdf' %}
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+{% endif %}
 <style>
     .new-qr-container {
         display: flex;
@@ -459,6 +462,29 @@
         justify-content: center;
         gap: 6px;
     }
+
+    .preview-welcome-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 15;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: none;
+    }
+    .preview-welcome-overlay.hide {
+        opacity: 0;
+    }
+    .preview-welcome-overlay img {
+        max-width: 200px;
+        max-height: 280px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
 </style>
 {% endblock %}
 
@@ -887,8 +913,19 @@
                                         id="pdf_welcome_img_input">
                                 </label>
                                 <div style="margin-top: 12px;">
-                                    <button type="button" class="btn-outline"
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background color</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="#2F6BFD"
+                                        style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
                                 </div>
                             </div>
 
@@ -1067,6 +1104,10 @@
                     <div class="mockup-inner"
                         style="{% if qr_type == 'pdf' %}padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;{% endif %}">
                         {% if qr_type == 'pdf' %}
+                        <!-- Welcome screen overlay: shown when user picks image, then smooth fade to PDF preview -->
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
                         <!-- PDF Default Template Preview -->
                         <div id="preview-top-block"
                             style="background-color: var(--primary); width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
@@ -1161,6 +1202,68 @@
 {% block extra_js %}
 {% if qr_type == 'pdf' %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('pdf_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            var bgInput = document.getElementById('welcome_bg_color_picker');
+            if (bgInput) overlay.style.backgroundColor = bgInput.value;
+            imgEl.src = src;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () { overlay.style.display = 'none'; }, 800);
+            }, sec);
+        }
+        function getPreviewSrc() {
+            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+            if (file && file.type.indexOf('image') !== -1) {
+                if (file.size > 1024 * 1024) return null;
+                return URL.createObjectURL(file);
+            }
+            return null;
+        }
+        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+        if (welcomeBgPicker && welcomeBgHex) {
+            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+        }
+        if (overlay && imgEl && welcomeInput) {
+            welcomeInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (!file) return;
+                if (file.size > 1024 * 1024) {
+                    alert('Image must be 1 MB or smaller.');
+                    this.value = '';
+                    return;
+                }
+                if (file.type.indexOf('image') !== -1) {
+                    var url = getPreviewSrc();
+                    if (url) playWelcomePreview(url);
+                }
+            });
+            var previewBtn = document.getElementById('welcome-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function () {
+                    var src = getPreviewSrc();
+                    if (src) playWelcomePreview(src);
+                    else alert('Upload an image first (max 1 MB).');
+                });
+            }
+        }
+    })();
+</script>
 {% endif %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -1422,18 +1525,68 @@
             });
         }
 
-        // Font colors
+        // Typography & colors for PDF preview
         const titleColorPicker = document.getElementById('pdf_title_color_picker');
         const titleColorHex = document.getElementById('pdf_title_color_hex');
-        if (titleColorPicker && titleColorHex) {
-            titleColorPicker.addEventListener('input', e => { titleColorHex.value = e.target.value.toUpperCase(); });
-        }
-
         const textColorPicker = document.getElementById('pdf_text_color_picker');
         const textColorHex = document.getElementById('pdf_text_color_hex');
-        if (textColorPicker && textColorHex) {
-            textColorPicker.addEventListener('input', e => { textColorHex.value = e.target.value.toUpperCase(); });
+        const titleFontSelect = document.querySelector('select[name="pdf_title_font"]');
+        const textFontSelect = document.querySelector('select[name="pdf_text_font"]');
+        const previewTitleEl = document.getElementById('preview-title-text');
+        const previewCompanyEl = document.getElementById('preview-company-text');
+        const previewDescEl = document.getElementById('preview-desc-text');
+        const previewWebsiteEl = document.getElementById('preview-website-text');
+
+        function applyPdfFonts() {
+            var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
+            if (previewTitleEl && titleFontSelect) {
+                previewTitleEl.style.fontFamily = quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewCompanyEl && textFontSelect) {
+                previewCompanyEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewDescEl && textFontSelect) {
+                previewDescEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewWebsiteEl && textFontSelect) {
+                previewWebsiteEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
         }
+
+        function applyPdfTextColors() {
+            const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
+            const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
+            if (previewTitleEl) previewTitleEl.style.color = titleColor;
+            if (previewCompanyEl) previewCompanyEl.style.color = textColor;
+            if (previewDescEl) previewDescEl.style.color = textColor;
+            if (previewWebsiteEl) previewWebsiteEl.style.color = textColor;
+        }
+
+        // Initialize hex displays and apply initial styles
+        if (titleColorPicker && titleColorHex) {
+            titleColorHex.value = (titleColorPicker.value || '#000000').toUpperCase();
+            titleColorPicker.addEventListener('input', e => {
+                titleColorHex.value = e.target.value.toUpperCase();
+                applyPdfTextColors();
+            });
+        }
+        if (textColorPicker && textColorHex) {
+            textColorHex.value = (textColorPicker.value || '#6b7280').toUpperCase();
+            textColorPicker.addEventListener('input', e => {
+                textColorHex.value = e.target.value.toUpperCase();
+                applyPdfTextColors();
+            });
+        }
+        if (titleFontSelect) {
+            titleFontSelect.addEventListener('change', applyPdfFonts);
+            titleFontSelect.addEventListener('input', applyPdfFonts);
+        }
+        if (textFontSelect) {
+            textFontSelect.addEventListener('change', applyPdfFonts);
+            textFontSelect.addEventListener('input', applyPdfFonts);
+        }
+        applyPdfFonts();
+        applyPdfTextColors();
 
         // Time slider
         const timeSlider = document.getElementById('welcome-time-slider');

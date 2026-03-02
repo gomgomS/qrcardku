@@ -504,9 +504,42 @@ def qr_update_content(qr_type, qrcard_id):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                      "pdf_website", "pdf_btn_text", "welcome_time",
+                      "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
                       "scan_limit_enabled", "scan_limit_value"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+
+        # Save welcome screen image when uploaded (update flow: content step has the file), max 1 MB
+        welcome_img = request.files.get("pdf_welcome_img")
+        if welcome_img and welcome_img.filename:
+            import os
+            welcome_img.seek(0, 2)
+            welcome_size = welcome_img.tell()
+            welcome_img.seek(0)
+            if welcome_size > 1024 * 1024:
+                return view_user.view_user(app).update_qr_content_html(
+                    qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name,
+                    short_code=short_code or None,
+                    error_msg="Welcome image must be 1 MB or smaller.",
+                    base_url=config.G_BASE_URL
+                )
+            ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+            if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                ext = ".jpg"
+            upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+            os.makedirs(upload_dir, exist_ok=True)
+            welcome_name = "welcome" + ext
+            welcome_path = os.path.join(upload_dir, welcome_name)
+            welcome_img.save(welcome_path)
+            welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+            pdf_data["welcome_img_url"] = welcome_url
+            qrcard["welcome_img_url"] = welcome_url
+            proc = qr_proc.qr_proc(app)
+            proc.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$set": {"welcome_img_url": welcome_url}}
+            )
+        elif qrcard.get("welcome_img_url"):
+            pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
         # Back from design: re-render content step with current values; update draft
         if request.form.get("back_from_design"):
@@ -584,9 +617,13 @@ def qr_update_design(qr_type, qrcard_id):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                      "pdf_website", "pdf_btn_text", "welcome_time",
+                      "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
                       "scan_limit_enabled", "scan_limit_value"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+        if qrcard.get("welcome_img_url"):
+            pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
+        if qrcard.get("welcome_bg_color"):
+            pdf_data["welcome_bg_color"] = qrcard["welcome_bg_color"]
         
         _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), pdf_data)
         qrcard.update(pdf_data)
@@ -630,11 +667,16 @@ def qr_update_save(qrcard_id):
             val = draft.get(field, default)
         return val
     
+    # Preserve welcome_img_url from draft or existing qrcard (file is uploaded on content step only)
+    qrcard_for_save = qr_proc.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
+    welcome_url = draft.get("welcome_img_url") or (qrcard_for_save.get("welcome_img_url") if qrcard_for_save else "") or ""
+
     params = {
         "fk_user_id": fk_user_id,
         "qrcard_id": qrcard_id,
         "name": qr_name or draft.get("qr_name") or "Untitled QR",
         "url_content": url_content or draft.get("url_content") or "",
+        "welcome_img_url": welcome_url,
         "pdf_template": _get_field("pdf_template", "default"),
         "pdf_primary_color": _get_field("pdf_primary_color", "#2F6BFD"),
         "pdf_secondary_color": _get_field("pdf_secondary_color", "#0E379A"),
@@ -648,6 +690,7 @@ def qr_update_save(qrcard_id):
         "pdf_website": _get_field("pdf_website"),
         "pdf_btn_text": _get_field("pdf_btn_text", "See PDF"),
         "welcome_time": _get_field("welcome_time", "5.0"),
+        "welcome_bg_color": _get_field("welcome_bg_color", "#2F6BFD"),
     }
 
     # Scan limit fields (from form or draft)
@@ -729,7 +772,7 @@ def user_new_qr_design(qr_type):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                      "pdf_website", "pdf_btn_text", "welcome_time"]
+                      "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
         
         # Save uploaded PDFs to a temp folder keyed by session
@@ -751,6 +794,23 @@ def user_new_qr_design(qr_type):
                         existing_names.add(f.filename)
             session["pdf_tmp_files"] = existing_tmp
             session.modified = True
+            # Save welcome screen image to same temp folder for move on final save, max 1 MB
+            welcome_img = request.files.get("pdf_welcome_img")
+            if welcome_img and welcome_img.filename:
+                welcome_img.seek(0, 2)
+                welcome_size = welcome_img.tell()
+                welcome_img.seek(0)
+                if welcome_size <= 1024 * 1024:
+                    ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        ext = ".jpg"
+                    welcome_name = "welcome" + ext
+                    welcome_img.save(os.path.join(tmp_dir, welcome_name))
+                    session["welcome_img_tmp_key"] = tmp_key
+                    session["welcome_img_tmp_name"] = welcome_name
+                    session.modified = True
+                else:
+                    error_msg = "Welcome image must be 1 MB or smaller."
         
         if not qr_proc_inst.is_name_unique(session.get("fk_user_id"), qr_name):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
@@ -811,7 +871,8 @@ def qr_save():
         "pdf_desc": request.form.get("pdf_desc", ""),
         "pdf_website": request.form.get("pdf_website", ""),
         "pdf_btn_text": request.form.get("pdf_btn_text", "See PDF"),
-        "welcome_time": request.form.get("welcome_time", "5.0")
+        "welcome_time": request.form.get("welcome_time", "5.0"),
+        "welcome_bg_color": request.form.get("welcome_bg_color", "#2F6BFD")
     }
     # Scan limit fields from content step
     enabled_raw = request.form.get("scan_limit_enabled")
@@ -842,11 +903,28 @@ def qr_save():
         new_qrcard_id = result["message_data"]["qrcard_id"]
         tmp_key = session.pop("pdf_tmp_key", None)
         tmp_files = session.pop("pdf_tmp_files", [])
+        welcome_tmp_key = session.pop("welcome_img_tmp_key", None)
+        welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
         session.modified = True
+        dest_dir = os.path.join(app.root_path, "static", "uploads", "pdf", new_qrcard_id)
+        tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key) if tmp_key else None
+        if welcome_tmp_key:
+            tmp_dir_w = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", welcome_tmp_key)
+            src_welcome = os.path.join(tmp_dir_w, welcome_tmp_name)
+            ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
+            if os.path.exists(src_welcome):
+                os.makedirs(dest_dir, exist_ok=True)
+                shutil.move(src_welcome, os.path.join(dest_dir, "welcome" + ext))
+                welcome_url = f"/static/uploads/pdf/{new_qrcard_id}/welcome{ext}"
+                from pytavia_modules.qr import qr_proc as _qrproc
+                _qrproc.qr_proc(app).mgdDB.db_qrcard.update_one(
+                    {"qrcard_id": new_qrcard_id},
+                    {"$set": {"welcome_img_url": welcome_url}}
+                )
         saved_files = []
         if tmp_key and tmp_files:
-            tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
-            dest_dir = os.path.join(app.root_path, "static", "uploads", "pdf", new_qrcard_id)
+            if not tmp_dir:
+                tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
             os.makedirs(dest_dir, exist_ok=True)
             for f_info in tmp_files:
                 src = os.path.join(tmp_dir, f_info["safe_name"])
@@ -859,6 +937,17 @@ def qr_save():
                     })
             try:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+        elif tmp_key:
+            tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
+            try:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+        if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
+            try:
+                shutil.rmtree(os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", welcome_tmp_key), ignore_errors=True)
             except Exception:
                 pass
         if saved_files:
