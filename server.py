@@ -508,38 +508,52 @@ def qr_update_content(qr_type, qrcard_id):
                       "scan_limit_enabled", "scan_limit_value"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
 
-        # Save welcome screen image when uploaded (update flow: content step has the file), max 1 MB
-        welcome_img = request.files.get("pdf_welcome_img")
-        if welcome_img and welcome_img.filename:
-            import os
-            welcome_img.seek(0, 2)
-            welcome_size = welcome_img.tell()
-            welcome_img.seek(0)
-            if welcome_size > 1024 * 1024:
-                return view_user.view_user(app).update_qr_content_html(
-                    qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name,
-                    short_code=short_code or None,
-                    error_msg="Welcome image must be 1 MB or smaller.",
-                    base_url=config.G_BASE_URL
+        # Delete existing welcome image if requested
+        if request.form.get("welcome_img_delete") == "1":
+            from pytavia_modules.qr import qr_proc as _qrp_del
+            # Clear in-memory and DB URL; we keep file cleanup best-effort and non-fatal
+            qrcard["welcome_img_url"] = ""
+            pdf_data["welcome_img_url"] = ""
+            try:
+                _qrp_del.qr_proc(app).mgdDB.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {"welcome_img_url": ""}}
                 )
-            ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
-            if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                ext = ".jpg"
-            upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-            os.makedirs(upload_dir, exist_ok=True)
-            welcome_name = "welcome" + ext
-            welcome_path = os.path.join(upload_dir, welcome_name)
-            welcome_img.save(welcome_path)
-            welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
-            pdf_data["welcome_img_url"] = welcome_url
-            qrcard["welcome_img_url"] = welcome_url
-            proc = qr_proc.qr_proc(app)
-            proc.mgdDB.db_qrcard.update_one(
-                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                {"$set": {"welcome_img_url": welcome_url}}
-            )
-        elif qrcard.get("welcome_img_url"):
-            pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
+            except Exception:
+                app.logger.exception("Failed to clear welcome_img_url for qrcard %s", qrcard_id)
+        else:
+            # Save welcome screen image when uploaded (update flow: content step has the file), max 1 MB
+            welcome_img = request.files.get("pdf_welcome_img")
+            if welcome_img and welcome_img.filename:
+                import os
+                welcome_img.seek(0, 2)
+                welcome_size = welcome_img.tell()
+                welcome_img.seek(0)
+                if welcome_size > 1024 * 1024:
+                    return view_user.view_user(app).update_qr_content_html(
+                        qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name,
+                        short_code=short_code or None,
+                        error_msg="Welcome image must be 1 MB or smaller.",
+                        base_url=config.G_BASE_URL
+                    )
+                ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+                os.makedirs(upload_dir, exist_ok=True)
+                welcome_name = "welcome" + ext
+                welcome_path = os.path.join(upload_dir, welcome_name)
+                welcome_img.save(welcome_path)
+                welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                pdf_data["welcome_img_url"] = welcome_url
+                qrcard["welcome_img_url"] = welcome_url
+                proc = qr_proc.qr_proc(app)
+                proc.mgdDB.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {"welcome_img_url": welcome_url}}
+                )
+            elif qrcard.get("welcome_img_url"):
+                pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
         # Back from design: re-render content step with current values; update draft
         if request.form.get("back_from_design"):
