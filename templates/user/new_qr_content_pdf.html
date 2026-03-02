@@ -1,2 +1,1715 @@
-{% extends "user/new_qr_content.html" %}
+{% extends "user/base.html" %}
 
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .new-qr-container {
+        display: flex;
+        gap: 32px;
+        height: 100%;
+    }
+
+    .form-column {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-column {
+        width: 340px;
+        flex-shrink: 0;
+    }
+
+    .steps {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        color: var(--text-muted);
+        max-width: 1000px;
+        margin: 0 auto 32px auto;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .step-num {
+        width: 24px;
+        height: 24px;
+        background-color: #e5e7eb;
+        color: var(--text-muted);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .step-completed {
+        color: #16a34a;
+        font-weight: 500;
+    }
+
+    .step-completed .step-num {
+        background-color: #16a34a;
+        color: white;
+    }
+
+    .step-active {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .step-active .step-num {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .nav-buttons {
+        margin-left: auto;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-outline {
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .btn-primary-pill {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 6px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .collapse-section {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .collapse-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        background-color: white;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .collapse-header:last-child {
+        border-bottom: none;
+    }
+
+    .header-left-col {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-icon {
+        color: var(--primary);
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .header-text h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 2px;
+    }
+
+    .header-text p {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .collapse-body {
+        padding: 0 24px 24px 24px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+    }
+
+    .collapse-body.show {
+        padding: 24px;
+        max-height: 1000px;
+        /* arbitrary large value for transition to work */
+        opacity: 1;
+    }
+
+    .sub-collapse-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        cursor: pointer;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .sub-collapse-header:first-child {
+        border-top: none;
+    }
+
+    .sub-collapse-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+        padding-bottom: 0;
+    }
+
+    .sub-collapse-body.show {
+        max-height: 500px;
+        opacity: 1;
+        padding-bottom: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .name-qr-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-bottom: 8px;
+    }
+
+    .toggle-label-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .toggle-label-with-icon i {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e5e7eb;
+        transition: .3s;
+        border-radius: 20px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(16px);
+    }
+
+    /* URL Config Row */
+    .url-prefix-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f9fafb;
+    }
+
+    .url-prefix {
+        padding: 10px 14px;
+        color: var(--text-muted);
+        font-size: 14px;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .url-prefix-group input {
+        flex: 1;
+        border: none;
+        padding: 10px 14px;
+        background: white;
+    }
+
+    .url-prefix-group input:focus {
+        outline: none;
+    }
+
+    .btn-secondary-sm {
+        background: white;
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Phone Mockup Styling */
+    .phone-container {
+        position: sticky;
+        top: 24px;
+    }
+
+    .phone-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .phone-type-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .phone-mockup {
+        width: 100%;
+        height: 600px;
+        background-color: white;
+        border: 12px solid #1a1a1a;
+        border-radius: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mockup internal content matching reference */
+    .mockup-inner {
+        width: 100%;
+        height: 100%;
+        background-color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-disclaimer {
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .preview-welcome-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 15;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: none;
+    }
+    .preview-welcome-overlay.hide {
+        opacity: 0;
+    }
+    .preview-welcome-overlay img {
+        max-width: 200px;
+        max-height: 280px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true"
+            style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
+            Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i
+                class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/' ~ qr_type ~ '/qr-design') }}"
+    enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+
+    <div class="new-qr-container">
+        <!-- Left form section -->
+        <div class="form-column">
+            {% if error_msg %}
+            <div
+                style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Basic Information Section -->
+
+
+            <!-- Appearance Section for PDF -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-text">
+                            <h3>Appearance</h3>
+                            <p>Customize the style and template.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Select Template -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Select Template</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                                <!-- Template Options (Mocked for visual) -->
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="default" checked class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #e5e7eb; width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
+                                        </div>
+                                        <div style="background: #d1d5db; width: 80%; height: 8px; margin: 0 auto 4px;">
+                                        </div>
+                                        <div style="background: #d1d5db; width: 60%; height: 8px; margin: 0 auto;">
+                                        </div>
+                                    </div>
+                                    <span
+                                        style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template1" class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #fca5a5; width: 100%; height: 40%; border-radius: 4px; margin-bottom: 8px;">
+                                        </div>
+                                        <div style="background: #fecaca; width: 100%; height: 40%; border-radius: 4px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        1</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template2" class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #bae6fd; width: 40%; height: 40%; border-radius: 50%; margin: 0 auto 8px;">
+                                        </div>
+                                        <div style="background: #e0f2fe; width: 100%; height: 40%; border-radius: 4px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        2</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template3" class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #bbf7d0; width: 100%; height: 100%; border-radius: 4px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        3</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template4" class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div style="display: flex; gap: 4px; height: 100%;">
+                                            <div
+                                                style="background: #fef08a; width: 50%; height: 100%; border-radius: 4px;">
+                                            </div>
+                                            <div
+                                                style="background: #fde047; width: 50%; height: 100%; border-radius: 4px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        4</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Design (Colors) -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Design</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div
+                                style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;">
+                                <!-- Predefined Colors (5 options based on prompt) -->
+                                <div class="color-preset active" data-primary="#2f6bfd" data-secondary="#0e379a"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 2px solid var(--primary); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #2f6bfd; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #0e379a; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#10b981" data-secondary="#047857"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#f59e0b" data-secondary="#b45309"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #f59e0b; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b45309; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                            </div>
+
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 24px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="pdf_primary_hex" name="pdf_primary_color"
+                                                value="{{ qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="pdf_primary_picker" value="#2f6bfd"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="pdf_secondary_hex" name="pdf_secondary_color"
+                                                value="{{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="pdf_secondary_picker" value="#0e379a"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-invert-colors"
+                                    style="background: transparent; border: 1px solid var(--border-color); color: var(--primary); font-size: 12px; font-weight: 500; border-radius: 20px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-arrow-right-arrow-left"></i> Invert
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fonts -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Fonts</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                                <!-- Title Font -->
+                                <div style="margin-bottom: 16px;">
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="pdf_title_font"
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            <option value="Lato">Lato</option>
+                                            <option value="Roboto">Roboto</option>
+                                            <option value="Open Sans">Open Sans</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                        </select>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="pdf_title_color_hex" value="#000000"
+                                                style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" name="pdf_title_color" id="pdf_title_color_picker"
+                                                value="{{ qrcard.get('pdf_title_color', '#000000') if qrcard else '#000000' }}"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Text Font -->
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="pdf_text_font"
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            <option value="Lato">Lato</option>
+                                            <option value="Roboto">Roboto</option>
+                                            <option value="Open Sans">Open Sans</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                        </select>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="pdf_text_color_hex" value="#000000"
+                                                style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" name="pdf_text_color" id="pdf_text_color_picker"
+                                                value="{{ qrcard.get('pdf_text_color', '#000000') if qrcard else '#000000' }}"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Basic Information Section for PDF -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>Basic Information</h3>
+                            <p>Add essential information.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <!-- Add PDF Area --> <!-- Add PDF Area -->
+                    <div style="margin-top: 16px; margin-bottom: 24px;">
+                        <label
+                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-cloud-arrow-up"
+                                    style="font-size: 18px; color: var(--text-main);"></i>
+                                <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
+                                    PDF(s)</span>
+                                <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
+                            </div>
+                            <input type="file" name="pdf_files" accept="application/pdf" multiple
+                                style="display: none;">
+                        </label>
+                        <!-- Uploaded files list mock -->
+                        <div id="pdf-file-list"
+                            style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Items will be injected here via JS -->
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
+                        <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 16px;">
+                            PDF
+                            information</div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Company</label>
+                            <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
+                                style="background: white;"
+                                value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">PDF title</label>
+                            <input type="text" name="pdf_title" class="form-control" placeholder="Title"
+                                style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Description</label>
+                            <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
+                                style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Website</label>
+                            <input type="text" name="pdf_website" class="form-control" placeholder="https://"
+                                style="background: white;"
+                                value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Button</label>
+                            <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
+                                style="background: white; border-color: var(--primary);"
+                                value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Content Section for PDF -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>Content</h3>
+                            <p>All the details about your QR.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="margin-top: 8px;">
+                                <label
+                                    style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                                <label
+                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                    <div id="welcome-img-preview"
+                                        style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                        <!-- Placeholder state -->
+                                        <div
+                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                    </div>
+                                    <input type="file" name="pdf_welcome_img" accept="image/*" style="display: none;"
+                                        id="pdf_welcome_img_input">
+                                </label>
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                    <button type="button" id="welcome-delete-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; display: none;">
+                                        Remove
+                                    </button>
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background color</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="#2F6BFD"
+                                        style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 24px;">
+                                <label
+                                    style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+                                    Time (seconds) <i class="fa-regular fa-circle-question"
+                                        style="color: var(--text-muted); font-size: 14px;"></i>
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
+                                        style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider"
+                                        value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                    <span id="welcome-time-display">2.5 seconds</span>
+                                    <span>10 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section (Following Reference layout) -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
+                        <div class="header-text">
+                            <h3>Stats</h3>
+                            <p>Key metrics and data to evaluate performance.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Schedule Date -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> Schedule a date
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p
+                                style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">
+                                Set the dates on which your content will be shown through the QR. At the end of that
+                                period,
+                                it
+                                will be disabled.
+                            </p>
+
+                            <div class="toggle-row" style="padding-left: 22px;">
+                                <div class="toggle-label-with-icon">
+                                    Activate the schedule to work during certain dates
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- Date Inputs Disabled natively for layout purposes -->
+                            <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
+                                <div style="flex: 1;">
+                                    <label
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
+                                    <div
+                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
+                                    <div
+                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- URL Config -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-link" style="color: var(--text-main);"></i> URL configuration
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                This address is automatically generated for your PDF QR code.
+                            </p>
+
+                            <div class="form-group" style="margin-top: 8px;">
+                                <label class="form-label" style="font-size: 12px;">URL</label>
+                                <div class="url-prefix-group">
+                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url |
+                                        default('https://qrcardku.com') }}/p/</div>
+                                    <input type="text" name="short_code" id="stats-short-code-input"
+                                        placeholder="Letters, numbers, '-' and '_' only" value="{{ short_code | default('', true) }}"
+                                        pattern="[a-zA-Z0-9_-]{2,32}"
+                                        title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
+                                        style="background:#f9fafb;color:var(--text-muted);"
+                                        maxlength="32" readonly>
+                                </div>
+                                <p id="stats-url-preview"
+                                    style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;"></p>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan Limit -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                Limit the number of times your QR can be scanned in total.
+                            </p>
+
+                            <div class="toggle-row">
+                                <div class="toggle-label-with-icon">
+                                    Enable scan limit
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="scan_limit_enabled" id="scan-limit-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="form-label" style="font-size: 12px;">Scan Limit</label>
+                                <input type="number" name="scan_limit_value" id="scan-limit-value" class="form-control" placeholder="e.g. 50" min="1">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right preview section -->
+        <div class="preview-column">
+            <div class="phone-container">
+                <div class="phone-header">
+                    <div class="phone-type-badge">
+                        <i class="fa-solid fa-file-pdf"></i> PDF
+                    </div>
+                    <i class="fa-solid fa-pen" style="color: var(--primary); cursor: pointer;"></i>
+                </div>
+
+                <div class="phone-mockup">
+                    <div class="mockup-inner"
+                        style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        <!-- Welcome screen overlay: shown when user picks image, then smooth fade to PDF preview -->
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
+                        <!-- PDF Default Template Preview -->
+                        <div id="preview-top-block"
+                            style="background-color: var(--primary); width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
+                        </div>
+
+                        <div id="preview-bottom-block"
+                            style="background-color: #ffffff; width: 100%; margin-top: -30px; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; align-items: center; z-index: 2; position: relative; padding-bottom: 40px; flex-grow: 1;">
+
+                            <!-- PDF Thumbnail and Navigation -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 24px;">
+                                <div id="preview-pdf-prev"
+                                    style="display: none; cursor: pointer; padding: 10px; color: var(--primary); font-size: 20px;">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </div>
+
+                                <div id="preview-pdf-thumbnail-container"
+                                    style="width: 65%; aspect-ratio: 1 / 1.4; transition: aspect-ratio 0.3s ease; background: white; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e5e7eb; flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
+                                    <i id="preview-pdf-placeholder-icon" class="fa-regular fa-file-pdf"
+                                        style="font-size: 48px; color: #d1d5db;"></i>
+                                    <canvas id="preview-pdf-canvas"
+                                        style="display: none; width: 100%; height: 100%; object-fit: contain;"></canvas>
+                                </div>
+
+                                <div id="preview-pdf-next"
+                                    style="display: none; cursor: pointer; padding: 10px; color: var(--primary); font-size: 20px;">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </div>
+                            </div>
+
+                            <div id="preview-title-text"
+                                style="color: var(--text-main); font-size: 18px; font-weight: 800; font-family: 'Lato', sans-serif; margin-bottom: 8px; text-align: center; padding: 0 20px; line-height: 1.2; display: none;">
+                            </div>
+
+                            <div id="preview-company-text"
+                                style="color: var(--text-main); font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; text-align: center; padding: 0 20px; margin-bottom: 8px; word-break: break-word; display: none;">
+                            </div>
+
+                            <div id="preview-desc-text"
+                                style="color: var(--text-muted); font-size: 12px; font-weight: 400; font-family: 'Lato', sans-serif; text-align: center; padding: 0 24px; margin-bottom: 24px; line-height: 1.4; display: none; -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            </div>
+
+                            <!-- See PDF Button -->
+                            <div id="preview-btn"
+                                style="background-color: #0e379a; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto;">
+                                See PDF
+                            </div>
+
+                            <div id="preview-website-text"
+                                style="color: var(--primary); font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 12px; display: none; text-align: center; text-decoration: underline;">
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="preview-disclaimer">
+                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('pdf_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            var bgInput = document.getElementById('welcome_bg_color_picker');
+            if (bgInput) overlay.style.backgroundColor = bgInput.value;
+            imgEl.src = src;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () { overlay.style.display = 'none'; }, 800);
+            }, sec);
+        }
+        function getPreviewSrc() {
+            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+            if (file && file.type.indexOf('image') !== -1) {
+                if (file.size > 1024 * 1024) return null;
+                return URL.createObjectURL(file);
+            }
+            return null;
+        }
+        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+        if (welcomeBgPicker && welcomeBgHex) {
+            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+        }
+        if (overlay && imgEl && welcomeInput) {
+            var thumb = document.getElementById('welcome-img-preview');
+            var deleteBtn = document.getElementById('welcome-delete-btn');
+            welcomeInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (!file) return;
+                if (file.size > 1024 * 1024) {
+                    alert('Image must be 1 MB or smaller.');
+                    this.value = '';
+                    if (thumb) {
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    }
+                    if (deleteBtn) deleteBtn.style.display = 'none';
+                    return;
+                }
+                if (file.type.indexOf('image') !== -1) {
+                    var url = getPreviewSrc();
+                    if (url && thumb) {
+                        thumb.innerHTML = '<img src=\"' + url + '\" alt=\"Welcome image\" style=\"width:48px;height:48px;border-radius:6px;object-fit:cover;\"><span style=\"font-size:13px;color:var(--text-muted);\">Selected image</span>';
+                    }
+                    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                    if (url) playWelcomePreview(url);
+                }
+            });
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function () {
+                    welcomeInput.value = '';
+                    if (thumb) {
+                        thumb.innerHTML = '<div style=\"width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;\"><i class=\"fa-regular fa-image\" style=\"color:#9ca3af;\"></i></div><span style=\"font-size:13px;color:var(--text-muted);\">Upload Image</span>';
+                    }
+                    this.style.display = 'none';
+                });
+            }
+            var previewBtn = document.getElementById('welcome-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function () {
+                    var src = getPreviewSrc();
+                    if (src) playWelcomePreview(src);
+                    else alert('Upload an image first (max 1 MB).');
+                });
+            }
+        }
+    })();
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
+        const step3Link = document.getElementById('step3-link');
+        const contentNextBtn = document.getElementById('content-next-btn');
+        const qrNameInput = document.querySelector('input[name="qr_name"]');
+
+        function checkContentValid() {
+            var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
+            const pdfInput = document.querySelector('input[name="pdf_files"]');
+            var valid = nameOk && pdfInput && pdfInput.files && pdfInput.files.length > 0;
+
+            if (step3Link) {
+                if (valid) {
+                    step3Link.classList.remove('step-disabled');
+                    step3Link.removeAttribute('aria-disabled');
+                    step3Link.disabled = false;
+                } else {
+                    step3Link.classList.add('step-disabled');
+                    step3Link.setAttribute('aria-disabled', 'true');
+                    step3Link.disabled = true;
+                }
+            }
+            if (contentNextBtn) {
+                contentNextBtn.disabled = !valid;
+            }
+        }
+
+        if (qrNameInput) qrNameInput.addEventListener('input', checkContentValid);
+        const pdfFileInputCheck = document.querySelector('input[name="pdf_files"]');
+        if (pdfFileInputCheck) pdfFileInputCheck.addEventListener('change', checkContentValid);
+        checkContentValid();
+        // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
+        (function () {
+            var baseUrl = {{ (base_url or '') | tojson }};
+            var prefixEl = document.getElementById('stats-url-prefix');
+            var shortInput = document.getElementById('stats-short-code-input');
+            var previewEl = document.getElementById('stats-url-preview');
+            if (!shortInput || !previewEl) return;
+            function stripInvalidChars(val) {
+                return (val || '').replace(/[^a-zA-Z0-9_-]/g, '');
+            }
+            function updateUrlPreview() {
+                var code = shortInput.value.trim();
+                var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/p/');
+                previewEl.textContent = code ? prefix + code : '';
+            }
+            shortInput.addEventListener('input', function () {
+                var filtered = stripInvalidChars(shortInput.value);
+                if (filtered !== shortInput.value) shortInput.value = filtered;
+                updateUrlPreview();
+            });
+            shortInput.addEventListener('paste', function () {
+                var self = shortInput;
+                setTimeout(function () { self.value = stripInvalidChars(self.value); updateUrlPreview(); }, 0);
+            });
+            updateUrlPreview(); // run once on load
+        })();
+
+        // Scan limit toggle: enable number input only when active
+        (function () {
+            var toggle = document.getElementById('scan-limit-toggle');
+            var input = document.getElementById('scan-limit-value');
+            if (!toggle || !input) return;
+            function sync() {
+                var enabled = toggle.checked;
+                input.disabled = !enabled;
+            }
+            toggle.addEventListener('change', sync);
+            sync();
+        })();
+
+    const attachCollapseListener = (selector) => {
+        const headers = document.querySelectorAll(selector);
+        headers.forEach(header => {
+            header.addEventListener('click', function () {
+                const body = this.nextElementSibling;
+                const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
+
+                if (!body.classList.contains('show')) {
+                    body.classList.add('show');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                } else {
+                    body.classList.remove('show');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                }
+            });
+        });
+    };
+
+    attachCollapseListener('.collapse-header');
+    attachCollapseListener('.sub-collapse-header');
+
+    // PDF UI Logic
+    const previewTopBlock = document.getElementById('preview-top-block');
+        const previewBtn = document.getElementById('preview-btn');
+
+        // Set up pdf.js worker
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        if (pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
+
+        // Colors sync
+        const primaryPicker = document.getElementById('pdf_primary_picker');
+        const primaryHex = document.getElementById('pdf_primary_hex');
+        const secondaryPicker = document.getElementById('pdf_secondary_picker');
+        const secondaryHex = document.getElementById('pdf_secondary_hex');
+
+        if (primaryPicker && primaryHex) {
+            primaryPicker.addEventListener('input', e => {
+                primaryHex.value = e.target.value.toUpperCase();
+                if (previewTopBlock) previewTopBlock.style.backgroundColor = e.target.value;
+            });
+        }
+        if (secondaryPicker && secondaryHex) {
+            secondaryPicker.addEventListener('input', e => {
+                secondaryHex.value = e.target.value.toUpperCase();
+                if (previewBtn) previewBtn.style.backgroundColor = e.target.value;
+            });
+        }
+
+        // Invert colors
+        const invertBtn = document.getElementById('btn-invert-colors');
+        if (invertBtn && primaryPicker && secondaryPicker) {
+            invertBtn.addEventListener('click', () => {
+                const temp = primaryPicker.value;
+                primaryPicker.value = secondaryPicker.value;
+                secondaryPicker.value = temp;
+                primaryHex.value = primaryPicker.value.toUpperCase();
+                secondaryHex.value = secondaryPicker.value.toUpperCase();
+                if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
+                if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
+            });
+        }
+
+        // Sync preset colors
+        document.querySelectorAll('.color-preset').forEach(preset => {
+            preset.addEventListener('click', function () {
+                document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                this.style.border = '2px solid var(--primary)';
+                // reset others
+                document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
+
+                if (primaryPicker) {
+                    primaryPicker.value = this.dataset.primary;
+                    primaryHex.value = this.dataset.primary.toUpperCase();
+                    if (previewTopBlock) previewTopBlock.style.backgroundColor = this.dataset.primary;
+                }
+                if (secondaryPicker) {
+                    secondaryPicker.value = this.dataset.secondary;
+                    secondaryHex.value = this.dataset.secondary.toUpperCase();
+                    if (previewBtn) previewBtn.style.backgroundColor = this.dataset.secondary;
+                }
+            });
+        });
+
+        // Button text sync
+        const btnTextInput = document.querySelector('input[name="pdf_btn_text"]');
+        if (btnTextInput && previewBtn) {
+            btnTextInput.addEventListener('input', e => {
+                previewBtn.textContent = e.target.value || 'See PDF';
+            });
+        }
+
+        // Company, Title, Desc, Website sync
+        const companyInput = document.querySelector('input[name="pdf_company"]');
+        const previewCompany = document.getElementById('preview-company-text');
+        if (companyInput && previewCompany) {
+            // Initial check in case it's an edit page with pre-filled values
+            if (companyInput.value) {
+                previewCompany.textContent = companyInput.value;
+                previewCompany.style.display = 'block';
+            }
+
+            companyInput.addEventListener('input', e => {
+                previewCompany.textContent = e.target.value;
+                previewCompany.style.display = e.target.value ? 'block' : 'none';
+            });
+        }
+
+        const titleInput = document.querySelector('input[name="pdf_title"]');
+        const previewTitle = document.getElementById('preview-title-text');
+        if (titleInput && previewTitle) {
+            if (titleInput.value) {
+                previewTitle.textContent = titleInput.value;
+                previewTitle.style.display = 'block';
+            }
+
+            titleInput.addEventListener('input', e => {
+                previewTitle.textContent = e.target.value;
+                previewTitle.style.display = e.target.value ? 'block' : 'none';
+            });
+        }
+
+        const descInput = document.querySelector('input[name="pdf_desc"]');
+        const previewDesc = document.getElementById('preview-desc-text');
+        if (descInput && previewDesc) {
+            if (descInput.value) {
+                previewDesc.textContent = descInput.value;
+                previewDesc.style.display = '-webkit-box';
+            }
+
+            descInput.addEventListener('input', e => {
+                previewDesc.textContent = e.target.value;
+                // Use webkit-box for line clamp to work alongside display none
+                previewDesc.style.display = e.target.value ? '-webkit-box' : 'none';
+            });
+        }
+
+        const websiteInput = document.querySelector('input[name="pdf_website"]');
+        const previewWebsite = document.getElementById('preview-website-text');
+        if (websiteInput && previewWebsite) {
+            if (websiteInput.value) {
+                previewWebsite.textContent = websiteInput.value;
+                previewWebsite.style.display = 'block';
+            }
+
+            websiteInput.addEventListener('input', e => {
+                previewWebsite.textContent = e.target.value;
+                previewWebsite.style.display = e.target.value ? 'block' : 'none';
+            });
+        }
+
+        // Typography & colors for PDF preview
+        const titleColorPicker = document.getElementById('pdf_title_color_picker');
+        const titleColorHex = document.getElementById('pdf_title_color_hex');
+        const textColorPicker = document.getElementById('pdf_text_color_picker');
+        const textColorHex = document.getElementById('pdf_text_color_hex');
+        const titleFontSelect = document.querySelector('select[name="pdf_title_font"]');
+        const textFontSelect = document.querySelector('select[name="pdf_text_font"]');
+        const previewTitleEl = document.getElementById('preview-title-text');
+        const previewCompanyEl = document.getElementById('preview-company-text');
+        const previewDescEl = document.getElementById('preview-desc-text');
+        const previewWebsiteEl = document.getElementById('preview-website-text');
+
+        function applyPdfFonts() {
+            var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
+            if (previewTitleEl && titleFontSelect) {
+                previewTitleEl.style.fontFamily = quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewCompanyEl && textFontSelect) {
+                previewCompanyEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewDescEl && textFontSelect) {
+                previewDescEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+            if (previewWebsiteEl && textFontSelect) {
+                previewWebsiteEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            }
+        }
+
+        function applyPdfTextColors() {
+            const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
+            const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
+            if (previewTitleEl) previewTitleEl.style.color = titleColor;
+            if (previewCompanyEl) previewCompanyEl.style.color = textColor;
+            if (previewDescEl) previewDescEl.style.color = textColor;
+            if (previewWebsiteEl) previewWebsiteEl.style.color = textColor;
+        }
+
+        // Initialize hex displays and apply initial styles
+        if (titleColorPicker && titleColorHex) {
+            titleColorHex.value = (titleColorPicker.value || '#000000').toUpperCase();
+            titleColorPicker.addEventListener('input', e => {
+                titleColorHex.value = e.target.value.toUpperCase();
+                applyPdfTextColors();
+            });
+        }
+        if (textColorPicker && textColorHex) {
+            textColorHex.value = (textColorPicker.value || '#6b7280').toUpperCase();
+            textColorPicker.addEventListener('input', e => {
+                textColorHex.value = e.target.value.toUpperCase();
+                applyPdfTextColors();
+            });
+        }
+        if (titleFontSelect) {
+            titleFontSelect.addEventListener('change', applyPdfFonts);
+            titleFontSelect.addEventListener('input', applyPdfFonts);
+        }
+        if (textFontSelect) {
+            textFontSelect.addEventListener('change', applyPdfFonts);
+            textFontSelect.addEventListener('input', applyPdfFonts);
+        }
+        applyPdfFonts();
+        applyPdfTextColors();
+
+        // Time slider
+        const timeSlider = document.getElementById('welcome-time-slider');
+        const timeDisplay = document.getElementById('welcome-time-display');
+        if (timeSlider && timeDisplay) {
+            timeSlider.addEventListener('input', e => {
+                timeDisplay.textContent = e.target.value + ' seconds';
+            });
+        }
+
+        // PDF File Upload Preview
+        const pdfFileInput = document.querySelector('input[name="pdf_files"]');
+        const pdfFileList = document.getElementById('pdf-file-list');
+        const previewCanvas = document.getElementById('preview-pdf-canvas');
+        const previewIcon = document.getElementById('preview-pdf-placeholder-icon');
+
+        if (pdfFileInput && pdfFileList) {
+            let accumulatedPdfFiles = new DataTransfer();
+            let isDeleting = false;
+
+            pdfFileInput.addEventListener('change', function (e) {
+                if (isDeleting) {
+                    isDeleting = false;
+                } else {
+                    const newFiles = Array.from(e.target.files);
+                    newFiles.forEach(newFile => {
+                        let isDup = false;
+                        for (let i = 0; i < accumulatedPdfFiles.items.length; i++) {
+                            let ex = accumulatedPdfFiles.items[i].getAsFile();
+                            if (ex.name === newFile.name && ex.size === newFile.size) {
+                                isDup = true;
+                                break;
+                            }
+                        }
+                        if (!isDup) accumulatedPdfFiles.items.add(newFile);
+                    });
+                    pdfFileInput.files = accumulatedPdfFiles.files;
+                }
+
+                pdfFileList.innerHTML = ''; // clear current list
+                const files = pdfFileInput.files;
+
+                // Reset preview and navigation if no files
+                if (files.length === 0) {
+                    if (previewCanvas) {
+                        previewCanvas.style.display = 'none';
+                        previewIcon.style.display = 'inline-block';
+                        const container = document.getElementById('preview-pdf-thumbnail-container');
+                        if (container) container.style.aspectRatio = '1 / 1.4';
+                    }
+                    const prevBtn = document.getElementById('preview-pdf-prev');
+                    const nextBtn = document.getElementById('preview-pdf-next');
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                    return;
+                }
+
+                let totalSize = 0;
+                const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+
+                // Render First PDF Preview & Setup Navigation
+                let currentPdfIndex = 0;
+                const pdfArray = Array.from(files);
+                const prevBtn = document.getElementById('preview-pdf-prev');
+                const nextBtn = document.getElementById('preview-pdf-next');
+
+                if (pdfArray.length > 1) {
+                    if (prevBtn) prevBtn.style.display = 'block';
+                    if (nextBtn) nextBtn.style.display = 'block';
+                } else {
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                }
+
+                function renderPdfPreview(index) {
+                    if (window['pdfjs-dist/build/pdf'] && previewCanvas && previewIcon && pdfArray[index]) {
+                        const fileReader = new FileReader();
+                        fileReader.onload = function (evt) {
+                            const typedarray = new Uint8Array(evt.target.result);
+                            window['pdfjs-dist/build/pdf'].getDocument(typedarray).promise.then(pdf => {
+                                pdf.getPage(1).then(page => {
+                                    const viewport = page.getViewport({ scale: 1.5 });
+                                    const context = previewCanvas.getContext('2d');
+                                    previewCanvas.height = viewport.height;
+                                    previewCanvas.width = viewport.width;
+
+                                    const renderContext = {
+                                        canvasContext: context,
+                                        viewport: viewport
+                                    };
+                                    page.render(renderContext).promise.then(() => {
+                                        previewIcon.style.display = 'none';
+                                        previewCanvas.style.display = 'block';
+                                        const container = document.getElementById('preview-pdf-thumbnail-container');
+                                        if (container) {
+                                            container.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+                                        }
+                                    });
+                                });
+                            }).catch(err => {
+                                console.error('Error rendering PDF:', err);
+                            });
+                        };
+                        fileReader.readAsArrayBuffer(pdfArray[index]);
+                    }
+                }
+
+                // Initial render
+                renderPdfPreview(currentPdfIndex);
+
+                if (prevBtn) {
+                    prevBtn.onclick = function () {
+                        currentPdfIndex = (currentPdfIndex > 0) ? currentPdfIndex - 1 : pdfArray.length - 1;
+                        renderPdfPreview(currentPdfIndex);
+                    };
+                }
+
+                if (nextBtn) {
+                    nextBtn.onclick = function () {
+                        currentPdfIndex = (currentPdfIndex < pdfArray.length - 1) ? currentPdfIndex + 1 : 0;
+                        renderPdfPreview(currentPdfIndex);
+                    };
+                }
+
+                Array.from(files).forEach((file, index) => {
+                    totalSize += file.size;
+                    const fileItem = document.createElement('div');
+                    fileItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px;';
+
+                    const leftSide = document.createElement('div');
+                    leftSide.style.cssText = 'display: flex; align-items: center; gap: 8px; overflow: hidden;';
+
+                    const icon = document.createElement('i');
+                    icon.className = 'fa-regular fa-file-pdf';
+                    icon.style.color = '#ef4444'; // PDF redish color
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.style.cssText = 'font-size: 13px; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+                    nameSpan.textContent = file.name;
+
+                    // Calculate KB/MB format
+                    let sizeStr = '';
+                    const sizeKB = file.size / 1024;
+                    if (sizeKB > 1024) {
+                        sizeStr = (sizeKB / 1024).toFixed(2) + ' MB';
+                    } else {
+                        sizeStr = sizeKB.toFixed(1) + ' KB';
+                    }
+
+                    const sizeSpan = document.createElement('span');
+                    sizeSpan.style.cssText = 'font-size: 11px; color: var(--text-muted); flex-shrink: 0;';
+                    sizeSpan.textContent = sizeStr;
+
+                    leftSide.appendChild(icon);
+                    leftSide.appendChild(nameSpan);
+                    leftSide.appendChild(sizeSpan);
+
+                    // Delete button
+                    const deleteBtn = document.createElement('i');
+                    deleteBtn.className = 'fa-solid fa-xmark';
+                    deleteBtn.style.cssText = 'color: var(--text-muted); cursor: pointer; padding: 4px;';
+                    deleteBtn.title = 'Remove file';
+
+                    // Handle removal
+                    deleteBtn.addEventListener('click', () => {
+                        let newAccumulated = new DataTransfer();
+                        Array.from(pdfFileInput.files).forEach((f, i) => {
+                            if (i !== index) newAccumulated.items.add(f);
+                        });
+                        accumulatedPdfFiles = newAccumulated;
+                        pdfFileInput.files = accumulatedPdfFiles.files;
+
+                        isDeleting = true;
+                        pdfFileInput.dispatchEvent(new Event('change'));
+                    });
+
+                    fileItem.appendChild(leftSide);
+                    fileItem.appendChild(deleteBtn);
+                    pdfFileList.appendChild(fileItem);
+                });
+
+                if (totalSize > maxSizeBytes) {
+                    alert('Total file size exceeds the 10MB limit. Please select fewer or smaller files.');
+                    pdfFileInput.value = ''; // Reset input
+                    accumulatedPdfFiles = new DataTransfer(); // Reset accumulated memory
+                    pdfFileList.innerHTML = '';
+                    if (previewCanvas) {
+                        previewCanvas.style.display = 'none';
+                        previewIcon.style.display = 'inline-block';
+                    }
+                    const prevBtn = document.getElementById('preview-pdf-prev');
+                    const nextBtn = document.getElementById('preview-pdf-next');
+                    if (prevBtn) prevBtn.style.display = 'none';
+                    if (nextBtn) nextBtn.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // PDF Initialization Block for Edit/Draft Mode
+        const qrcard_pdf_template = "{{ qrcard.get('pdf_template', 'default') if qrcard else 'default' }}";
+        const qrcard_pdf_primary_color = "{{ qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}";
+        const qrcard_pdf_secondary_color = "{{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}";
+        const qrcard_pdf_title_font = "{{ qrcard.get('pdf_title_font', 'Lato') if qrcard else 'Lato' }}";
+        const qrcard_pdf_text_font = "{{ qrcard.get('pdf_text_font', 'Lato') if qrcard else 'Lato' }}";
+
+        // Set Template Active
+        const templates = document.querySelectorAll('.template-preview');
+        templates.forEach(t => {
+            if (t.dataset.template === qrcard_pdf_template) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+
+        // Pickers sync to hex
+        const priPicker = document.getElementById('pdf_primary_picker');
+        const secPicker = document.getElementById('pdf_secondary_picker');
+        const priHex = document.getElementById('pdf_primary_hex');
+        const secHex = document.getElementById('pdf_secondary_hex');
+
+        if (priPicker && priHex) {
+            priPicker.value = qrcard_pdf_primary_color;
+            priHex.value = qrcard_pdf_primary_color.toUpperCase();
+        }
+        if (secPicker && secHex) {
+            secPicker.value = qrcard_pdf_secondary_color;
+            secHex.value = qrcard_pdf_secondary_color.toUpperCase();
+        }
+
+        // Dropdowns
+        const titleSelect = document.querySelector('select[name="pdf_title_font"]');
+        const textSelect = document.querySelector('select[name="pdf_text_font"]');
+        if (titleSelect) titleSelect.value = qrcard_pdf_title_font;
+        if (textSelect) textSelect.value = qrcard_pdf_text_font;
+
+        // Time Slider Label
+        const timeSlider = document.getElementById('welcome-time-slider');
+        const timeDisplay = document.getElementById('welcome-time-display');
+        if (timeSlider && timeDisplay) {
+            timeDisplay.textContent = timeSlider.value + " seconds";
+        }
+
+        // Trigger any mockup updates globally
+        if (window.updateAllMockups) {
+            window.updateAllMockups();
+        }
+    });
+</script>
+
+{% endblock %}
