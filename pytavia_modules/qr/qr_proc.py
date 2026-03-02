@@ -44,6 +44,16 @@ class qr_proc:
             self.webapp.logger.debug(traceback.format_exc())
             return None
 
+    def increment_scan_count(self, fk_user_id, qrcard_id):
+        """Increment total scan count for a qrcard."""
+        try:
+            self.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"},
+                {"$inc": {"stats.scan_count": 1}}
+            )
+        except Exception as e:
+            self.webapp.logger.debug(traceback.format_exc())
+
     def add_qrcard(self, params):
         try:
             fk_user_id  = params.get("fk_user_id")
@@ -66,14 +76,14 @@ class qr_proc:
                     "message_data": {}
                }
 
-            # Dynamic web: require unique short_code (generate or validate custom)
-            if qr_type == "web":
+            # Dynamic types (web/pdf): require unique short_code (generate or validate custom)
+            if qr_type in ("web", "pdf"):
                 if short_code:
                     import re
-                    if not re.match(r"^[a-z0-9\-]{2,32}$", short_code):
+                    if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
                         return {
                             "message_action": "ADD_QRCARD_FAILED",
-                            "message_desc": "Address identifier must be 2–32 characters: letters, numbers, or hyphens.",
+                            "message_desc": "Address identifier must be 2–32 characters: letters, numbers, '-' or '_', no spaces or other symbols.",
                             "message_data": {}
                         }
                     if not self.is_short_code_unique(short_code):
@@ -110,7 +120,27 @@ class qr_proc:
             qrcard_rec["short_code"]  = short_code
             qrcard_rec["design_data"] = {}
             qrcard_rec["qr_image_url"]= ""
-            qrcard_rec["stats"]       = {"scan_count": 0}
+            
+            if qr_type == "pdf":
+                pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
+                              "pdf_title_font", "pdf_title_color", "pdf_text_font",
+                              "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+                              "pdf_website", "pdf_btn_text", "welcome_time"]
+                for f in pdf_fields:
+                    qrcard_rec[f] = params.get(f, "")
+            
+            # Scan statistics and optional limit
+            qrcard_rec["stats"] = {"scan_count": 0}
+            try:
+                enabled_raw = params.get("scan_limit_enabled", False)
+                qrcard_rec["scan_limit_enabled"] = bool(enabled_raw)
+                limit_raw = params.get("scan_limit_value", 0)
+                limit_val = int(limit_raw) if str(limit_raw).strip().isdigit() else 0
+                qrcard_rec["scan_limit_value"] = max(limit_val, 0)
+            except Exception:
+                qrcard_rec["scan_limit_enabled"] = False
+                qrcard_rec["scan_limit_value"] = 0
+
             qrcard_rec["status"]      = "ACTIVE"
             qrcard_rec["created_at"]  = created_at
             qrcard_rec["timestamp"]   = current_time
@@ -160,15 +190,46 @@ class qr_proc:
             name       = params.get("name")
             url_content= params.get("url_content")
             
-            # Additional values could be extracted here if needed
+            update_data = {
+                "name": name,
+                "url_content": url_content,
+            }
             
+            pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
+                          "pdf_title_font", "pdf_title_color", "pdf_text_font",
+                          "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+                          "pdf_website", "pdf_btn_text", "welcome_time"]
+            for f in pdf_fields:
+                if f in params:
+                    update_data[f] = params.get(f)
+
+            # Scan limit fields
+            if "scan_limit_enabled" in params:
+                update_data["scan_limit_enabled"] = bool(params.get("scan_limit_enabled"))
+            if "scan_limit_value" in params:
+                try:
+                    limit_raw = params.get("scan_limit_value", 0)
+                    limit_val = int(limit_raw) if str(limit_raw).strip().isdigit() else 0
+                    update_data["scan_limit_value"] = max(limit_val, 0)
+                except Exception:
+                    pass
+
+            # Optionally update short_code for dynamic types (web/pdf) when a new, valid, unique code is provided
+            try:
+                doc = self.get_qrcard(fk_user_id, qrcard_id)
+            except Exception:
+                doc = None
+            if doc and doc.get("qr_type") in ("web", "pdf"):
+                new_short = (params.get("short_code") or "").strip().lower()
+                current_short = (doc.get("short_code") or "").strip().lower()
+                if new_short and new_short != current_short:
+                    import re
+                    if re.match(r"^[a-z0-9_-]{2,32}$", new_short) and self.is_short_code_unique(new_short, exclude_qrcard_id=qrcard_id):
+                        update_data["short_code"] = new_short
+
             self.mgdDB.db_qrcard.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                {"$set": {
-                    "name": name,
-                    "url_content": url_content,
-                    # We might add 'updated_at': str(time.time() * 1000) here in the future
-                }}
+                {"$set": update_data}
             )
             return {"status": "SUCCESS", "message": "QR card updated."}
         except Exception as e:
@@ -193,6 +254,30 @@ class qr_proc:
             self.mgdDB.db_qrcard.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$set": {"status": "DELETED"}}
+            )
+            return True
+        except Exception as e:
+            self.webapp.logger.debug(traceback.format_exc())
+            return False
+
+    def update_pdf_files(self, fk_user_id, qrcard_id, pdf_files_list):
+        """Store/replace the list of uploaded PDF file metadata for a qrcard."""
+        try:
+            self.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$set": {"pdf_files": pdf_files_list}}
+            )
+            return True
+        except Exception as e:
+            self.webapp.logger.debug(traceback.format_exc())
+            return False
+
+    def remove_pdf_file(self, fk_user_id, qrcard_id, file_url):
+        """Remove a single PDF file entry from the stored list by its URL."""
+        try:
+            self.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$pull": {"pdf_files": {"url": file_url}}}
             )
             return True
         except Exception as e:

@@ -381,12 +381,37 @@ def user_dashboard():
 
 @app.route("/p/<short_code>")
 def qr_redirect(short_code):
-    """Public redirect: scan goes to qrcardku.com/p/<short_code> -> redirect to current url_content (dynamic web)."""
+    """Public endpoint: /p/<short_code>.
+
+    - For web type: redirect to current url_content.
+    - For pdf type: render a public landing page using stored PDF settings/files.
+    """
     from pytavia_modules.qr import qr_proc
-    qrcard = qr_proc.qr_proc(app).get_qrcard_by_short_code(short_code)
-    if not qrcard or not qrcard.get("url_content"):
+    proc = qr_proc.qr_proc(app)
+    qrcard = proc.get_qrcard_by_short_code(short_code)
+    if not qrcard:
         abort(404)
-    dest = qrcard["url_content"].strip()
+    # Enforce optional scan limit before serving content
+    stats = (qrcard.get("stats") or {})
+    current_scans = int(stats.get("scan_count", 0) or 0)
+    limit_enabled = bool(qrcard.get("scan_limit_enabled"))
+    limit_value = int(qrcard.get("scan_limit_value", 0) or 0)
+    if limit_enabled and limit_value > 0 and current_scans >= limit_value:
+        # When limit reached, behave as if content no longer exists
+        abort(404)
+
+    # Increment scan counter (only for successful hits)
+    try:
+        proc.increment_scan_count(qrcard.get("fk_user_id"), qrcard.get("qrcard_id"))
+    except Exception:
+        pass
+    qr_type = qrcard.get("qr_type") or "web"
+    if qr_type == "pdf":
+        return render_template("/user/public_pdf.html", qrcard=qrcard)
+    # default: web-like behavior
+    dest = (qrcard.get("url_content") or "").strip()
+    if not dest:
+        abort(404)
     if not dest.startswith("http://") and not dest.startswith("https://"):
         dest = "https://" + dest
     return redirect(dest, code=302)
@@ -403,6 +428,20 @@ def qr_delete(qrcard_id):
         return redirect(url_for("login_view"))
     from pytavia_modules.qr import qr_proc
     qr_proc.qr_proc(app).delete_qrcard(session.get("fk_user_id"), qrcard_id)
+    return redirect(url_for("user_qr_list"))
+
+
+@app.route("/qr/delete/bulk", methods=["POST"])
+def qr_delete_bulk():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    qrcard_ids = request.form.getlist("qrcard_ids")
+    if not qrcard_ids:
+        return redirect(url_for("user_qr_list"))
+    from pytavia_modules.qr import qr_proc
+    proc = qr_proc.qr_proc(app)
+    for qrcard_id in qrcard_ids:
+        proc.delete_qrcard(session.get("fk_user_id"), qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/edit/<qrcard_id>", methods=["GET", "POST"])
@@ -427,7 +466,7 @@ def qr_update_start(qrcard_id):
 def _get_qr_draft(session, qrcard_id):
     return (session.get("qr_draft") or {}).get(qrcard_id)
 
-def _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code=None):
+def _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code=None, extra_data=None):
     if "qr_draft" not in session:
         session["qr_draft"] = {}
     session["qr_draft"][qrcard_id] = {
@@ -435,6 +474,8 @@ def _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code=None):
         "qr_name": qr_name,
         "short_code": short_code or "",
     }
+    if extra_data:
+        session["qr_draft"][qrcard_id].update(extra_data)
     session.modified = True
 
 def _clear_qr_draft(session, qrcard_id):
@@ -459,30 +500,69 @@ def qr_update_content(qr_type, qrcard_id):
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         short_code = request.form.get("short_code", "").strip()
+        
+        pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
+                      "pdf_title_font", "pdf_title_color", "pdf_text_font",
+                      "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+                      "pdf_website", "pdf_btn_text", "welcome_time",
+                      "scan_limit_enabled", "scan_limit_value"]
+        pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+
         # Back from design: re-render content step with current values; update draft
         if request.form.get("back_from_design"):
-            _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code)
+            _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, pdf_data)
+            qrcard.update(pdf_data)
             return view_user.view_user(app).update_qr_content_html(
                 qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name,
-                short_code=short_code or None
+                short_code=short_code or None,
+                base_url=config.G_BASE_URL
             )
         if not qr_proc.qr_proc(app).is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             return view_user.view_user(app).update_qr_content_html(
-                qr_type=qr_type, qrcard=qrcard, error_msg="A QR card with this name already exists. Please choose a unique name."
+                qr_type=qr_type, qrcard=qrcard,
+                error_msg="A QR card with this name already exists. Please choose a unique name.",
+                base_url=config.G_BASE_URL
             )
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip())
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), pdf_data)
+        qrcard.update(pdf_data)
+
+        # For PDF type: immediately persist any newly uploaded PDF files so they are not lost between steps
+        if qr_type == "pdf":
+            import os
+            from pytavia_modules.qr import qr_proc as _qr_proc_for_update
+            pdf_file_list = request.files.getlist("pdf_files")
+            if pdf_file_list and any(f.filename for f in pdf_file_list):
+                pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+                os.makedirs(pdf_upload_dir, exist_ok=True)
+                qrcard_db = _qr_proc_for_update.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
+                existing_files = qrcard_db.get("pdf_files", []) if qrcard_db else []
+                for f in pdf_file_list:
+                    if f and f.filename and f.filename.lower().endswith(".pdf"):
+                        safe_name = f.filename.replace(" ", "_")
+                        filepath = os.path.join(pdf_upload_dir, safe_name)
+                        if not os.path.exists(filepath):
+                            f.save(filepath)
+                        file_entry = {"name": f.filename, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                        if not any(x.get("name") == f.filename for x in existing_files):
+                            existing_files.append(file_entry)
+                _qr_proc_for_update.qr_proc(app).update_pdf_files(fk_user_id, qrcard_id, existing_files)
+
         return view_user.view_user(app).update_qr_design_html(
             qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name
         )
     # GET: use session draft if available so Step 2 tab / Back preserves edits
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
+        qrcard.update(draft)
         return view_user.view_user(app).update_qr_content_html(
             qr_type=qr_type, qrcard=qrcard,
             url_content=draft.get("url_content"), qr_name=draft.get("qr_name"),
-            short_code=draft.get("short_code") or None
+            short_code=draft.get("short_code") or None,
+            base_url=config.G_BASE_URL
         )
-    return view_user.view_user(app).update_qr_content_html(qr_type=qr_type, qrcard=qrcard)
+    return view_user.view_user(app).update_qr_content_html(
+        qr_type=qr_type, qrcard=qrcard, base_url=config.G_BASE_URL
+    )
 
 @app.route("/qr/update/<qr_type>/qr-design/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_design(qr_type, qrcard_id):
@@ -500,10 +580,20 @@ def qr_update_design(qr_type, qrcard_id):
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip())
+            
+        pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
+                      "pdf_title_font", "pdf_title_color", "pdf_text_font",
+                      "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+                      "pdf_website", "pdf_btn_text", "welcome_time",
+                      "scan_limit_enabled", "scan_limit_value"]
+        pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+        
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), pdf_data)
+        qrcard.update(pdf_data)
     else:
         draft = _get_qr_draft(session, qrcard_id)
         if draft:
+            qrcard.update(draft)
             url_content = draft.get("url_content") or qrcard.get("url_content") or "qrcardku.com"
             qr_name = draft.get("qr_name") or qrcard.get("name") or "Untitled QR"
         else:
@@ -511,7 +601,7 @@ def qr_update_design(qr_type, qrcard_id):
             qr_name = qrcard.get("name") or "Untitled QR"
     qr_encode_url = None
     if qr_type == "web" and qrcard.get("short_code"):
-        qr_encode_url = request.url_root.rstrip("/") + "/p/" + qrcard["short_code"]
+        qr_encode_url = config.G_BASE_URL + "/p/" + qrcard["short_code"]
     return view_user.view_user(app).update_qr_design_html(
         qr_type=qr_type, qrcard=qrcard, url_content=url_content, qr_name=qr_name,
         qr_encode_url=qr_encode_url
@@ -529,22 +619,91 @@ def qr_update_save(qrcard_id):
     if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
         url_content = "https://" + url_content
     from pytavia_modules.qr import qr_proc
+    
+    # Use session draft as fallback for any missing PDF values in the form
+    draft = _get_qr_draft(session, qrcard_id) or {}
+    
+    def _get_field(field, default=""):
+        """Get from form first, then session draft, then default."""
+        val = request.form.get(field, "").strip()
+        if not val:
+            val = draft.get(field, default)
+        return val
+    
     params = {
         "fk_user_id": fk_user_id,
         "qrcard_id": qrcard_id,
-        "name": qr_name or "Untitled QR",
-        "url_content": url_content or "",
+        "name": qr_name or draft.get("qr_name") or "Untitled QR",
+        "url_content": url_content or draft.get("url_content") or "",
+        "pdf_template": _get_field("pdf_template", "default"),
+        "pdf_primary_color": _get_field("pdf_primary_color", "#2F6BFD"),
+        "pdf_secondary_color": _get_field("pdf_secondary_color", "#0E379A"),
+        "pdf_title_font": _get_field("pdf_title_font", "Lato"),
+        "pdf_title_color": _get_field("pdf_title_color", "#000000"),
+        "pdf_text_font": _get_field("pdf_text_font", "Lato"),
+        "pdf_text_color": _get_field("pdf_text_color", "#000000"),
+        "pdf_company": _get_field("pdf_company"),
+        "pdf_title": _get_field("pdf_title"),
+        "pdf_desc": _get_field("pdf_desc"),
+        "pdf_website": _get_field("pdf_website"),
+        "pdf_btn_text": _get_field("pdf_btn_text", "See PDF"),
+        "welcome_time": _get_field("welcome_time", "5.0"),
     }
+
+    # Scan limit fields (from form or draft)
+    enabled_raw = request.form.get("scan_limit_enabled")
+    params["scan_limit_enabled"] = bool(enabled_raw or draft.get("scan_limit_enabled"))
+    raw_limit = (request.form.get("scan_limit_value") or "").strip()
+    if not raw_limit and "scan_limit_value" in draft:
+        raw_limit = str(draft.get("scan_limit_value") or "")
+    params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else int(draft.get("scan_limit_value", 0) or 0)
+
+    # Optional custom short_code updates for dynamic types (web/pdf)
+    short_code_form = (request.form.get("short_code") or "").strip().lower()
+    short_code_draft = (draft.get("short_code") or "").strip().lower()
+    if short_code_form or short_code_draft:
+        params["short_code"] = short_code_form or short_code_draft
+
     qr_proc.qr_proc(app).edit_qrcard(params)
+    
+    # Save any newly uploaded PDF files and append to existing (still-kept) list
+    if True:  # always run to handle new uploads even for non-pdf edits gracefully
+        import os
+        from pytavia_modules.qr import qr_proc as _qr_proc_for_files
+        pdf_file_list = request.files.getlist("pdf_files")
+        # Start from existing files that are still present in the form (not removed)
+        existing_urls = request.form.getlist("existing_pdf_urls")
+        qrcard_db = _qr_proc_for_files.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
+        db_files = qrcard_db.get("pdf_files", []) if qrcard_db else []
+        if existing_urls:
+            existing_files = [f for f in db_files if f.get("url") in existing_urls]
+        else:
+            existing_files = []
+        if pdf_file_list and any(f.filename for f in pdf_file_list):
+            pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+            os.makedirs(pdf_upload_dir, exist_ok=True)
+            for f in pdf_file_list:
+                if f and f.filename and f.filename.lower().endswith(".pdf"):
+                    safe_name = f.filename.replace(" ", "_")
+                    filepath = os.path.join(pdf_upload_dir, safe_name)
+                    f.save(filepath)
+                    file_entry = {"name": f.filename, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                    # Avoid duplicates by name
+                    if not any(x.get("name") == f.filename for x in existing_files):
+                        existing_files.append(file_entry)
+        if existing_files:
+            _qr_proc_for_files.qr_proc(app).update_pdf_files(fk_user_id, qrcard_id, existing_files)
+    
     _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/<qr_type>")
 def user_new_qr_type(qr_type):
+    from flask import request as _req
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
-    # The view will handle mapping 'web', 'pdf', 'images', 'ecardname', 'video', 'links', 'sosmed'
-    return view_user.view_user(app).new_qr_type_html(qr_type)
+    base_url = config.G_BASE_URL
+    return view_user.view_user(app).new_qr_type_html(qr_type, base_url=base_url)
 
 @app.route("/qr/new/<qr_type>/qr-design", methods=["GET", "POST"])
 def user_new_qr_design(qr_type):
@@ -567,29 +726,65 @@ def user_new_qr_design(qr_type):
         qr_name = request.form.get("qr_name", "Untitled QR")
         short_code = (request.form.get("short_code") or "").strip().lower()
         
+        pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
+                      "pdf_title_font", "pdf_title_color", "pdf_text_font",
+                      "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+                      "pdf_website", "pdf_btn_text", "welcome_time"]
+        pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
+        
+        # Save uploaded PDFs to a temp folder keyed by session
+        if qr_type == "pdf":
+            import os, uuid as _uuid
+            tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
+            session["pdf_tmp_key"] = tmp_key
+            tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
+            os.makedirs(tmp_dir, exist_ok=True)
+            pdf_file_list = request.files.getlist("pdf_files")
+            existing_tmp = session.get("pdf_tmp_files", [])
+            existing_names = {x["name"] for x in existing_tmp}
+            for f in pdf_file_list:
+                if f and f.filename and f.filename.lower().endswith(".pdf"):
+                    safe_name = f.filename.replace(" ", "_")
+                    if f.filename not in existing_names:
+                        f.save(os.path.join(tmp_dir, safe_name))
+                        existing_tmp.append({"name": f.filename, "safe_name": safe_name})
+                        existing_names.add(f.filename)
+            session["pdf_tmp_files"] = existing_tmp
+            session.modified = True
+        
         if not qr_proc_inst.is_name_unique(session.get("fk_user_id"), qr_name):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
-            return view_user.view_user(app).new_qr_content_html(qr_type, url_content=url_content, qr_name=qr_name, error_msg=error_msg)
+            return view_user.view_user(app).new_qr_type_html(qr_type, error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         
         if qr_type == "web":
             if short_code:
                 import re
-                if not re.match(r"^[a-z0-9\-]{2,32}$", short_code):
-                    error_msg = "Address identifier must be 2–32 characters: letters, numbers, or hyphens."
-                    return view_user.view_user(app).new_qr_content_html(qr_type, url_content=url_content, qr_name=qr_name, short_code=short_code, error_msg=error_msg)
+                if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
+                    error_msg = "Address identifier must be 2–32 characters: letters, numbers, '-' or '_', no spaces or other symbols."
+                    return view_user.view_user(app).new_qr_type_html(qr_type, error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
                 if not qr_proc_inst.is_short_code_unique(short_code):
                     error_msg = "This address identifier is already in use. Please choose another."
-                    return view_user.view_user(app).new_qr_content_html(qr_type, url_content=url_content, qr_name=qr_name, short_code=short_code, error_msg=error_msg)
+                    return view_user.view_user(app).new_qr_type_html(qr_type, error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
             else:
                 short_code = qr_proc_inst._generate_short_code()
                 while not qr_proc_inst.is_short_code_unique(short_code):
                     short_code = qr_proc_inst._generate_short_code()
-            base = request.url_root.rstrip("/")
+            base = config.G_BASE_URL
             qr_encode_url = base + "/p/" + short_code
+        elif qr_type == "pdf":
+            # Auto-generate a unique short_code for PDF type
+            short_code = qr_proc_inst._generate_short_code()
+            while not qr_proc_inst.is_short_code_unique(short_code):
+                short_code = qr_proc_inst._generate_short_code()
+            base = config.G_BASE_URL
+            qr_encode_url = base + "/p/" + short_code
+    else:
+        pdf_data = {}
     
     return view_user.view_user(app).new_qr_design_html(
         qr_type, url_content=url_content, qr_name=qr_name,
-        short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg
+        short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg,
+        pdf_data=pdf_data
     )
 
 @app.route("/qr/save", methods=["POST"])
@@ -603,10 +798,30 @@ def qr_save():
         "fk_user_id": session.get("fk_user_id"),
         "qr_type": qr_type,
         "name": request.form.get("qr_name", "Untitled QR"),
-        "url_content": request.form.get("url_content", "")
+        "url_content": request.form.get("url_content", ""),
+        "pdf_template": request.form.get("pdf_template", "default"),
+        "pdf_primary_color": request.form.get("pdf_primary_color", "#2F6BFD"),
+        "pdf_secondary_color": request.form.get("pdf_secondary_color", "#0E379A"),
+        "pdf_title_font": request.form.get("pdf_title_font", "Lato"),
+        "pdf_title_color": request.form.get("pdf_title_color", "#000000"),
+        "pdf_text_font": request.form.get("pdf_text_font", "Lato"),
+        "pdf_text_color": request.form.get("pdf_text_color", "#000000"),
+        "pdf_company": request.form.get("pdf_company", ""),
+        "pdf_title": request.form.get("pdf_title", ""),
+        "pdf_desc": request.form.get("pdf_desc", ""),
+        "pdf_website": request.form.get("pdf_website", ""),
+        "pdf_btn_text": request.form.get("pdf_btn_text", "See PDF"),
+        "welcome_time": request.form.get("welcome_time", "5.0")
     }
-    if qr_type == "web":
+    # Scan limit fields from content step
+    enabled_raw = request.form.get("scan_limit_enabled")
+    params["scan_limit_enabled"] = bool(enabled_raw)
+    raw_limit = (request.form.get("scan_limit_value") or "").strip()
+    params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+    if qr_type in ("web", "pdf"):
         params["short_code"] = (request.form.get("short_code") or "").strip().lower()
+    
+    print(f"[qr_save DEBUG] company={params.get('pdf_company')!r} primary={params.get('pdf_primary_color')!r} template={params.get('pdf_template')!r}")
     
     from pytavia_modules.qr import qr_proc
     result = qr_proc.qr_proc(app).add_qrcard(params)
@@ -617,10 +832,65 @@ def qr_save():
             url_content=request.form.get("url_content", ""),
             qr_name=request.form.get("qr_name", ""),
             short_code=sc,
-            qr_encode_url=request.url_root.rstrip("/") + "/p/" + sc if sc else None,
+            qr_encode_url=(config.G_BASE_URL + "/p/" + sc) if sc else None,
             error_msg=result.get("message_desc", "Save failed.")
         )
+    
+    # Move uploaded PDF files from temp session folder to final qrcard folder
+    if qr_type == "pdf" and result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        import os, shutil
+        new_qrcard_id = result["message_data"]["qrcard_id"]
+        tmp_key = session.pop("pdf_tmp_key", None)
+        tmp_files = session.pop("pdf_tmp_files", [])
+        session.modified = True
+        saved_files = []
+        if tmp_key and tmp_files:
+            tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
+            dest_dir = os.path.join(app.root_path, "static", "uploads", "pdf", new_qrcard_id)
+            os.makedirs(dest_dir, exist_ok=True)
+            for f_info in tmp_files:
+                src = os.path.join(tmp_dir, f_info["safe_name"])
+                dst = os.path.join(dest_dir, f_info["safe_name"])
+                if os.path.exists(src):
+                    shutil.move(src, dst)
+                    saved_files.append({
+                        "name": f_info["name"],
+                        "url": f"/static/uploads/pdf/{new_qrcard_id}/{f_info['safe_name']}"
+                    })
+            try:
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+            except Exception:
+                pass
+        if saved_files:
+            from pytavia_modules.qr import qr_proc as _qrproc
+            _qrproc.qr_proc(app).update_pdf_files(session.get("fk_user_id"), new_qrcard_id, saved_files)
+    
     return redirect(url_for("user_qr_list"))
+
+@app.route("/api/qr/remove_pdf_file", methods=["POST"])
+def api_remove_pdf_file():
+    """Remove a single saved PDF file from a QR card's pdf_files list."""
+    from flask import request, jsonify
+    if "fk_user_id" not in session:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+    fk_user_id = session.get("fk_user_id")
+    data = request.get_json()
+    qrcard_id = data.get("qrcard_id", "")
+    file_url = data.get("url", "")
+    if not qrcard_id or not file_url:
+        return jsonify({"success": False, "error": "Missing fields"}), 400
+    from pytavia_modules.qr import qr_proc
+    ok = qr_proc.qr_proc(app).remove_pdf_file(fk_user_id, qrcard_id, file_url)
+    # Also delete the file from disk
+    if ok:
+        import os
+        disk_path = os.path.join(app.root_path, file_url.lstrip("/").replace("/", os.sep))
+        try:
+            if os.path.exists(disk_path):
+                os.remove(disk_path)
+        except Exception:
+            pass
+    return jsonify({"success": ok})
 
 @app.route("/qr/list")
 def user_qr_list():

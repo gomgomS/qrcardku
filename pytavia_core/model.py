@@ -383,10 +383,30 @@ db = {
         "url_content"               : "",       # destination URL (for web: redirect target; for web-static: encoded in QR)
         "short_code"                : "",       # for web (dynamic): unique slug for qrcardku.com/p/<short_code>; empty for web-static
         "design_data"               : {},       # JSON object for frame/color configurations
+        
+        # --- PDF Specific Fields ---
+        "pdf_template"              : "default",
+        "pdf_primary_color"         : "#2F6BFD",
+        "pdf_secondary_color"       : "#0E379A",
+        "pdf_title_font"            : "Lato",
+        "pdf_title_color"           : "#000000",
+        "pdf_text_font"             : "Lato",
+        "pdf_text_color"            : "#000000",
+        "pdf_company"               : "",
+        "pdf_title"                 : "",
+        "pdf_desc"                  : "",
+        "pdf_website"               : "",
+        "pdf_btn_text"              : "See PDF",
+        "welcome_time"              : "5.0",
+        "pdf_files"                 : [],
+        # ---------------------------
+
         "qr_image_url"              : "",       # internal path to rendered QR if physically saved
         "stats"                     : {
-            "scan_count": 0
+            "scan_count": 0        # total successful page hits
         },
+        "scan_limit_enabled"       : False,    # whether scan limit is enforced
+        "scan_limit_value"         : 0,        # max allowed scans when enabled (0 = unlimited)
         "status"                    : "ACTIVE", # ACTIVE | INACTIVE
         "created_at"                : "",       # timestamp string
         "timestamp"                 : 0,        # unix timestamp

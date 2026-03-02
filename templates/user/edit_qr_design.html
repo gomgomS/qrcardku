@@ -690,7 +690,8 @@
             <input type="hidden" name="back_from_design" value="1" />
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+            {% if qr_type == 'web' and short_code %}<input type="hidden" name="short_code"
+                value="{{ short_code | e }}" />{% endif %}
 
             {% if qr_type == 'pdf' %}
             {% set pdf_fields = ['pdf_template', 'pdf_primary_color', 'pdf_secondary_color', 'pdf_title_font',
@@ -717,7 +718,7 @@
     <input type="hidden" name="qr_type" value="{{ qr_type }}" />
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-    {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{%
+    {% if qr_type == 'web' and short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{%
     endif %}
 
     {% if qr_type == 'pdf' %}

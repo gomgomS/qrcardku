@@ -18,28 +18,36 @@ class view_user:
             print(traceback.format_exc())
             return "Failed to load New QR page"
 
-    def new_qr_type_html(self, qr_type, msg=None, error_msg=None):
+    def new_qr_type_html(self, qr_type, msg=None, error_msg=None, base_url=None, url_content=None, qr_name=None, short_code=None):
         try:
+            template_name = "/user/new_qr_content_web.html" if qr_type == "web" else "/user/new_qr_content_pdf.html"
             return render_template(
-                "/user/new_qr_content.html",
+                template_name,
                 qr_type=qr_type,
-                msg=msg, 
-                error_msg=error_msg
+                msg=msg,
+                error_msg=error_msg,
+                base_url=base_url,
+                url_content=url_content or "",
+                qr_name=qr_name or "",
+                short_code=short_code or ""
             )
         except:
+            print(traceback.format_exc())
             return "Failed to load New QR Content Form"
 
-    def new_qr_design_html(self, qr_type, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None):
+    def new_qr_design_html(self, qr_type, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None):
         try:
+            template_name = "/user/new_qr_design_web.html" if qr_type == "web" else "/user/new_qr_design_pdf.html"
             return render_template(
-                "/user/new_qr_design.html",
+                template_name,
                 qr_type=qr_type,
                 url_content=url_content,
                 qr_name=qr_name,
                 short_code=short_code or "",
                 qr_encode_url=qr_encode_url,
                 msg=msg,
-                error_msg=error_msg
+                error_msg=error_msg,
+                pdf_data=pdf_data
             )
         except:
             print(traceback.format_exc())
@@ -57,7 +65,7 @@ class view_user:
             print(traceback.format_exc())
             return "Failed to load Edit QR Form"
 
-    def update_qr_content_html(self, qr_type, qrcard, url_content=None, qr_name=None, short_code=None, msg=None, error_msg=None):
+    def update_qr_content_html(self, qr_type, qrcard, url_content=None, qr_name=None, short_code=None, msg=None, error_msg=None, base_url=None):
         """Step-based update: content step (reuses new_qr_content layout with update URLs and prefills). url_content/qr_name optional when re-rendering from Back from design."""
         try:
             raw_url = (url_content if url_content is not None else (qrcard.get("url_content") or "")).strip()
@@ -67,19 +75,22 @@ class view_user:
                 url_content_display = raw_url[7:]
             else:
                 url_content_display = raw_url
+            template_name = "/user/edit_qr_content_web.html" if qr_type == "web" else "/user/edit_qr_content_pdf.html"
             return render_template(
-                "/user/new_qr_content.html",
+                template_name,
                 qr_type=qr_type,
                 qrcard_id=qrcard.get("qrcard_id"),
+                qrcard=qrcard,
                 url_content=url_content_display or "qrcardku.com",
                 qr_name=(qr_name if qr_name is not None else qrcard.get("name")) or "",
                 short_code=(short_code if short_code is not None else qrcard.get("short_code")) or "",
-                form_action="/qr/update/{}/qr-design/{}".format(qr_type, qrcard.get("qrcard_id")),
+                form_action="/qr/update/{}/{}".format(qr_type, qrcard.get("qrcard_id")),
                 back_url="/qr/list",
                 step1_url="/qr/list",
                 step3_url="/qr/update/{}/qr-design/{}".format(qr_type, qrcard.get("qrcard_id")),
                 is_update=True,
                 msg=msg,
+                base_url=base_url,
                 error_msg=error_msg,
             )
         except Exception as e:
@@ -92,8 +103,9 @@ class view_user:
             url_content = url_content or qrcard.get("url_content") or "qrcardku.com"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
             cid = qrcard.get("qrcard_id")
+            template_name = "/user/edit_qr_design_web.html" if qr_type == "web" else "/user/edit_qr_design_pdf.html"
             return render_template(
-                "/user/new_qr_design.html",
+                template_name,
                 qr_type=qr_type,
                 qrcard_id=cid,
                 qrcard=qrcard,

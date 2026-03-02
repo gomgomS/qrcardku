@@ -12,37 +12,6 @@
         margin-bottom: 24px;
     }
 
-    .folders-section {
-        margin-bottom: 40px;
-    }
-
-    .folders-section h3 {
-        font-size: 14px;
-        margin-bottom: 12px;
-        color: var(--text-main);
-    }
-
-    .search-input {
-        width: 100%;
-        max-width: 300px;
-        padding: 8px 12px;
-        padding-left: 32px;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        margin-bottom: 16px;
-        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 8px center;
-        background-color: white;
-    }
-
-    .empty-folders {
-        border: 1px dashed var(--border-color);
-        border-radius: 8px;
-        padding: 40px;
-        text-align: center;
-        color: var(--text-muted);
-        background-color: white;
-    }
-
     .tabs {
         display: flex;
         border-bottom: 1px solid var(--border-color);
@@ -322,6 +291,50 @@
             dropdowns[i].classList.remove('show');
         }
     }
+
+    // Bulk delete: select all and Delete selected
+    document.addEventListener('DOMContentLoaded', function () {
+        var form = document.getElementById('bulk-delete-form');
+        var selectAll = document.getElementById('select-all-qr');
+        var bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+        var checkboxes = document.querySelectorAll('.qr-row-checkbox');
+
+        function updateBulkDeleteVisibility() {
+            var any = false;
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) { any = true; break; }
+            }
+            if (bulkDeleteBtn) bulkDeleteBtn.style.display = any ? 'inline-flex' : 'none';
+            if (selectAll) {
+                selectAll.checked =
+                    any &&
+                    checkboxes.length > 0 &&
+                    Array.prototype.every.call(checkboxes, function (c) { return c.checked; });
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                for (var i = 0; i < checkboxes.length; i++) {
+                    checkboxes[i].checked = selectAll.checked;
+                }
+                updateBulkDeleteVisibility();
+            });
+        }
+
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].addEventListener('change', updateBulkDeleteVisibility);
+        }
+
+        if (bulkDeleteBtn && form) {
+            bulkDeleteBtn.addEventListener('click', function () {
+                var checked = document.querySelectorAll('.qr-row-checkbox:checked');
+                if (!checked.length) return;
+                if (!confirm('Delete ' + checked.length + ' selected QR code(s)?')) return;
+                form.submit();
+            });
+        }
+    });
 </script>
 {% endblock %}
 
@@ -359,7 +372,7 @@
             var editUrl = trigger.getAttribute('data-edit-url') || '#';
 
             var displayUrl = url;
-            if (qrType === 'web' && shortCode) {
+            if ((qrType === 'web' || qrType === 'pdf') && shortCode) {
                 displayUrl = window.location.origin + '/p/' + shortCode;
             }
 
@@ -427,16 +440,11 @@
 {% block content %}
 <div class="top-actions">
     <div class="page-title" style="margin: 0;">My QR codes</div>
-    <button class="btn-primary"><i class="fa-solid fa-plus"></i> Create New</button>
-</div>
-
-<div class="folders-section">
-    <h3>My folders</h3>
-    <input type="text" class="search-input" placeholder="Search...">
-    <div class="empty-folders">
-        <i class="fa-regular fa-folder" style="font-size: 24px; margin-bottom: 8px;"></i><br>
-        Here you can manage your folders. <a href="#" style="color: var(--primary); text-decoration: none;">Create
-            folder</a>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <button type="button" id="bulk-delete-btn" class="btn-outline" style="display: none; padding: 8px 16px; border: 1px solid var(--border-color); background: white; color: #dc2626; border-color: #dc2626;">
+            <i class="fa-solid fa-trash"></i> Delete selected
+        </button>
+        <a href="/qr/new" class="btn-primary" style="text-decoration: none;"><i class="fa-solid fa-plus"></i> Create New</a>
     </div>
 </div>
 
@@ -469,10 +477,12 @@
     <button class="btn-primary" style="float: right; padding: 4px 12px; font-size: 12px;">Update</button>
 </div>
 
+<form id="bulk-delete-form" method="POST" action="/qr/delete/bulk" style="margin: 0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 <table class="qr-table">
     <thead>
         <tr>
-            <th width="40"><input type="checkbox"></th>
+            <th width="40"><input type="checkbox" id="select-all-qr" title="Select all"></th>
             <th>Name</th>
             <th>QR Type</th>
             <th>Created</th>
@@ -486,7 +496,7 @@
         {% if qr_list %}
         {% for qr in qr_list %}
         <tr>
-            <td><input type="checkbox"></td>
+            <td><input type="checkbox" class="qr-row-checkbox" name="qrcard_ids" value="{{ qr.qrcard_id }}"></td>
             <td>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <span class="qr-scan-trigger" data-tooltip="Click to scan"
@@ -510,10 +520,17 @@
             <td>{{ qr.created_at[:10] }}</td>
             <td>-</td>
             <td><span class="status-active">{{ qr.status | capitalize }}</span></td>
-            <td>{{ qr.stats.scan_count }}</td>
+            <td>
+                {% set limit = qr.scan_limit_value if qr.scan_limit_enabled else None %}
+                {% if limit and limit > 0 %}
+                    {{ qr.stats.scan_count }} / {{ limit }}
+                {% else %}
+                    {{ qr.stats.scan_count }}
+                {% endif %}
+            </td>
             <td>
                 <div style="position: relative; display: inline-block;" class="dropdown-wrapper">
-                    <button style="border:1px solid #ddd; background:white; padding: 4px 8px; border-radius:4px;"
+                    <button type="button" style="border:1px solid #ddd; background:white; padding: 4px 8px; border-radius:4px;"
                         onclick="toggleDropdown(event, this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                     <div class="dropdown-content"
                         style="display: none; position: absolute; right: 0; background-color: #fff; min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; margin-top: 4px;">
@@ -543,6 +560,7 @@
         {% endif %}
     </tbody>
 </table>
+</form>
 
 <!-- Scan QR modal (one shared modal, filled by JS) -->
 <div id="scan-qr-overlay" class="scan-qr-overlay" aria-hidden="true">
