@@ -261,9 +261,14 @@
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
+        .tpl-1 .pdf-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-1 .pdf-item-name {
             font-size: 13px; font-weight: 500; color: #111827;
-            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .tpl-1 .pdf-item-subdesc {
+            font-size: 11px; color: #9ca3af;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
         }
         .tpl-1 .t1-website {
             text-align: center; margin-top: 16px;
@@ -341,9 +346,14 @@
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
+        .tpl-2 .pdf-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-2 .pdf-item-name {
             font-size: 13px; font-weight: 500; color: #111827;
-            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .tpl-2 .pdf-item-subdesc {
+            font-size: 11px; color: #9ca3af;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
         }
         .tpl-2 .t2-website {
             text-align: center; margin-top: 16px;
@@ -427,9 +437,14 @@
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
+        .tpl-3 .pdf-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-3 .pdf-item-name {
             font-size: 13px; font-weight: 500; color: #111827;
-            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .tpl-3 .pdf-item-subdesc {
+            font-size: 11px; color: #9ca3af;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
         }
         .tpl-3 .t3-website {
             text-align: center; margin-top: 16px;
@@ -523,9 +538,14 @@
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
+        .tpl-4 .pdf-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-4 .pdf-item-name {
             font-size: 13px; font-weight: 500; color: #111827;
-            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .tpl-4 .pdf-item-subdesc {
+            font-size: 11px; color: #9ca3af;
+            display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px;
         }
         .tpl-4 .t4-website {
             text-align: center; margin-top: 16px;
@@ -595,7 +615,7 @@
        TEMPLATE 1: optional header image + primary card body
     ═══════════════════════════════════════════════════ #}
     {% elif tmpl == 'template1' %}
-    {% set has_t1_img = qrcard.get('pdf_t1_header_img_url') %}
+    {% set has_t1_img = qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url') %}
     <div class="tpl-1">
         {% if has_t1_img %}
         <div class="t1-header">
@@ -613,7 +633,10 @@
                     <div class="pdf-item-icon">
                         <i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:16px;"></i>
                     </div>
-                    <span class="pdf-item-name">{{ pdf.name }}</span>
+                    <div class="pdf-item-text">
+                        <span class="pdf-item-name">{{ pdf.get('display_name', pdf.name) }}</span>
+                        {% if pdf.get('item_desc') %}<span class="pdf-item-subdesc">{{ pdf.item_desc }}</span>{% endif %}
+                    </div>
                     <i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:11px;flex-shrink:0;"></i>
                 </a>
                 {% endfor %}
@@ -643,7 +666,10 @@
                     <div class="pdf-item-icon">
                         <i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:16px;"></i>
                     </div>
-                    <span class="pdf-item-name">{{ pdf.name }}</span>
+                    <div class="pdf-item-text">
+                        <span class="pdf-item-name">{{ pdf.get('display_name', pdf.name) }}</span>
+                        {% if pdf.get('item_desc') %}<span class="pdf-item-subdesc">{{ pdf.item_desc }}</span>{% endif %}
+                    </div>
                     <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
                 </a>
                 {% endfor %}
@@ -662,9 +688,10 @@
     ═══════════════════════════════════════════════════ #}
     {% elif tmpl == 'template3' %}
     <div class="tpl-3">
+        {% set t3_img = qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t4_circle_img_url') %}
         <div class="t3-circle">
-            {% if qrcard.get('pdf_t3_circle_img_url') %}
-            <img src="{{ qrcard.get('pdf_t3_circle_img_url') }}" alt="">
+            {% if t3_img %}
+            <img src="{{ t3_img }}" alt="">
             {% else %}
             <div class="t3-circle-placeholder"><i class="fa-regular fa-image"></i></div>
             {% endif %}
@@ -680,7 +707,10 @@
                 <div class="pdf-item-icon">
                     <i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:16px;"></i>
                 </div>
-                <span class="pdf-item-name">{{ pdf.name }}</span>
+                <div class="pdf-item-text">
+                    <span class="pdf-item-name">{{ pdf.get('display_name', pdf.name) }}</span>
+                    {% if pdf.get('item_desc') %}<span class="pdf-item-subdesc">{{ pdf.item_desc }}</span>{% endif %}
+                </div>
                 <i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:11px;flex-shrink:0;"></i>
             </a>
             {% endfor %}
@@ -699,9 +729,10 @@
     {% elif tmpl == 'template4' %}
     <div class="tpl-4">
         <div class="t4-card">
+            {% set t4_img = qrcard.get('pdf_t4_circle_img_url') or qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') %}
             <div class="t4-circle">
-                {% if qrcard.get('pdf_t4_circle_img_url') %}
-                <img src="{{ qrcard.get('pdf_t4_circle_img_url') }}" alt="">
+                {% if t4_img %}
+                <img src="{{ t4_img }}" alt="">
                 {% else %}
                 <div class="t4-circle-placeholder"><i class="fa-regular fa-image"></i></div>
                 {% endif %}
@@ -717,7 +748,10 @@
                     <div class="pdf-item-icon">
                         <i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:16px;"></i>
                     </div>
-                    <span class="pdf-item-name">{{ pdf.name }}</span>
+                    <div class="pdf-item-text">
+                        <span class="pdf-item-name">{{ pdf.get('display_name', pdf.name) }}</span>
+                        {% if pdf.get('item_desc') %}<span class="pdf-item-subdesc">{{ pdf.item_desc }}</span>{% endif %}
+                    </div>
                     <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
                 </a>
                 {% endfor %}

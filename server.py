@@ -529,7 +529,6 @@ def qr_update_content(qr_type, qrcard_id):
             # Save welcome screen image when uploaded (update flow: content step has the file), max 1 MB
             welcome_img = request.files.get("pdf_welcome_img")
             if welcome_img and welcome_img.filename:
-                import os
                 welcome_img.seek(0, 2)
                 welcome_size = welcome_img.tell()
                 welcome_img.seek(0)
@@ -559,6 +558,57 @@ def qr_update_content(qr_type, qrcard_id):
             elif qrcard.get("welcome_img_url"):
                 pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
+        # One unified cover image shared by all templates:
+        #   T1 → displayed as full-width header
+        #   T3/T4 → displayed as circle at top
+        # All three DB fields always stay in sync.
+        _cover_img_fields = ["pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url"]
+        cover_img = request.files.get("pdf_t1_header_img")
+        cover_delete = request.form.get("pdf_t1_header_img_delete") == "1"
+        if cover_delete:
+            for _f in _cover_img_fields:
+                pdf_data[_f] = ""
+                qrcard[_f] = ""
+            proc = qr_proc.qr_proc(app)
+            proc.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$set": {_f: "" for _f in _cover_img_fields}}
+            )
+        elif cover_img and cover_img.filename:
+            cover_img.seek(0, 2)
+            cover_size = cover_img.tell()
+            cover_img.seek(0)
+            if cover_size <= 2 * 1024 * 1024:
+                ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+                os.makedirs(upload_dir, exist_ok=True)
+                save_path = os.path.join(upload_dir, "pdf_cover_img" + ext)
+                cover_img.save(save_path)
+                cover_url = f"/static/uploads/pdf/{qrcard_id}/pdf_cover_img{ext}"
+                for _f in _cover_img_fields:
+                    pdf_data[_f] = cover_url
+                    qrcard[_f] = cover_url
+                proc = qr_proc.qr_proc(app)
+                proc.mgdDB.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {_f: cover_url for _f in _cover_img_fields}}
+                )
+        else:
+            # No new upload – carry forward whichever field already has a URL
+            existing_cover = (qrcard.get("pdf_t1_header_img_url") or
+                              qrcard.get("pdf_t3_circle_img_url") or
+                              qrcard.get("pdf_t4_circle_img_url") or "")
+            for _f in _cover_img_fields:
+                pdf_data[_f] = existing_cover
+                qrcard[_f] = existing_cover
+
+        # Save per-PDF metadata to draft so qr_update_save can access them
+        pdf_data["pdf_display_names"] = request.form.getlist("pdf_display_names")
+        pdf_data["pdf_item_descs"]    = request.form.getlist("pdf_item_descs")
+        pdf_data["pdf_existing_urls"] = request.form.getlist("existing_pdf_urls")
+
         # Back from design: re-render content step with current values; update draft
         if request.form.get("back_from_design"):
             _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, pdf_data)
@@ -579,7 +629,6 @@ def qr_update_content(qr_type, qrcard_id):
 
         # For PDF type: immediately persist any newly uploaded PDF files so they are not lost between steps
         if qr_type == "pdf":
-            import os
             from pytavia_modules.qr import qr_proc as _qr_proc_for_update
             pdf_file_list = request.files.getlist("pdf_files")
             if pdf_file_list and any(f.filename for f in pdf_file_list):
@@ -685,9 +734,21 @@ def qr_update_save(qrcard_id):
             val = draft.get(field, default)
         return val
     
-    # Preserve welcome_img_url from draft or existing qrcard (file is uploaded on content step only)
+    # Preserve image URLs from draft or existing qrcard (files are uploaded on content step only).
+    # All three cover-image fields always hold the same URL (unified cover image).
     qrcard_for_save = qr_proc.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
     welcome_url = draft.get("welcome_img_url") or (qrcard_for_save.get("welcome_img_url") if qrcard_for_save else "") or ""
+    cover_url = (
+        draft.get("pdf_t1_header_img_url") or
+        draft.get("pdf_t3_circle_img_url") or
+        draft.get("pdf_t4_circle_img_url") or
+        (qrcard_for_save.get("pdf_t1_header_img_url") if qrcard_for_save else "") or
+        (qrcard_for_save.get("pdf_t3_circle_img_url") if qrcard_for_save else "") or
+        (qrcard_for_save.get("pdf_t4_circle_img_url") if qrcard_for_save else "") or ""
+    )
+    t1_header_url = cover_url
+    t3_circle_url = cover_url
+    t4_circle_url = cover_url
 
     params = {
         "fk_user_id": fk_user_id,
@@ -695,6 +756,9 @@ def qr_update_save(qrcard_id):
         "name": qr_name or draft.get("qr_name") or "Untitled QR",
         "url_content": url_content or draft.get("url_content") or "",
         "welcome_img_url": welcome_url,
+        "pdf_t1_header_img_url": t1_header_url,
+        "pdf_t3_circle_img_url": t3_circle_url,
+        "pdf_t4_circle_img_url": t4_circle_url,
         "pdf_template": _get_field("pdf_template", "default"),
         "pdf_primary_color": _get_field("pdf_primary_color", "#2F6BFD"),
         "pdf_secondary_color": _get_field("pdf_secondary_color", "#0E379A"),
@@ -730,15 +794,26 @@ def qr_update_save(qrcard_id):
     
     # Save any newly uploaded PDF files and append to existing (still-kept) list
     if True:  # always run to handle new uploads even for non-pdf edits gracefully
-        import os
         from pytavia_modules.qr import qr_proc as _qr_proc_for_files
         pdf_file_list = request.files.getlist("pdf_files")
-        # Start from existing files that are still present in the form (not removed)
-        existing_urls = request.form.getlist("existing_pdf_urls")
+        # Start from existing files that are still present in the form (not removed).
+        # Fall back to the session draft because these fields are submitted on the content
+        # step (not the design step) and the design form doesn't carry them forward.
+        existing_urls = request.form.getlist("existing_pdf_urls") or draft.get("pdf_existing_urls", [])
+        display_names = request.form.getlist("pdf_display_names") or draft.get("pdf_display_names", [])
+        item_descs    = request.form.getlist("pdf_item_descs")    or draft.get("pdf_item_descs", [])
         qrcard_db = _qr_proc_for_files.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
         db_files = qrcard_db.get("pdf_files", []) if qrcard_db else []
         if existing_urls:
-            existing_files = [f for f in db_files if f.get("url") in existing_urls]
+            db_map = {f.get("url"): f for f in db_files}
+            existing_files = []
+            for i, url in enumerate(existing_urls):
+                entry = dict(db_map.get(url, {"name": url.split("/")[-1], "url": url}))
+                if i < len(display_names) and display_names[i].strip():
+                    entry["display_name"] = display_names[i].strip()
+                if i < len(item_descs):
+                    entry["item_desc"] = item_descs[i].strip()
+                existing_files.append(entry)
         else:
             existing_files = []
         if pdf_file_list and any(f.filename for f in pdf_file_list):
