@@ -469,13 +469,17 @@ def _get_qr_draft(session, qrcard_id):
 def _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code=None, extra_data=None):
     if "qr_draft" not in session:
         session["qr_draft"] = {}
-    session["qr_draft"][qrcard_id] = {
+    # Merge into existing draft so values set in earlier steps (e.g. content step)
+    # are not lost when the design step calls this with only its own fields.
+    existing = dict(session["qr_draft"].get(qrcard_id) or {})
+    existing.update({
         "url_content": url_content,
         "qr_name": qr_name,
         "short_code": short_code or "",
-    }
+    })
     if extra_data:
-        session["qr_draft"][qrcard_id].update(extra_data)
+        existing.update(extra_data)
+    session["qr_draft"][qrcard_id] = existing
     session.modified = True
 
 def _clear_qr_draft(session, qrcard_id):
@@ -505,7 +509,7 @@ def qr_update_content(qr_type, qrcard_id):
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
                       "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
-                      "scan_limit_enabled", "scan_limit_value"]
+                      "scan_limit_enabled", "scan_limit_value", "pdf_font_apply_all"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
 
         # Delete existing welcome image if requested
@@ -632,7 +636,7 @@ def qr_update_design(qr_type, qrcard_id):
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
                       "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
-                      "scan_limit_enabled", "scan_limit_value"]
+                      "scan_limit_enabled", "scan_limit_value", "pdf_font_apply_all"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
         if qrcard.get("welcome_img_url"):
             pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
@@ -705,6 +709,7 @@ def qr_update_save(qrcard_id):
         "pdf_btn_text": _get_field("pdf_btn_text", "See PDF"),
         "welcome_time": _get_field("welcome_time", "5.0"),
         "welcome_bg_color": _get_field("welcome_bg_color", "#2F6BFD"),
+        "pdf_font_apply_all": _get_field("pdf_font_apply_all", ""),
     }
 
     # Scan limit fields (from form or draft)
@@ -786,7 +791,8 @@ def user_new_qr_design(qr_type):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
                       "pdf_title_font", "pdf_title_color", "pdf_text_font",
                       "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                      "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color"]
+                      "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
+                      "pdf_font_apply_all"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
         
         # Save uploaded PDFs to a temp folder keyed by session
@@ -886,7 +892,8 @@ def qr_save():
         "pdf_website": request.form.get("pdf_website", ""),
         "pdf_btn_text": request.form.get("pdf_btn_text", "See PDF"),
         "welcome_time": request.form.get("welcome_time", "5.0"),
-        "welcome_bg_color": request.form.get("welcome_bg_color", "#2F6BFD")
+        "welcome_bg_color": request.form.get("welcome_bg_color", "#2F6BFD"),
+        "pdf_font_apply_all": request.form.get("pdf_font_apply_all", "")
     }
     # Scan limit fields from content step
     enabled_raw = request.form.get("scan_limit_enabled")

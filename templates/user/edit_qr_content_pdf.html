@@ -499,8 +499,9 @@
                             <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                                 <!-- Template Options (Mocked for visual) -->
                                 <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="default" checked class="hidden-radio"
-                                        style="display:none;">
+                                    <input type="radio" name="pdf_template" value="default"
+                                        {% if not qrcard or qrcard.get('pdf_template', 'default') == 'default' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
                                     <div class="template-card"
                                         style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
                                         <div
@@ -515,61 +516,121 @@
                                         style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
                                 </label>
                                 <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template1" class="hidden-radio"
-                                        style="display:none;">
+                                    <input type="radio" name="pdf_template" value="template1"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template1' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #fca5a5; width: 100%; height: 40%; border-radius: 4px; margin-bottom: 8px;">
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        <!-- Header image zone -->
+                                        <div style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;">
+                                            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;"></div>
                                         </div>
-                                        <div style="background: #fecaca; width: 100%; height: 40%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        1</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template2" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #bae6fd; width: 40%; height: 40%; border-radius: 50%; margin: 0 auto 8px;">
-                                        </div>
-                                        <div style="background: #e0f2fe; width: 100%; height: 40%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        2</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template3" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #bbf7d0; width: 100%; height: 100%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        3</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template4" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div style="display: flex; gap: 4px; height: 100%;">
-                                            <div
-                                                style="background: #fef08a; width: 50%; height: 100%; border-radius: 4px;">
+                                        <!-- White card area -->
+                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div style="background: #9ca3af; width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;"></div>
+                                            <div style="background: #d1d5db; width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;"></div>
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                                <div style="width: 12px; height: 12px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
-                                            <div
-                                                style="background: #fde047; width: 50%; height: 100%; border-radius: 4px;">
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
+                                                <div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
                                         </div>
                                     </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        4</span>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 1</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template2"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template2' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <!-- White floating card (no circle image) -->
+                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                            <!-- Company + title bars -->
+                                            <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
+                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;"></div>
+                                            <!-- List items -->
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line -->
+                                        <div style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 2</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template3"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template3' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
+                                        <!-- Circle image -->
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i>
+                                        </div>
+                                        <!-- Title bars -->
+                                        <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 3px;"></div>
+                                        <div style="background: rgba(255,255,255,0.5); width: 38%; height: 3px; border-radius: 2px; margin-bottom: 7px;"></div>
+                                        <!-- List items -->
+                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
+                                            <div style="width: 10px; height: 10px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                        </div>
+                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
+                                            <div style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 3</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template4"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template4' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                                        <!-- White floating card with circle image overlapping top -->
+                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                            <!-- Circle image overlapping card top -->
+                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 7px;"></i>
+                                            </div>
+                                            <!-- Company + title bars -->
+                                            <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
+                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;"></div>
+                                            <!-- List items -->
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line below card -->
+                                        <div style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 4</span>
                                 </label>
                             </div>
                         </div>
@@ -703,6 +764,19 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Apply font settings to all templates toggle -->
+                                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-main);">Apply font to all templates</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">When ON, font type &amp; color override all template previews</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="pdf_font_apply_all" name="pdf_font_apply_all"
+                                            {% if qrcard and qrcard.get('pdf_font_apply_all') %}checked{% endif %}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -770,6 +844,93 @@
                             style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
                             <!-- Items will be injected here via JS -->
                         </div>
+                    </div>
+
+                    <!-- Template 1: Header Image Upload (visible only when template1 is selected) -->
+                    <div id="t1-header-img-section" style="display: none; margin-bottom: 20px;">
+                        <label class="form-label" style="font-size: 12px;">Header Image <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – shown at top of page)</span></label>
+                        <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                            <div id="t1-header-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                {% if qrcard and qrcard.get('pdf_t1_header_img_url') %}
+                                <img src="{{ qrcard.get('pdf_t1_header_img_url') }}" alt="Header image"
+                                    style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
+                                <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                {% else %}
+                                <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                </div>
+                                <span style="font-size: 13px; color: var(--text-muted);">Upload Header Image</span>
+                                {% endif %}
+                            </div>
+                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                            <input type="file" name="pdf_t1_header_img" accept="image/*" style="display: none;" id="pdf_t1_header_img_input">
+                        </label>
+                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                            <button type="button" id="t1-header-img-remove-btn" class="btn-outline"
+                                style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('pdf_t1_header_img_url')) %}display: none;{% endif %}">
+                                <i class="fa-solid fa-xmark"></i> Remove
+                            </button>
+                            <input type="hidden" name="pdf_t1_header_img_delete" id="pdf_t1_header_img_delete" value="0">
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. If no image, PDF list shows directly.</p>
+                    </div>
+
+                    <!-- Template 3: Circle Image Upload (visible only when template3 selected) -->
+                    <div id="t3-circle-img-section" style="display: none; margin-bottom: 20px;">
+                        <label class="form-label" style="font-size: 12px;">Circle Image <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – shown as circle at top)</span></label>
+                        <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                            <div id="t3-circle-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                {% if qrcard and qrcard.get('pdf_t3_circle_img_url') %}
+                                <img src="{{ qrcard.get('pdf_t3_circle_img_url') }}" alt="Circle image"
+                                    style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                {% else %}
+                                <div style="width: 48px; height: 48px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                </div>
+                                <span style="font-size: 13px; color: var(--text-muted);">Upload Circle Image</span>
+                                {% endif %}
+                            </div>
+                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                            <input type="file" name="pdf_t3_circle_img" accept="image/*" style="display: none;" id="pdf_t3_circle_img_input">
+                        </label>
+                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                            <button type="button" id="t3-circle-img-remove-btn" class="btn-outline"
+                                style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('pdf_t3_circle_img_url')) %}display: none;{% endif %}">
+                                <i class="fa-solid fa-xmark"></i> Remove
+                            </button>
+                            <input type="hidden" name="pdf_t3_circle_img_delete" id="pdf_t3_circle_img_delete" value="0">
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Displayed as a circle at the top center.</p>
+                    </div>
+
+                    <!-- Template 4: Circle Image Upload -->
+                    <div id="t4-circle-img-section" style="display: none; margin-bottom: 20px;">
+                        <label class="form-label" style="font-size: 12px;">Circle Image <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – overlaps top of card)</span></label>
+                        <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                            <div id="t4-circle-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                {% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}
+                                <img src="{{ qrcard.get('pdf_t4_circle_img_url') }}" alt="Circle image"
+                                    style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--border-color);">
+                                <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                {% else %}
+                                <div style="width: 48px; height: 48px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                </div>
+                                <span style="font-size: 13px; color: var(--text-muted);">Upload Circle Image</span>
+                                {% endif %}
+                            </div>
+                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                            <input type="file" name="pdf_t4_circle_img" accept="image/*" style="display: none;" id="pdf_t4_circle_img_input">
+                        </label>
+                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                            <button type="button" id="t4-circle-img-remove-btn" class="btn-outline"
+                                style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('pdf_t4_circle_img_url')) %}display: none;{% endif %}">
+                                <i class="fa-solid fa-xmark"></i> Remove
+                            </button>
+                            <input type="hidden" name="pdf_t4_circle_img_delete" id="pdf_t4_circle_img_delete" value="0">
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Displayed as a circle overlapping the top of the card.</p>
                     </div>
 
                     <div
@@ -1050,6 +1211,158 @@
                         <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
                             <img id="preview-welcome-img" src="" alt="Welcome">
                         </div>
+
+                        <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
+                        <div id="preview-template1" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: #f3f4f6; overflow-y: auto; overflow-x: hidden;">
+                            <!-- Header image area (light bg so image looks natural) -->
+                            <div id="t1-preview-header" style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('pdf_t1_header_img_url')) %}display: none;{% endif %}">
+                                <img id="t1-preview-header-img"
+                                    src="{% if qrcard and qrcard.get('pdf_t1_header_img_url') %}{{ qrcard.get('pdf_t1_header_img_url') }}{% endif %}"
+                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <!-- Colored card body (primary color bg, white text) -->
+                            <div id="t1-preview-card-body" style="background: {{ preview_primary }}; {% if qrcard and qrcard.get('pdf_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 14px 14px 20px; min-height: 0; overflow-y: auto;">
+                                <div id="t1-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF file list (white cards on colored bg) -->
+                                <div id="t1-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <!-- Website link -->
+                                <div id="t1-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 2 Preview: primary bg + floating white card (no circle image) -->
+                        <div id="preview-template2" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div style="background: white; border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <div id="t2-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list inside white card -->
+                                <div id="t2-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t2-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                        </div>
+
+                        <!-- Template 3 Preview: primary bg + circle image at top -->
+                        <div id="preview-template3" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
+                            <div style="flex: 1; display: flex; flex-direction: column; padding: 20px 14px 20px; overflow-y: auto; align-items: center;">
+                                <!-- Circle image -->
+                                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 3px solid white; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; flex-shrink: 0; box-shadow: 0 0 0 5px rgba(255,255,255,0.15);">
+                                    <img id="t3-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('pdf_t3_circle_img_url') %}{{ qrcard.get('pdf_t3_circle_img_url') }}{% endif %}"
+                                        alt="" style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('pdf_t3_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t3-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('pdf_t3_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                        <i class="fa-regular fa-image" style="font-size: 26px; color: rgba(255,255,255,0.5);"></i>
+                                    </div>
+                                </div>
+                                <!-- Text -->
+                                <div id="t3-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; width: 100%; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; width: 100%; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list -->
+                                <div id="t3-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px; width: 100%;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <!-- Website -->
+                                <div id="t3-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 4 Preview: primary bg + floating white card + circle image overlapping top -->
+                        <div id="preview-template4" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div style="background: white; border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <!-- Circle image overlapping top of card -->
+                                <div style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center;">
+                                    <img id="t4-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}{{ qrcard.get('pdf_t4_circle_img_url') }}{% endif %}"
+                                        alt="" style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('pdf_t4_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t4-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e5e7eb;">
+                                        <i class="fa-regular fa-image" style="font-size: 22px; color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                                <!-- Text inside card -->
+                                <div id="t4-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list inside white card -->
+                                <div id="t4-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t4-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                        </div>
+
                         <!-- PDF Default Template Preview -->
                         <div id="preview-top-block"
                             style="background-color: {{ preview_primary }}; width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
@@ -1094,7 +1407,7 @@
 
                             <!-- See PDF Button -->
                             <div id="preview-btn"
-                                style="background-color: {{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto;">
+                                style="background-color: {{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto; width: fit-content; margin-left: auto; margin-right: auto; white-space: nowrap;">
                                 See PDF
                             </div>
 
@@ -1262,6 +1575,8 @@
                     secondaryHex.value = secondaryPicker.value.toUpperCase();
                     if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
                     if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
+                    // Propagate to t1-t4
+                    primaryPicker.dispatchEvent(new Event('input'));
                 });
             }
 
@@ -1278,6 +1593,8 @@
                         primaryPicker.value = this.dataset.primary;
                         primaryHex.value = this.dataset.primary.toUpperCase();
                         if (previewTopBlock) previewTopBlock.style.backgroundColor = this.dataset.primary;
+                        // Propagate to t1-t4
+                        primaryPicker.dispatchEvent(new Event('input'));
                     }
                     if (secondaryPicker) {
                         secondaryPicker.value = this.dataset.secondary;
@@ -1366,29 +1683,108 @@
             const previewDescEl = document.getElementById('preview-desc-text');
             const previewWebsiteEl = document.getElementById('preview-website-text');
 
+            function isFontToggleOn() {
+                var t = document.getElementById('pdf_font_apply_all');
+                return t && t.checked;
+            }
+
             function applyPdfFonts() {
-                var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
-                if (previewTitleEl && titleFontSelect) {
-                    previewTitleEl.style.fontFamily = quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-                }
-                if (previewCompanyEl && textFontSelect) {
-                    previewCompanyEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-                }
-                if (previewDescEl && textFontSelect) {
-                    previewDescEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-                }
-                if (previewWebsiteEl && textFontSelect) {
-                    previewWebsiteEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-                }
+                if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
+                var quote   = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
+                var titleFF = titleFontSelect ? quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+                var textFF  = textFontSelect  ? quote(textFontSelect.value)  + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+
+                // Default template
+                if (previewTitleEl   && titleFF) previewTitleEl.style.fontFamily   = titleFF;
+                if (previewCompanyEl && textFF)  previewCompanyEl.style.fontFamily  = textFF;
+                if (previewDescEl    && textFF)  previewDescEl.style.fontFamily     = textFF;
+                if (previewWebsiteEl && textFF)  previewWebsiteEl.style.fontFamily  = textFF;
+
+                // Templates 1-4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    var websiteEl = document.getElementById(pfx + '-preview-website');
+                    if (titleEl   && titleFF) titleEl.style.fontFamily   = titleFF;
+                    if (companyEl && textFF)  companyEl.style.fontFamily  = textFF;
+                    if (descEl    && textFF)  descEl.style.fontFamily     = textFF;
+                    if (websiteEl && textFF)  websiteEl.style.fontFamily  = textFF;
+                });
             }
 
             function applyPdfTextColors() {
+                if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
                 const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
-                const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
-                if (previewTitleEl) previewTitleEl.style.color = titleColor;
-                if (previewCompanyEl) previewCompanyEl.style.color = textColor;
-                if (previewDescEl) previewDescEl.style.color = textColor;
-                if (previewWebsiteEl) previewWebsiteEl.style.color = textColor;
+                const textColor  = textColorPicker  ? textColorPicker.value  : '#6b7280';
+
+                // Default template
+                if (previewTitleEl)   previewTitleEl.style.color   = titleColor;
+                if (previewCompanyEl) previewCompanyEl.style.color  = textColor;
+                if (previewDescEl)    previewDescEl.style.color     = textColor;
+                if (previewWebsiteEl) previewWebsiteEl.style.color  = textColor;
+
+                // Templates 1-4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   titleEl.style.color   = titleColor;
+                    if (companyEl) companyEl.style.color  = textColor;
+                    if (descEl)    descEl.style.color     = textColor;
+                });
+            }
+
+            // Restore all templates to their natural design colors & font families
+            function resetAllFontsToDefault() {
+                var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+
+                // Default template — natural colors
+                if (previewTitleEl)   { previewTitleEl.style.color   = '#111827'; previewTitleEl.style.fontFamily   = ''; }
+                if (previewCompanyEl) { previewCompanyEl.style.color  = '#6b7280'; previewCompanyEl.style.fontFamily  = ''; }
+                if (previewDescEl)    { previewDescEl.style.color     = '#6b7280'; previewDescEl.style.fontFamily     = ''; }
+                if (previewWebsiteEl) { previewWebsiteEl.style.color  = '#6b7280'; previewWebsiteEl.style.fontFamily  = ''; }
+
+                // t1 / t3: colored bg → white text
+                ['t1', 't3'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   { titleEl.style.color   = 'white';                    titleEl.style.fontFamily   = ''; }
+                    if (companyEl) { companyEl.style.color  = 'rgba(255,255,255,0.75)';  companyEl.style.fontFamily  = ''; }
+                    if (descEl)    { descEl.style.color     = 'rgba(255,255,255,0.8)';   descEl.style.fontFamily     = ''; }
+                });
+
+                // t2 / t4: white card → company=primary, title=dark, desc=gray
+                ['t2', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   { titleEl.style.color   = '#111827';  titleEl.style.fontFamily   = ''; }
+                    if (companyEl) { companyEl.style.color  = primary;   companyEl.style.fontFamily  = ''; }
+                    if (descEl)    { descEl.style.color     = '#6b7280'; descEl.style.fontFamily     = ''; }
+                });
+
+                // Website elements for t1-t4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var el = document.getElementById(pfx + '-preview-website');
+                    if (el) { el.style.fontFamily = ''; }
+                });
+            }
+
+            // Toggle is a master switch: ON → apply custom fonts+colors; OFF → restore natural look
+            var fontApplyAllToggle = document.getElementById('pdf_font_apply_all');
+            if (fontApplyAllToggle) {
+                fontApplyAllToggle.addEventListener('change', function () {
+                    if (this.checked) {
+                        applyPdfFonts();
+                        applyPdfTextColors();
+                    } else {
+                        resetAllFontsToDefault();
+                    }
+                });
             }
 
             if (titleColorPicker && titleColorHex) {
@@ -1876,6 +2272,532 @@
         }
     }) ();
     {% endif %}
+</script>
+
+<script>
+// ── Template Selection & Template 1 Logic ──────────────────────────────────
+(function () {
+    'use strict';
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function val(name) {
+        var el = document.querySelector('[name="' + name + '"]');
+        return el ? el.value.trim() : '';
+    }
+
+    // ── Template card border highlight ────────────────────────────────────────
+    function syncTemplateCardBorders() {
+        document.querySelectorAll('input[name="pdf_template"]').forEach(function (radio) {
+            var card = radio.closest('label').querySelector('.template-card');
+            var span = radio.closest('label').querySelector('span');
+            if (card) {
+                if (radio.checked) {
+                    card.style.border = '2px solid var(--primary)';
+                    if (span) span.style.color = 'var(--text-main)';
+                } else {
+                    card.style.border = '1px solid var(--border-color)';
+                    if (span) span.style.color = 'var(--text-muted)';
+                }
+            }
+        });
+    }
+
+    // ── Switch template preview in phone mockup ───────────────────────────────
+    function switchPdfTemplate(template) {
+        var t1Preview = document.getElementById('preview-template1');
+        var t2Preview = document.getElementById('preview-template2');
+        var t3Preview = document.getElementById('preview-template3');
+        var t4Preview = document.getElementById('preview-template4');
+        var t1Section = document.getElementById('t1-header-img-section');
+        var t3Section = document.getElementById('t3-circle-img-section');
+        var t4Section = document.getElementById('t4-circle-img-section');
+        var topBlock  = document.getElementById('preview-top-block');
+        var botBlock  = document.getElementById('preview-bottom-block');
+
+        // Hide all first
+        [t1Preview, t2Preview, t3Preview, t4Preview].forEach(function (el) { if (el) el.style.display = 'none'; });
+        [t1Section, t3Section, t4Section].forEach(function (el) { if (el) el.style.display = 'none'; });
+        if (topBlock) topBlock.style.display = 'none';
+        if (botBlock) botBlock.style.display = 'none';
+
+        if (template === 'template1') {
+            if (t1Preview) t1Preview.style.display = 'flex';
+            if (t1Section) t1Section.style.display = 'block';
+            updateT1TextPreview();
+            updateT1PdfList();
+        } else if (template === 'template2') {
+            if (t2Preview) t2Preview.style.display = 'flex';
+            updateT2TextPreview();
+            updateT2PdfList();
+        } else if (template === 'template3') {
+            if (t3Preview) t3Preview.style.display = 'flex';
+            if (t3Section) t3Section.style.display = 'block';
+            updateT3TextPreview();
+            updateT3PdfList();
+        } else if (template === 'template4') {
+            if (t4Preview) t4Preview.style.display = 'flex';
+            if (t4Section) t4Section.style.display = 'block';
+            updateT4TextPreview();
+            updateT4PdfList();
+        } else {
+            if (topBlock) topBlock.style.display = '';
+            if (botBlock) botBlock.style.display = '';
+        }
+    }
+
+    // ── Sync text fields into template 1 preview ─────────────────────────────
+    function updateT1TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t1-preview-company', val('pdf_company'));
+        set('t1-preview-title',   val('pdf_title'));
+        set('t1-preview-desc',    val('pdf_desc'));
+        set('t1-preview-website', val('pdf_website'));
+        // Ensure card body background matches current primary color
+        var picker = document.getElementById('pdf_primary_picker');
+        var cardBody = document.getElementById('t1-preview-card-body');
+        if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
+    }
+
+    // ── Build PDF list in template 1 preview ─────────────────────────────────
+    function buildT1PdfItem(name, url) {
+        var a = document.createElement('a');
+        a.href   = url || '#';
+        a.target = url ? '_blank' : '';
+        if (url) a.setAttribute('download', '');
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+
+        var iconBox = document.createElement('div');
+        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        var ico = document.createElement('i');
+        ico.className = 'fa-regular fa-file-pdf';
+        ico.style.cssText = 'color:#ef4444;font-size:14px;';
+        iconBox.appendChild(ico);
+
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameSpan.textContent = name;
+
+        var chevron = document.createElement('i');
+        chevron.className = 'fa-solid fa-chevron-right';
+        chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+
+        a.appendChild(iconBox);
+        a.appendChild(nameSpan);
+        a.appendChild(chevron);
+        return a;
+    }
+
+    function updateT1PdfList() {
+        var listEl = document.getElementById('t1-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        // Saved PDFs still visible (not removed)
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var nameEl = item.querySelector('a');
+            if (!nameEl) return;
+            listEl.appendChild(buildT1PdfItem(nameEl.textContent.trim(), item.dataset.url));
+        });
+
+        // Newly selected files
+        var pdfInput = document.querySelector('input[name="pdf_files"]');
+        if (pdfInput && pdfInput.files) {
+            Array.from(pdfInput.files).forEach(function (file) {
+                listEl.appendChild(buildT1PdfItem(file.name, null));
+            });
+        }
+    }
+
+    // ── Sync text fields into template 2 preview ─────────────────────────────
+    function updateT2TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t2-preview-company', val('pdf_company'));
+        set('t2-preview-title',   val('pdf_title'));
+        set('t2-preview-desc',    val('pdf_desc'));
+        set('t2-preview-website', val('pdf_website'));
+        var picker  = document.getElementById('pdf_primary_picker');
+        var t2el    = document.getElementById('preview-template2');
+        var compEl  = document.getElementById('t2-preview-company');
+        if (picker) {
+            if (t2el)   t2el.style.backgroundColor = picker.value;
+            if (compEl) compEl.style.color = picker.value;
+        }
+    }
+
+    function updateT2PdfList() {
+        var listEl = document.getElementById('t2-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var nameEl = item.querySelector('a');
+            if (!nameEl) return;
+            listEl.appendChild(buildT4PdfItem(nameEl.textContent.trim(), item.dataset.url, primary));
+        });
+        var pdfInput = document.querySelector('input[name="pdf_files"]');
+        if (pdfInput && pdfInput.files) {
+            Array.from(pdfInput.files).forEach(function (file) {
+                listEl.appendChild(buildT4PdfItem(file.name, null, primary));
+            });
+        }
+    }
+
+    // ── Template 3: text sync, PDF list, circle image ────────────────────────
+    function updateT3TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t3-preview-company', val('pdf_company'));
+        set('t3-preview-title',   val('pdf_title'));
+        set('t3-preview-desc',    val('pdf_desc'));
+        set('t3-preview-website', val('pdf_website'));
+        var picker = document.getElementById('pdf_primary_picker');
+        var t3el = document.getElementById('preview-template3');
+        if (picker && t3el) t3el.style.backgroundColor = picker.value;
+    }
+
+    function updateT3PdfList() {
+        var listEl = document.getElementById('t3-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var nameEl = item.querySelector('a');
+            if (!nameEl) return;
+            listEl.appendChild(buildT1PdfItem(nameEl.textContent.trim(), item.dataset.url));
+        });
+        var pdfInput = document.querySelector('input[name="pdf_files"]');
+        if (pdfInput && pdfInput.files) {
+            Array.from(pdfInput.files).forEach(function (file) {
+                listEl.appendChild(buildT1PdfItem(file.name, null));
+            });
+        }
+    }
+
+    // Circle image upload for template 3
+    var t3ImgInput = document.getElementById('pdf_t3_circle_img_input');
+    if (t3ImgInput) {
+        t3ImgInput.addEventListener('change', function () {
+            var file = this.files && this.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Circle image must be 2 MB or smaller.');
+                this.value = '';
+                return;
+            }
+            var url = URL.createObjectURL(file);
+            var previewImg   = document.getElementById('t3-preview-circle-img');
+            var placeholder  = document.getElementById('t3-preview-circle-placeholder');
+            var thumb        = document.getElementById('t3-circle-img-preview');
+            var removeBtn    = document.getElementById('t3-circle-img-remove-btn');
+            var deleteFlag   = document.getElementById('pdf_t3_circle_img_delete');
+
+            if (previewImg)  { previewImg.src = url; previewImg.style.display = 'block'; }
+            if (placeholder) { placeholder.style.display = 'none'; }
+            if (thumb) {
+                thumb.innerHTML = '<img src="' + url + '" alt="Circle" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border-color);"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            }
+            if (removeBtn)  { removeBtn.style.display = 'inline-flex'; }
+            if (deleteFlag) { deleteFlag.value = '0'; }
+        });
+    }
+
+    var t3RemoveBtn = document.getElementById('t3-circle-img-remove-btn');
+    if (t3RemoveBtn) {
+        t3RemoveBtn.addEventListener('click', function () {
+            if (t3ImgInput) t3ImgInput.value = '';
+            var deleteFlag  = document.getElementById('pdf_t3_circle_img_delete');
+            var previewImg  = document.getElementById('t3-preview-circle-img');
+            var placeholder = document.getElementById('t3-preview-circle-placeholder');
+            var thumb       = document.getElementById('t3-circle-img-preview');
+
+            if (deleteFlag)  { deleteFlag.value = '1'; }
+            if (previewImg)  { previewImg.src = ''; previewImg.style.display = 'none'; }
+            if (placeholder) { placeholder.style.display = 'flex'; }
+            if (thumb) {
+                thumb.innerHTML = '<div style="width:48px;height:48px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Circle Image</span>';
+            }
+            this.style.display = 'none';
+        });
+    }
+
+    // ── Template 4: text sync, PDF list, circle image ────────────────────────
+    function updateT4TextPreview() {
+        function set(id, value, isBlock) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? (isBlock || 'block') : 'none';
+        }
+        set('t4-preview-company', val('pdf_company'));
+        set('t4-preview-title',   val('pdf_title'));
+        set('t4-preview-desc',    val('pdf_desc'));
+        set('t4-preview-website', val('pdf_website'));
+        // Company uses primary color
+        var picker = document.getElementById('pdf_primary_picker');
+        var t4el   = document.getElementById('preview-template4');
+        var compEl = document.getElementById('t4-preview-company');
+        if (picker) {
+            if (t4el)   t4el.style.backgroundColor = picker.value;
+            if (compEl) compEl.style.color = picker.value;
+        }
+    }
+
+    function updateT4PdfList() {
+        var listEl = document.getElementById('t4-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var nameEl = item.querySelector('a');
+            if (!nameEl) return;
+            listEl.appendChild(buildT4PdfItem(nameEl.textContent.trim(), item.dataset.url, primary));
+        });
+        var pdfInput = document.querySelector('input[name="pdf_files"]');
+        if (pdfInput && pdfInput.files) {
+            Array.from(pdfInput.files).forEach(function (file) {
+                listEl.appendChild(buildT4PdfItem(file.name, null, primary));
+            });
+        }
+    }
+
+    function buildT4PdfItem(name, url, primaryColor) {
+        var a = document.createElement('a');
+        a.href   = url || '#';
+        a.target = url ? '_blank' : '';
+        if (url) a.setAttribute('download', '');
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;gap:8px;';
+
+        var iconBox = document.createElement('div');
+        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        var ico = document.createElement('i');
+        ico.className = 'fa-regular fa-file-pdf';
+        ico.style.cssText = 'color:#ef4444;font-size:14px;';
+        iconBox.appendChild(ico);
+
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameSpan.textContent = name;
+
+        var chevron = document.createElement('i');
+        chevron.className = 'fa-solid fa-chevron-right';
+        chevron.style.cssText = 'color:' + (primaryColor || '#2f6bfd') + ';font-size:10px;flex-shrink:0;';
+
+        a.appendChild(iconBox);
+        a.appendChild(nameSpan);
+        a.appendChild(chevron);
+        return a;
+    }
+
+    // Circle image upload for template 4
+    var t4ImgInput = document.getElementById('pdf_t4_circle_img_input');
+    if (t4ImgInput) {
+        t4ImgInput.addEventListener('change', function () {
+            var file = this.files && this.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Circle image must be 2 MB or smaller.');
+                this.value = '';
+                return;
+            }
+            var url = URL.createObjectURL(file);
+            var previewImg   = document.getElementById('t4-preview-circle-img');
+            var placeholder  = document.getElementById('t4-preview-circle-placeholder');
+            var thumb        = document.getElementById('t4-circle-img-preview');
+            var removeBtn    = document.getElementById('t4-circle-img-remove-btn');
+            var deleteFlag   = document.getElementById('pdf_t4_circle_img_delete');
+
+            if (previewImg)  { previewImg.src = url; previewImg.style.display = 'block'; }
+            if (placeholder) { placeholder.style.display = 'none'; }
+            if (thumb) {
+                thumb.innerHTML = '<img src="' + url + '" alt="Circle" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--border-color);"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            }
+            if (removeBtn)  { removeBtn.style.display = 'inline-flex'; }
+            if (deleteFlag) { deleteFlag.value = '0'; }
+        });
+    }
+
+    var t4RemoveBtn = document.getElementById('t4-circle-img-remove-btn');
+    if (t4RemoveBtn) {
+        t4RemoveBtn.addEventListener('click', function () {
+            if (t4ImgInput) t4ImgInput.value = '';
+            var deleteFlag  = document.getElementById('pdf_t4_circle_img_delete');
+            var previewImg  = document.getElementById('t4-preview-circle-img');
+            var placeholder = document.getElementById('t4-preview-circle-placeholder');
+            var thumb       = document.getElementById('t4-circle-img-preview');
+
+            if (deleteFlag)  { deleteFlag.value = '1'; }
+            if (previewImg)  { previewImg.src = ''; previewImg.style.display = 'none'; }
+            if (placeholder) { placeholder.style.display = 'flex'; }
+            if (thumb) {
+                thumb.innerHTML = '<div style="width:48px;height:48px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Circle Image</span>';
+            }
+            this.style.display = 'none';
+        });
+    }
+
+    // ── Show/hide header zone and adjust card body style ─────────────────────
+    function showT1Header(hasImage) {
+        var hdr      = document.getElementById('t1-preview-header');
+        var cardBody = document.getElementById('t1-preview-card-body');
+        if (hdr) {
+            hdr.style.display = hasImage ? 'block' : 'none';
+        }
+        if (cardBody) {
+            cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+            cardBody.style.marginTop    = hasImage ? '-18px' : '0';
+            // Ensure card body always uses primary color
+            var picker = document.getElementById('pdf_primary_picker');
+            if (picker) cardBody.style.backgroundColor = picker.value;
+        }
+    }
+
+    // ── Primary color → update all template backgrounds + company colors ──────
+    var primaryPicker = document.getElementById('pdf_primary_picker');
+    if (primaryPicker) {
+        primaryPicker.addEventListener('input', function (e) {
+            var color = e.target.value;
+            // t1 card body bg
+            var cardBody = document.getElementById('t1-preview-card-body');
+            if (cardBody) cardBody.style.backgroundColor = color;
+            // t2/t3/t4 full bg
+            ['preview-template2', 'preview-template3', 'preview-template4'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.backgroundColor = color;
+            });
+            // t2 + t4 company text color = primary
+            ['t2-preview-company', 't4-preview-company'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.color = color;
+            });
+            // Rebuild PDF lists for templates that use primary-colored chevrons
+            var active = document.querySelector('input[name="pdf_template"]:checked');
+            if (active) {
+                if (active.value === 'template2') updateT2PdfList();
+                if (active.value === 'template4') updateT4PdfList();
+            }
+        });
+    }
+
+    // ── Header image upload for template 1 ───────────────────────────────────
+    var t1ImgInput = document.getElementById('pdf_t1_header_img_input');
+    if (t1ImgInput) {
+        t1ImgInput.addEventListener('change', function () {
+            var file = this.files && this.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Header image must be 2 MB or smaller.');
+                this.value = '';
+                return;
+            }
+            var url = URL.createObjectURL(file);
+            var previewImg   = document.getElementById('t1-preview-header-img');
+            var placeholder  = document.getElementById('t1-preview-header-placeholder');
+            var thumb        = document.getElementById('t1-header-img-preview');
+            var removeBtn    = document.getElementById('t1-header-img-remove-btn');
+            var deleteFlag   = document.getElementById('pdf_t1_header_img_delete');
+
+            if (previewImg)  { previewImg.src = url; previewImg.style.display = 'block'; }
+            if (thumb) {
+                thumb.innerHTML = '<img src="' + url + '" alt="Header" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            }
+            if (removeBtn)  { removeBtn.style.display = 'inline-flex'; }
+            if (deleteFlag) { deleteFlag.value = '0'; }
+            showT1Header(true);
+        });
+    }
+
+    var t1RemoveBtn = document.getElementById('t1-header-img-remove-btn');
+    if (t1RemoveBtn) {
+        t1RemoveBtn.addEventListener('click', function () {
+            if (t1ImgInput) t1ImgInput.value = '';
+            var deleteFlag  = document.getElementById('pdf_t1_header_img_delete');
+            var previewImg  = document.getElementById('t1-preview-header-img');
+            var placeholder = document.getElementById('t1-preview-header-placeholder');
+            var thumb       = document.getElementById('t1-header-img-preview');
+
+            if (deleteFlag)  { deleteFlag.value = '1'; }
+            if (previewImg)  { previewImg.src = ''; previewImg.style.display = 'none'; }
+            if (thumb) {
+                thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Header Image</span>';
+            }
+            this.style.display = 'none';
+            showT1Header(false);
+        });
+    }
+
+    // ── Wire text inputs to update the active template preview ───────────────
+    ['pdf_company', 'pdf_title', 'pdf_desc', 'pdf_website'].forEach(function (name) {
+        var input = document.querySelector('input[name="' + name + '"]');
+        if (!input) return;
+        input.addEventListener('input', function () {
+            var active = document.querySelector('input[name="pdf_template"]:checked');
+            if (!active) return;
+            if (active.value === 'template1') updateT1TextPreview();
+            if (active.value === 'template2') updateT2TextPreview();
+            if (active.value === 'template3') updateT3TextPreview();
+            if (active.value === 'template4') updateT4TextPreview();
+        });
+    });
+
+    // ── Watch PDF list DOM changes to refresh the active template's list ──────
+    var pdfObserver = new MutationObserver(function () {
+        var active = document.querySelector('input[name="pdf_template"]:checked');
+        if (!active) return;
+        if (active.value === 'template1') updateT1PdfList();
+        if (active.value === 'template2') updateT2PdfList();
+        if (active.value === 'template3') updateT3PdfList();
+        if (active.value === 'template4') updateT4PdfList();
+    });
+    var savedPdfList = document.getElementById('saved-pdf-list');
+    var newPdfList   = document.getElementById('pdf-file-list');
+    if (savedPdfList) pdfObserver.observe(savedPdfList, { childList: true, subtree: true });
+    if (newPdfList)   pdfObserver.observe(newPdfList,   { childList: true, subtree: true });
+
+    // ── Also hook pdf_files input directly ───────────────────────────────────
+    var pdfFileInput = document.querySelector('input[name="pdf_files"]');
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', function () {
+            var active = document.querySelector('input[name="pdf_template"]:checked');
+            if (!active) return;
+            if (active.value === 'template1') setTimeout(updateT1PdfList, 80);
+            if (active.value === 'template2') setTimeout(updateT2PdfList, 80);
+            if (active.value === 'template3') setTimeout(updateT3PdfList, 80);
+            if (active.value === 'template4') setTimeout(updateT4PdfList, 80);
+        });
+    }
+
+    // ── Radio change listener ─────────────────────────────────────────────────
+    document.querySelectorAll('input[name="pdf_template"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            syncTemplateCardBorders();
+            switchPdfTemplate(this.value);
+        });
+    });
+
+    // ── Initialize on page load ───────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        // Ensure the correct radio is checked (Jinja sets it, but sync to be safe)
+        var savedTemplate = "{{ qrcard.get('pdf_template', 'default') if qrcard else 'default' }}";
+        var savedRadio = document.querySelector('input[name="pdf_template"][value="' + savedTemplate + '"]');
+        if (savedRadio) savedRadio.checked = true;
+        syncTemplateCardBorders();
+        switchPdfTemplate(savedTemplate);
+    });
+
+})();
 </script>
 
 {% endblock %}
