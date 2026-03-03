@@ -205,6 +205,10 @@
         padding-bottom: 16px;
     }
 
+    .sub-collapse-body.show.sub-collapse-body-lg {
+        max-height: 2000px;
+    }
+
     .form-group {
         margin-bottom: 20px;
     }
@@ -798,135 +802,157 @@
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body">
-                    <!-- Add PDF Area -->
-                    <div style="margin-top: 16px; margin-bottom: 24px;">
-                        <label
-                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 18px; color: var(--text-main);"></i>
-                                <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
-                                    PDF(s)</span>
-                                <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
-                            </div>
-                            <input type="file" name="pdf_files" id="pdf_file_input" accept="application/pdf" multiple
-                                style="display: none;">
-                        </label>
 
-                        <!-- Saved PDF files from database -->
-                        {% if qrcard and qrcard.get('pdf_files') %}
-                        <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"
-                            id="saved-pdf-list">
-                            {% for pdf in qrcard.get('pdf_files', []) %}
-                            <div class="pdf-file-item" data-url="{{ pdf.url }}"
-                                style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
-                                <input type="hidden" name="existing_pdf_urls" value="{{ pdf.url }}">
-                                <!-- File header row -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
-                                        <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 15px; flex-shrink: 0;"></i>
-                                        <a href="{{ pdf.url }}" target="_blank"
-                                            style="font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;">{{ pdf.name }}</a>
+                    <!-- 1. PDF upload and detail information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">PDF upload and detail information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body sub-collapse-body-lg">
+                            <div style="margin-top: 16px; margin-bottom: 24px;">
+                                <label
+                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-cloud-arrow-up"
+                                            style="font-size: 18px; color: var(--text-main);"></i>
+                                        <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
+                                            PDF(s)</span>
+                                        <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
                                     </div>
-                                    <button type="button" class="remove-saved-pdf-btn" data-url="{{ pdf.url }}"
-                                        data-qrcard-id="{{ qrcard_id }}"
-                                        style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; flex-shrink: 0;"
-                                        title="Remove this PDF">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-                                <!-- Display Name input -->
-                                <div style="margin-bottom: 8px;">
-                                    <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Name</label>
-                                    <input type="text" name="pdf_display_names" class="pdf-display-name-input"
-                                        value="{{ pdf.get('display_name', pdf.name) }}"
-                                        style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
-                                </div>
-                                <!-- Description input -->
-                                <div>
-                                    <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Description</label>
-                                    <input type="text" name="pdf_item_descs" class="pdf-item-desc-input"
-                                        value="{{ pdf.get('item_desc', '') }}"
-                                        placeholder="Optional note shown under the file name…"
-                                        style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                                    <input type="file" name="pdf_files" id="pdf_file_input" accept="application/pdf" multiple
+                                        style="display: none;">
+                                </label>
 
-                        <!-- New files picked by user (JS-injected) -->
-                        <div id="pdf-file-list"
-                            style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
-                            <!-- Items will be injected here via JS -->
-                        </div>
-                    </div>
-
-                    <!-- Unified Cover Image – one upload used by all templates (T1=header, T3/T4=circle) -->
-                    <div id="pdf-cover-img-section" style="margin-bottom: 20px;">
-                        <label class="form-label" style="font-size: 12px;">Cover Image
-                            <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – header for Template 1, circle for Template 3 &amp; 4)</span>
-                        </label>
-                        <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
-                            <div id="cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                {% set cover_url = qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url') if qrcard else '' %}
-                                {% if cover_url %}
-                                <img src="{{ cover_url }}" alt="Cover image"
-                                    style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
-                                <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
-                                {% else %}
-                                <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                <!-- Saved PDF files from database -->
+                                {% if qrcard and qrcard.get('pdf_files') %}
+                                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"
+                                    id="saved-pdf-list">
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <div class="pdf-file-item" data-url="{{ pdf.url }}"
+                                        style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
+                                        <input type="hidden" name="existing_pdf_urls" value="{{ pdf.url }}">
+                                        <!-- File header row -->
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
+                                                <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 15px; flex-shrink: 0;"></i>
+                                                <a href="{{ pdf.url }}" target="_blank"
+                                                    style="font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;">{{ pdf.name }}</a>
+                                            </div>
+                                            <button type="button" class="remove-saved-pdf-btn" data-url="{{ pdf.url }}"
+                                                data-qrcard-id="{{ qrcard_id }}"
+                                                style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; flex-shrink: 0;"
+                                                title="Remove this PDF">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                        <!-- Display Name input -->
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Name</label>
+                                            <input type="text" name="pdf_display_names" class="pdf-display-name-input"
+                                                value="{{ pdf.get('display_name', pdf.name) }}"
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                        </div>
+                                        <!-- Description input -->
+                                        <div>
+                                            <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Description</label>
+                                            <input type="text" name="pdf_item_descs" class="pdf-item-desc-input"
+                                                value="{{ pdf.get('item_desc', '') }}"
+                                                placeholder="Optional note shown under the file name…"
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                        </div>
+                                    </div>
+                                    {% endfor %}
                                 </div>
-                                <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
                                 {% endif %}
+
+                                <!-- New files picked by user (JS-injected) -->
+                                <div id="pdf-file-list"
+                                    style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Items will be injected here via JS -->
+                                </div>
                             </div>
-                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
-                            <input type="file" name="pdf_t1_header_img" accept="image/*" style="display: none;" id="pdf_t1_header_img_input">
-                        </label>
-                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                            <button type="button" id="cover-img-remove-btn" class="btn-outline"
-                                style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and (qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url'))) %}display: none;{% endif %}">
-                                <i class="fa-solid fa-xmark"></i> Remove
-                            </button>
-                            <input type="hidden" name="pdf_t1_header_img_delete" id="pdf_t1_header_img_delete" value="0">
                         </div>
-                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Same image used across all templates, displayed as header or circle depending on design.</p>
                     </div>
 
-                    <div
-                        style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
-                        <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 16px;">
-                            PDF
-                            information</div>
+                    <!-- 2. Cover image -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Cover image</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div id="pdf-cover-img-section" style="margin-top: 16px; margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 12px;">Cover Image
+                                    <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – header for Template 1, circle for Template 3 &amp; 4)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                    <div id="cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                        {% set cover_url = qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url') if qrcard else '' %}
+                                        {% if cover_url %}
+                                        <img src="{{ cover_url }}" alt="Cover image"
+                                            style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                                    <input type="file" name="pdf_t1_header_img" accept="image/*" style="display: none;" id="pdf_t1_header_img_input">
+                                </label>
+                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="cover-img-remove-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and (qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url'))) %}display: none;{% endif %}">
+                                        <i class="fa-solid fa-xmark"></i> Remove
+                                    </button>
+                                    <input type="hidden" name="pdf_t1_header_img_delete" id="pdf_t1_header_img_delete" value="0">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Same image used across all templates, displayed as header or circle depending on design.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Company</label>
-                            <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
-                                style="background: white;"
-                                value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
+                    <!-- 3. PDF information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">PDF information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">PDF title</label>
-                            <input type="text" name="pdf_title" class="form-control" placeholder="Title"
-                                style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Description</label>
-                            <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
-                                style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Website</label>
-                            <input type="text" name="pdf_website" class="form-control" placeholder="https://"
-                                style="background: white;"
-                                value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Button</label>
-                            <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
-                                style="background: white; border-color: var(--primary);"
-                                value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
+                        <div class="sub-collapse-body">
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Company</label>
+                                    <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">PDF title</label>
+                                    <input type="text" name="pdf_title" class="form-control" placeholder="Title"
+                                        style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Description</label>
+                                    <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
+                                        style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Website</label>
+                                    <input type="text" name="pdf_website" class="form-control" placeholder="https://"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Button</label>
+                                    <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
+                                        style="background: white; border-color: var(--primary);"
+                                        value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
