@@ -173,8 +173,8 @@
 
     .collapse-body.show {
         padding: 24px;
-        max-height: 1000px;
-        /* arbitrary large value for transition to work */
+        max-height: 4000px;
+        /* large enough to fit all content including image upload sections */
         opacity: 1;
     }
 
@@ -203,6 +203,10 @@
         max-height: 500px;
         opacity: 1;
         padding-bottom: 16px;
+    }
+
+    .sub-collapse-body.show.sub-collapse-body-lg {
+        max-height: 2000px;
     }
 
     .form-group {
@@ -497,10 +501,11 @@
                         </div>
                         <div class="sub-collapse-body">
                             <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
-                                <!-- Template Options (Mocked for visual) -->
+                                <!-- Template Options (matching edit page) -->
                                 <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="default" checked class="hidden-radio"
-                                        style="display:none;">
+                                    <input type="radio" name="pdf_template" value="default"
+                                        {% if not qrcard or qrcard.get('pdf_template', 'default') == 'default' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
                                     <div class="template-card"
                                         style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
                                         <div
@@ -515,61 +520,121 @@
                                         style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
                                 </label>
                                 <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template1" class="hidden-radio"
-                                        style="display:none;">
+                                    <input type="radio" name="pdf_template" value="template1"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template1' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #fca5a5; width: 100%; height: 40%; border-radius: 4px; margin-bottom: 8px;">
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        <!-- Header image zone -->
+                                        <div style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;">
+                                            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;"></div>
                                         </div>
-                                        <div style="background: #fecaca; width: 100%; height: 40%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        1</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template2" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #bae6fd; width: 40%; height: 40%; border-radius: 50%; margin: 0 auto 8px;">
-                                        </div>
-                                        <div style="background: #e0f2fe; width: 100%; height: 40%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        2</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template3" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div
-                                            style="background: #bbf7d0; width: 100%; height: 100%; border-radius: 4px;">
-                                        </div>
-                                    </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        3</span>
-                                </label>
-                                <label style="cursor: pointer; text-align: center;">
-                                    <input type="radio" name="pdf_template" value="template4" class="hidden-radio"
-                                        style="display:none;">
-                                    <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div style="display: flex; gap: 4px; height: 100%;">
-                                            <div
-                                                style="background: #fef08a; width: 50%; height: 100%; border-radius: 4px;">
+                                        <!-- White card area -->
+                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div style="background: #9ca3af; width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;"></div>
+                                            <div style="background: #d1d5db; width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;"></div>
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                                <div style="width: 12px; height: 12px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
-                                            <div
-                                                style="background: #fde047; width: 50%; height: 100%; border-radius: 4px;">
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
+                                                <div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
                                         </div>
                                     </div>
-                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
-                                        4</span>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 1</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template2"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template2' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <!-- White floating card (no circle image) -->
+                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                            <!-- Company + title bars -->
+                                            <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
+                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;"></div>
+                                            <!-- List items -->
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line -->
+                                        <div style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 2</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template3"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template3' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
+                                        <!-- Circle image -->
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i>
+                                        </div>
+                                        <!-- Title bars -->
+                                        <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 3px;"></div>
+                                        <div style="background: rgba(255,255,255,0.5); width: 38%; height: 3px; border-radius: 2px; margin-bottom: 7px;"></div>
+                                        <!-- List items -->
+                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
+                                            <div style="width: 10px; height: 10px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                        </div>
+                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
+                                            <div style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 3</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="pdf_template" value="template4"
+                                        {% if qrcard and qrcard.get('pdf_template') == 'template4' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                                        <!-- White floating card with circle image overlapping top -->
+                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                            <!-- Circle image overlapping card top -->
+                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 7px;"></i>
+                                            </div>
+                                            <!-- Company + title bars -->
+                                            <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
+                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;"></div>
+                                            <!-- List items -->
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line below card -->
+                                        <div style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 4</span>
                                 </label>
                             </div>
                         </div>
@@ -705,6 +770,19 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Apply font settings to all templates toggle -->
+                                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-main);">Apply font to all templates</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">When ON, font type &amp; color override all template previews</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="pdf_font_apply_all" name="pdf_font_apply_all"
+                                            {% if qrcard and qrcard.get('pdf_font_apply_all') %}checked{% endif %}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -726,60 +804,157 @@
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body">
-                    <!-- Add PDF Area --> <!-- Add PDF Area -->
-                    <div style="margin-top: 16px; margin-bottom: 24px;">
-                        <label
-                            style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 18px; color: var(--text-main);"></i>
-                                <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
-                                    PDF(s)</span>
-                                <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
+
+                    <!-- 1. PDF upload and detail information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">PDF upload and detail information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body sub-collapse-body-lg">
+                            <div style="margin-top: 16px; margin-bottom: 24px;">
+                                <label
+                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-cloud-arrow-up"
+                                            style="font-size: 18px; color: var(--text-main);"></i>
+                                        <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
+                                            PDF(s)</span>
+                                        <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
+                                    </div>
+                                    <input type="file" name="pdf_files" id="pdf_file_input" accept="application/pdf" multiple
+                                        style="display: none;">
+                                </label>
+
+                                <!-- Saved PDF files from database -->
+                                {% if qrcard and qrcard.get('pdf_files') %}
+                                <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"
+                                    id="saved-pdf-list">
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <div class="pdf-file-item" data-url="{{ pdf.url }}"
+                                        style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
+                                        <input type="hidden" name="existing_pdf_urls" value="{{ pdf.url }}">
+                                        <!-- File header row -->
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden;">
+                                                <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 15px; flex-shrink: 0;"></i>
+                                                <a href="{{ pdf.url }}" target="_blank"
+                                                    style="font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;">{{ pdf.name }}</a>
+                                            </div>
+                                            <button type="button" class="remove-saved-pdf-btn" data-url="{{ pdf.url }}"
+                                                data-qrcard-id="{{ qrcard_id }}"
+                                                style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; flex-shrink: 0;"
+                                                title="Remove this PDF">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                        <!-- Display Name input -->
+                                        <div style="margin-bottom: 8px;">
+                                            <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Name</label>
+                                            <input type="text" name="pdf_display_names" class="pdf-display-name-input"
+                                                value="{{ pdf.get('display_name', pdf.name) }}"
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                        </div>
+                                        <!-- Description input -->
+                                        <div>
+                                            <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Description</label>
+                                            <input type="text" name="pdf_item_descs" class="pdf-item-desc-input"
+                                                value="{{ pdf.get('item_desc', '') }}"
+                                                placeholder="Optional note shown under the file name…"
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+
+                                <!-- New files picked by user (JS-injected) -->
+                                <div id="pdf-file-list"
+                                    style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Items will be injected here via JS -->
+                                </div>
                             </div>
-                            <input type="file" name="pdf_files" accept="application/pdf" multiple
-                                style="display: none;">
-                        </label>
-                        <!-- Uploaded files list mock -->
-                        <div id="pdf-file-list"
-                            style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-                            <!-- Items will be injected here via JS -->
                         </div>
                     </div>
 
-                    <div
-                        style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
-                        <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 16px;">
-                            PDF
-                            information</div>
+                    <!-- 2. Cover image -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Cover image</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div id="pdf-cover-img-section" style="margin-top: 16px; margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 12px;">Cover Image
+                                    <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – header for Template 1, circle for Template 3 &amp; 4)</span>
+                                </label>
+                                <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                    <div id="cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                        {% set cover_url = qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url') if qrcard else '' %}
+                                        {% if cover_url %}
+                                        <img src="{{ cover_url }}" alt="Cover image"
+                                            style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                                    <input type="file" name="pdf_t1_header_img" accept="image/*" style="display: none;" id="pdf_t1_header_img_input">
+                                </label>
+                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="cover-img-remove-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and (qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url'))) %}display: none;{% endif %}">
+                                        <i class="fa-solid fa-xmark"></i> Remove
+                                    </button>
+                                    <input type="hidden" name="pdf_t1_header_img_delete" id="pdf_t1_header_img_delete" value="0">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Same image used across all templates, displayed as header or circle depending on design.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Company</label>
-                            <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
-                                style="background: white;"
-                                value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
+                    <!-- 3. PDF information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">PDF information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">PDF title</label>
-                            <input type="text" name="pdf_title" class="form-control" placeholder="Title"
-                                style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Description</label>
-                            <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
-                                style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Website</label>
-                            <input type="text" name="pdf_website" class="form-control" placeholder="https://"
-                                style="background: white;"
-                                value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" style="font-size: 12px;">Button</label>
-                            <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
-                                style="background: white; border-color: var(--primary);"
-                                value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
+                        <div class="sub-collapse-body">
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Company</label>
+                                    <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">PDF title</label>
+                                    <input type="text" name="pdf_title" class="form-control" placeholder="Title"
+                                        style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Description</label>
+                                    <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
+                                        style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Website</label>
+                                    <input type="text" name="pdf_website" class="form-control" placeholder="https://"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Button</label>
+                                    <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
+                                        style="background: white; border-color: var(--primary);"
+                                        value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -813,12 +988,18 @@
                                     style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
                                     <div id="welcome-img-preview"
                                         style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                        {% if qrcard and qrcard.get('welcome_img_url') %}
+                                        <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image"
+                                            style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
                                         <!-- Placeholder state -->
                                         <div
                                             style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
                                             <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                        {% endif %}
                                     </div>
                                     <input type="file" name="pdf_welcome_img" accept="image/*" style="display: none;"
                                         id="pdf_welcome_img_input">
@@ -827,9 +1008,10 @@
                                     <button type="button" id="welcome-preview-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline"
-                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; display: none;">
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
                                         Remove
                                     </button>
+                                    <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                             </div>
@@ -837,7 +1019,7 @@
                             <div style="margin-top: 20px;">
                                 <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background color</label>
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="#2F6BFD"
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="{{ qrcard.get('welcome_bg_color', qrcard.get('pdf_primary_color', '#2F6BFD')) if qrcard is defined and qrcard else '#2F6BFD' }}"
                                         style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
                                     <input type="text" id="welcome_bg_color_hex" readonly
                                         style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
@@ -940,9 +1122,15 @@
                         </div>
 
                         <div class="sub-collapse-body">
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                                This address is automatically generated for your PDF QR code.
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                                Customize your URL custom address identifier for this QR code.
                             </p>
+                            <div style="font-size: 11px; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #fecaca; background-color: #fef2f2; color: #b91c1c;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span style="margin-left: 6px;">
+                                    Be careful when changing this URL. Updating it will also change the destination of this QR.
+                                </span>
+                            </div>
 
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="font-size: 12px;">URL</label>
@@ -950,11 +1138,11 @@
                                     <div class="url-prefix" id="stats-url-prefix">{{ base_url |
                                         default('https://qrcardku.com') }}/p/</div>
                                     <input type="text" name="short_code" id="stats-short-code-input"
-                                        placeholder="Letters, numbers, '-' and '_' only" value="{{ short_code | default('', true) }}"
+                                        placeholder="Letters, numbers, '-' and '_' only"
+                                        value="{{ short_code | default('', true) }}"
                                         pattern="[a-zA-Z0-9_-]{2,32}"
                                         title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
-                                        style="background:#f9fafb;color:var(--text-muted);"
-                                        maxlength="32" readonly>
+                                        maxlength="32">
                                 </div>
                                 <p id="stats-url-preview"
                                     style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;"></p>
@@ -1012,13 +1200,166 @@
                 <div class="phone-mockup">
                     <div class="mockup-inner"
                         style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
-                        <!-- Welcome screen overlay: shown when user picks image, then smooth fade to PDF preview -->
+                        {% set preview_primary = qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' %}
+                        <!-- Welcome screen overlay: shown first, then smooth fade to PDF preview -->
                         <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
                             <img id="preview-welcome-img" src="" alt="Welcome">
                         </div>
+
+                        <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
+                        <div id="preview-template1" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: #f3f4f6; overflow-y: auto; overflow-x: hidden;">
+                            <!-- Header image area (light bg so image looks natural) -->
+                            <div id="t1-preview-header" style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('pdf_t1_header_img_url')) %}display: none;{% endif %}">
+                                <img id="t1-preview-header-img"
+                                    src="{% if qrcard and qrcard.get('pdf_t1_header_img_url') %}{{ qrcard.get('pdf_t1_header_img_url') }}{% endif %}"
+                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <!-- Colored card body (primary color bg, white text) -->
+                            <div id="t1-preview-card-body" style="background: {{ preview_primary }}; {% if qrcard and qrcard.get('pdf_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 14px 14px 20px; min-height: 0; overflow-y: auto;">
+                                <div id="t1-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF file list (white cards on colored bg) -->
+                                <div id="t1-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <!-- Website link -->
+                                <div id="t1-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 2 Preview: primary bg + floating white card (no circle image) -->
+                        <div id="preview-template2" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div style="background: white; border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <div id="t2-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list inside white card -->
+                                <div id="t2-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t2-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                        </div>
+
+                        <!-- Template 3 Preview: primary bg + circle image at top -->
+                        <div id="preview-template3" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
+                            <div style="flex: 1; display: flex; flex-direction: column; padding: 20px 14px 20px; overflow-y: auto; align-items: center;">
+                                <!-- Circle image -->
+                                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 3px solid white; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; flex-shrink: 0; box-shadow: 0 0 0 5px rgba(255,255,255,0.15);">
+                                    <img id="t3-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('pdf_t3_circle_img_url') %}{{ qrcard.get('pdf_t3_circle_img_url') }}{% endif %}"
+                                        alt="" style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('pdf_t3_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t3-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('pdf_t3_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                        <i class="fa-regular fa-image" style="font-size: 26px; color: rgba(255,255,255,0.5);"></i>
+                                    </div>
+                                </div>
+                                <!-- Text -->
+                                <div id="t3-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; width: 100%; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; width: 100%; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list -->
+                                <div id="t3-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px; width: 100%;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <!-- Website -->
+                                <div id="t3-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 4 Preview: primary bg + floating white card + circle image overlapping top -->
+                        <div id="preview-template4" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div style="background: white; border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <!-- Circle image overlapping top of card -->
+                                <div style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center;">
+                                    <img id="t4-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}{{ qrcard.get('pdf_t4_circle_img_url') }}{% endif %}"
+                                        alt="" style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('pdf_t4_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t4-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e5e7eb;">
+                                        <i class="fa-regular fa-image" style="font-size: 22px; color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                                <!-- Text inside card -->
+                                <div id="t4-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                <!-- PDF list inside white card -->
+                                <div id="t4-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
+                                    {% if qrcard and qrcard.get('pdf_files') %}
+                                    {% for pdf in qrcard.get('pdf_files', []) %}
+                                    <a href="{{ pdf.url }}" target="_blank" download
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
+                                        </div>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t4-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('pdf_website')) %}display: none;{% endif %}">{{ qrcard.get('pdf_website', '') if qrcard else '' }}</div>
+                        </div>
+
                         <!-- PDF Default Template Preview -->
                         <div id="preview-top-block"
-                            style="background-color: var(--primary); width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
+                            style="background-color: {{ preview_primary }}; width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
                         </div>
 
                         <div id="preview-bottom-block"
@@ -1028,7 +1369,7 @@
                             <div
                                 style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 24px;">
                                 <div id="preview-pdf-prev"
-                                    style="display: none; cursor: pointer; padding: 10px; color: var(--primary); font-size: 20px;">
+                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
                                     <i class="fa-solid fa-chevron-left"></i>
                                 </div>
 
@@ -1041,7 +1382,7 @@
                                 </div>
 
                                 <div id="preview-pdf-next"
-                                    style="display: none; cursor: pointer; padding: 10px; color: var(--primary); font-size: 20px;">
+                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
                                     <i class="fa-solid fa-chevron-right"></i>
                                 </div>
                             </div>
@@ -1060,12 +1401,12 @@
 
                             <!-- See PDF Button -->
                             <div id="preview-btn"
-                                style="background-color: #0e379a; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto;">
+                                style="background-color: {{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto; width: fit-content; margin-left: auto; margin-right: auto; white-space: nowrap;">
                                 See PDF
                             </div>
 
                             <div id="preview-website-text"
-                                style="color: var(--primary); font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 12px; display: none; text-align: center; text-decoration: underline;">
+                                style="color: {{ preview_primary }}; font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 12px; display: none; text-align: center; text-decoration: underline;">
                             </div>
                         </div>
 
@@ -1085,87 +1426,6 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
-    (function () {
-        var overlay = document.getElementById('preview-welcome-overlay');
-        var imgEl = document.getElementById('preview-welcome-img');
-        var welcomeInput = document.getElementById('pdf_welcome_img_input');
-        var timeSlider = document.getElementById('welcome-time-slider');
-        function getWelcomeTimeSec() {
-            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
-            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
-        }
-        function playWelcomePreview(src) {
-            if (!overlay || !imgEl || !src) return;
-            var bgInput = document.getElementById('welcome_bg_color_picker');
-            if (bgInput) overlay.style.backgroundColor = bgInput.value;
-            imgEl.src = src;
-            overlay.style.display = 'flex';
-            overlay.classList.remove('hide');
-            var sec = getWelcomeTimeSec() * 1000;
-            setTimeout(function () {
-                overlay.classList.add('hide');
-                setTimeout(function () { overlay.style.display = 'none'; }, 800);
-            }, sec);
-        }
-        function getPreviewSrc() {
-            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
-            if (file && file.type.indexOf('image') !== -1) {
-                if (file.size > 1024 * 1024) return null;
-                return URL.createObjectURL(file);
-            }
-            return null;
-        }
-        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
-        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
-        if (welcomeBgPicker && welcomeBgHex) {
-            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
-            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
-        }
-        if (overlay && imgEl && welcomeInput) {
-            var thumb = document.getElementById('welcome-img-preview');
-            var deleteBtn = document.getElementById('welcome-delete-btn');
-            welcomeInput.addEventListener('change', function () {
-                var file = this.files && this.files[0];
-                if (!file) return;
-                if (file.size > 1024 * 1024) {
-                    alert('Image must be 1 MB or smaller.');
-                    this.value = '';
-                    if (thumb) {
-                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
-                    }
-                    if (deleteBtn) deleteBtn.style.display = 'none';
-                    return;
-                }
-                if (file.type.indexOf('image') !== -1) {
-                    var url = getPreviewSrc();
-                    if (url && thumb) {
-                        thumb.innerHTML = '<img src=\"' + url + '\" alt=\"Welcome image\" style=\"width:48px;height:48px;border-radius:6px;object-fit:cover;\"><span style=\"font-size:13px;color:var(--text-muted);\">Selected image</span>';
-                    }
-                    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
-                    if (url) playWelcomePreview(url);
-                }
-            });
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function () {
-                    welcomeInput.value = '';
-                    if (thumb) {
-                        thumb.innerHTML = '<div style=\"width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;\"><i class=\"fa-regular fa-image\" style=\"color:#9ca3af;\"></i></div><span style=\"font-size:13px;color:var(--text-muted);\">Upload Image</span>';
-                    }
-                    this.style.display = 'none';
-                });
-            }
-            var previewBtn = document.getElementById('welcome-preview-btn');
-            if (previewBtn) {
-                previewBtn.addEventListener('click', function () {
-                    var src = getPreviewSrc();
-                    if (src) playWelcomePreview(src);
-                    else alert('Upload an image first (max 1 MB).');
-                });
-            }
-        }
-    })();
-</script>
-<script>
     document.addEventListener('DOMContentLoaded', function () {
         // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
         const step3Link = document.getElementById('step3-link');
@@ -1175,7 +1435,13 @@
         function checkContentValid() {
             var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
             const pdfInput = document.querySelector('input[name="pdf_files"]');
-            var valid = nameOk && pdfInput && pdfInput.files && pdfInput.files.length > 0;
+            var hasNew = pdfInput && pdfInput.files && pdfInput.files.length > 0;
+            var savedCount = 0;
+            var savedList = document.getElementById('saved-pdf-list');
+            if (savedList) {
+                savedCount = savedList.querySelectorAll('.pdf-file-item').length;
+            }
+            var valid = nameOk && (hasNew || savedCount > 0);
 
             if (step3Link) {
                 if (valid) {
@@ -1236,425 +1502,551 @@
             toggle.addEventListener('change', sync);
             sync();
         })();
+        const attachCollapseListener = (selector) => {
+            const headers = document.querySelectorAll(selector);
+            headers.forEach(header => {
+                header.addEventListener('click', function () {
+                    const body = this.nextElementSibling;
+                    const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
 
-    const attachCollapseListener = (selector) => {
-        const headers = document.querySelectorAll(selector);
-        headers.forEach(header => {
-            header.addEventListener('click', function () {
-                const body = this.nextElementSibling;
-                const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
-
-                if (!body.classList.contains('show')) {
-                    body.classList.add('show');
-                    if (icon) {
-                        icon.classList.remove('fa-chevron-down');
-                        icon.classList.add('fa-chevron-up');
-                    }
-                } else {
-                    body.classList.remove('show');
-                    if (icon) {
-                        icon.classList.remove('fa-chevron-up');
-                        icon.classList.add('fa-chevron-down');
-                    }
-                }
-            });
-        });
-    };
-
-    attachCollapseListener('.collapse-header');
-    attachCollapseListener('.sub-collapse-header');
-
-    // PDF UI Logic
-    const previewTopBlock = document.getElementById('preview-top-block');
-        const previewBtn = document.getElementById('preview-btn');
-
-        // Set up pdf.js worker
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        if (pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-        }
-
-        // Colors sync
-        const primaryPicker = document.getElementById('pdf_primary_picker');
-        const primaryHex = document.getElementById('pdf_primary_hex');
-        const secondaryPicker = document.getElementById('pdf_secondary_picker');
-        const secondaryHex = document.getElementById('pdf_secondary_hex');
-
-        if (primaryPicker && primaryHex) {
-            primaryPicker.addEventListener('input', e => {
-                primaryHex.value = e.target.value.toUpperCase();
-                if (previewTopBlock) previewTopBlock.style.backgroundColor = e.target.value;
-            });
-        }
-        if (secondaryPicker && secondaryHex) {
-            secondaryPicker.addEventListener('input', e => {
-                secondaryHex.value = e.target.value.toUpperCase();
-                if (previewBtn) previewBtn.style.backgroundColor = e.target.value;
-            });
-        }
-
-        // Invert colors
-        const invertBtn = document.getElementById('btn-invert-colors');
-        if (invertBtn && primaryPicker && secondaryPicker) {
-            invertBtn.addEventListener('click', () => {
-                const temp = primaryPicker.value;
-                primaryPicker.value = secondaryPicker.value;
-                secondaryPicker.value = temp;
-                primaryHex.value = primaryPicker.value.toUpperCase();
-                secondaryHex.value = secondaryPicker.value.toUpperCase();
-                if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
-                if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
-            });
-        }
-
-        // Sync preset colors
-        document.querySelectorAll('.color-preset').forEach(preset => {
-            preset.addEventListener('click', function () {
-                document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
-                this.classList.add('active');
-                this.style.border = '2px solid var(--primary)';
-                // reset others
-                document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
-
-                if (primaryPicker) {
-                    primaryPicker.value = this.dataset.primary;
-                    primaryHex.value = this.dataset.primary.toUpperCase();
-                    if (previewTopBlock) previewTopBlock.style.backgroundColor = this.dataset.primary;
-                }
-                if (secondaryPicker) {
-                    secondaryPicker.value = this.dataset.secondary;
-                    secondaryHex.value = this.dataset.secondary.toUpperCase();
-                    if (previewBtn) previewBtn.style.backgroundColor = this.dataset.secondary;
-                }
-            });
-        });
-
-        // Button text sync
-        const btnTextInput = document.querySelector('input[name="pdf_btn_text"]');
-        if (btnTextInput && previewBtn) {
-            btnTextInput.addEventListener('input', e => {
-                previewBtn.textContent = e.target.value || 'See PDF';
-            });
-        }
-
-        // Company, Title, Desc, Website sync
-        const companyInput = document.querySelector('input[name="pdf_company"]');
-        const previewCompany = document.getElementById('preview-company-text');
-        if (companyInput && previewCompany) {
-            // Initial check in case it's an edit page with pre-filled values
-            if (companyInput.value) {
-                previewCompany.textContent = companyInput.value;
-                previewCompany.style.display = 'block';
-            }
-
-            companyInput.addEventListener('input', e => {
-                previewCompany.textContent = e.target.value;
-                previewCompany.style.display = e.target.value ? 'block' : 'none';
-            });
-        }
-
-        const titleInput = document.querySelector('input[name="pdf_title"]');
-        const previewTitle = document.getElementById('preview-title-text');
-        if (titleInput && previewTitle) {
-            if (titleInput.value) {
-                previewTitle.textContent = titleInput.value;
-                previewTitle.style.display = 'block';
-            }
-
-            titleInput.addEventListener('input', e => {
-                previewTitle.textContent = e.target.value;
-                previewTitle.style.display = e.target.value ? 'block' : 'none';
-            });
-        }
-
-        const descInput = document.querySelector('input[name="pdf_desc"]');
-        const previewDesc = document.getElementById('preview-desc-text');
-        if (descInput && previewDesc) {
-            if (descInput.value) {
-                previewDesc.textContent = descInput.value;
-                previewDesc.style.display = '-webkit-box';
-            }
-
-            descInput.addEventListener('input', e => {
-                previewDesc.textContent = e.target.value;
-                // Use webkit-box for line clamp to work alongside display none
-                previewDesc.style.display = e.target.value ? '-webkit-box' : 'none';
-            });
-        }
-
-        const websiteInput = document.querySelector('input[name="pdf_website"]');
-        const previewWebsite = document.getElementById('preview-website-text');
-        if (websiteInput && previewWebsite) {
-            if (websiteInput.value) {
-                previewWebsite.textContent = websiteInput.value;
-                previewWebsite.style.display = 'block';
-            }
-
-            websiteInput.addEventListener('input', e => {
-                previewWebsite.textContent = e.target.value;
-                previewWebsite.style.display = e.target.value ? 'block' : 'none';
-            });
-        }
-
-        // Typography & colors for PDF preview
-        const titleColorPicker = document.getElementById('pdf_title_color_picker');
-        const titleColorHex = document.getElementById('pdf_title_color_hex');
-        const textColorPicker = document.getElementById('pdf_text_color_picker');
-        const textColorHex = document.getElementById('pdf_text_color_hex');
-        const titleFontSelect = document.querySelector('select[name="pdf_title_font"]');
-        const textFontSelect = document.querySelector('select[name="pdf_text_font"]');
-        const previewTitleEl = document.getElementById('preview-title-text');
-        const previewCompanyEl = document.getElementById('preview-company-text');
-        const previewDescEl = document.getElementById('preview-desc-text');
-        const previewWebsiteEl = document.getElementById('preview-website-text');
-
-        function applyPdfFonts() {
-            var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
-            if (previewTitleEl && titleFontSelect) {
-                previewTitleEl.style.fontFamily = quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-            }
-            if (previewCompanyEl && textFontSelect) {
-                previewCompanyEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-            }
-            if (previewDescEl && textFontSelect) {
-                previewDescEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-            }
-            if (previewWebsiteEl && textFontSelect) {
-                previewWebsiteEl.style.fontFamily = quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-            }
-        }
-
-        function applyPdfTextColors() {
-            const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
-            const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
-            if (previewTitleEl) previewTitleEl.style.color = titleColor;
-            if (previewCompanyEl) previewCompanyEl.style.color = textColor;
-            if (previewDescEl) previewDescEl.style.color = textColor;
-            if (previewWebsiteEl) previewWebsiteEl.style.color = textColor;
-        }
-
-        // Initialize hex displays and apply initial styles
-        if (titleColorPicker && titleColorHex) {
-            titleColorHex.value = (titleColorPicker.value || '#000000').toUpperCase();
-            titleColorPicker.addEventListener('input', e => {
-                titleColorHex.value = e.target.value.toUpperCase();
-                applyPdfTextColors();
-            });
-        }
-        if (textColorPicker && textColorHex) {
-            textColorHex.value = (textColorPicker.value || '#6b7280').toUpperCase();
-            textColorPicker.addEventListener('input', e => {
-                textColorHex.value = e.target.value.toUpperCase();
-                applyPdfTextColors();
-            });
-        }
-        if (titleFontSelect) {
-            titleFontSelect.addEventListener('change', applyPdfFonts);
-            titleFontSelect.addEventListener('input', applyPdfFonts);
-        }
-        if (textFontSelect) {
-            textFontSelect.addEventListener('change', applyPdfFonts);
-            textFontSelect.addEventListener('input', applyPdfFonts);
-        }
-        applyPdfFonts();
-        applyPdfTextColors();
-
-        // Time slider
-        const timeSlider = document.getElementById('welcome-time-slider');
-        const timeDisplay = document.getElementById('welcome-time-display');
-        if (timeSlider && timeDisplay) {
-            timeSlider.addEventListener('input', e => {
-                timeDisplay.textContent = e.target.value + ' seconds';
-            });
-        }
-
-        // PDF File Upload Preview
-        const pdfFileInput = document.querySelector('input[name="pdf_files"]');
-        const pdfFileList = document.getElementById('pdf-file-list');
-        const previewCanvas = document.getElementById('preview-pdf-canvas');
-        const previewIcon = document.getElementById('preview-pdf-placeholder-icon');
-
-        if (pdfFileInput && pdfFileList) {
-            let accumulatedPdfFiles = new DataTransfer();
-            let isDeleting = false;
-
-            pdfFileInput.addEventListener('change', function (e) {
-                if (isDeleting) {
-                    isDeleting = false;
-                } else {
-                    const newFiles = Array.from(e.target.files);
-                    newFiles.forEach(newFile => {
-                        let isDup = false;
-                        for (let i = 0; i < accumulatedPdfFiles.items.length; i++) {
-                            let ex = accumulatedPdfFiles.items[i].getAsFile();
-                            if (ex.name === newFile.name && ex.size === newFile.size) {
-                                isDup = true;
-                                break;
-                            }
+                    if (!body.classList.contains('show')) {
+                        body.classList.add('show');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-down');
+                            icon.classList.add('fa-chevron-up');
                         }
-                        if (!isDup) accumulatedPdfFiles.items.add(newFile);
-                    });
-                    pdfFileInput.files = accumulatedPdfFiles.files;
+                    } else {
+                        body.classList.remove('show');
+                        if (icon) {
+                            icon.classList.remove('fa-chevron-up');
+                            icon.classList.add('fa-chevron-down');
+                        }
+                    }
+                });
+            });
+        };
+
+        attachCollapseListener('.collapse-header');
+        attachCollapseListener('.sub-collapse-header');
+
+        // PDF UI Logic
+        const previewTopBlock = document.getElementById('preview-top-block');
+            const previewBtn = document.getElementById('preview-btn');
+
+            // Set up pdf.js worker
+            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+            if (pdfjsLib) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+            }
+
+            // Colors sync
+            const primaryPicker = document.getElementById('pdf_primary_picker');
+            const primaryHex = document.getElementById('pdf_primary_hex');
+            const secondaryPicker = document.getElementById('pdf_secondary_picker');
+            const secondaryHex = document.getElementById('pdf_secondary_hex');
+
+            if (primaryPicker && primaryHex) {
+                primaryPicker.addEventListener('input', e => {
+                    primaryHex.value = e.target.value.toUpperCase();
+                    if (previewTopBlock) previewTopBlock.style.backgroundColor = e.target.value;
+                });
+            }
+            if (secondaryPicker && secondaryHex) {
+                secondaryPicker.addEventListener('input', e => {
+                    secondaryHex.value = e.target.value.toUpperCase();
+                    if (previewBtn) previewBtn.style.backgroundColor = e.target.value;
+                });
+            }
+
+            // Invert colors
+            const invertBtn = document.getElementById('btn-invert-colors');
+            if (invertBtn && primaryPicker && secondaryPicker) {
+                invertBtn.addEventListener('click', () => {
+                    const temp = primaryPicker.value;
+                    primaryPicker.value = secondaryPicker.value;
+                    secondaryPicker.value = temp;
+                    primaryHex.value = primaryPicker.value.toUpperCase();
+                    secondaryHex.value = secondaryPicker.value.toUpperCase();
+                    if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
+                    if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
+                    // Propagate to t1-t4
+                    primaryPicker.dispatchEvent(new Event('input'));
+                });
+            }
+
+            // Sync preset colors
+            document.querySelectorAll('.color-preset').forEach(preset => {
+                preset.addEventListener('click', function () {
+                    document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    this.style.border = '2px solid var(--primary)';
+                    // reset others
+                    document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
+
+                    if (primaryPicker) {
+                        primaryPicker.value = this.dataset.primary;
+                        primaryHex.value = this.dataset.primary.toUpperCase();
+                        if (previewTopBlock) previewTopBlock.style.backgroundColor = this.dataset.primary;
+                        // Propagate to t1-t4
+                        primaryPicker.dispatchEvent(new Event('input'));
+                    }
+                    if (secondaryPicker) {
+                        secondaryPicker.value = this.dataset.secondary;
+                        secondaryHex.value = this.dataset.secondary.toUpperCase();
+                        if (previewBtn) previewBtn.style.backgroundColor = this.dataset.secondary;
+                    }
+                });
+            });
+
+            // Button text sync
+            const btnTextInput = document.querySelector('input[name="pdf_btn_text"]');
+            if (btnTextInput && previewBtn) {
+                btnTextInput.addEventListener('input', e => {
+                    previewBtn.textContent = e.target.value || 'See PDF';
+                });
+            }
+
+            // Company, Title, Desc, Website sync
+            const companyInput = document.querySelector('input[name="pdf_company"]');
+            const previewCompany = document.getElementById('preview-company-text');
+            if (companyInput && previewCompany) {
+                // Initial check in case it's an edit page with pre-filled values
+                if (companyInput.value) {
+                    previewCompany.textContent = companyInput.value;
+                    previewCompany.style.display = 'block';
                 }
 
-                pdfFileList.innerHTML = ''; // clear current list
-                const files = pdfFileInput.files;
+                companyInput.addEventListener('input', e => {
+                    previewCompany.textContent = e.target.value;
+                    previewCompany.style.display = e.target.value ? 'block' : 'none';
+                });
+            }
 
-                // Reset preview and navigation if no files
-                if (files.length === 0) {
-                    if (previewCanvas) {
-                        previewCanvas.style.display = 'none';
-                        previewIcon.style.display = 'inline-block';
-                        const container = document.getElementById('preview-pdf-thumbnail-container');
-                        if (container) container.style.aspectRatio = '1 / 1.4';
+            const titleInput = document.querySelector('input[name="pdf_title"]');
+            const previewTitle = document.getElementById('preview-title-text');
+            if (titleInput && previewTitle) {
+                if (titleInput.value) {
+                    previewTitle.textContent = titleInput.value;
+                    previewTitle.style.display = 'block';
+                }
+
+                titleInput.addEventListener('input', e => {
+                    previewTitle.textContent = e.target.value;
+                    previewTitle.style.display = e.target.value ? 'block' : 'none';
+                });
+            }
+
+            const descInput = document.querySelector('input[name="pdf_desc"]');
+            const previewDesc = document.getElementById('preview-desc-text');
+            if (descInput && previewDesc) {
+                if (descInput.value) {
+                    previewDesc.textContent = descInput.value;
+                    previewDesc.style.display = '-webkit-box';
+                }
+
+                descInput.addEventListener('input', e => {
+                    previewDesc.textContent = e.target.value;
+                    // Use webkit-box for line clamp to work alongside display none
+                    previewDesc.style.display = e.target.value ? '-webkit-box' : 'none';
+                });
+            }
+
+            const websiteInput = document.querySelector('input[name="pdf_website"]');
+            const previewWebsite = document.getElementById('preview-website-text');
+            if (websiteInput && previewWebsite) {
+                if (websiteInput.value) {
+                    previewWebsite.textContent = websiteInput.value;
+                    previewWebsite.style.display = 'block';
+                }
+
+                websiteInput.addEventListener('input', e => {
+                    previewWebsite.textContent = e.target.value;
+                    previewWebsite.style.display = e.target.value ? 'block' : 'none';
+                });
+            }
+
+            // Typography & colors for PDF preview
+            const titleColorPicker = document.getElementById('pdf_title_color_picker');
+            const titleColorHex = document.getElementById('pdf_title_color_hex');
+            const textColorPicker = document.getElementById('pdf_text_color_picker');
+            const textColorHex = document.getElementById('pdf_text_color_hex');
+            const titleFontSelect = document.querySelector('select[name="pdf_title_font"]');
+            const textFontSelect = document.querySelector('select[name="pdf_text_font"]');
+            const previewTitleEl = document.getElementById('preview-title-text');
+            const previewCompanyEl = document.getElementById('preview-company-text');
+            const previewDescEl = document.getElementById('preview-desc-text');
+            const previewWebsiteEl = document.getElementById('preview-website-text');
+
+            function isFontToggleOn() {
+                var t = document.getElementById('pdf_font_apply_all');
+                return t && t.checked;
+            }
+
+            function applyPdfFonts() {
+                if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
+                var quote   = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
+                var titleFF = titleFontSelect ? quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+                var textFF  = textFontSelect  ? quote(textFontSelect.value)  + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+
+                // Default template
+                if (previewTitleEl   && titleFF) previewTitleEl.style.fontFamily   = titleFF;
+                if (previewCompanyEl && textFF)  previewCompanyEl.style.fontFamily  = textFF;
+                if (previewDescEl    && textFF)  previewDescEl.style.fontFamily     = textFF;
+                if (previewWebsiteEl && textFF)  previewWebsiteEl.style.fontFamily  = textFF;
+
+                // Templates 1-4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    var websiteEl = document.getElementById(pfx + '-preview-website');
+                    if (titleEl   && titleFF) titleEl.style.fontFamily   = titleFF;
+                    if (companyEl && textFF)  companyEl.style.fontFamily  = textFF;
+                    if (descEl    && textFF)  descEl.style.fontFamily     = textFF;
+                    if (websiteEl && textFF)  websiteEl.style.fontFamily  = textFF;
+                });
+            }
+
+            function applyPdfTextColors() {
+                if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
+                const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
+                const textColor  = textColorPicker  ? textColorPicker.value  : '#6b7280';
+
+                // Default template
+                if (previewTitleEl)   previewTitleEl.style.color   = titleColor;
+                if (previewCompanyEl) previewCompanyEl.style.color  = textColor;
+                if (previewDescEl)    previewDescEl.style.color     = textColor;
+                if (previewWebsiteEl) previewWebsiteEl.style.color  = textColor;
+
+                // Templates 1-4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   titleEl.style.color   = titleColor;
+                    if (companyEl) companyEl.style.color  = textColor;
+                    if (descEl)    descEl.style.color     = textColor;
+                });
+            }
+
+            // Restore all templates to their natural design colors & font families
+            function resetAllFontsToDefault() {
+                var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+
+                // Default template — natural colors
+                if (previewTitleEl)   { previewTitleEl.style.color   = '#111827'; previewTitleEl.style.fontFamily   = ''; }
+                if (previewCompanyEl) { previewCompanyEl.style.color  = '#6b7280'; previewCompanyEl.style.fontFamily  = ''; }
+                if (previewDescEl)    { previewDescEl.style.color     = '#6b7280'; previewDescEl.style.fontFamily     = ''; }
+                if (previewWebsiteEl) { previewWebsiteEl.style.color  = '#6b7280'; previewWebsiteEl.style.fontFamily  = ''; }
+
+                // t1 / t3: colored bg → white text
+                ['t1', 't3'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   { titleEl.style.color   = 'white';                    titleEl.style.fontFamily   = ''; }
+                    if (companyEl) { companyEl.style.color  = 'rgba(255,255,255,0.75)';  companyEl.style.fontFamily  = ''; }
+                    if (descEl)    { descEl.style.color     = 'rgba(255,255,255,0.8)';   descEl.style.fontFamily     = ''; }
+                });
+
+                // t2 / t4: white card → company=primary, title=dark, desc=gray
+                ['t2', 't4'].forEach(function (pfx) {
+                    var titleEl   = document.getElementById(pfx + '-preview-title');
+                    var companyEl = document.getElementById(pfx + '-preview-company');
+                    var descEl    = document.getElementById(pfx + '-preview-desc');
+                    if (titleEl)   { titleEl.style.color   = '#111827';  titleEl.style.fontFamily   = ''; }
+                    if (companyEl) { companyEl.style.color  = primary;   companyEl.style.fontFamily  = ''; }
+                    if (descEl)    { descEl.style.color     = '#6b7280'; descEl.style.fontFamily     = ''; }
+                });
+
+                // Website elements for t1-t4
+                ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+                    var el = document.getElementById(pfx + '-preview-website');
+                    if (el) { el.style.fontFamily = ''; }
+                });
+            }
+
+            // Toggle is a master switch: ON → apply custom fonts+colors; OFF → restore natural look
+            var fontApplyAllToggle = document.getElementById('pdf_font_apply_all');
+            if (fontApplyAllToggle) {
+                fontApplyAllToggle.addEventListener('change', function () {
+                    if (this.checked) {
+                        applyPdfFonts();
+                        applyPdfTextColors();
+                    } else {
+                        resetAllFontsToDefault();
                     }
+                });
+            }
+
+            if (titleColorPicker && titleColorHex) {
+                titleColorHex.value = (titleColorPicker.value || '#000000').toUpperCase();
+                titleColorPicker.addEventListener('input', e => {
+                    titleColorHex.value = e.target.value.toUpperCase();
+                    applyPdfTextColors();
+                });
+            }
+
+            if (textColorPicker && textColorHex) {
+                textColorHex.value = (textColorPicker.value || '#6b7280').toUpperCase();
+                textColorPicker.addEventListener('input', e => {
+                    textColorHex.value = e.target.value.toUpperCase();
+                    applyPdfTextColors();
+                });
+            }
+
+            if (titleFontSelect) {
+                titleFontSelect.addEventListener('change', applyPdfFonts);
+                titleFontSelect.addEventListener('input', applyPdfFonts);
+            }
+            if (textFontSelect) {
+                textFontSelect.addEventListener('change', applyPdfFonts);
+                textFontSelect.addEventListener('input', applyPdfFonts);
+            }
+            applyPdfFonts();
+            applyPdfTextColors();
+
+            // Time slider
+            const timeSlider = document.getElementById('welcome-time-slider');
+            const timeDisplay = document.getElementById('welcome-time-display');
+            if (timeSlider && timeDisplay) {
+                timeSlider.addEventListener('input', e => {
+                    timeDisplay.textContent = e.target.value + ' seconds';
+                });
+            }
+
+            // PDF File Upload Preview
+            const pdfFileInput = document.querySelector('input[name="pdf_files"]');
+            const pdfFileList = document.getElementById('pdf-file-list');
+            const previewCanvas = document.getElementById('preview-pdf-canvas');
+            const previewIcon = document.getElementById('preview-pdf-placeholder-icon');
+
+            if (pdfFileInput && pdfFileList) {
+                let accumulatedPdfFiles = new DataTransfer();
+                let isDeleting = false;
+
+                pdfFileInput.addEventListener('change', function (e) {
+                    if (isDeleting) {
+                        isDeleting = false;
+                    } else {
+                        const newFiles = Array.from(e.target.files);
+                        newFiles.forEach(newFile => {
+                            let isDup = false;
+                            for (let i = 0; i < accumulatedPdfFiles.items.length; i++) {
+                                let ex = accumulatedPdfFiles.items[i].getAsFile();
+                                if (ex.name === newFile.name && ex.size === newFile.size) {
+                                    isDup = true;
+                                    break;
+                                }
+                            }
+                            if (!isDup) accumulatedPdfFiles.items.add(newFile);
+                        });
+                        pdfFileInput.files = accumulatedPdfFiles.files;
+                    }
+
+                    pdfFileList.innerHTML = ''; // clear current list
+
+                    // Build combined array: saved URLs first, then new File objects
+                    const savedUrls = Array.from(
+                        document.querySelectorAll('#saved-pdf-list .pdf-file-item:not([style*="opacity: 0"])')
+                    ).map(function (item) { return item.dataset.url; }).filter(Boolean);
+
+                    const newFilesList = Array.from(pdfFileInput.files);
+                    // Combined: each item is either a URL string or a File object
+                    const combinedArray = savedUrls.concat(newFilesList);
+
+                    // Reset preview and navigation if nothing at all
+                    if (combinedArray.length === 0) {
+                        if (previewCanvas) {
+                            previewCanvas.style.display = 'none';
+                            previewIcon.style.display = 'inline-block';
+                            const container = document.getElementById('preview-pdf-thumbnail-container');
+                            if (container) container.style.aspectRatio = '1 / 1.4';
+                        }
+                        const prevBtn2 = document.getElementById('preview-pdf-prev');
+                        const nextBtn2 = document.getElementById('preview-pdf-next');
+                        if (prevBtn2) prevBtn2.style.display = 'none';
+                        if (nextBtn2) nextBtn2.style.display = 'none';
+                        return;
+                    }
+
+                    let totalSize = 0;
+                    const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+
+                    // Render First PDF Preview & Setup Navigation using combined array
+                    let currentPdfIndex = 0;
+                    const pdfArray = combinedArray;
                     const prevBtn = document.getElementById('preview-pdf-prev');
                     const nextBtn = document.getElementById('preview-pdf-next');
-                    if (prevBtn) prevBtn.style.display = 'none';
-                    if (nextBtn) nextBtn.style.display = 'none';
-                    return;
-                }
 
-                let totalSize = 0;
-                const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+                    if (pdfArray.length > 1) {
+                        if (prevBtn) prevBtn.style.display = 'block';
+                        if (nextBtn) nextBtn.style.display = 'block';
+                    } else {
+                        if (prevBtn) prevBtn.style.display = 'none';
+                        if (nextBtn) nextBtn.style.display = 'none';
+                    }
 
-                // Render First PDF Preview & Setup Navigation
-                let currentPdfIndex = 0;
-                const pdfArray = Array.from(files);
-                const prevBtn = document.getElementById('preview-pdf-prev');
-                const nextBtn = document.getElementById('preview-pdf-next');
+                    function renderPdfPreview(index) {
+                        const item = pdfArray[index];
+                        if (!item || !window['pdfjs-dist/build/pdf'] || !previewCanvas) return;
+                        const pdfjsLib = window['pdfjs-dist/build/pdf'];
 
-                if (pdfArray.length > 1) {
-                    if (prevBtn) prevBtn.style.display = 'block';
-                    if (nextBtn) nextBtn.style.display = 'block';
-                } else {
-                    if (prevBtn) prevBtn.style.display = 'none';
-                    if (nextBtn) nextBtn.style.display = 'none';
-                }
-
-                function renderPdfPreview(index) {
-                    if (window['pdfjs-dist/build/pdf'] && previewCanvas && previewIcon && pdfArray[index]) {
-                        const fileReader = new FileReader();
-                        fileReader.onload = function (evt) {
-                            const typedarray = new Uint8Array(evt.target.result);
-                            window['pdfjs-dist/build/pdf'].getDocument(typedarray).promise.then(pdf => {
+                        function doRender(source) {
+                            pdfjsLib.getDocument(source).promise.then(pdf => {
                                 pdf.getPage(1).then(page => {
                                     const viewport = page.getViewport({ scale: 1.5 });
                                     const context = previewCanvas.getContext('2d');
                                     previewCanvas.height = viewport.height;
                                     previewCanvas.width = viewport.width;
-
-                                    const renderContext = {
-                                        canvasContext: context,
-                                        viewport: viewport
-                                    };
-                                    page.render(renderContext).promise.then(() => {
+                                    page.render({ canvasContext: context, viewport: viewport }).promise.then(() => {
                                         previewIcon.style.display = 'none';
                                         previewCanvas.style.display = 'block';
                                         const container = document.getElementById('preview-pdf-thumbnail-container');
-                                        if (container) {
-                                            container.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
-                                        }
+                                        if (container) container.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
                                     });
                                 });
-                            }).catch(err => {
-                                console.error('Error rendering PDF:', err);
-                            });
+                            }).catch(err => console.error('Error rendering PDF:', err));
+                        }
+
+                        if (typeof item === 'string') {
+                            // Saved URL — load directly
+                            doRender(item);
+                        } else {
+                            // File object — read with FileReader
+                            const fileReader = new FileReader();
+                            fileReader.onload = function (evt) {
+                                doRender(new Uint8Array(evt.target.result));
+                            };
+                            fileReader.readAsArrayBuffer(item);
+                        }
+                    }
+
+                    // Initial render
+                    renderPdfPreview(currentPdfIndex);
+
+                    if (prevBtn) {
+                        prevBtn.onclick = function () {
+                            currentPdfIndex = (currentPdfIndex > 0) ? currentPdfIndex - 1 : pdfArray.length - 1;
+                            renderPdfPreview(currentPdfIndex);
                         };
-                        fileReader.readAsArrayBuffer(pdfArray[index]);
-                    }
-                }
-
-                // Initial render
-                renderPdfPreview(currentPdfIndex);
-
-                if (prevBtn) {
-                    prevBtn.onclick = function () {
-                        currentPdfIndex = (currentPdfIndex > 0) ? currentPdfIndex - 1 : pdfArray.length - 1;
-                        renderPdfPreview(currentPdfIndex);
-                    };
-                }
-
-                if (nextBtn) {
-                    nextBtn.onclick = function () {
-                        currentPdfIndex = (currentPdfIndex < pdfArray.length - 1) ? currentPdfIndex + 1 : 0;
-                        renderPdfPreview(currentPdfIndex);
-                    };
-                }
-
-                Array.from(files).forEach((file, index) => {
-                    totalSize += file.size;
-                    const fileItem = document.createElement('div');
-                    fileItem.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px;';
-
-                    const leftSide = document.createElement('div');
-                    leftSide.style.cssText = 'display: flex; align-items: center; gap: 8px; overflow: hidden;';
-
-                    const icon = document.createElement('i');
-                    icon.className = 'fa-regular fa-file-pdf';
-                    icon.style.color = '#ef4444'; // PDF redish color
-
-                    const nameSpan = document.createElement('span');
-                    nameSpan.style.cssText = 'font-size: 13px; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
-                    nameSpan.textContent = file.name;
-
-                    // Calculate KB/MB format
-                    let sizeStr = '';
-                    const sizeKB = file.size / 1024;
-                    if (sizeKB > 1024) {
-                        sizeStr = (sizeKB / 1024).toFixed(2) + ' MB';
-                    } else {
-                        sizeStr = sizeKB.toFixed(1) + ' KB';
                     }
 
-                    const sizeSpan = document.createElement('span');
-                    sizeSpan.style.cssText = 'font-size: 11px; color: var(--text-muted); flex-shrink: 0;';
-                    sizeSpan.textContent = sizeStr;
+                    if (nextBtn) {
+                        nextBtn.onclick = function () {
+                            currentPdfIndex = (currentPdfIndex < pdfArray.length - 1) ? currentPdfIndex + 1 : 0;
+                            renderPdfPreview(currentPdfIndex);
+                        };
+                    }
 
-                    leftSide.appendChild(icon);
-                    leftSide.appendChild(nameSpan);
-                    leftSide.appendChild(sizeSpan);
+                    const files = pdfFileInput.files;
+                    Array.from(files).forEach((file, index) => {
+                        totalSize += file.size;
 
-                    // Delete button
-                    const deleteBtn = document.createElement('i');
-                    deleteBtn.className = 'fa-solid fa-xmark';
-                    deleteBtn.style.cssText = 'color: var(--text-muted); cursor: pointer; padding: 4px;';
-                    deleteBtn.title = 'Remove file';
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'pdf-file-item';
+                        fileItem.dataset.name = file.name;
+                        fileItem.style.cssText = 'background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;';
 
-                    // Handle removal
-                    deleteBtn.addEventListener('click', () => {
-                        let newAccumulated = new DataTransfer();
-                        Array.from(pdfFileInput.files).forEach((f, i) => {
-                            if (i !== index) newAccumulated.items.add(f);
+                        // ── Header row (icon + filename + size + delete) ──
+                        const headerRow = document.createElement('div');
+                        headerRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;';
+
+                        const leftSide = document.createElement('div');
+                        leftSide.style.cssText = 'display: flex; align-items: center; gap: 8px; overflow: hidden; min-width: 0;';
+
+                        const icon = document.createElement('i');
+                        icon.className = 'fa-regular fa-file-pdf';
+                        icon.style.cssText = 'color: #ef4444; font-size: 15px; flex-shrink: 0;';
+
+                        const nameSpan = document.createElement('span');
+                        nameSpan.style.cssText = 'font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+                        nameSpan.textContent = file.name;
+
+                        const sizeKB = file.size / 1024;
+                        const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(2) + ' MB' : sizeKB.toFixed(1) + ' KB';
+                        const sizeSpan = document.createElement('span');
+                        sizeSpan.style.cssText = 'font-size: 11px; color: var(--text-muted); flex-shrink: 0;';
+                        sizeSpan.textContent = sizeStr;
+
+                        leftSide.appendChild(icon);
+                        leftSide.appendChild(nameSpan);
+                        leftSide.appendChild(sizeSpan);
+
+                        const deleteBtn = document.createElement('i');
+                        deleteBtn.className = 'fa-solid fa-xmark';
+                        deleteBtn.style.cssText = 'color: var(--text-muted); cursor: pointer; padding: 4px; flex-shrink: 0;';
+                        deleteBtn.title = 'Remove file';
+                        deleteBtn.addEventListener('click', () => {
+                            let newAccumulated = new DataTransfer();
+                            Array.from(pdfFileInput.files).forEach((f, i) => {
+                                if (i !== index) newAccumulated.items.add(f);
+                            });
+                            accumulatedPdfFiles = newAccumulated;
+                            pdfFileInput.files = accumulatedPdfFiles.files;
+                            isDeleting = true;
+                            pdfFileInput.dispatchEvent(new Event('change'));
                         });
-                        accumulatedPdfFiles = newAccumulated;
-                        pdfFileInput.files = accumulatedPdfFiles.files;
 
-                        isDeleting = true;
-                        pdfFileInput.dispatchEvent(new Event('change'));
+                        headerRow.appendChild(leftSide);
+                        headerRow.appendChild(deleteBtn);
+
+                        // ── Name input ──
+                        const nameLabel = document.createElement('label');
+                        nameLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;';
+                        nameLabel.textContent = 'Name';
+
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'text';
+                        nameInput.name = 'pdf_display_names';
+                        nameInput.className = 'pdf-display-name-input';
+                        nameInput.value = file.name;
+                        nameInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); margin-bottom: 8px; box-sizing: border-box;';
+                        nameInput.addEventListener('input', function () {
+                            if (typeof updateActivePdfList === 'function') updateActivePdfList();
+                        });
+
+                        // ── Desc input ──
+                        const descLabel = document.createElement('label');
+                        descLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;';
+                        descLabel.textContent = 'Description';
+
+                        const descInput = document.createElement('input');
+                        descInput.type = 'text';
+                        descInput.name = 'pdf_item_descs';
+                        descInput.className = 'pdf-item-desc-input';
+                        descInput.placeholder = 'Optional note shown under the file name…';
+                        descInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); box-sizing: border-box;';
+                        descInput.addEventListener('input', function () {
+                            if (typeof updateActivePdfList === 'function') updateActivePdfList();
+                        });
+
+                        fileItem.appendChild(headerRow);
+                        fileItem.appendChild(nameLabel);
+                        fileItem.appendChild(nameInput);
+                        fileItem.appendChild(descLabel);
+                        fileItem.appendChild(descInput);
+                        pdfFileList.appendChild(fileItem);
                     });
 
-                    fileItem.appendChild(leftSide);
-                    fileItem.appendChild(deleteBtn);
-                    pdfFileList.appendChild(fileItem);
-                });
-
-                if (totalSize > maxSizeBytes) {
-                    alert('Total file size exceeds the 10MB limit. Please select fewer or smaller files.');
-                    pdfFileInput.value = ''; // Reset input
-                    accumulatedPdfFiles = new DataTransfer(); // Reset accumulated memory
-                    pdfFileList.innerHTML = '';
-                    if (previewCanvas) {
-                        previewCanvas.style.display = 'none';
-                        previewIcon.style.display = 'inline-block';
+                    if (totalSize > maxSizeBytes) {
+                        alert('Total file size exceeds the 10MB limit. Please select fewer or smaller files.');
+                        pdfFileInput.value = ''; // Reset input
+                        accumulatedPdfFiles = new DataTransfer(); // Reset accumulated memory
+                        pdfFileList.innerHTML = '';
+                        if (previewCanvas) {
+                            previewCanvas.style.display = 'none';
+                            previewIcon.style.display = 'inline-block';
+                        }
+                        const prevBtn = document.getElementById('preview-pdf-prev');
+                        const nextBtn = document.getElementById('preview-pdf-next');
+                        if (prevBtn) prevBtn.style.display = 'none';
+                        if (nextBtn) nextBtn.style.display = 'none';
                     }
-                    const prevBtn = document.getElementById('preview-pdf-prev');
-                    const nextBtn = document.getElementById('preview-pdf-next');
-                    if (prevBtn) prevBtn.style.display = 'none';
-                    if (nextBtn) nextBtn.style.display = 'none';
-                }
-            });
-        }
+                });
+            }
     });
 </script>
 
@@ -1710,6 +2102,606 @@
             window.updateAllMockups();
         }
     });
+</script>
+
+<script>
+    // Wire up "remove saved PDF" buttons
+    document.querySelectorAll('.remove-saved-pdf-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var fileUrl = this.dataset.url;
+            var qrcardId = this.dataset.qrcardId;
+            var row = this.closest('.pdf-file-item');
+            fetch('/api/qr/remove_pdf_file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: fileUrl, qrcard_id: qrcardId })
+            })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.success && row) {
+                        row.style.transition = 'opacity 0.3s';
+                        row.style.opacity = '0';
+                        setTimeout(function () {
+                            row.remove();
+                        }, 300);
+                    } else {
+                        alert('Could not remove this PDF. Please try again.');
+                    }
+                })
+                .catch(function () {
+                    alert('Could not remove this PDF. Please try again.');
+                });
+        });
+    });
+</script>
+
+<script>
+    // Welcome screen preview: show image for welcome_time then smooth fade to PDF content
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('pdf_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            var bgInput = document.getElementById('welcome_bg_color_picker');
+            if (bgInput) overlay.style.backgroundColor = bgInput.value;
+            imgEl.src = src;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                }, 800);
+            }, sec);
+        }
+
+        var initialUrl = '';
+        var currentObjectUrl = null;
+        function getPreviewSrc() {
+            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+            if (file && file.type.indexOf('image') !== -1) {
+                if (file.size > 1024 * 1024) return null;
+                if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+                currentObjectUrl = URL.createObjectURL(file);
+                return currentObjectUrl;
+            }
+            return initialUrl || null;
+        }
+        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+        if (welcomeBgPicker && welcomeBgHex) {
+            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+        }
+        if (overlay && imgEl) {
+            var thumb = document.getElementById('welcome-img-preview');
+            var deleteBtn = document.getElementById('welcome-delete-btn');
+            var deleteFlag = document.getElementById('welcome_img_delete');
+            if (welcomeInput) {
+                welcomeInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    if (file.size > 1024 * 1024) {
+                        alert('Image must be 1 MB or smaller.');
+                        this.value = '';
+                        if (thumb && !initialUrl) {
+                            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                        }
+                        if (deleteBtn && !initialUrl) deleteBtn.style.display = 'none';
+                        return;
+                    }
+                    if (file.type.indexOf('image') !== -1) {
+                        var url = getPreviewSrc();
+                        if (url && thumb) {
+                            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                        }
+                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                        if (deleteFlag) deleteFlag.value = '0';
+                        if (url) playWelcomePreview(url);
+                    }
+                });
+            }
+            if (deleteBtn && welcomeInput) {
+                deleteBtn.addEventListener('click', function () {
+                    welcomeInput.value = '';
+                    initialUrl = '';
+                    if (thumb) {
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    }
+                    if (deleteFlag) deleteFlag.value = '1';
+                    this.style.display = 'none';
+                });
+            }
+            var previewBtn = document.getElementById('welcome-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function () {
+                    var src = getPreviewSrc();
+                    if (src) playWelcomePreview(src);
+                    else alert('Upload an image first (max 1 MB).');
+                });
+            }
+        }
+    })();
+</script>
+
+<script>
+// ── Template Selection & Template 1–4 Logic ──────────────────────────────────
+(function () {
+    'use strict';
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    function val(name) {
+        var el = document.querySelector('[name="' + name + '"]');
+        return el ? el.value.trim() : '';
+    }
+
+    // ── Template card border highlight ────────────────────────────────────────
+    function syncTemplateCardBorders() {
+        document.querySelectorAll('input[name="pdf_template"]').forEach(function (radio) {
+            var card = radio.closest('label').querySelector('.template-card');
+            var span = radio.closest('label').querySelector('span');
+            if (card) {
+                if (radio.checked) {
+                    card.style.border = '2px solid var(--primary)';
+                    if (span) span.style.color = 'var(--text-main)';
+                } else {
+                    card.style.border = '1px solid var(--border-color)';
+                    if (span) span.style.color = 'var(--text-muted)';
+                }
+            }
+        });
+    }
+
+    // ── Switch template preview in phone mockup ───────────────────────────────
+    function switchPdfTemplate(template) {
+        var t1Preview = document.getElementById('preview-template1');
+        var t2Preview = document.getElementById('preview-template2');
+        var t3Preview = document.getElementById('preview-template3');
+        var t4Preview = document.getElementById('preview-template4');
+        var topBlock = document.getElementById('preview-top-block');
+        var botBlock = document.getElementById('preview-bottom-block');
+
+        // Hide all template previews first
+        [t1Preview, t2Preview, t3Preview, t4Preview].forEach(function (el) { if (el) el.style.display = 'none'; });
+        if (topBlock) topBlock.style.display = 'none';
+        if (botBlock) botBlock.style.display = 'none';
+
+        if (template === 'template1') {
+            if (t1Preview) t1Preview.style.display = 'flex';
+            updateT1TextPreview();
+            updateT1PdfList();
+        } else if (template === 'template2') {
+            if (t2Preview) t2Preview.style.display = 'flex';
+            updateT2TextPreview();
+            updateT2PdfList();
+        } else if (template === 'template3') {
+            if (t3Preview) t3Preview.style.display = 'flex';
+            updateT3TextPreview();
+            updateT3PdfList();
+        } else if (template === 'template4') {
+            if (t4Preview) t4Preview.style.display = 'flex';
+            updateT4TextPreview();
+            updateT4PdfList();
+        } else {
+            if (topBlock) topBlock.style.display = '';
+            if (botBlock) botBlock.style.display = '';
+        }
+    }
+
+    // ── Sync text fields into template 1 preview ─────────────────────────────
+    function updateT1TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t1-preview-company', val('pdf_company'));
+        set('t1-preview-title',   val('pdf_title'));
+        set('t1-preview-desc',    val('pdf_desc'));
+        set('t1-preview-website', val('pdf_website'));
+        // Ensure card body background matches current primary color
+        var picker = document.getElementById('pdf_primary_picker');
+        var cardBody = document.getElementById('t1-preview-card-body');
+        if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
+    }
+
+    // ── Helper: read display name + desc from a .pdf-file-item element ────────
+    function getPdfItemMeta(item) {
+        var nameInput = item.querySelector('.pdf-display-name-input');
+        var descInput = item.querySelector('.pdf-item-desc-input');
+        var fallbackName = (item.querySelector('a') || {}).textContent || (item.dataset.name || '');
+        var displayName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : fallbackName.trim();
+        var desc = descInput ? descInput.value.trim() : '';
+        return { displayName: displayName, desc: desc };
+    }
+
+    // ── Build PDF list item for template 1 & 3 (white bg, gray chevron) ──────
+    function buildT1PdfItem(name, desc, url) {
+        var a = document.createElement('a');
+        a.href   = url || '#';
+        a.target = url ? '_blank' : '';
+        if (url) a.setAttribute('download', '');
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+
+        var iconBox = document.createElement('div');
+        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        var ico = document.createElement('i');
+        ico.className = 'fa-regular fa-file-pdf';
+        ico.style.cssText = 'color:#ef4444;font-size:14px;';
+        iconBox.appendChild(ico);
+
+        // Name + optional desc stacked
+        var textWrap = document.createElement('div');
+        textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameSpan.textContent = name;
+        textWrap.appendChild(nameSpan);
+        if (desc) {
+            var descSpan = document.createElement('span');
+            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+            descSpan.textContent = desc;
+            textWrap.appendChild(descSpan);
+        }
+
+        var chevron = document.createElement('i');
+        chevron.className = 'fa-solid fa-chevron-right';
+        chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+
+        a.appendChild(iconBox);
+        a.appendChild(textWrap);
+        a.appendChild(chevron);
+        return a;
+    }
+
+    function updateT1PdfList() {
+        var listEl = document.getElementById('t1-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT1PdfItem(meta.displayName, meta.desc, item.dataset.url));
+        });
+        document.querySelectorAll('#pdf-file-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT1PdfItem(meta.displayName, meta.desc, null));
+        });
+    }
+
+    // ── Sync text fields into template 2 preview ─────────────────────────────
+    function updateT2TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t2-preview-company', val('pdf_company'));
+        set('t2-preview-title',   val('pdf_title'));
+        set('t2-preview-desc',    val('pdf_desc'));
+        set('t2-preview-website', val('pdf_website'));
+        var picker  = document.getElementById('pdf_primary_picker');
+        var t2el    = document.getElementById('preview-template2');
+        var compEl  = document.getElementById('t2-preview-company');
+        if (picker) {
+            if (t2el)   t2el.style.backgroundColor = picker.value;
+            if (compEl) compEl.style.color = picker.value;
+        }
+    }
+
+    function updateT2PdfList() {
+        var listEl = document.getElementById('t2-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT4PdfItem(meta.displayName, meta.desc, item.dataset.url, primary));
+        });
+        document.querySelectorAll('#pdf-file-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT4PdfItem(meta.displayName, meta.desc, null, primary));
+        });
+    }
+
+    // ── Template 3: text sync, PDF list ──────────────────────────────────────
+    function updateT3TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t3-preview-company', val('pdf_company'));
+        set('t3-preview-title',   val('pdf_title'));
+        set('t3-preview-desc',    val('pdf_desc'));
+        set('t3-preview-website', val('pdf_website'));
+        var picker = document.getElementById('pdf_primary_picker');
+        var t3el = document.getElementById('preview-template3');
+        if (picker && t3el) t3el.style.backgroundColor = picker.value;
+    }
+
+    function updateT3PdfList() {
+        var listEl = document.getElementById('t3-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT1PdfItem(meta.displayName, meta.desc, item.dataset.url));
+        });
+        document.querySelectorAll('#pdf-file-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT1PdfItem(meta.displayName, meta.desc, null));
+        });
+    }
+
+    // ── Template 4: text sync, PDF list ──────────────────────────────────────
+    function updateT4TextPreview() {
+        function set(id, value, isBlock) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? (isBlock || 'block') : 'none';
+        }
+        set('t4-preview-company', val('pdf_company'));
+        set('t4-preview-title',   val('pdf_title'));
+        set('t4-preview-desc',    val('pdf_desc'));
+        set('t4-preview-website', val('pdf_website'));
+        // Company uses primary color
+        var picker = document.getElementById('pdf_primary_picker');
+        var t4el   = document.getElementById('preview-template4');
+        var compEl = document.getElementById('t4-preview-company');
+        if (picker) {
+            if (t4el)   t4el.style.backgroundColor = picker.value;
+            if (compEl) compEl.style.color = picker.value;
+        }
+    }
+
+    function updateT4PdfList() {
+        var listEl = document.getElementById('t4-preview-pdf-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        var primary = (document.getElementById('pdf_primary_picker') || {}).value || '#2f6bfd';
+        document.querySelectorAll('#saved-pdf-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT4PdfItem(meta.displayName, meta.desc, item.dataset.url, primary));
+        });
+        document.querySelectorAll('#pdf-file-list .pdf-file-item').forEach(function (item) {
+            var meta = getPdfItemMeta(item);
+            listEl.appendChild(buildT4PdfItem(meta.displayName, meta.desc, null, primary));
+        });
+    }
+
+    // ── Build PDF list item for template 2 & 4 (gray bg, primary chevron) ────
+    function buildT4PdfItem(name, desc, url, primaryColor) {
+        var a = document.createElement('a');
+        a.href   = url || '#';
+        a.target = url ? '_blank' : '';
+        if (url) a.setAttribute('download', '');
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;gap:8px;';
+
+        var iconBox = document.createElement('div');
+        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        var ico = document.createElement('i');
+        ico.className = 'fa-regular fa-file-pdf';
+        ico.style.cssText = 'color:#ef4444;font-size:14px;';
+        iconBox.appendChild(ico);
+
+        // Name + optional desc stacked
+        var textWrap = document.createElement('div');
+        textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameSpan.textContent = name;
+        textWrap.appendChild(nameSpan);
+        if (desc) {
+            var descSpan = document.createElement('span');
+            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+            descSpan.textContent = desc;
+            textWrap.appendChild(descSpan);
+        }
+        var chevron = document.createElement('i');
+        chevron.className = 'fa-solid fa-chevron-right';
+        chevron.style.cssText = 'color:' + (primaryColor || '#2f6bfd') + ';font-size:10px;flex-shrink:0;';
+
+        a.appendChild(iconBox);
+        a.appendChild(textWrap);
+        a.appendChild(chevron);
+        return a;
+    }
+
+    // ── Show/hide header zone and adjust card body style ─────────────────────
+    function showT1Header(hasImage) {
+        var hdr      = document.getElementById('t1-preview-header');
+        var cardBody = document.getElementById('t1-preview-card-body');
+        if (hdr) {
+            hdr.style.display = hasImage ? 'block' : 'none';
+        }
+        if (cardBody) {
+            cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+            cardBody.style.marginTop    = hasImage ? '-18px' : '0';
+            // Ensure card body always uses primary color
+            var picker = document.getElementById('pdf_primary_picker');
+            if (picker) cardBody.style.backgroundColor = picker.value;
+        }
+    }
+
+    // ── Primary color → update all template backgrounds + company colors ──────
+    var primaryPicker = document.getElementById('pdf_primary_picker');
+    if (primaryPicker) {
+        primaryPicker.addEventListener('input', function (e) {
+            var color = e.target.value;
+            // t1 card body bg
+            var cardBody = document.getElementById('t1-preview-card-body');
+            if (cardBody) cardBody.style.backgroundColor = color;
+            // t2/t3/t4 full bg
+            ['preview-template2', 'preview-template3', 'preview-template4'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.backgroundColor = color;
+            });
+            // t2 + t4 company text color = primary
+            ['t2-preview-company', 't4-preview-company'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.style.color = color;
+            });
+            // Rebuild PDF lists for templates that use primary-colored chevrons
+            var active = document.querySelector('input[name="pdf_template"]:checked');
+            if (active) {
+                if (active.value === 'template2') updateT2PdfList();
+                if (active.value === 'template4') updateT4PdfList();
+            }
+        });
+    }
+
+    // ── Unified cover image upload (one image shared by all templates) ─────────
+    var t1ImgInput = document.getElementById('pdf_t1_header_img_input');
+    if (t1ImgInput) {
+        t1ImgInput.addEventListener('change', function () {
+            var file = this.files && this.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Cover image must be 2 MB or smaller.');
+                this.value = '';
+                return;
+            }
+            var url = URL.createObjectURL(file);
+            // Update T1 header preview
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
+            showT1Header(true);
+            // Update T3 circle preview
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
+            if (t3Ph)  { t3Ph.style.display = 'none'; }
+            // Update T4 circle preview
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
+            if (t4Ph)  { t4Ph.style.display = 'none'; }
+            // Update upload thumb
+            var thumb     = document.getElementById('cover-img-preview');
+            var removeBtn = document.getElementById('cover-img-remove-btn');
+            var delFlag   = document.getElementById('pdf_t1_header_img_delete');
+            if (thumb) {
+                thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            }
+            if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
+            if (delFlag)   { delFlag.value = '0'; }
+        });
+    }
+
+    var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
+    if (coverRemoveBtn) {
+        coverRemoveBtn.addEventListener('click', function () {
+            if (t1ImgInput) t1ImgInput.value = '';
+            var delFlag = document.getElementById('pdf_t1_header_img_delete');
+            // Clear T1 header preview
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+            showT1Header(false);
+            // Clear T3 circle preview
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
+            if (t3Ph)  { t3Ph.style.display = 'flex'; }
+            // Clear T4 circle preview
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
+            if (t4Ph)  { t4Ph.style.display = 'flex'; }
+            // Reset thumb
+            var thumb = document.getElementById('cover-img-preview');
+            if (thumb) {
+                thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+            }
+            if (delFlag) { delFlag.value = '1'; }
+            this.style.display = 'none';
+        });
+    }
+
+    // ── Wire text inputs to update the active template preview ───────────────
+    ['pdf_company', 'pdf_title', 'pdf_desc', 'pdf_website'].forEach(function (name) {
+        var input = document.querySelector('input[name="' + name + '"]');
+        if (!input) return;
+        input.addEventListener('input', function () {
+            var active = document.querySelector('input[name="pdf_template"]:checked');
+            if (!active) return;
+            if (active.value === 'template1') updateT1TextPreview();
+            if (active.value === 'template2') updateT2TextPreview();
+            if (active.value === 'template3') updateT3TextPreview();
+            if (active.value === 'template4') updateT4TextPreview();
+        });
+    });
+
+    // ── Helper: update the active template's PDF list ────────────────────────
+    function updateActivePdfList() {
+        var active = document.querySelector('input[name="pdf_template"]:checked');
+        if (!active) return;
+        if (active.value === 'template1') updateT1PdfList();
+        if (active.value === 'template2') updateT2PdfList();
+        if (active.value === 'template3') updateT3PdfList();
+        if (active.value === 'template4') updateT4PdfList();
+    }
+
+    // Make it globally callable for name/desc input listeners
+    window.updateActivePdfList = updateActivePdfList;
+
+    // ── Watch PDF list DOM changes to refresh the active template's list ──────
+    var pdfObserver = new MutationObserver(function () { updateActivePdfList(); });
+    var savedPdfList = document.getElementById('saved-pdf-list');
+    var newPdfList   = document.getElementById('pdf-file-list');
+    if (savedPdfList) pdfObserver.observe(savedPdfList, { childList: true, subtree: true });
+    if (newPdfList)   pdfObserver.observe(newPdfList,   { childList: true, subtree: true });
+
+    // ── Event delegation: Name/Desc input changes → live preview update ───────
+    [savedPdfList, newPdfList].forEach(function (list) {
+        if (!list) return;
+        list.addEventListener('input', function (e) {
+            if (e.target.classList.contains('pdf-display-name-input') ||
+                e.target.classList.contains('pdf-item-desc-input')) {
+                updateActivePdfList();
+            }
+        });
+    });
+
+    // ── Also hook pdf_files input directly ───────────────────────────────────
+    var pdfFileInput = document.querySelector('input[name="pdf_files"]');
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', function () {
+            setTimeout(updateActivePdfList, 80);
+        });
+    }
+
+    // ── Radio change listener ─────────────────────────────────────────────────
+    document.querySelectorAll('input[name="pdf_template"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            syncTemplateCardBorders();
+            switchPdfTemplate(this.value);
+        });
+    });
+
+    // ── Initialize on page load ───────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        // Ensure the correct radio is checked (Jinja sets it, but sync to be safe)
+        var savedTemplate = "{{ qrcard.get('pdf_template', 'default') if qrcard else 'default' }}";
+        var savedRadio = document.querySelector('input[name="pdf_template"][value="' + savedTemplate + '"]');
+        if (savedRadio) savedRadio.checked = true;
+        syncTemplateCardBorders();
+        switchPdfTemplate(savedTemplate);
+    });
+
+})();
 </script>
 
 {% endblock %}

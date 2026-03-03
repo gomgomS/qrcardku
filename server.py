@@ -635,16 +635,69 @@ def qr_update_content(qr_type, qrcard_id):
                 pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
                 os.makedirs(pdf_upload_dir, exist_ok=True)
                 qrcard_db = _qr_proc_for_update.qr_proc(app).get_qrcard(fk_user_id, qrcard_id)
-                existing_files = qrcard_db.get("pdf_files", []) if qrcard_db else []
+                existing_files = list(qrcard_db.get("pdf_files", [])) if qrcard_db else []
+                # Fast lookup by already-uploaded file name and stored filename segment (prevent duplicates by filename)
+                existing_names = set()
+                existing_safe_names = set()
+                for _f_entry in existing_files:
+                    _n = _f_entry.get("name")
+                    if _n:
+                        existing_names.add(_n)
+                    _url = (_f_entry.get("url") or "").strip()
+                    if _url:
+                        existing_safe_names.add(os.path.basename(_url))
+                # display names/descs: existing files occupy the first N form slots; new files follow
+                _step_display_names = request.form.getlist("pdf_display_names")
+                _step_item_descs    = request.form.getlist("pdf_item_descs")
+                _step_existing_urls = request.form.getlist("existing_pdf_urls")
+                _new_file_offset = len(_step_existing_urls)
+                _new_file_idx = 0
+                # Track duplicates chosen within the same request as well
+                seen_upload_names = set()
+                duplicate_name = None
                 for f in pdf_file_list:
                     if f and f.filename and f.filename.lower().endswith(".pdf"):
-                        safe_name = f.filename.replace(" ", "_")
+                        original_name = f.filename
+                        safe_name = original_name.replace(" ", "_")
+                        # Duplicate if:
+                        #   - name already stored on this QR card, or
+                        #   - stored file basename matches safe_name, or
+                        #   - same filename picked twice in one upload batch
+                        if (
+                            original_name in existing_names
+                            or safe_name in existing_safe_names
+                            or original_name in seen_upload_names
+                        ):
+                            duplicate_name = original_name
+                            break
+                        seen_upload_names.add(original_name)
+                        safe_name = safe_name
                         filepath = os.path.join(pdf_upload_dir, safe_name)
                         if not os.path.exists(filepath):
                             f.save(filepath)
-                        file_entry = {"name": f.filename, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
-                        if not any(x.get("name") == f.filename for x in existing_files):
-                            existing_files.append(file_entry)
+                        file_entry = {"name": original_name, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                        form_idx = _new_file_offset + _new_file_idx
+                        if form_idx < len(_step_display_names) and _step_display_names[form_idx].strip():
+                            file_entry["display_name"] = _step_display_names[form_idx].strip()
+                        if form_idx < len(_step_item_descs) and _step_item_descs[form_idx].strip():
+                            file_entry["item_desc"] = _step_item_descs[form_idx].strip()
+                        _new_file_idx += 1
+                        existing_files.append(file_entry)
+                        existing_names.add(original_name)
+                        existing_safe_names.add(safe_name)
+                if duplicate_name:
+                    # Re-render content step with an explicit error if user tries to upload
+                    # a PDF that has the same original filename as one already attached.
+                    qrcard.update(pdf_data)
+                    return view_user.view_user(app).update_qr_content_html(
+                        qr_type=qr_type,
+                        qrcard=qrcard,
+                        url_content=url_content,
+                        qr_name=qr_name,
+                        short_code=short_code or None,
+                        error_msg=f"Oops, a PDF named '{duplicate_name}' is already attached to this QR card. Please rename the file or choose a different PDF.",
+                        base_url=config.G_BASE_URL,
+                    )
                 _qr_proc_for_update.qr_proc(app).update_pdf_files(fk_user_id, qrcard_id, existing_files)
 
         return view_user.view_user(app).update_qr_design_html(
@@ -806,6 +859,7 @@ def qr_update_save(qrcard_id):
         db_files = qrcard_db.get("pdf_files", []) if qrcard_db else []
         if existing_urls:
             db_map = {f.get("url"): f for f in db_files}
+            existing_url_set = set(existing_urls)
             existing_files = []
             for i, url in enumerate(existing_urls):
                 entry = dict(db_map.get(url, {"name": url.split("/")[-1], "url": url}))
@@ -814,17 +868,30 @@ def qr_update_save(qrcard_id):
                 if i < len(item_descs):
                     entry["item_desc"] = item_descs[i].strip()
                 existing_files.append(entry)
+            # Preserve any files added in the content step that are not in existing_urls
+            for db_file in db_files:
+                if db_file.get("url") not in existing_url_set:
+                    existing_files.append(db_file)
         else:
-            existing_files = []
+            existing_files = list(db_files)
         if pdf_file_list and any(f.filename for f in pdf_file_list):
             pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
             os.makedirs(pdf_upload_dir, exist_ok=True)
+            # New files are submitted after existing in the form (Jinja first, then JS-created)
+            new_file_offset = len(existing_urls)
+            new_file_idx = 0
             for f in pdf_file_list:
                 if f and f.filename and f.filename.lower().endswith(".pdf"):
                     safe_name = f.filename.replace(" ", "_")
                     filepath = os.path.join(pdf_upload_dir, safe_name)
                     f.save(filepath)
                     file_entry = {"name": f.filename, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                    form_idx = new_file_offset + new_file_idx
+                    if form_idx < len(display_names) and display_names[form_idx].strip():
+                        file_entry["display_name"] = display_names[form_idx].strip()
+                    if form_idx < len(item_descs) and item_descs[form_idx].strip():
+                        file_entry["item_desc"] = item_descs[form_idx].strip()
+                    new_file_idx += 1
                     # Avoid duplicates by name
                     if not any(x.get("name") == f.filename for x in existing_files):
                         existing_files.append(file_entry)
@@ -869,6 +936,9 @@ def user_new_qr_design(qr_type):
                       "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
                       "pdf_font_apply_all"]
         pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
+        # Include scan limit in pdf_data so design step hidden fields can carry them forward
+        pdf_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
+        pdf_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
         
         # Save uploaded PDFs to a temp folder keyed by session
         if qr_type == "pdf":
@@ -888,6 +958,9 @@ def user_new_qr_design(qr_type):
                         existing_tmp.append({"name": f.filename, "safe_name": safe_name})
                         existing_names.add(f.filename)
             session["pdf_tmp_files"] = existing_tmp
+            # Store PDF display names and descriptions so qr_save can apply them
+            session["pdf_display_names"] = request.form.getlist("pdf_display_names")
+            session["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
             session.modified = True
             # Save welcome screen image to same temp folder for move on final save, max 1 MB
             welcome_img = request.files.get("pdf_welcome_img")
@@ -906,6 +979,21 @@ def user_new_qr_design(qr_type):
                     session.modified = True
                 else:
                     error_msg = "Welcome image must be 1 MB or smaller."
+            # Save cover image to same temp folder for move on final save, max 2 MB
+            cover_img = request.files.get("pdf_t1_header_img")
+            if cover_img and cover_img.filename:
+                cover_img.seek(0, 2)
+                cover_size = cover_img.tell()
+                cover_img.seek(0)
+                if cover_size <= 2 * 1024 * 1024:
+                    ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        ext = ".jpg"
+                    cover_name = "pdf_cover_img" + ext
+                    cover_img.save(os.path.join(tmp_dir, cover_name))
+                    session["cover_img_tmp_key"] = tmp_key
+                    session["cover_img_tmp_name"] = cover_name
+                    session.modified = True
         
         if not qr_proc_inst.is_name_unique(session.get("fk_user_id"), qr_name):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
@@ -927,10 +1015,18 @@ def user_new_qr_design(qr_type):
             base = config.G_BASE_URL
             qr_encode_url = base + "/p/" + short_code
         elif qr_type == "pdf":
-            # Auto-generate a unique short_code for PDF type
-            short_code = qr_proc_inst._generate_short_code()
-            while not qr_proc_inst.is_short_code_unique(short_code):
+            if short_code:
+                import re
+                if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
+                    error_msg = "Address identifier must be 2–32 characters: letters, numbers, '-' or '_', no spaces or other symbols."
+                    return view_user.view_user(app).new_qr_type_html(qr_type, error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
+                if not qr_proc_inst.is_short_code_unique(short_code):
+                    error_msg = "This address identifier is already in use. Please choose another."
+                    return view_user.view_user(app).new_qr_type_html(qr_type, error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
+            else:
                 short_code = qr_proc_inst._generate_short_code()
+                while not qr_proc_inst.is_short_code_unique(short_code):
+                    short_code = qr_proc_inst._generate_short_code()
             base = config.G_BASE_URL
             qr_encode_url = base + "/p/" + short_code
     else:
@@ -1001,6 +1097,10 @@ def qr_save():
         tmp_files = session.pop("pdf_tmp_files", [])
         welcome_tmp_key = session.pop("welcome_img_tmp_key", None)
         welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
+        cover_tmp_key = session.pop("cover_img_tmp_key", None)
+        cover_tmp_name = session.pop("cover_img_tmp_name", "pdf_cover_img.jpg")
+        saved_display_names = session.pop("pdf_display_names", [])
+        saved_item_descs = session.pop("pdf_item_descs", [])
         session.modified = True
         dest_dir = os.path.join(app.root_path, "static", "uploads", "pdf", new_qrcard_id)
         tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key) if tmp_key else None
@@ -1017,20 +1117,43 @@ def qr_save():
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"welcome_img_url": welcome_url}}
                 )
+        # Move cover image and save all three cover URL fields in DB
+        if cover_tmp_key:
+            tmp_dir_c = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", cover_tmp_key)
+            src_cover = os.path.join(tmp_dir_c, cover_tmp_name)
+            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            if os.path.exists(src_cover):
+                os.makedirs(dest_dir, exist_ok=True)
+                shutil.move(src_cover, os.path.join(dest_dir, "pdf_cover_img" + ext))
+                cover_url = f"/static/uploads/pdf/{new_qrcard_id}/pdf_cover_img{ext}"
+                from pytavia_modules.qr import qr_proc as _qrproc2
+                _qrproc2.qr_proc(app).mgdDB.db_qrcard.update_one(
+                    {"qrcard_id": new_qrcard_id},
+                    {"$set": {
+                        "pdf_t1_header_img_url": cover_url,
+                        "pdf_t3_circle_img_url": cover_url,
+                        "pdf_t4_circle_img_url": cover_url,
+                    }}
+                )
         saved_files = []
         if tmp_key and tmp_files:
             if not tmp_dir:
                 tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
             os.makedirs(dest_dir, exist_ok=True)
-            for f_info in tmp_files:
+            for idx, f_info in enumerate(tmp_files):
                 src = os.path.join(tmp_dir, f_info["safe_name"])
                 dst = os.path.join(dest_dir, f_info["safe_name"])
                 if os.path.exists(src):
                     shutil.move(src, dst)
-                    saved_files.append({
+                    entry = {
                         "name": f_info["name"],
                         "url": f"/static/uploads/pdf/{new_qrcard_id}/{f_info['safe_name']}"
-                    })
+                    }
+                    if idx < len(saved_display_names) and saved_display_names[idx].strip():
+                        entry["display_name"] = saved_display_names[idx].strip()
+                    if idx < len(saved_item_descs):
+                        entry["item_desc"] = saved_item_descs[idx].strip()
+                    saved_files.append(entry)
             try:
                 shutil.rmtree(tmp_dir, ignore_errors=True)
             except Exception:

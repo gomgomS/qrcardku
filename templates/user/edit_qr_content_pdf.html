@@ -810,7 +810,7 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body sub-collapse-body-lg">
-                            <div style="margin-top: 16px; margin-bottom: 24px;">
+                            <div id="pdf-upload-wrapper" style="margin-top: 16px; margin-bottom: 24px;">
                                 <label
                                     style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
                                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -818,18 +818,36 @@
                                             style="font-size: 18px; color: var(--text-main);"></i>
                                         <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Add
                                             PDF(s)</span>
-                                        <span style="font-size: 12px; color: var(--text-muted);">Maximum size: 10MB</span>
+                                        <span style="font-size: 12px; color: var(--text-muted);">
+                                            Maximum size: 10MB per file · PDF only
+                                        </span>
+                                    </div>
+                                    <div style="margin-top: 6px; font-size: 11px; color: var(--text-muted); text-align: center;">
+                                        Files with the same name as an already uploaded PDF for this QR card
+                                        cannot be added again. If needed, rename the file before uploading.
                                     </div>
                                     <input type="file" name="pdf_files" id="pdf_file_input" accept="application/pdf" multiple
                                         style="display: none;">
                                 </label>
+
+                                {% if error_msg and 'PDF named' in error_msg %}
+                                <div id="pdf-duplicate-error"
+                                    style="margin-top: 10px; background-color: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 6px; font-size: 12px;">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    {{ error_msg }}
+                                </div>
+                                {% else %}
+                                <div id="pdf-duplicate-error"
+                                    style="margin-top: 10px; background-color: #fee2e2; color: #b91c1c; padding: 10px 12px; border-radius: 6px; font-size: 12px; display: none;">
+                                </div>
+                                {% endif %}
 
                                 <!-- Saved PDF files from database -->
                                 {% if qrcard and qrcard.get('pdf_files') %}
                                 <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"
                                     id="saved-pdf-list">
                                     {% for pdf in qrcard.get('pdf_files', []) %}
-                                    <div class="pdf-file-item" data-url="{{ pdf.url }}"
+                                    <div class="pdf-file-item" data-url="{{ pdf.url }}" data-filename="{{ pdf.name }}"
                                         style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
                                         <input type="hidden" name="existing_pdf_urls" value="{{ pdf.url }}">
                                         <!-- File header row -->
@@ -1120,9 +1138,15 @@
                         </div>
 
                         <div class="sub-collapse-body">
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
                                 Customize your URL custom address identifier for this QR code.
                             </p>
+                            <div style="font-size: 11px; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #fecaca; background-color: #fef2f2; color: #b91c1c;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span style="margin-left: 6px;">
+                                    Be careful when changing this URL. Updating it will also change the destination of this QR.
+                                </span>
+                            </div>
 
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="font-size: 12px;">URL</label>
@@ -1454,7 +1478,50 @@
 
         if (qrNameInput) qrNameInput.addEventListener('input', checkContentValid);
         const pdfFileInputCheck = document.querySelector('input[name="pdf_files"]');
-        if (pdfFileInputCheck) pdfFileInputCheck.addEventListener('change', checkContentValid);
+        if (pdfFileInputCheck) {
+            pdfFileInputCheck.addEventListener('change', function (e) {
+                const input = e.target;
+                const files = Array.from(input.files || []);
+                const savedItems = document.querySelectorAll('#saved-pdf-list .pdf-file-item');
+                const existingNames = new Set();
+                savedItems.forEach(function (item) {
+                    const dataName = item.getAttribute('data-filename') || '';
+                    const link = item.querySelector('a');
+                    const linkName = link ? (link.textContent || '').trim() : '';
+                    if (dataName) existingNames.add(dataName);
+                    if (linkName) existingNames.add(linkName);
+                });
+                const seenInBatch = new Set();
+                let duplicate = null;
+                files.forEach(function (file) {
+                    const name = file.name || '';
+                    if (!name) {
+                        return;
+                    }
+                    if (existingNames.has(name) || seenInBatch.has(name)) {
+                        duplicate = name;
+                    }
+                    seenInBatch.add(name);
+                });
+
+                const dupBox = document.getElementById('pdf-duplicate-error');
+                if (duplicate) {
+                    if (dupBox) {
+                        dupBox.style.display = 'block';
+                        dupBox.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' +
+                            'Oops, a PDF named \'' + duplicate +
+                            '\' is already attached to this QR card. Please rename the file or choose a different PDF.';
+                    }
+                    // Reset input so duplicate file is not queued for upload
+                    input.value = '';
+                } else if (dupBox) {
+                    dupBox.style.display = 'none';
+                    dupBox.innerHTML = '';
+                }
+
+                checkContentValid();
+            });
+        }
         checkContentValid();
         // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
         (function () {
@@ -1993,6 +2060,7 @@
 
                         const nameInput = document.createElement('input');
                         nameInput.type = 'text';
+                        nameInput.name = 'pdf_display_names';
                         nameInput.className = 'pdf-display-name-input';
                         nameInput.value = file.name;
                         nameInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); margin-bottom: 8px; box-sizing: border-box;';
@@ -2007,6 +2075,7 @@
 
                         const descInput = document.createElement('input');
                         descInput.type = 'text';
+                        descInput.name = 'pdf_item_descs';
                         descInput.className = 'pdf-item-desc-input';
                         descInput.placeholder = 'Optional note shown under the file name…';
                         descInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); box-sizing: border-box;';
