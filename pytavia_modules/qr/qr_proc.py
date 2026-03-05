@@ -14,6 +14,15 @@ from pytavia_core import config
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
 
+PDF_FIELDS = [
+    "pdf_template", "pdf_primary_color", "pdf_secondary_color",
+    "pdf_title_font", "pdf_title_color", "pdf_text_font",
+    "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
+    "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
+    "welcome_img_url", "pdf_font_apply_all",
+    "pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url",
+]
+
 class qr_proc:
 
     mgdDB = database.get_db_conn(config.mainDB)
@@ -76,8 +85,8 @@ class qr_proc:
                     "message_data": {}
                }
 
-            # Dynamic types (web/pdf): require unique short_code (generate or validate custom)
-            if qr_type in ("web", "pdf"):
+            # Dynamic types (web/pdf/ecard): require unique short_code (generate or validate custom)
+            if qr_type in ("web", "pdf", "ecard"):
                 if short_code:
                     import re
                     if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
@@ -121,15 +130,11 @@ class qr_proc:
             qrcard_rec["design_data"] = {}
             qrcard_rec["qr_image_url"]= ""
             
-            if qr_type == "pdf":
-                pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
-                              "pdf_title_font", "pdf_title_color", "pdf_text_font",
-                              "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                              "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
-                              "welcome_img_url", "pdf_font_apply_all",
-                              "pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url"]
-                for f in pdf_fields:
-                    qrcard_rec[f] = params.get(f, "")
+            if qr_type in ("pdf", "ecard"):
+                for f in PDF_FIELDS:
+                    # keep defaults from model if param not supplied
+                    if f in params:
+                        qrcard_rec[f] = params.get(f, "")
             
             # Scan statistics and optional limit
             qrcard_rec["stats"] = {"scan_count": 0}
@@ -147,8 +152,27 @@ class qr_proc:
             qrcard_rec["created_at"]  = created_at
             qrcard_rec["timestamp"]   = current_time
 
-            # Insert into database
+            # Insert into main qrcard collection
             self.mgdDB.db_qrcard.insert_one(qrcard_rec)
+
+            # Also persist a normalized PDF view into dedicated collection
+            if qr_type == "pdf":
+                pdf_rec = database.get_record("db_qrcard_pdf")
+                pdf_rec["qrcard_id"]   = qrcard_id
+                pdf_rec["fk_user_id"]  = fk_user_id
+                pdf_rec["qr_type"]     = "pdf"
+                pdf_rec["name"]        = name
+                pdf_rec["url_content"] = url_content
+                pdf_rec["short_code"]  = short_code
+                for f in PDF_FIELDS:
+                    pdf_rec[f] = qrcard_rec.get(f, params.get(f, ""))
+                pdf_rec["stats"]              = qrcard_rec.get("stats", {"scan_count": 0})
+                pdf_rec["scan_limit_enabled"] = qrcard_rec.get("scan_limit_enabled", False)
+                pdf_rec["scan_limit_value"]   = qrcard_rec.get("scan_limit_value", 0)
+                pdf_rec["status"]             = qrcard_rec.get("status", "ACTIVE")
+                pdf_rec["created_at"]         = created_at
+                pdf_rec["timestamp"]          = current_time
+                self.mgdDB.db_qrcard_pdf.insert_one(pdf_rec)
 
             return {
                 "message_action": "ADD_QRCARD_SUCCESS",
@@ -197,13 +221,7 @@ class qr_proc:
                 "url_content": url_content,
             }
             
-            pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color",
-                          "pdf_title_font", "pdf_title_color", "pdf_text_font",
-                          "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc",
-                          "pdf_website", "pdf_btn_text", "welcome_time", "welcome_bg_color",
-                          "welcome_img_url", "pdf_font_apply_all",
-                          "pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url"]
-            for f in pdf_fields:
+            for f in PDF_FIELDS:
                 if f in params:
                     update_data[f] = params.get(f)
 
@@ -218,12 +236,12 @@ class qr_proc:
                 except Exception:
                     pass
 
-            # Optionally update short_code for dynamic types (web/pdf) when a new, valid, unique code is provided
+            # Optionally update short_code for dynamic types (web/pdf/ecard) when a new, valid, unique code is provided
             try:
                 doc = self.get_qrcard(fk_user_id, qrcard_id)
             except Exception:
                 doc = None
-            if doc and doc.get("qr_type") in ("web", "pdf"):
+            if doc and doc.get("qr_type") in ("web", "pdf", "ecard"):
                 new_short = (params.get("short_code") or "").strip().lower()
                 current_short = (doc.get("short_code") or "").strip().lower()
                 if new_short and new_short != current_short:
@@ -235,6 +253,31 @@ class qr_proc:
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$set": update_data}
             )
+
+            # Keep PDF shadow collection in sync when applicable
+            try:
+                doc = self.get_qrcard(fk_user_id, qrcard_id)
+            except Exception:
+                doc = None
+            if doc and doc.get("qr_type") == "pdf":
+                pdf_update = {
+                    "name": name,
+                    "url_content": url_content,
+                }
+                for f in PDF_FIELDS:
+                    if f in update_data:
+                        pdf_update[f] = update_data[f]
+                if "short_code" in update_data:
+                    pdf_update["short_code"] = update_data["short_code"]
+                if "scan_limit_enabled" in update_data:
+                    pdf_update["scan_limit_enabled"] = update_data["scan_limit_enabled"]
+                if "scan_limit_value" in update_data:
+                    pdf_update["scan_limit_value"] = update_data["scan_limit_value"]
+                self.mgdDB.db_qrcard_pdf.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": pdf_update},
+                    upsert=True,
+                )
             return {"status": "SUCCESS", "message": "QR card updated."}
         except Exception as e:
             self.webapp.logger.debug(traceback.format_exc())
@@ -271,6 +314,12 @@ class qr_proc:
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$set": {"pdf_files": pdf_files_list}}
             )
+            # Mirror into dedicated PDF collection as well
+            self.mgdDB.db_qrcard_pdf.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$set": {"pdf_files": pdf_files_list}},
+                upsert=True,
+            )
             return True
         except Exception as e:
             self.webapp.logger.debug(traceback.format_exc())
@@ -280,6 +329,10 @@ class qr_proc:
         """Remove a single PDF file entry from the stored list by its URL."""
         try:
             self.mgdDB.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$pull": {"pdf_files": {"url": file_url}}}
+            )
+            self.mgdDB.db_qrcard_pdf.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$pull": {"pdf_files": {"url": file_url}}}
             )

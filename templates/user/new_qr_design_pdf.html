@@ -711,7 +711,7 @@
     </div>
 </div>
 
-<form id="design-form" method="POST" action="{{ form_action | default('/qr/save') }}">
+<form id="design-form" method="POST" action="{{ form_action | default('/qr/save/pdf') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="qr_type" value="{{ qr_type }}" />
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
@@ -849,7 +849,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // Generate QR: for dynamic web use short URL (qrcardku.com/p/xxx), else use url_content
+        // Generate QR: for PDF use short URL (qrcardku.com/pdf/xxx), else use url_content
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
         const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);

@@ -690,8 +690,14 @@
             <input type="hidden" name="back_from_design" value="1" />
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
 
+            {% set E-card_fields = ['E-card_template', 'E-card_primary_color', 'E-card_secondary_color', 'E-card_title_font',
+            'E-card_title_color', 'E-card_text_font', 'E-card_text_color', 'E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website',
+            'E-card_btn_text', 'welcome_time'] %}
+            {% for field in E-card_fields %}
+            {% set f_val = qrcard.get(field, '') if qrcard else (E-card_data.get(field, '') if E-card_data else '') %}
+            <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
+            {% endfor %}
 
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
@@ -708,9 +714,15 @@
     <input type="hidden" name="qr_type" value="{{ qr_type }}" />
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-    {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{%
-    endif %}
+    
 
+    {% set E-card_fields = ['E-card_template', 'E-card_primary_color', 'E-card_secondary_color', 'E-card_title_font',
+    'E-card_title_color', 'E-card_text_font', 'E-card_text_color', 'E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website',
+    'E-card_btn_text', 'welcome_time'] %}
+    {% for field in E-card_fields %}
+    {% set f_val = qrcard.get(field, '') if qrcard else (E-card_data.get(field, '') if E-card_data else '') %}
+    <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
+    {% endfor %}
 </form>
 
 <div class="new-qr-container">
@@ -833,7 +845,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // Generate QR: for dynamic web use short URL (qrcardku.com/web/xxx), else use url_content
+        // Generate QR: for e-card use short URL (qrcardku.com/ecard/xxx), else use url_content
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
         const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);

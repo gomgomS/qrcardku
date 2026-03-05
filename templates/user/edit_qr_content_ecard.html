@@ -1,0 +1,2457 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<link
+    href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap"
+    rel="stylesheet">
+<style>
+    .new-qr-container {
+        display: flex;
+        gap: 32px;
+        height: 100%;
+    }
+
+    .form-column {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-column {
+        width: 340px;
+        flex-shrink: 0;
+    }
+
+    .steps {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        color: var(--text-muted);
+        max-width: 1000px;
+        margin: 0 auto 32px auto;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .step-num {
+        width: 24px;
+        height: 24px;
+        background-color: #e5e7eb;
+        color: var(--text-muted);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+    }
+
+    .step-completed {
+        color: #16a34a;
+        font-weight: 500;
+    }
+
+    .step-completed .step-num {
+        background-color: #16a34a;
+        color: white;
+    }
+
+    .step-active {
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .step-active .step-num {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .nav-buttons {
+        margin-left: auto;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-outline {
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .btn-primary-pill {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 6px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .collapse-section {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .collapse-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        background-color: white;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .collapse-header:last-child {
+        border-bottom: none;
+    }
+
+    .header-left-col {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-icon {
+        color: var(--primary);
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .header-text h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 2px;
+    }
+
+    .header-text p {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .collapse-body {
+        padding: 0 24px 24px 24px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+    }
+
+    .collapse-body.show {
+        padding: 24px;
+        max-height: 4000px;
+        /* large enough to fit all content including image upload sections */
+        opacity: 1;
+    }
+
+    .sub-collapse-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        cursor: pointer;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .sub-collapse-header:first-child {
+        border-top: none;
+    }
+
+    .sub-collapse-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+        padding-bottom: 0;
+    }
+
+    .sub-collapse-body.show {
+        max-height: 500px;
+        opacity: 1;
+        padding-bottom: 16px;
+    }
+
+    .sub-collapse-body.show.sub-collapse-body-lg {
+        max-height: 2000px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .name-qr-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-bottom: 8px;
+    }
+
+    .toggle-label-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .toggle-label-with-icon i {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e5e7eb;
+        transition: .3s;
+        border-radius: 20px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(16px);
+    }
+
+    /* URL Config Row */
+    .url-prefix-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f9fafb;
+    }
+
+    .url-prefix {
+        padding: 10px 14px;
+        color: var(--text-muted);
+        font-size: 14px;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .url-prefix-group input {
+        flex: 1;
+        border: none;
+        padding: 10px 14px;
+        background: white;
+    }
+
+    .url-prefix-group input:focus {
+        outline: none;
+    }
+
+    .btn-secondary-sm {
+        background: white;
+        border: 1px solid var(--border-color);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    /* Phone Mockup Styling */
+    .phone-container {
+        position: sticky;
+        top: 24px;
+    }
+
+    .phone-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .phone-type-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .phone-mockup {
+        width: 100%;
+        height: 600px;
+        background-color: white;
+        border: 12px solid #1a1a1a;
+        border-radius: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Mockup internal content matching reference */
+    .mockup-inner {
+        width: 100%;
+        height: 100%;
+        background-color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-disclaimer {
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .preview-welcome-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 15;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: none;
+    }
+
+    .preview-welcome-overlay.hide {
+        opacity: 0;
+    }
+
+    .preview-welcome-overlay img {
+        max-width: 200px;
+        max-height: 280px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true"
+            style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
+            Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i
+                class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/' ~ qr_type ~ '/qr-design') }}"
+    enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+
+    <div class="new-qr-container">
+        <!-- Left form section -->
+        <div class="form-column">
+            {% if error_msg %}
+            <div
+                style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Basic Information Section -->
+
+
+            <!-- Appearance Section for E-card -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-text">
+                            <h3>Appearance</h3>
+                            <p>Customize the style and template.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Select Template -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Select Template</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                                <!-- Template Options (Mocked for visual) -->
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="E-card_template" value="default" {% if not qrcard or
+                                        qrcard.get('E-card_template', 'default' )=='default' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #e5e7eb; width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
+                                        </div>
+                                        <div style="background: #d1d5db; width: 80%; height: 8px; margin: 0 auto 4px;">
+                                        </div>
+                                        <div style="background: #d1d5db; width: 60%; height: 8px; margin: 0 auto;">
+                                        </div>
+                                    </div>
+                                    <span
+                                        style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="E-card_template" value="template1" {% if qrcard and
+                                        qrcard.get('E-card_template')=='template1' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        <!-- Header image zone -->
+                                        <div
+                                            style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;">
+                                            <div
+                                                style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;">
+                                            </div>
+                                        </div>
+                                        <!-- White card area -->
+                                        <div
+                                            style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div
+                                                style="background: #9ca3af; width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;">
+                                            </div>
+                                            <div
+                                                style="background: #d1d5db; width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;">
+                                            </div>
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                                <div
+                                                    style="width: 12px; height: 12px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
+                                                </div>
+                                            </div>
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
+                                                <div
+                                                    style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        1</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="E-card_template" value="template2" {% if qrcard and
+                                        qrcard.get('E-card_template')=='template2' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                        <!-- White floating card (no circle image) -->
+                                        <div
+                                            style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                            <!-- Company + title bars -->
+                                            <div
+                                                style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;">
+                                            </div>
+                                            <div
+                                                style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
+                                            </div>
+                                            <div
+                                                style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;">
+                                            </div>
+                                            <!-- List items -->
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div
+                                                    style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;">
+                                                </div>
+                                            </div>
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div
+                                                    style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line -->
+                                        <div
+                                            style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        2</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="E-card_template" value="template3" {% if qrcard and
+                                        qrcard.get('E-card_template')=='template3' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
+                                        <!-- Circle image -->
+                                        <div
+                                            style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i>
+                                        </div>
+                                        <!-- Title bars -->
+                                        <div
+                                            style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 3px;">
+                                        </div>
+                                        <div
+                                            style="background: rgba(255,255,255,0.5); width: 38%; height: 3px; border-radius: 2px; margin-bottom: 7px;">
+                                        </div>
+                                        <!-- List items -->
+                                        <div
+                                            style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
+                                            <div
+                                                style="width: 10px; height: 10px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
+                                            </div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                            </div>
+                                            <div
+                                                style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                            </div>
+                                        </div>
+                                        <div
+                                            style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
+                                            <div
+                                                style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                            </div>
+                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                            </div>
+                                            <div
+                                                style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        3</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="E-card_template" value="template4" {% if qrcard and
+                                        qrcard.get('E-card_template')=='template4' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                                        <!-- White floating card with circle image overlapping top -->
+                                        <div
+                                            style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                            <!-- Circle image overlapping card top -->
+                                            <div
+                                                style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fa-regular fa-image"
+                                                    style="color: #9ca3af; font-size: 7px;"></i>
+                                            </div>
+                                            <!-- Company + title bars -->
+                                            <div
+                                                style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;">
+                                            </div>
+                                            <div
+                                                style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
+                                            </div>
+                                            <div
+                                                style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;">
+                                            </div>
+                                            <!-- List items -->
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div
+                                                    style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                </div>
+                                            </div>
+                                            <div
+                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                <div
+                                                    style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                </div>
+                                                <div
+                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                </div>
+                                                <div
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Website line below card -->
+                                        <div
+                                            style="background: rgba(255,255,255,0.6); width: 50%; height: 3px; border-radius: 2px; margin-top: 6px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template
+                                        4</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Design (Colors) -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Design</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div
+                                style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;">
+                                <!-- Predefined Colors (5 options based on prompt) -->
+                                <div class="color-preset active" data-primary="#2f6bfd" data-secondary="#0e379a"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 2px solid var(--primary); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #2f6bfd; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #0e379a; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#10b981" data-secondary="#047857"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#f59e0b" data-secondary="#b45309"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #f59e0b; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b45309; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                            </div>
+
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 24px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="E-card_primary_hex" name="E-card_primary_color"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="E-card_primary_picker" value="#2f6bfd"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="E-card_secondary_hex" name="E-card_secondary_color"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="E-card_secondary_picker" value="#0e379a"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="btn-invert-colors"
+                                    style="background: transparent; border: 1px solid var(--border-color); color: var(--primary); font-size: 12px; font-weight: 500; border-radius: 20px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-arrow-right-arrow-left"></i> Invert
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fonts -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Fonts</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                                <!-- Title Font -->
+                                <div style="margin-bottom: 16px;">
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="E-card_title_font"
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            <option value="Lato">Lato</option>
+                                            <option value="Roboto">Roboto</option>
+                                            <option value="Open Sans">Open Sans</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                        </select>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="E-card_title_color_hex" value="#000000"
+                                                style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" name="E-card_title_color" id="E-card_title_color_picker"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;"
+                                                value="{{ qrcard.get('E-card_title_color', '#000000') if qrcard else '#000000' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Text Font -->
+                                <div>
+                                    <label
+                                        style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="E-card_text_font"
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            <option value="Lato">Lato</option>
+                                            <option value="Roboto">Roboto</option>
+                                            <option value="Open Sans">Open Sans</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                        </select>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="E-card_text_color_hex" value="#000000"
+                                                style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" name="E-card_text_color" id="E-card_text_color_picker"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;"
+                                                value="{{ qrcard.get('E-card_text_color', '#000000') if qrcard else '#000000' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Apply font settings to all templates toggle -->
+                                <div
+                                    style="margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                                    <div>
+                                        <div style="font-size: 12px; font-weight: 600; color: var(--text-main);">Apply
+                                            font to all templates</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">When
+                                            ON, font type &amp; color override all template previews</div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="E-card_font_apply_all" name="E-card_font_apply_all"
+                                            {% if qrcard and qrcard.get('E-card_font_apply_all') %}checked{% endif %}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Basic Information Section for E-card -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>Basic Information</h3>
+                            <p>Add essential information.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Profile Image -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Profile image</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div id="E-card-cover-img-section" style="margin-top: 16px; margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 12px;">Profile Image
+                                    <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Used as
+                                        main profile avatar)</span>
+                                </label>
+                                <label
+                                    style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                    <div id="cover-img-preview"
+                                        style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                        {% set cover_url = qrcard.get('E-card_profile_img_url') if qrcard else '' %}
+                                        {% if cover_url %}
+                                        <img src="{{ cover_url }}" alt="Profile image"
+                                            style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <div
+                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-user" style="color: #9ca3af;"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Profile
+                                            Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <i class="fa-solid fa-cloud-arrow-up"
+                                        style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                                    <input type="file" name="E-card_profile_img" accept="image/*" style="display: none;"
+                                        id="E-card_profile_img_input">
+                                </label>
+                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="cover-img-remove-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not cover_url %}display: none;{% endif %}">
+                                        <i class="fa-solid fa-xmark"></i> Remove
+                                    </button>
+                                    <input type="hidden" name="E-card_profile_img_delete" id="E-card_profile_img_delete"
+                                        value="0">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i
+                                        class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. E-card information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">E-card information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Company</label>
+                                    <input type="text" name="E-card_company" class="form-control"
+                                        placeholder="Company Name" style="background: white;"
+                                        value="{{ qrcard.get('E-card_company', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">E-card title</label>
+                                    <input type="text" name="E-card_title" class="form-control" placeholder="Title"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('E-card_title', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Description</label>
+                                    <input type="text" name="E-card_desc" class="form-control" placeholder="Description"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('E-card_desc', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Website</label>
+                                    <input type="text" name="E-card_website" class="form-control" placeholder="https://"
+                                        style="background: white;"
+                                        value="{{ qrcard.get('E-card_website', '') if qrcard else '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-size: 12px;">Button</label>
+                                    <input type="text" name="E-card_btn_text" class="form-control"
+                                        placeholder="E.g.: View E-card"
+                                        style="background: white; border-color: var(--primary);"
+                                        value="{{ qrcard.get('E-card_btn_text', '') if qrcard else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Content Section for E-card -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>Content</h3>
+                            <p>All the details about your QR.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="margin-top: 8px;">
+                                <label
+                                    style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                                <label
+                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                    <div id="welcome-img-preview"
+                                        style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                        {% if qrcard and qrcard.get('welcome_img_url') %}
+                                        <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image"
+                                            style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <!-- Placeholder state -->
+                                        <div
+                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <input type="file" name="E-card_welcome_img" accept="image/*" style="display: none;"
+                                        id="E-card_welcome_img_input">
+                                </label>
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                    <button type="button" id="welcome-delete-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
+                                        Remove
+                                    </button>
+                                    <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <label
+                                    style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background
+                                    color</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
+                                        value="{{ qrcard.get('welcome_bg_color', qrcard.get('E-card_primary_color', '#2F6BFD')) or '#2F6BFD' }}"
+                                        style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 24px;">
+                                <label
+                                    style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+                                    Time (seconds) <i class="fa-regular fa-circle-question"
+                                        style="color: var(--text-muted); font-size: 14px;"></i>
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
+                                        style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider"
+                                        value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
+                                </div>
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                    <span id="welcome-time-display">2.5 seconds</span>
+                                    <span>10 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section (Following Reference layout) -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
+                        <div class="header-text">
+                            <h3>Stats</h3>
+                            <p>Key metrics and data to evaluate performance.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Schedule Date -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> Schedule a date
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p
+                                style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">
+                                Set the dates on which your content will be shown through the QR. At the end of that
+                                period,
+                                it
+                                will be disabled.
+                            </p>
+
+                            <div class="toggle-row" style="padding-left: 22px;">
+                                <div class="toggle-label-with-icon">
+                                    Activate the schedule to work during certain dates
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <!-- Date Inputs Disabled natively for layout purposes -->
+                            <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
+                                <div style="flex: 1;">
+                                    <label
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
+                                    <div
+                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
+                                    <div
+                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- URL Config -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-link" style="color: var(--text-main);"></i> URL configuration
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                                Customize your URL custom address identifier for this QR code.
+                            </p>
+                            <div
+                                style="font-size: 11px; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #fecaca; background-color: #fef2f2; color: #b91c1c;">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span style="margin-left: 6px;">
+                                    Be careful when changing this URL. Updating it will also change the destination of
+                                    this QR.
+                                </span>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 8px;">
+                                <label class="form-label" style="font-size: 12px;">URL</label>
+                                <div class="url-prefix-group">
+                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url |
+                                        default('https://qrcardku.com') }}/ecard/</div>
+                                    <input type="text" name="short_code" id="stats-short-code-input"
+                                        placeholder="Letters, numbers, '-' and '_' only"
+                                        value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
+                                        pattern="[a-zA-Z0-9_-]{2,32}"
+                                        title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
+                                        maxlength="32">
+                                </div>
+                                <p id="stats-url-preview"
+                                    style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;">
+                                </p>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers,
+                                    '-' and '_' only, no spaces or other symbols (2–32 characters).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scan Limit -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                Limit the number of times your QR can be scanned in total.
+                            </p>
+
+                            <div class="toggle-row">
+                                <div class="toggle-label-with-icon">
+                                    Enable scan limit
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="scan_limit_enabled" id="scan-limit-toggle" {% if qrcard
+                                        and qrcard.get('scan_limit_enabled') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="form-label" style="font-size: 12px;">Scan Limit</label>
+                                <input type="number" name="scan_limit_value" id="scan-limit-value" class="form-control"
+                                    placeholder="e.g. 50" min="1"
+                                    value="{{ qrcard.get('scan_limit_value') if qrcard and qrcard.get('scan_limit_value') else '' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right preview section -->
+        <div class="preview-column">
+            <div class="phone-container">
+                <div class="phone-header">
+                    <div class="phone-type-badge">
+                        <i class="fa-solid fa-file-E-card"></i> E-card
+                    </div>
+                    <i class="fa-solid fa-pen" style="color: var(--primary); cursor: pointer;"></i>
+                </div>
+
+                <div class="phone-mockup">
+                    <div class="mockup-inner"
+                        style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        {% set preview_primary = qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD'
+                        %}
+                        <!-- Welcome screen overlay: shown first, then smooth fade to E-card preview -->
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
+
+                        <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
+                        <div id="preview-template1"
+                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: #f3f4f6; overflow-y: auto; overflow-x: hidden;">
+                            <!-- Header image area (light bg so image looks natural) -->
+                            <div id="t1-preview-header"
+                                style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('E-card_t1_header_img_url')) %}display: none;{% endif %}">
+                                <img id="t1-preview-header-img"
+                                    src="{% if qrcard and qrcard.get('E-card_t1_header_img_url') %}{{ qrcard.get('E-card_t1_header_img_url') }}{% endif %}"
+                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <!-- Colored card body (primary color bg, white text) -->
+                            <div id="t1-preview-card-body"
+                                style="background: {{ preview_primary }}; {% if qrcard and qrcard.get('E-card_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 14px 14px 20px; min-height: 0; overflow-y: auto;">
+                                <div id="t1-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
+                                <div id="t1-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Website link -->
+                                <div id="t1-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 2 Preview: primary bg + floating white card (no circle image) -->
+                        <div id="preview-template2"
+                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div
+                                style="background: white; border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <div id="t2-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
+                                <div id="t2-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t2-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
+                        </div>
+
+                        <!-- Template 3 Preview: primary bg + circle image at top -->
+                        <div id="preview-template3"
+                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
+                            <div
+                                style="flex: 1; display: flex; flex-direction: column; padding: 20px 14px 20px; overflow-y: auto; align-items: center;">
+                                <!-- Circle image -->
+                                <div
+                                    style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 3px solid white; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; flex-shrink: 0; box-shadow: 0 0 0 5px rgba(255,255,255,0.15);">
+                                    <img id="t3-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('E-card_t3_circle_img_url') %}{{ qrcard.get('E-card_t3_circle_img_url') }}{% endif %}"
+                                        alt=""
+                                        style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('E-card_t3_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t3-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('E-card_t3_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%;">
+                                        <i class="fa-regular fa-image"
+                                            style="font-size: 26px; color: rgba(255,255,255,0.5);"></i>
+                                    </div>
+                                </div>
+                                <!-- Text -->
+                                <div id="t3-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; width: 100%; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
+                                <div id="t3-preview-desc"
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Website -->
+                                <div id="t3-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Template 4 Preview: primary bg + floating white card + circle image overlapping top -->
+                        <div id="preview-template4"
+                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
+                            <!-- White floating card -->
+                            <div
+                                style="background: white; border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                                <!-- Circle image overlapping top of card -->
+                                <div
+                                    style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center;">
+                                    <img id="t4-preview-circle-img"
+                                        src="{% if qrcard and qrcard.get('E-card_t4_circle_img_url') %}{{ qrcard.get('E-card_t4_circle_img_url') }}{% endif %}"
+                                        alt=""
+                                        style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('E-card_t4_circle_img_url')) %}display: none;{% endif %}">
+                                    <div id="t4-preview-circle-placeholder"
+                                        style="display: {% if qrcard and qrcard.get('E-card_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e5e7eb;">
+                                        <i class="fa-regular fa-image" style="font-size: 22px; color: #9ca3af;"></i>
+                                    </div>
+                                </div>
+                                <!-- Text inside card -->
+                                <div id="t4-preview-company"
+                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-title"
+                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
+                                <div id="t4-preview-desc"
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                            </div>
+                            <!-- Website below card -->
+                            <div id="t4-preview-website"
+                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
+                        </div>
+
+                        <!-- E-card Default Template Preview -->
+                        <div id="preview-top-block"
+                            style="background-color: {{ preview_primary }}; width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
+                        </div>
+
+                        <div id="preview-bottom-block"
+                            style="background-color: #ffffff; width: 100%; margin-top: -30px; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; align-items: center; z-index: 2; position: relative; padding-bottom: 40px; flex-grow: 1;">
+
+                            <!-- E-card Thumbnail and Navigation -->
+                            <div
+                                style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 24px;">
+                                <div id="preview-E-card-prev"
+                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </div>
+
+                                <div id="preview-profile-img-container"
+                                    style="width: 130px; height: 130px; border-radius: 50%; background: white; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
+                                    <i id="preview-profile-placeholder-icon" class="fa-regular fa-image"
+                                        style="font-size: 48px; color: #d1d5db;"></i>
+                                    <img id="preview-profile-img" src="" alt=""
+                                        style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+
+                                <div id="preview-E-card-next"
+                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </div>
+                            </div>
+
+                            <div id="preview-title-text"
+                                style="color: var(--text-main); font-size: 18px; font-weight: 800; font-family: 'Lato', sans-serif; margin-bottom: 8px; text-align: center; padding: 0 20px; line-height: 1.2; display: none;">
+                            </div>
+
+                            <div id="preview-company-text"
+                                style="color: var(--text-main); font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; text-align: center; padding: 0 20px; margin-bottom: 8px; word-break: break-word; display: none;">
+                            </div>
+
+                            <div id="preview-desc-text"
+                                style="color: var(--text-muted); font-size: 12px; font-weight: 400; font-family: 'Lato', sans-serif; text-align: center; padding: 0 24px; margin-bottom: 24px; line-height: 1.4; display: none; -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            </div>
+
+                            <!-- See E-card Button -->
+                            <div id="preview-btn"
+                                style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto; width: fit-content; margin-left: auto; margin-right: auto; white-space: nowrap;">
+                                See E-card
+                            </div>
+
+                            <div id="preview-website-text"
+                                style="color: {{ preview_primary }}; font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 12px; display: none; text-align: center; text-decoration: underline;">
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="preview-disclaimer">
+                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/E-card.js/2.16.105/E-card.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
+        const step3Link = document.getElementById('step3-link');
+        const contentNextBtn = document.getElementById('content-next-btn');
+        const qrNameInput = document.querySelector('input[name="qr_name"]');
+
+        function checkContentValid() {
+            var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
+            const profileInput = document.querySelector('input[name="E-card_profile_img"]');
+            var hasNew = profileInput && profileInput.files && profileInput.files.length > 0;
+            var savedCover = document.querySelector('#cover-img-preview img');
+
+            var hasImage = hasNew || (savedCover && savedCover.src && savedCover.src.length > 0);
+
+            var valid = nameOk && hasImage;
+
+            if (step3Link) {
+                if (valid) {
+                    step3Link.classList.remove('step-disabled');
+                    step3Link.removeAttribute('aria-disabled');
+                    step3Link.disabled = false;
+                } else {
+                    step3Link.classList.add('step-disabled');
+                    step3Link.setAttribute('aria-disabled', 'true');
+                    step3Link.disabled = true;
+                }
+            }
+            if (contentNextBtn) {
+                contentNextBtn.disabled = !valid;
+            }
+        }
+
+        if (qrNameInput) qrNameInput.addEventListener('input', checkContentValid);
+        const profileInputCheck = document.querySelector('input[name="E-card_profile_img"]');
+        if (profileInputCheck) profileInputCheck.addEventListener('change', checkContentValid);
+        checkContentValid();
+        // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
+        (function () {
+            var baseUrl = {{ (base_url or '') | tojson
+    }};
+    var prefixEl = document.getElementById('stats-url-prefix');
+    var shortInput = document.getElementById('stats-short-code-input');
+    var previewEl = document.getElementById('stats-url-preview');
+    if (!shortInput || !previewEl) return;
+    function stripInvalidChars(val) {
+        return (val || '').replace(/[^a-zA-Z0-9_-]/g, '');
+    }
+    function updateUrlPreview() {
+        var code = shortInput.value.trim();
+        var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/ecard/');
+        previewEl.textContent = code ? prefix + code : '';
+    }
+    shortInput.addEventListener('input', function () {
+        var filtered = stripInvalidChars(shortInput.value);
+        if (filtered !== shortInput.value) shortInput.value = filtered;
+        updateUrlPreview();
+    });
+    shortInput.addEventListener('paste', function () {
+        var self = shortInput;
+        setTimeout(function () { self.value = stripInvalidChars(self.value); updateUrlPreview(); }, 0);
+    });
+    updateUrlPreview(); // run once on load
+        }) ();
+
+    // Scan limit toggle: enable number input only when active
+    (function () {
+        var toggle = document.getElementById('scan-limit-toggle');
+        var input = document.getElementById('scan-limit-value');
+        if (!toggle || !input) return;
+        function sync() {
+            var enabled = toggle.checked;
+            input.disabled = !enabled;
+        }
+        toggle.addEventListener('change', sync);
+        sync();
+    })();
+    const attachCollapseListener = (selector) => {
+        const headers = document.querySelectorAll(selector);
+        headers.forEach(header => {
+            header.addEventListener('click', function () {
+                const body = this.nextElementSibling;
+                const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
+
+                if (!body.classList.contains('show')) {
+                    body.classList.add('show');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                } else {
+                    body.classList.remove('show');
+                    if (icon) {
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                }
+            });
+        });
+    };
+
+    attachCollapseListener('.collapse-header');
+    attachCollapseListener('.sub-collapse-header');
+
+    // E-card UI Logic
+    const previewTopBlock = document.getElementById('preview-top-block');
+    const previewBtn = document.getElementById('preview-btn');
+
+    // Colors sync
+    const primaryPicker = document.getElementById('E-card_primary_picker');
+    const primaryHex = document.getElementById('E-card_primary_hex');
+    const secondaryPicker = document.getElementById('E-card_secondary_picker');
+    const secondaryHex = document.getElementById('E-card_secondary_hex');
+
+    if (primaryPicker && primaryHex) {
+        primaryPicker.addEventListener('input', e => {
+            primaryHex.value = e.target.value.toUpperCase();
+            if (previewTopBlock) previewTopBlock.style.backgroundColor = e.target.value;
+        });
+    }
+    if (secondaryPicker && secondaryHex) {
+        secondaryPicker.addEventListener('input', e => {
+            secondaryHex.value = e.target.value.toUpperCase();
+            if (previewBtn) previewBtn.style.backgroundColor = e.target.value;
+        });
+    }
+
+    // Invert colors
+    const invertBtn = document.getElementById('btn-invert-colors');
+    if (invertBtn && primaryPicker && secondaryPicker) {
+        invertBtn.addEventListener('click', () => {
+            const temp = primaryPicker.value;
+            primaryPicker.value = secondaryPicker.value;
+            secondaryPicker.value = temp;
+            primaryHex.value = primaryPicker.value.toUpperCase();
+            secondaryHex.value = secondaryPicker.value.toUpperCase();
+            if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
+            if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
+            // Propagate to t1-t4
+            primaryPicker.dispatchEvent(new Event('input'));
+        });
+    }
+
+    // Sync preset colors
+    document.querySelectorAll('.color-preset').forEach(preset => {
+        preset.addEventListener('click', function () {
+            document.querySelectorAll('.color-preset').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            this.style.border = '2px solid var(--primary)';
+            // reset others
+            document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
+
+            if (primaryPicker) {
+                primaryPicker.value = this.dataset.primary;
+                primaryHex.value = this.dataset.primary.toUpperCase();
+                if (previewTopBlock) previewTopBlock.style.backgroundColor = this.dataset.primary;
+                // Propagate to t1-t4
+                primaryPicker.dispatchEvent(new Event('input'));
+            }
+            if (secondaryPicker) {
+                secondaryPicker.value = this.dataset.secondary;
+                secondaryHex.value = this.dataset.secondary.toUpperCase();
+                if (previewBtn) previewBtn.style.backgroundColor = this.dataset.secondary;
+            }
+        });
+    });
+
+    // Button text sync
+    const btnTextInput = document.querySelector('input[name="E-card_btn_text"]');
+    if (btnTextInput && previewBtn) {
+        btnTextInput.addEventListener('input', e => {
+            previewBtn.textContent = e.target.value || 'See E-card';
+        });
+    }
+
+    // Company, Title, Desc, Website sync
+    const companyInput = document.querySelector('input[name="E-card_company"]');
+    const previewCompany = document.getElementById('preview-company-text');
+    if (companyInput && previewCompany) {
+        // Initial check in case it's an edit page with pre-filled values
+        if (companyInput.value) {
+            previewCompany.textContent = companyInput.value;
+            previewCompany.style.display = 'block';
+        }
+
+        companyInput.addEventListener('input', e => {
+            previewCompany.textContent = e.target.value;
+            previewCompany.style.display = e.target.value ? 'block' : 'none';
+        });
+    }
+
+    const titleInput = document.querySelector('input[name="E-card_title"]');
+    const previewTitle = document.getElementById('preview-title-text');
+    if (titleInput && previewTitle) {
+        if (titleInput.value) {
+            previewTitle.textContent = titleInput.value;
+            previewTitle.style.display = 'block';
+        }
+
+        titleInput.addEventListener('input', e => {
+            previewTitle.textContent = e.target.value;
+            previewTitle.style.display = e.target.value ? 'block' : 'none';
+        });
+    }
+
+    const descInput = document.querySelector('input[name="E-card_desc"]');
+    const previewDesc = document.getElementById('preview-desc-text');
+    if (descInput && previewDesc) {
+        if (descInput.value) {
+            previewDesc.textContent = descInput.value;
+            previewDesc.style.display = '-webkit-box';
+        }
+
+        descInput.addEventListener('input', e => {
+            previewDesc.textContent = e.target.value;
+            // Use webkit-box for line clamp to work alongside display none
+            previewDesc.style.display = e.target.value ? '-webkit-box' : 'none';
+        });
+    }
+
+    const websiteInput = document.querySelector('input[name="E-card_website"]');
+    const previewWebsite = document.getElementById('preview-website-text');
+    if (websiteInput && previewWebsite) {
+        if (websiteInput.value) {
+            previewWebsite.textContent = websiteInput.value;
+            previewWebsite.style.display = 'block';
+        }
+
+        websiteInput.addEventListener('input', e => {
+            previewWebsite.textContent = e.target.value;
+            previewWebsite.style.display = e.target.value ? 'block' : 'none';
+        });
+    }
+
+    // Typography & colors for E-card preview
+    const titleColorPicker = document.getElementById('E-card_title_color_picker');
+    const titleColorHex = document.getElementById('E-card_title_color_hex');
+    const textColorPicker = document.getElementById('E-card_text_color_picker');
+    const textColorHex = document.getElementById('E-card_text_color_hex');
+    const titleFontSelect = document.querySelector('select[name="E-card_title_font"]');
+    const textFontSelect = document.querySelector('select[name="E-card_text_font"]');
+    const previewTitleEl = document.getElementById('preview-title-text');
+    const previewCompanyEl = document.getElementById('preview-company-text');
+    const previewDescEl = document.getElementById('preview-desc-text');
+    const previewWebsiteEl = document.getElementById('preview-website-text');
+
+    function isFontToggleOn() {
+        var t = document.getElementById('E-card_font_apply_all');
+        return t && t.checked;
+    }
+
+    function applyEcardFonts() {
+        if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
+        var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
+        var titleFF = titleFontSelect ? quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+        var textFF = textFontSelect ? quote(textFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
+
+        // Default template
+        if (previewTitleEl && titleFF) previewTitleEl.style.fontFamily = titleFF;
+        if (previewCompanyEl && textFF) previewCompanyEl.style.fontFamily = textFF;
+        if (previewDescEl && textFF) previewDescEl.style.fontFamily = textFF;
+        if (previewWebsiteEl && textFF) previewWebsiteEl.style.fontFamily = textFF;
+
+        // Templates 1-4
+        ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+            var titleEl = document.getElementById(pfx + '-preview-title');
+            var companyEl = document.getElementById(pfx + '-preview-company');
+            var descEl = document.getElementById(pfx + '-preview-desc');
+            var websiteEl = document.getElementById(pfx + '-preview-website');
+            if (titleEl && titleFF) titleEl.style.fontFamily = titleFF;
+            if (companyEl && textFF) companyEl.style.fontFamily = textFF;
+            if (descEl && textFF) descEl.style.fontFamily = textFF;
+            if (websiteEl && textFF) websiteEl.style.fontFamily = textFF;
+        });
+    }
+
+    function applyEcardTextColors() {
+        if (!isFontToggleOn()) return; // toggle OFF → do nothing
+
+        const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
+        const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
+
+        // Default template
+        if (previewTitleEl) previewTitleEl.style.color = titleColor;
+        if (previewCompanyEl) previewCompanyEl.style.color = textColor;
+        if (previewDescEl) previewDescEl.style.color = textColor;
+        if (previewWebsiteEl) previewWebsiteEl.style.color = textColor;
+
+        // Templates 1-4
+        ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+            var titleEl = document.getElementById(pfx + '-preview-title');
+            var companyEl = document.getElementById(pfx + '-preview-company');
+            var descEl = document.getElementById(pfx + '-preview-desc');
+            if (titleEl) titleEl.style.color = titleColor;
+            if (companyEl) companyEl.style.color = textColor;
+            if (descEl) descEl.style.color = textColor;
+        });
+    }
+
+    // Restore all templates to their natural design colors & font families
+    function resetAllFontsToDefault() {
+        var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
+
+        // Default template — natural colors
+        if (previewTitleEl) { previewTitleEl.style.color = '#111827'; previewTitleEl.style.fontFamily = ''; }
+        if (previewCompanyEl) { previewCompanyEl.style.color = '#6b7280'; previewCompanyEl.style.fontFamily = ''; }
+        if (previewDescEl) { previewDescEl.style.color = '#6b7280'; previewDescEl.style.fontFamily = ''; }
+        if (previewWebsiteEl) { previewWebsiteEl.style.color = '#6b7280'; previewWebsiteEl.style.fontFamily = ''; }
+
+
+        // t1 / t3: colored bg → white text
+        ['t1', 't3'].forEach(function (pfx) {
+            var titleEl = document.getElementById(pfx + '-preview-title');
+            var companyEl = document.getElementById(pfx + '-preview-company');
+            var descEl = document.getElementById(pfx + '-preview-desc');
+            if (titleEl) { titleEl.style.color = 'white'; titleEl.style.fontFamily = ''; }
+            if (companyEl) { companyEl.style.color = 'rgba(255,255,255,0.75)'; companyEl.style.fontFamily = ''; }
+            if (descEl) { descEl.style.color = 'rgba(255,255,255,0.8)'; descEl.style.fontFamily = ''; }
+        });
+
+        // t2 / t4: white card → company=primary, title=dark, desc=gray
+        ['t2', 't4'].forEach(function (pfx) {
+            var titleEl = document.getElementById(pfx + '-preview-title');
+            var companyEl = document.getElementById(pfx + '-preview-company');
+            var descEl = document.getElementById(pfx + '-preview-desc');
+            if (titleEl) { titleEl.style.color = '#111827'; titleEl.style.fontFamily = ''; }
+            if (companyEl) { companyEl.style.color = primary; companyEl.style.fontFamily = ''; }
+            if (descEl) { descEl.style.color = '#6b7280'; descEl.style.fontFamily = ''; }
+        });
+
+        // Website elements for t1-t4
+        ['t1', 't2', 't3', 't4'].forEach(function (pfx) {
+            var el = document.getElementById(pfx + '-preview-website');
+            if (el) { el.style.fontFamily = ''; }
+        });
+    }
+
+    // Toggle is a master switch: ON → apply custom fonts+colors; OFF → restore natural look
+    var fontApplyAllToggle = document.getElementById('E-card_font_apply_all');
+    if (fontApplyAllToggle) {
+        fontApplyAllToggle.addEventListener('change', function () {
+            if (this.checked) {
+                applyEcardFonts();
+                applyEcardTextColors();
+            } else {
+                resetAllFontsToDefault();
+            }
+        });
+    }
+
+    if (titleColorPicker && titleColorHex) {
+        titleColorHex.value = (titleColorPicker.value || '#000000').toUpperCase();
+        titleColorPicker.addEventListener('input', e => {
+            titleColorHex.value = e.target.value.toUpperCase();
+            applyEcardTextColors();
+        });
+    }
+
+    if (textColorPicker && textColorHex) {
+        textColorHex.value = (textColorPicker.value || '#6b7280').toUpperCase();
+        textColorPicker.addEventListener('input', e => {
+            textColorHex.value = e.target.value.toUpperCase();
+            applyEcardTextColors();
+        });
+    }
+
+    if (titleFontSelect) {
+        titleFontSelect.addEventListener('change', applyEcardFonts);
+        titleFontSelect.addEventListener('input', applyEcardFonts);
+    }
+    if (textFontSelect) {
+        textFontSelect.addEventListener('change', applyEcardFonts);
+        textFontSelect.addEventListener('input', applyEcardFonts);
+    }
+    applyEcardFonts();
+    applyEcardTextColors();
+
+    // Time slider
+    const timeSlider = document.getElementById('welcome-time-slider');
+    const timeDisplay = document.getElementById('welcome-time-display');
+    if (timeSlider && timeDisplay) {
+        timeSlider.addEventListener('input', e => {
+            timeDisplay.textContent = e.target.value + ' seconds';
+        });
+    }
+
+    // Profile Image Upload Preview
+    const profileInput = document.querySelector('input[name="E-card_profile_img"]');
+    const profilePreview = document.getElementById('cover-img-preview');
+    const removeProfileBtn = document.getElementById('remove-cover-btn');
+    const profileIcon = profilePreview ? profilePreview.querySelector('.fa-user') : null;
+    let profileImgEl = profilePreview ? profilePreview.querySelector('img') : null;
+
+    if (profileInput && profilePreview && removeProfileBtn) {
+        profileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    if (!profileImgEl) {
+                        profileImgEl = document.createElement('img');
+                        profileImgEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none;';
+                        if (profileIcon) {
+                            profilePreview.insertBefore(profileImgEl, profileIcon);
+                        } else {
+                            profilePreview.appendChild(profileImgEl);
+                        }
+                    }
+                    profileImgEl.src = evt.target.result;
+                    profileImgEl.style.display = 'block';
+                    if (profileIcon) profileIcon.style.display = 'none';
+                    removeProfileBtn.style.display = 'flex';
+
+                    // Update main preview canvas
+                    const previewProfileImg = document.getElementById('preview-profile-img');
+                    if (previewProfileImg) {
+                        previewProfileImg.src = evt.target.result;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removeProfileBtn.addEventListener('click', function () {
+            profileInput.value = ''; // Clear input
+
+            // Revert back to original DB image or default avatar
+            const originalUrl = "E-card_profile_img_url"; // Need logic to capture the pre-existing profile_img url from db if exists, otherwise empty
+
+            if (profileImgEl) {
+                profileImgEl.src = '';
+                profileImgEl.style.display = 'none';
+            }
+            if (profileIcon) profileIcon.style.display = 'block';
+            this.style.display = 'none';
+
+            const deleteHidden = document.querySelector('input[name="E-card_profile_img_delete"]');
+            if (deleteHidden) deleteHidden.value = "1";
+
+            // Revert main preview to default user icon
+            const previewProfileImg = document.getElementById('preview-profile-img');
+            if (previewProfileImg) {
+                // Determine base url from existing or empty string
+                const baseUrl = window.location.origin;
+                previewProfileImg.src = baseUrl + '/static/images/default-avatar.png'; // Placeholder if needed, or hide appropriately.
+            }
+            // Trigger validation check
+            checkContentValid();
+        });
+    }
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // E-card Initialization Block for Edit/Draft Mode
+        const qrcard_Ecard_template = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
+        const qrcard_Ecard_primary_color = "{{ qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}";
+        const qrcard_Ecard_secondary_color = "{{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}";
+        const qrcard_Ecard_title_font = "{{ qrcard.get('E-card_title_font', 'Lato') if qrcard else 'Lato' }}";
+        const qrcard_Ecard_text_font = "{{ qrcard.get('E-card_text_font', 'Lato') if qrcard else 'Lato' }}";
+
+        // Set Template Active
+        const templates = document.querySelectorAll('.template-preview');
+        templates.forEach(t => {
+            if (t.dataset.template === qrcard_Ecard_template) {
+                t.classList.add('active');
+            } else {
+                t.classList.remove('active');
+            }
+        });
+
+        // Pickers sync to hex
+        const priPicker = document.getElementById('E-card_primary_picker');
+        const secPicker = document.getElementById('E-card_secondary_picker');
+        const priHex = document.getElementById('E-card_primary_hex');
+        const secHex = document.getElementById('E-card_secondary_hex');
+
+        if (priPicker && priHex) {
+            priPicker.value = qrcard_Ecard_primary_color;
+            priHex.value = qrcard_Ecard_primary_color.toUpperCase();
+        }
+        if (secPicker && secHex) {
+            secPicker.value = qrcard_Ecard_secondary_color;
+            secHex.value = qrcard_Ecard_secondary_color.toUpperCase();
+        }
+
+        // Dropdowns
+        const titleSelect = document.querySelector('select[name="E-card_title_font"]');
+        const textSelect = document.querySelector('select[name="E-card_text_font"]');
+        if (titleSelect) titleSelect.value = qrcard_Ecard_title_font;
+        if (textSelect) textSelect.value = qrcard_Ecard_text_font;
+
+        // Time Slider Label
+        const timeSlider = document.getElementById('welcome-time-slider');
+        const timeDisplay = document.getElementById('welcome-time-display');
+        if (timeSlider && timeDisplay) {
+            timeDisplay.textContent = timeSlider.value + " seconds";
+        }
+
+        // Trigger any mockup updates globally
+        if (window.updateAllMockups) {
+            window.updateAllMockups();
+        }
+    });
+</script>
+
+</script>
+
+<script>
+    // Welcome screen preview: show image for welcome_time then smooth fade to E-card content
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('E-card_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            var bgInput = document.getElementById('welcome_bg_color_picker');
+            if (bgInput) overlay.style.backgroundColor = bgInput.value;
+            imgEl.src = src;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () {
+                    overlay.style.display = 'none';
+                }, 800);
+            }, sec);
+        }
+
+        var initialUrl = {{ (qrcard.get('welcome_img_url') or '') | tojson
+    }};
+    var currentObjectUrl = null;
+    function getPreviewSrc() {
+        var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+        if (file && file.type.indexOf('image') !== -1) {
+            if (file.size > 1024 * 1024) return null;
+            if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = URL.createObjectURL(file);
+            return currentObjectUrl;
+        }
+        return initialUrl || null;
+    }
+    var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+    var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+    if (welcomeBgPicker && welcomeBgHex) {
+        welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+        welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+    }
+    if (overlay && imgEl) {
+        if (initialUrl) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(initialUrl); });
+            } else {
+                playWelcomePreview(initialUrl);
+            }
+        }
+        var thumb = document.getElementById('welcome-img-preview');
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        var deleteFlag = document.getElementById('welcome_img_delete');
+        if (welcomeInput) {
+            welcomeInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (!file) return;
+                if (file.size > 1024 * 1024) {
+                    alert('Image must be 1 MB or smaller.');
+                    this.value = '';
+                    if (thumb && !initialUrl) {
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    }
+                    if (deleteBtn && !initialUrl) deleteBtn.style.display = 'none';
+                    return;
+                }
+                if (file.type.indexOf('image') !== -1) {
+                    var url = getPreviewSrc();
+                    if (url && thumb) {
+                        thumb.innerHTML = '<img src=\"' + url + '\" alt=\"Welcome image\" style=\"width:48px;height:48px;border-radius:6px;object-fit:cover;\"><span style=\"font-size:13px;color:var(--text-muted);\">Selected image</span>';
+                    }
+                    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                    if (deleteFlag) deleteFlag.value = '0';
+                    if (url) playWelcomePreview(url);
+                }
+            });
+        }
+        if (deleteBtn && welcomeInput) {
+            deleteBtn.addEventListener('click', function () {
+                welcomeInput.value = '';
+                initialUrl = '';
+                if (thumb) {
+                    thumb.innerHTML = '<div style=\"width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;\"><i class=\"fa-regular fa-image\" style=\"color:#9ca3af;\"></i></div><span style=\"font-size:13px;color:var(--text-muted);\">Upload Image</span>';
+                }
+                if (deleteFlag) deleteFlag.value = '1';
+                this.style.display = 'none';
+            });
+        }
+        var previewBtn = document.getElementById('welcome-preview-btn');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', function () {
+                var src = getPreviewSrc();
+                if (src) playWelcomePreview(src);
+                else if (initialUrl) playWelcomePreview(initialUrl);
+                else alert('Upload an image first (max 1 MB), or save to use the current welcome image.');
+            });
+        }
+    }
+    }) ();
+</script>
+
+
+
+<script>
+    // ── Template Selection & Template 1 Logic ──────────────────────────────────
+    (function () {
+        'use strict';
+
+        // ── helpers ──────────────────────────────────────────────────────────────
+        function val(name) {
+            var el = document.querySelector('[name="' + name + '"]');
+            return el ? el.value.trim() : '';
+        }
+
+        // ── Template card border highlight ────────────────────────────────────────
+        function syncTemplateCardBorders() {
+            document.querySelectorAll('input[name="E-card_template"]').forEach(function (radio) {
+                var card = radio.closest('label').querySelector('.template-card');
+                var span = radio.closest('label').querySelector('span');
+                if (card) {
+                    if (radio.checked) {
+                        card.style.border = '2px solid var(--primary)';
+                        if (span) span.style.color = 'var(--text-main)';
+                    } else {
+                        card.style.border = '1px solid var(--border-color)';
+                        if (span) span.style.color = 'var(--text-muted)';
+                    }
+                }
+            });
+        }
+
+        // ── Get file name & desc from DOM item ────────────────────────────────────
+        function getEcardItemMeta(itemBlock) {
+            var n = itemBlock.querySelector('input[name="E-card_file_name[]"]');
+            var d = itemBlock.querySelector('input[name="E-card_file_desc[]"]');
+            return {
+                displayName: n && n.value.trim() ? n.value.trim() : 'Document',
+                desc: d ? d.value.trim() : ''
+            };
+        }
+        var botBlock = document.getElementById('preview-bottom-block');
+
+        // Hide all template previews first
+        [t1Preview, t2Preview, t3Preview, t4Preview].forEach(function (el) { if (el) el.style.display = 'none'; });
+        if (topBlock) topBlock.style.display = 'none';
+        if (botBlock) botBlock.style.display = 'none';
+
+        if (template === 'template1') {
+            if (t1Preview) t1Preview.style.display = 'flex';
+            updateT1TextPreview();
+            updateT1EcardList();
+        } else if (template === 'template2') {
+            if (t2Preview) t2Preview.style.display = 'flex';
+            updateT2TextPreview();
+            updateT2EcardList();
+        } else if (template === 'template3') {
+            if (t3Preview) t3Preview.style.display = 'flex';
+            updateT3TextPreview();
+            updateT3EcardList();
+        } else if (template === 'template4') {
+            if (t4Preview) t4Preview.style.display = 'flex';
+            updateT4TextPreview();
+            updateT4EcardList();
+        } else {
+            if (topBlock) topBlock.style.display = '';
+            if (botBlock) botBlock.style.display = '';
+        }
+    }
+
+        // ── Sync text fields into template 1 preview ─────────────────────────────
+        function updateT1TextPreview() {
+        function set(id, value) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = value;
+            el.style.display = value ? 'block' : 'none';
+        }
+        set('t1-preview-company', val('E-card_company'));
+        set('t1-preview-title', val('E-card_title'));
+        set('t1-preview-desc', val('E-card_desc'));
+        set('t1-preview-website', val('E-card_website'));
+        // Ensure card body background matches current primary color
+        var picker = document.getElementById('E-card_primary_picker');
+        var cardBody = document.getElementById('t1-preview-card-body');
+        if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
+    }
+
+    // ── Build E-card list in template 1 preview ─────────────────────────────────
+    // Helper: read display name + desc from a .E-card-file-item element
+    function getEcardItemMeta(item) {
+        var nameInput = item.querySelector('.E-card-display-name-input');
+        var itemDescInput = item.querySelector('.E-card-item-desc-input');
+        var fallbackName = (item.querySelector('a') || {}).textContent || (item.dataset.name || '');
+        var displayName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : fallbackName.trim();
+        var desc = itemDescInput ? itemDescInput.value.trim() : '';
+        return { displayName: displayName, desc: desc };
+    }
+
+    function buildT1EcardItem(name, desc, url) {
+        var a = document.createElement('a');
+        a.href = url || '#';
+        a.target = url ? '_blank' : '';
+        if (url) a.setAttribute('download', '');
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+
+        var iconBox = document.createElement('div');
+        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        var ico = document.createElement('i');
+        ico.className = 'fa-regular fa-file-E-card';
+        ico.style.cssText = 'color:#ef4444;font-size:14px;';
+        iconBox.appendChild(ico);
+
+        // Name + optional desc stacked
+        var textWrap = document.createElement('div');
+        textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        nameSpan.textContent = name;
+        textWrap.appendChild(nameSpan);
+        if (desc) {
+            var descSpan = document.createElement('span');
+            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+            descSpan.textContent = desc;
+            textWrap.appendChild(descSpan);
+        }
+
+        var chevron = document.createElement('i');
+        chevron.className = 'fa-solid fa-chevron-right';
+        chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+
+        a.appendChild(iconBox);
+        a.appendChild(textWrap);
+        a.appendChild(chevron);
+        return a;
+        function switchEcardTemplate(template) {
+            var t1Preview = document.getElementById('preview-template1');
+            var t2Preview = document.getElementById('preview-template2');
+            var t3Preview = document.getElementById('preview-template3');
+            var t4Preview = document.getElementById('preview-template4');
+            var topBlock = document.getElementById('preview-top-block');
+
+            // ── Sync text fields into template 2 preview ─────────────────────────────
+            function updateT2TextPreview() {
+                function set(id, value) {
+                    var el = document.getElementById(id);
+                    if (!el) return;
+                    el.textContent = value;
+                    el.style.display = value ? 'block' : 'none';
+                }
+                set('t2-preview-company', val('E-card_company'));
+                set('t2-preview-title', val('E-card_title'));
+                set('t2-preview-desc', val('E-card_desc'));
+                set('t2-preview-website', val('E-card_website'));
+                var picker = document.getElementById('E-card_primary_picker');
+                var t2el = document.getElementById('preview-template2');
+                var compEl = document.getElementById('t2-preview-company');
+                if (picker) {
+                    if (t2el) t2el.style.backgroundColor = picker.value;
+                    if (compEl) compEl.style.color = picker.value;
+                }
+            }
+
+            function updateT2TextPreview() {
+            });
+        }
+
+        // ── Template 3: text sync, E-card list, circle image ────────────────────────
+        function updateT3TextPreview() {
+            function set(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? 'block' : 'none';
+            }
+            set('t3-preview-company', val('E-card_company'));
+            set('t3-preview-title', val('E-card_title'));
+            set('t3-preview-desc', val('E-card_desc'));
+            set('t3-preview-website', val('E-card_website'));
+            var picker = document.getElementById('E-card_primary_picker');
+            var t3el = document.getElementById('preview-template3');
+            if (picker && t3el) t3el.style.backgroundColor = picker.value;
+        }
+
+        function updateT3E-cardList() {
+            var listEl = document.getElementById('t3-preview-E-card-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
+                var meta = getEcardItemMeta(item);
+                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, item.dataset.url));
+            });
+            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
+                var meta = getEcardItemMeta(item);
+                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, null));
+            });
+        }
+
+
+        // ── Template 4: text sync, E-card list, circle image ────────────────────────
+        function updateT4TextPreview() {
+            function set(id, value, isBlock) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? (isBlock || 'block') : 'none';
+            }
+            set('t4-preview-company', val('E-card_company'));
+            set('t4-preview-title', val('E-card_title'));
+            set('t4-preview-desc', val('E-card_desc'));
+            set('t4-preview-website', val('E-card_website'));
+            // Company uses primary color
+            var picker = document.getElementById('E-card_primary_picker');
+            var t4el = document.getElementById('preview-template4');
+            var compEl = document.getElementById('t4-preview-company');
+            if (picker) {
+                if (t4el) t4el.style.backgroundColor = picker.value;
+                if (compEl) compEl.style.color = picker.value;
+            }
+        }
+
+        function updateT4E-cardList() {
+            var listEl = document.getElementById('t4-preview-E-card-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
+            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
+                var meta = getEcardItemMeta(item);
+                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, item.dataset.url, primary));
+            });
+            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
+                var meta = getEcardItemMeta(item);
+                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, null, primary));
+            });
+        }
+
+        function buildT4E-cardItem(name, desc, url, primaryColor) {
+            var a = document.createElement('a');
+            a.href = url || '#';
+            a.target = url ? '_blank' : '';
+            if (url) a.setAttribute('download', '');
+            a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;gap:8px;';
+
+            var iconBox = document.createElement('div');
+            iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+            var ico = document.createElement('i');
+            ico.className = 'fa-regular fa-file-E-card';
+            ico.style.cssText = 'color:#ef4444;font-size:14px;';
+            iconBox.appendChild(ico);
+
+            // Name + optional desc stacked
+            var textWrap = document.createElement('div');
+            textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+            var nameSpan = document.createElement('span');
+            nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            nameSpan.textContent = name;
+            textWrap.appendChild(nameSpan);
+            if (desc) {
+                var descSpan = document.createElement('span');
+                descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+                descSpan.textContent = desc;
+                textWrap.appendChild(descSpan);
+            }
+            var chevron = document.createElement('i');
+            chevron.className = 'fa-solid fa-chevron-right';
+            chevron.style.cssText = 'color:' + (primaryColor || '#2f6bfd') + ';font-size:10px;flex-shrink:0;';
+
+            a.appendChild(iconBox);
+            a.appendChild(textWrap);
+            a.appendChild(chevron);
+            return a;
+        }
+
+
+        // ── Show/hide header zone and adjust card body style ─────────────────────
+        var primaryPicker = document.getElementById('E-card_primary_picker');
+        if (primaryPicker) {
+            primaryPicker.addEventListener('input', function (e) {
+                var color = e.target.value;
+                // t1 card body bg
+                var cardBody = document.getElementById('t1-preview-card-body');
+                if (cardBody) cardBody.style.backgroundColor = color;
+                // t2/t3/t4 full bg
+                ['preview-template2', 'preview-template3', 'preview-template4'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.style.backgroundColor = color;
+                });
+                // t2 + t4 company text color = primary
+                ['t2-preview-company', 't4-preview-company'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.style.color = color;
+                });
+            }
+
+        // ── Unified cover image upload (one image shared by all templates) ─────────
+        var t1ImgInput = document.getElementById('E-card_t1_header_img_input');
+            if (t1ImgInput) {
+                t1ImgInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Cover image must be 2 MB or smaller.');
+                        this.value = '';
+                        return;
+                    }
+                    var url = URL.createObjectURL(file);
+                    // Update T1 header preview
+                    var t1Img = document.getElementById('t1-preview-header-img');
+                    if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
+                    showT1Header(true);
+                    // Update T3 circle preview
+                    var t3Img = document.getElementById('t3-preview-circle-img');
+                    var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+                    if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
+                    if (t3Ph) { t3Ph.style.display = 'none'; }
+                    // Update T4 circle preview
+                    var t4Img = document.getElementById('t4-preview-circle-img');
+                    var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+                    if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
+                    if (t4Ph) { t4Ph.style.display = 'none'; }
+                    // Update upload thumb
+                    var thumb = document.getElementById('cover-img-preview');
+                    var removeBtn = document.getElementById('cover-img-remove-btn');
+                    var delFlag = document.getElementById('E-card_t1_header_img_delete');
+                    if (thumb) {
+                        thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                    }
+                    if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
+                    if (delFlag) { delFlag.value = '0'; }
+                });
+            }
+
+            var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
+            if (coverRemoveBtn) {
+                coverRemoveBtn.addEventListener('click', function () {
+                    if (t1ImgInput) t1ImgInput.value = '';
+                    var delFlag = document.getElementById('E-card_t1_header_img_delete');
+                    // Clear T1 header preview
+                    var t1Img = document.getElementById('t1-preview-header-img');
+                    if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+                    showT1Header(false);
+                    // Clear T3 circle preview
+                    var t3Img = document.getElementById('t3-preview-circle-img');
+                    var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+                    if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
+                    if (t3Ph) { t3Ph.style.display = 'flex'; }
+                    // Clear T4 circle preview
+                    var t4Img = document.getElementById('t4-preview-circle-img');
+                    var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+                    if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
+                    if (t4Ph) { t4Ph.style.display = 'flex'; }
+                    // Reset thumb
+                    var thumb = document.getElementById('cover-img-preview');
+                    if (thumb) {
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+                    }
+                    if (delFlag) { delFlag.value = '1'; }
+                    this.style.display = 'none';
+                });
+            }
+
+            // ── Wire text inputs to update the active template preview ───────────────
+            ['E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website'].forEach(function (name) {
+                var input = document.querySelector('input[name="' + name + '"]');
+                if (!input) return;
+                input.addEventListener('input', function () {
+                    var active = document.querySelector('input[name="E-card_template"]:checked');
+                    if (!active) return;
+                    if (active.value === 'template1') updateT1TextPreview();
+                    if (active.value === 'template2') updateT2TextPreview();
+                    if (active.value === 'template3') updateT3TextPreview();
+                    if (active.value === 'template4') updateT4TextPreview();
+                });
+            });
+
+
+
+            // ── Radio change listener ─────────────────────────────────────────────────
+            document.querySelectorAll('input[name="E-card_template"]').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    syncTemplateCardBorders();
+                    switchEcardTemplate(this.value);
+                });
+            });
+
+            // ── Initialize on page load ───────────────────────────────────────────────
+            document.addEventListener('DOMContentLoaded', function () {
+                // Ensure the correct radio is checked (Jinja sets it, but sync to be safe)
+                var savedTemplate = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
+                var savedRadio = document.querySelector('input[name="E-card_template"][value="' + savedTemplate + '"]');
+                if (savedRadio) savedRadio.checked = true;
+                syncTemplateCardBorders();
+                switchEcardTemplate(savedTemplate);
+            });
+
+        }) ();
+</script>
+
+{% endblock %}

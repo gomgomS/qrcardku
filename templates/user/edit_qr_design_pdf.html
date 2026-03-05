@@ -845,7 +845,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // Generate QR: for dynamic web use short URL (qrcardku.com/p/xxx), else use url_content
+        // Generate QR: for PDF use short URL (qrcardku.com/pdf/xxx), else use url_content
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
         const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);

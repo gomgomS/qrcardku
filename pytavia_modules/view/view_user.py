@@ -20,7 +20,12 @@ class view_user:
 
     def new_qr_type_html(self, qr_type, msg=None, error_msg=None, base_url=None, url_content=None, qr_name=None, short_code=None):
         try:
-            template_name = "/user/new_qr_content_web.html" if qr_type == "web" else "/user/new_qr_content_pdf.html"
+            if qr_type == "web":
+                template_name = "/user/new_qr_content_web.html"
+            elif qr_type == "ecard":
+                template_name = "/user/new_qr_content_ecard.html"
+            else:
+                template_name = "/user/new_qr_content_pdf.html"
             return render_template(
                 template_name,
                 qr_type=qr_type,
@@ -37,7 +42,12 @@ class view_user:
 
     def new_qr_design_html(self, qr_type, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None):
         try:
-            template_name = "/user/new_qr_design_web.html" if qr_type == "web" else "/user/new_qr_design_pdf.html"
+            if qr_type == "web":
+                template_name = "/user/new_qr_design_web.html"
+            elif qr_type == "ecard":
+                template_name = "/user/new_qr_design_ecard.html"
+            else:
+                template_name = "/user/new_qr_design_pdf.html"
             return render_template(
                 template_name,
                 qr_type=qr_type,
@@ -75,7 +85,12 @@ class view_user:
                 url_content_display = raw_url[7:]
             else:
                 url_content_display = raw_url
-            template_name = "/user/edit_qr_content_web.html" if qr_type == "web" else "/user/edit_qr_content_pdf.html"
+            if qr_type == "web":
+                template_name = "/user/edit_qr_content_web.html"
+            elif qr_type == "ecard":
+                template_name = "/user/edit_qr_content_ecard.html"
+            else:
+                template_name = "/user/edit_qr_content_pdf.html"
             return render_template(
                 template_name,
                 qr_type=qr_type,
@@ -103,7 +118,12 @@ class view_user:
             url_content = url_content or qrcard.get("url_content") or "qrcardku.com"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
             cid = qrcard.get("qrcard_id")
-            template_name = "/user/edit_qr_design_web.html" if qr_type == "web" else "/user/edit_qr_design_pdf.html"
+            if qr_type == "web":
+                template_name = "/user/edit_qr_design_web.html"
+            elif qr_type == "ecard":
+                template_name = "/user/edit_qr_design_ecard.html"
+            else:
+                template_name = "/user/edit_qr_design_pdf.html"
             return render_template(
                 template_name,
                 qr_type=qr_type,

@@ -1152,7 +1152,7 @@
                                 <label class="form-label" style="font-size: 12px;">URL</label>
                                 <div class="url-prefix-group">
                                     <div class="url-prefix" id="stats-url-prefix">{{ base_url |
-                                        default('https://qrcardku.com') }}/p/</div>
+                                        default('https://qrcardku.com') }}/pdf/</div>
                                     <input type="text" name="short_code" id="stats-short-code-input"
                                         placeholder="Letters, numbers, '-' and '_' only"
                                         value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
@@ -1535,7 +1535,7 @@
             }
             function updateUrlPreview() {
                 var code = shortInput.value.trim();
-                var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/p/');
+                var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/pdf/');
                 previewEl.textContent = code ? prefix + code : '';
             }
             shortInput.addEventListener('input', function () {

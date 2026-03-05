@@ -412,5 +412,110 @@ db = {
         "status"                    : "ACTIVE", # ACTIVE | INACTIVE
         "created_at"                : "",       # timestamp string
         "timestamp"                 : 0,        # unix timestamp
+    },
+
+    # Dedicated collection for web-type QR cards (dynamic redirect)
+    "db_qrcard_web": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "web",    # always 'web'
+        "name"                      : "",
+        "url_content"               : "",       # redirect target URL
+        "short_code"                : "",       # unique slug for /web/<short_code>
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for e-card-type QR cards
+    "db_qrcard_ecard": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "ecard",  # always 'ecard'
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+        "pdf_template"              : "default",
+        "pdf_primary_color"         : "#2F6BFD",
+        "pdf_secondary_color"       : "#0E379A",
+        "pdf_title_font"            : "Lato",
+        "pdf_title_color"           : "#000000",
+        "pdf_text_font"             : "Lato",
+        "pdf_text_color"            : "#000000",
+        "pdf_company"               : "",
+        "pdf_title"                 : "",
+        "pdf_desc"                  : "",
+        "pdf_website"               : "",
+        "pdf_btn_text"              : "See PDF",
+        "welcome_time"              : "5.0",
+        "welcome_bg_color"           : "#2F6BFD",
+        "welcome_img_url"           : "",
+        "pdf_t1_header_img_url"     : "",
+        "pdf_t3_circle_img_url"     : "",
+        "pdf_t4_circle_img_url"     : "",
+        "pdf_files"                 : [],
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for PDF-type QR cards (normalized view of PDF-specific fields)
+    "db_qrcard_pdf": {
+        "qrcard_id"                 : "",       # link back to master qrcard_id
+        "fk_user_id"                : "",       # link to db_user
+        "qr_type"                   : "pdf",    # always 'pdf'
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+
+        # Appearance / content fields (mirror of PDF-specific section above)
+        "pdf_template"              : "default",
+        "pdf_primary_color"         : "#2F6BFD",
+        "pdf_secondary_color"       : "#0E379A",
+        "pdf_title_font"            : "Lato",
+        "pdf_title_color"           : "#000000",
+        "pdf_text_font"             : "Lato",
+        "pdf_text_color"            : "#000000",
+        "pdf_company"               : "",
+        "pdf_title"                 : "",
+        "pdf_desc"                  : "",
+        "pdf_website"               : "",
+        "pdf_btn_text"              : "See PDF",
+        "welcome_time"              : "5.0",
+        "welcome_bg_color"          : "#2F6BFD",
+        "welcome_img_url"           : "",
+        "pdf_font_apply_all"        : False,
+        "pdf_t1_header_img_url"     : "",
+        "pdf_t3_circle_img_url"     : "",
+        "pdf_t4_circle_img_url"     : "",
+        "pdf_files"                 : [],
+
+        # Shared stats and meta
+        "stats"                     : {
+            "scan_count": 0
+        },
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Lightweight index of all QR cards (used for listing and routing)
+    "db_qr_index": {
+        "qrcard_id"                 : "",       # link to type-specific collection
+        "fk_user_id"                : "",       # owner
+        "qr_type"                   : "",       # 'web' | 'pdf' | 'ecard' | ...
+        "name"                      : "",
+        "short_code"                : "",
+        "status"                    : "ACTIVE", # ACTIVE | DELETED
+        "created_at"                : "",       # timestamp string
+        "timestamp"                 : 0,        # unix timestamp
     }
 }

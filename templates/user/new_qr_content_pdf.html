@@ -1136,7 +1136,7 @@
                                 <label class="form-label" style="font-size: 12px;">URL</label>
                                 <div class="url-prefix-group">
                                     <div class="url-prefix" id="stats-url-prefix">{{ base_url |
-                                        default('https://qrcardku.com') }}/p/</div>
+                                        default('https://qrcardku.com') }}/pdf/</div>
                                     <input type="text" name="short_code" id="stats-short-code-input"
                                         placeholder="Letters, numbers, '-' and '_' only"
                                         value="{{ short_code | default('', true) }}"
@@ -1475,7 +1475,7 @@
             }
             function updateUrlPreview() {
                 var code = shortInput.value.trim();
-                var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/p/');
+                var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl + '/pdf/');
                 previewEl.textContent = code ? prefix + code : '';
             }
             shortInput.addEventListener('input', function () {
@@ -2277,6 +2277,8 @@
 
         if (template === 'template1') {
             if (t1Preview) t1Preview.style.display = 'flex';
+            var t1Img = document.getElementById('t1-preview-header-img');
+            showT1Header(t1Img && t1Img.src && t1Img.src.length > 0);
             updateT1TextPreview();
             updateT1PdfList();
         } else if (template === 'template2') {
@@ -2285,10 +2287,24 @@
             updateT2PdfList();
         } else if (template === 'template3') {
             if (t3Preview) t3Preview.style.display = 'flex';
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Img && t3Ph) {
+                var hasCover = t3Img.src && t3Img.src.length > 0;
+                t3Img.style.display = hasCover ? 'block' : 'none';
+                t3Ph.style.display = hasCover ? 'none' : 'flex';
+            }
             updateT3TextPreview();
             updateT3PdfList();
         } else if (template === 'template4') {
             if (t4Preview) t4Preview.style.display = 'flex';
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Img && t4Ph) {
+                var hasCover = t4Img.src && t4Img.src.length > 0;
+                t4Img.style.display = hasCover ? 'block' : 'none';
+                t4Ph.style.display = hasCover ? 'none' : 'flex';
+            }
             updateT4TextPreview();
             updateT4PdfList();
         } else {
@@ -2598,6 +2614,11 @@
             }
             if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
             if (delFlag)   { delFlag.value = '0'; }
+            // If user is on default template, show template1 preview so cover image is visible
+            var activeTemplate = document.querySelector('input[name="pdf_template"]:checked');
+            if (activeTemplate && activeTemplate.value === 'default') {
+                switchPdfTemplate('template1');
+            }
         });
     }
 
