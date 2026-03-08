@@ -5,6 +5,7 @@
 {% set hide_top_nav = true %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link
     href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap"
     rel="stylesheet">
@@ -1372,8 +1373,18 @@
                                     style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
                                 <div id="t1-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 1 -->
+                                <div id="t1-preview-contact-list"
+                                    style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+                                </div>
+                                <!-- Contact button for template 1 -->
+                                <div id="t1-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'See E-card') if qrcard else 'See E-card' }}
+                                </div>
                                 <!-- Website link -->
                                 <div id="t1-preview-website"
                                     style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
@@ -1381,12 +1392,19 @@
                             </div>
                         </div>
 
-                        <!-- Template 2 Preview: primary bg + floating white card (no circle image) -->
+                        <!-- Template 2 Preview: header image + floating white card -->
                         <div id="preview-template2"
-                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
-                            <!-- White floating card -->
-                            <div
-                                style="background: white; border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
+                            <!-- Header image area -->
+                            <div id="t2-preview-header"
+                                style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('E-card_t1_header_img_url')) %}display: none;{% endif %}">
+                                <img id="t2-preview-header-img"
+                                    src="{% if qrcard and qrcard.get('E-card_t1_header_img_url') %}{{ qrcard.get('E-card_t1_header_img_url') }}{% endif %}"
+                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <!-- White floating card body -->
+                            <div id="t2-preview-card-body"
+                                style="background: white; {% if qrcard and qrcard.get('E-card_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 20px 16px; min-height: 0; overflow-y: auto;">
                                 <div id="t2-preview-company"
                                     style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
@@ -1394,16 +1412,20 @@
                                     style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
                                 <div id="t2-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
-                            </div>
-                            <!-- Website below card -->
-                            <div id="t2-preview-website"
-                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
-                                {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-
-                            <div id="t2-preview-contact"
-                                style="margin-top: 6px; font-size: 10px; color: white; text-align: center; display: none;">
+                                <!-- Contact list for template 2 -->
+                                <div id="t2-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+                                <!-- Contact button for template 2 -->
+                                <div id="t2-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'See E-card') if qrcard else 'See E-card' }}
+                                </div>
+                                <!-- Website inside card -->
+                                <div id="t2-preview-website"
+                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: {{ preview_primary }}; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
                             </div>
                         </div>
 
@@ -1433,16 +1455,21 @@
                                     style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
                                 <div id="t3-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 3 -->
+                                <div id="t3-preview-contact-list"
+                                    style="display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:8px;"></div>
+                                <!-- Contact button for template 3 -->
+                                <div id="t3-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'See E-card') if qrcard else 'See E-card' }}
+                                </div>
                                 <!-- Website -->
                                 <div id="t3-preview-website"
-                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    style="text-align: center; margin-top: 4px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-
-                                <div id="t3-preview-contact"
-                                    style="margin-top: 6px; font-size: 10px; color: rgba(255,255,255,0.9); text-align: center; display: none;">
-                                </div>
                             </div>
                         </div>
 
@@ -1472,17 +1499,21 @@
                                     style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
                                 <div id="t4-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 4 -->
+                                <div id="t4-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+                                <!-- Contact button for template 4 -->
+                                <div id="t4-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'See E-card') if qrcard else 'See E-card' }}
+                                </div>
                             </div>
                             <!-- Website below card -->
                             <div id="t4-preview-website"
                                 style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
                                 {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-
-                            <div id="t4-preview-contact"
-                                style="margin-top: 6px; font-size: 10px; color: white; text-align: center; display: none;">
-                            </div>
                         </div>
 
                         <!-- E-card Default Template Preview -->
@@ -1554,10 +1585,25 @@
         </div>
     </div>
 </form>
+
+<!-- Profile image crop modal -->
+<div id="ecard-profile-crop-modal" class="ecard-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
+    <div class="ecard-crop-modal-box" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize & crop image</div>
+        <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
+            <img id="ecard-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
+        </div>
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="ecard-crop-cancel" class="btn-outline" style="padding: 8px 16px;">Cancel</button>
+            <button type="button" id="ecard-crop-apply" class="btn-primary" style="padding: 8px 20px;">Apply</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
@@ -1851,6 +1897,7 @@
             addCard('website', labelEl && labelEl.value, valEl && valEl.value);
         });
     }
+    window.updateContactPreview = updateContactPreview;
 
     // Typography & colors for E-card preview
     const titleColorPicker = document.getElementById('E-card_title_color_picker');
@@ -2041,6 +2088,36 @@
                         previewPlaceholder.style.display = 'none';
                     }
 
+                    // Propagate profile image to template 1 header preview
+                    const t1Img = document.getElementById('t1-preview-header-img');
+                    if (t1Img) {
+                        t1Img.src = evt.target.result;
+                        t1Img.style.display = 'block';
+                    }
+                    if (typeof showT1Header === 'function') {
+                        showT1Header(true);
+                    } else {
+                        const t1Hdr = document.getElementById('t1-preview-header');
+                        const t1Body = document.getElementById('t1-preview-card-body');
+                        if (t1Hdr) t1Hdr.style.display = 'block';
+                        if (t1Body) { t1Body.style.borderRadius = '22px 22px 0 0'; t1Body.style.marginTop = '-18px'; }
+                    }
+
+                    // Propagate profile image to template 2 header preview
+                    const t2Img = document.getElementById('t2-preview-header-img');
+                    if (t2Img) {
+                        t2Img.src = evt.target.result;
+                        t2Img.style.display = 'block';
+                    }
+                    if (typeof showT2Header === 'function') {
+                        showT2Header(true);
+                    } else {
+                        const t2Hdr = document.getElementById('t2-preview-header');
+                        const t2Body = document.getElementById('t2-preview-card-body');
+                        if (t2Hdr) t2Hdr.style.display = 'block';
+                        if (t2Body) { t2Body.style.borderRadius = '22px 22px 0 0'; t2Body.style.marginTop = '-18px'; }
+                    }
+
                     // Also propagate profile image to template 3 & 4 circle previews for consistency
                     const t3Img = document.getElementById('t3-preview-circle-img');
                     const t3Ph = document.getElementById('t3-preview-circle-placeholder');
@@ -2082,6 +2159,30 @@
             }
             if (previewPlaceholder) {
                 previewPlaceholder.style.display = 'block';
+            }
+
+            // Clear template 1 header preview
+            const t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+            if (typeof showT1Header === 'function') {
+                showT1Header(false);
+            } else {
+                const t1Hdr = document.getElementById('t1-preview-header');
+                const t1Body = document.getElementById('t1-preview-card-body');
+                if (t1Hdr) t1Hdr.style.display = 'none';
+                if (t1Body) { t1Body.style.borderRadius = '0'; t1Body.style.marginTop = '0'; }
+            }
+
+            // Clear template 2 header preview
+            const t2Img = document.getElementById('t2-preview-header-img');
+            if (t2Img) { t2Img.src = ''; t2Img.style.display = 'none'; }
+            if (typeof showT2Header === 'function') {
+                showT2Header(false);
+            } else {
+                const t2Hdr = document.getElementById('t2-preview-header');
+                const t2Body = document.getElementById('t2-preview-card-body');
+                if (t2Hdr) t2Hdr.style.display = 'none';
+                if (t2Body) { t2Body.style.borderRadius = '0'; t2Body.style.marginTop = '0'; }
             }
 
             // Also clear template 3 & 4 circle previews
@@ -2386,8 +2487,24 @@
 
         // ── helpers ──────────────────────────────────────────────────────────────
         function val(name) {
+            if (name === 'E-card_website') {
+                var firstRow = document.querySelector('#ecard-website-list .ecard-contact-row');
+                if (firstRow) {
+                    var v = firstRow.querySelector('input[name="E-card_website_value[]"]');
+                    return v ? v.value.trim() : '';
+                }
+                return '';
+            }
             var el = document.querySelector('[name="' + name + '"]');
             return el ? el.value.trim() : '';
+        }
+
+        function setPreviewBtnText(btnId, text) {
+            var btn = document.getElementById(btnId);
+            if (!btn) return;
+            var textNodes = Array.from(btn.childNodes).filter(function (n) { return n.nodeType === 3; });
+            if (textNodes.length > 0) textNodes[textNodes.length - 1].nodeValue = ' ' + text;
+            else btn.appendChild(document.createTextNode(' ' + text));
         }
 
         // ── Template card border highlight ────────────────────────────────────────
@@ -2440,7 +2557,23 @@
             } else {
                 if (topBlock) topBlock.style.display = '';
                 if (botBlock) botBlock.style.display = '';
+                updateDefaultTextPreview();
+                if (window.updateContactPreview) window.updateContactPreview();
             }
+        }
+
+        // ── Update default template text/website preview from form ────────────────
+        function updateDefaultTextPreview() {
+            function set(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? 'block' : 'none';
+            }
+            set('preview-title-text', val('E-card_company'));
+            set('preview-company-text', val('E-card_title'));
+            set('preview-desc-text', val('E-card_desc'));
+            set('preview-website-text', val('E-card_website'));
         }
 
         // ── Sync text fields into template 1 preview ─────────────────────────────
@@ -2456,7 +2589,7 @@
             set('t1-preview-title', val('E-card_company'));
             set('t1-preview-desc', val('E-card_desc'));
             set('t1-preview-website', val('E-card_website'));
-            // Ensure card body background matches current primary color
+            setPreviewBtnText('t1-preview-btn', val('E-card_btn_text') || 'See E-card');
             var picker = document.getElementById('E-card_primary_picker');
             var cardBody = document.getElementById('t1-preview-card-body');
             if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
@@ -2511,18 +2644,58 @@
             return a;
         }
 
-        function updateT1EcardList() {
-            var listEl = document.getElementById('t1-preview-E-card-list');
+        // ── Rebuild contact list (phones, emails, websites) for a template preview ─
+        function rebuildTemplateContactList(listId, bgColor, bordered) {
+            var listEl = document.getElementById(listId);
             if (!listEl) return;
             listEl.innerHTML = '';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, item.dataset.url));
+            var border = bordered ? '1px solid #e5e7eb' : 'none';
+
+            function makeRow(iconClass, iconColor, labelVal, subVal) {
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;padding:8px 10px;background:' + bgColor + ';border:' + border + ';border-radius:8px;gap:8px;';
+                var box = document.createElement('div');
+                box.style.cssText = 'width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+                var ico = document.createElement('i');
+                ico.className = iconClass;
+                ico.style.cssText = 'color:' + iconColor + ';font-size:12px;';
+                box.appendChild(ico);
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'flex:1;min-width:0;';
+                var s1 = document.createElement('span');
+                s1.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                s1.textContent = labelVal || '\u2014';
+                var s2 = document.createElement('span');
+                s2.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                s2.textContent = subVal || '';
+                wrap.appendChild(s1); wrap.appendChild(s2);
+                var chev = document.createElement('i');
+                chev.className = 'fa-solid fa-chevron-right';
+                chev.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+                row.appendChild(box); row.appendChild(wrap); row.appendChild(chev);
+                return row;
+            }
+
+            document.querySelectorAll('#ecard-phone-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_phone_label[]"]') || {}).value || 'Phone';
+                var num = (row.querySelector('input[name="E-card_phone_number[]"]') || {}).value || '';
+                if (num) listEl.appendChild(makeRow('fa-solid fa-phone', '#2563eb', lbl, num));
             });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, null));
+            document.querySelectorAll('#ecard-email-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_email_label[]"]') || {}).value || 'Email';
+                var v = (row.querySelector('input[name="E-card_email_value[]"]') || {}).value || '';
+                if (v) listEl.appendChild(makeRow('fa-solid fa-envelope', '#ea4335', lbl, v));
             });
+            document.querySelectorAll('#ecard-website-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_website_label[]"]') || {}).value || 'Website';
+                var v = (row.querySelector('input[name="E-card_website_value[]"]') || {}).value || '';
+                if (v) listEl.appendChild(makeRow('fa-solid fa-globe', '#10b981', lbl, v));
+            });
+        }
+        window.rebuildTemplateContactList = rebuildTemplateContactList;
+
+        function updateT1EcardList() {
+            rebuildTemplateContactList('t1-preview-contact-list', 'white');
         }
 
         // ── Sync text fields into template 2 preview ─────────────────────────────
@@ -2537,6 +2710,7 @@
             set('t2-preview-title', val('E-card_company'));
             set('t2-preview-desc', val('E-card_desc'));
             set('t2-preview-website', val('E-card_website'));
+            setPreviewBtnText('t2-preview-btn', val('E-card_btn_text') || 'See E-card');
             var picker = document.getElementById('E-card_primary_picker');
             var t2el = document.getElementById('preview-template2');
             var compEl = document.getElementById('t2-preview-company');
@@ -2547,18 +2721,7 @@
         }
 
         function updateT2EcardList() {
-            var listEl = document.getElementById('t2-preview-E-card-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, item.dataset.url, primary));
-            });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, null, primary));
-            });
+            rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
         }
 
         // ── Template 3: text sync, E-card list ──────────────────────────────────────
@@ -2573,23 +2736,14 @@
             set('t3-preview-title', val('E-card_company'));
             set('t3-preview-desc', val('E-card_desc'));
             set('t3-preview-website', val('E-card_website'));
+            setPreviewBtnText('t3-preview-btn', val('E-card_btn_text') || 'See E-card');
             var picker = document.getElementById('E-card_primary_picker');
             var t3el = document.getElementById('preview-template3');
             if (picker && t3el) t3el.style.backgroundColor = picker.value;
         }
 
         function updateT3EcardList() {
-            var listEl = document.getElementById('t3-preview-E-card-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, item.dataset.url));
-            });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, null));
-            });
+            rebuildTemplateContactList('t3-preview-contact-list', 'white');
         }
 
         // ── Template 4: text sync, E-card list ──────────────────────────────────────
@@ -2604,7 +2758,7 @@
             set('t4-preview-title', val('E-card_company'));
             set('t4-preview-desc', val('E-card_desc'));
             set('t4-preview-website', val('E-card_website'));
-            // Company uses primary color
+            setPreviewBtnText('t4-preview-btn', val('E-card_btn_text') || 'See E-card');
             var picker = document.getElementById('E-card_primary_picker');
             var t4el = document.getElementById('preview-template4');
             var compEl = document.getElementById('t4-preview-company');
@@ -2615,18 +2769,7 @@
         }
 
         function updateT4EcardList() {
-            var listEl = document.getElementById('t4-preview-E-card-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, item.dataset.url, primary));
-            });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, null, primary));
-            });
+            rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
         }
 
         // ── Build E-card list item for template 2 & 4 (gray bg, primary chevron) ────
@@ -2677,9 +2820,20 @@
             if (cardBody) {
                 cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
                 cardBody.style.marginTop = hasImage ? '-18px' : '0';
-                // Ensure card body always uses primary color
                 var picker = document.getElementById('E-card_primary_picker');
                 if (picker) cardBody.style.backgroundColor = picker.value;
+            }
+        }
+
+        function showT2Header(hasImage) {
+            var hdr = document.getElementById('t2-preview-header');
+            var cardBody = document.getElementById('t2-preview-card-body');
+            if (hdr) {
+                hdr.style.display = hasImage ? 'block' : 'none';
+            }
+            if (cardBody) {
+                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+                cardBody.style.marginTop = hasImage ? '-18px' : '0';
             }
         }
 
@@ -2710,41 +2864,99 @@
             });
         }
 
-        // ── Unified cover image upload (one image shared by all templates) ─────────
-        var t1ImgInput = document.getElementById('E-card_t1_header_img_input');
-        if (t1ImgInput) {
+        // ── Profile image upload with crop (shared by all templates) ─────────────
+        var t1ImgInput = document.getElementById('E-card_profile_img_input');
+        var cropModal = document.getElementById('ecard-profile-crop-modal');
+        var cropImageEl = document.getElementById('ecard-crop-image');
+        var cropCancelBtn = document.getElementById('ecard-crop-cancel');
+        var cropApplyBtn = document.getElementById('ecard-crop-apply');
+        var ecardCropper = null;
+        var ecardCropObjectUrl = null;
+
+        function applyProfileImageToPreviews(url) {
+            var previewProfileImg = document.getElementById('preview-profile-img');
+            var previewPlaceholder = document.getElementById('preview-profile-placeholder-icon');
+            if (previewProfileImg) { previewProfileImg.src = url; previewProfileImg.style.display = 'block'; }
+            if (previewPlaceholder) { previewPlaceholder.style.display = 'none'; }
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
+            showT1Header(true);
+            var t2Img = document.getElementById('t2-preview-header-img');
+            if (t2Img) { t2Img.src = url; t2Img.style.display = 'block'; }
+            showT2Header(true);
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
+            if (t3Ph) { t3Ph.style.display = 'none'; }
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
+            if (t4Ph) { t4Ph.style.display = 'none'; }
+            var thumb = document.getElementById('cover-img-preview');
+            var removeBtn = document.getElementById('cover-img-remove-btn');
+            var delFlag = document.getElementById('E-card_profile_img_delete');
+            if (thumb) thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            if (removeBtn) removeBtn.style.display = 'inline-flex';
+            if (delFlag) delFlag.value = '0';
+        }
+
+        if (t1ImgInput && cropModal && cropImageEl) {
             t1ImgInput.addEventListener('change', function () {
                 var file = this.files && this.files[0];
                 if (!file) return;
                 if (file.size > 2 * 1024 * 1024) {
-                    alert('Cover image must be 2 MB or smaller.');
+                    alert('Image must be 2 MB or smaller.');
                     this.value = '';
                     return;
                 }
-                var url = URL.createObjectURL(file);
-                // Update T1 header preview
-                var t1Img = document.getElementById('t1-preview-header-img');
-                if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
-                showT1Header(true);
-                // Update T3 circle preview
-                var t3Img = document.getElementById('t3-preview-circle-img');
-                var t3Ph = document.getElementById('t3-preview-circle-placeholder');
-                if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
-                if (t3Ph) { t3Ph.style.display = 'none'; }
-                // Update T4 circle preview
-                var t4Img = document.getElementById('t4-preview-circle-img');
-                var t4Ph = document.getElementById('t4-preview-circle-placeholder');
-                if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
-                if (t4Ph) { t4Ph.style.display = 'none'; }
-                // Update upload thumb
-                var thumb = document.getElementById('cover-img-preview');
-                var removeBtn = document.getElementById('cover-img-remove-btn');
-                var delFlag = document.getElementById('E-card_t1_header_img_delete');
-                if (thumb) {
-                    thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                if (ecardCropObjectUrl) URL.revokeObjectURL(ecardCropObjectUrl);
+                if (ecardCropper) { ecardCropper.destroy(); ecardCropper = null; }
+                ecardCropObjectUrl = URL.createObjectURL(file);
+                cropImageEl.src = ecardCropObjectUrl;
+                cropModal.style.display = 'flex';
+                cropModal.style.alignItems = 'center';
+                cropModal.style.justifyContent = 'center';
+                cropImageEl.onload = function () {
+                    if (ecardCropper) ecardCropper.destroy();
+                    ecardCropper = new Cropper(cropImageEl, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.8 });
+                };
+            });
+        }
+
+        function closeCropModal() {
+            if (cropModal) cropModal.style.display = 'none';
+            if (ecardCropObjectUrl) { URL.revokeObjectURL(ecardCropObjectUrl); ecardCropObjectUrl = null; }
+            if (ecardCropper) { ecardCropper.destroy(); ecardCropper = null; }
+        }
+
+        if (cropCancelBtn) {
+            cropCancelBtn.addEventListener('click', function () {
+                if (t1ImgInput) t1ImgInput.value = '';
+                closeCropModal();
+            });
+        }
+        if (cropApplyBtn && t1ImgInput) {
+            cropApplyBtn.addEventListener('click', function () {
+                if (!ecardCropper) { closeCropModal(); return; }
+                ecardCropper.getCroppedCanvas({ maxWidth: 800, maxHeight: 800 }).toBlob(function (blob) {
+                    if (!blob) { closeCropModal(); return; }
+                    var f = new File([blob], 'profile.jpg', { type: blob.type || 'image/jpeg' });
+                    var dt = new DataTransfer();
+                    dt.items.add(f);
+                    t1ImgInput.files = dt.files;
+                    var url = URL.createObjectURL(blob);
+                    applyProfileImageToPreviews(url);
+                    URL.revokeObjectURL(url);
+                    closeCropModal();
+                }, 'image/jpeg', 0.92);
+            });
+        }
+        if (cropModal) {
+            cropModal.addEventListener('click', function (e) {
+                if (e.target === cropModal) {
+                    if (t1ImgInput) t1ImgInput.value = '';
+                    closeCropModal();
                 }
-                if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
-                if (delFlag) { delFlag.value = '0'; }
             });
         }
 
@@ -2752,11 +2964,15 @@
         if (coverRemoveBtn) {
             coverRemoveBtn.addEventListener('click', function () {
                 if (t1ImgInput) t1ImgInput.value = '';
-                var delFlag = document.getElementById('E-card_t1_header_img_delete');
+                var delFlag = document.getElementById('E-card_profile_img_delete');
                 // Clear T1 header preview
                 var t1Img = document.getElementById('t1-preview-header-img');
                 if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
                 showT1Header(false);
+                // Clear T2 header preview
+                var t2Img = document.getElementById('t2-preview-header-img');
+                if (t2Img) { t2Img.src = ''; t2Img.style.display = 'none'; }
+                showT2Header(false);
                 // Clear T3 circle preview
                 var t3Img = document.getElementById('t3-preview-circle-img');
                 var t3Ph = document.getElementById('t3-preview-circle-placeholder');
@@ -2778,18 +2994,47 @@
         }
 
         // ── Wire text inputs to update the active template preview ───────────────
-        ['E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website'].forEach(function (name) {
+        ['E-card_company', 'E-card_title', 'E-card_desc', 'E-card_btn_text'].forEach(function (name) {
             var input = document.querySelector('input[name="' + name + '"]');
             if (!input) return;
             input.addEventListener('input', function () {
                 var active = document.querySelector('input[name="E-card_template"]:checked');
-                if (!active) return;
-                if (active.value === 'template1') updateT1TextPreview();
-                if (active.value === 'template2') updateT2TextPreview();
-                if (active.value === 'template3') updateT3TextPreview();
-                if (active.value === 'template4') updateT4TextPreview();
+                var tpl = active ? active.value : 'default';
+                if (tpl === 'template1') updateT1TextPreview();
+                else if (tpl === 'template2') updateT2TextPreview();
+                else if (tpl === 'template3') updateT3TextPreview();
+                else if (tpl === 'template4') updateT4TextPreview();
+                else updateDefaultTextPreview();
             });
         });
+        // E-card_website is derived from first website row; wire website list inputs
+        document.querySelectorAll('#ecard-website-list input').forEach(function (inp) {
+            inp.addEventListener('input', function () {
+                var active = document.querySelector('input[name="E-card_template"]:checked');
+                var tpl = active ? active.value : 'default';
+                if (tpl === 'template1') updateT1TextPreview();
+                else if (tpl === 'template2') updateT2TextPreview();
+                else if (tpl === 'template3') updateT3TextPreview();
+                else if (tpl === 'template4') updateT4TextPreview();
+                else updateDefaultTextPreview();
+            });
+        });
+
+        // ── Wire contact inputs (phone, email, website) to update active template's contact list ─
+        ['E-card_phone_label[]', 'E-card_phone_number[]', 'E-card_email_label[]', 'E-card_email_value[]',
+            'E-card_website_label[]', 'E-card_website_value[]'].forEach(function (nm) {
+                document.querySelectorAll('input[name="' + nm + '"]').forEach(function (inp) {
+                    inp.addEventListener('input', function () {
+                        var active = document.querySelector('input[name="E-card_template"]:checked');
+                        var tpl = active ? active.value : 'default';
+                        if (tpl === 'template1') rebuildTemplateContactList('t1-preview-contact-list', 'white');
+                        else if (tpl === 'template2') rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
+                        else if (tpl === 'template3') rebuildTemplateContactList('t3-preview-contact-list', 'white');
+                        else if (tpl === 'template4') rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
+                        else if (window.updateContactPreview) window.updateContactPreview();
+                    });
+                });
+            });
 
         // ── Helper: update the active template's E-card list ────────────────────────
         function updateActiveEcardList() {
