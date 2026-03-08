@@ -462,6 +462,25 @@ def _clear_qr_draft(session, qrcard_id):
         del session["qr_draft"][qrcard_id]
         session.modified = True
 
+def _apply_pdf_draft_to_files(qrcard, draft_data):
+    """Apply draft's pdf_existing_urls / pdf_display_names / pdf_item_descs into qrcard['pdf_files']."""
+    existing_urls = draft_data.get("pdf_existing_urls")
+    if not existing_urls:
+        return
+    display_names = draft_data.get("pdf_display_names", [])
+    item_descs = draft_data.get("pdf_item_descs", [])
+    db_files = list(qrcard.get("pdf_files") or [])
+    db_map = {f.get("url"): dict(f) for f in db_files}
+    rebuilt = []
+    for i, url in enumerate(existing_urls):
+        entry = dict(db_map.get(url, {"name": url.split("/")[-1], "url": url}))
+        if i < len(display_names) and display_names[i].strip():
+            entry["display_name"] = display_names[i].strip()
+        if i < len(item_descs):
+            entry["item_desc"] = item_descs[i].strip()
+        rebuilt.append(entry)
+    qrcard["pdf_files"] = rebuilt
+
 
 # ─── Update: type-specific routes (pdf / web / ecard). No combined qr_type route. ───
 
@@ -841,15 +860,20 @@ def qr_update_content_pdf(qrcard_id):
             for _f in _cover_img_fields:
                 ecard_data[_f] = existing_cover
                 qrcard[_f] = existing_cover
-        ecard_data["pdf_display_names"] = request.form.getlist("pdf_display_names")
-        ecard_data["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
-        ecard_data["pdf_existing_urls"] = request.form.getlist("existing_pdf_urls")
         if request.form.get("back_from_design"):
+            existing_draft = _get_qr_draft(session, qrcard_id) or {}
+            ecard_data["pdf_display_names"] = existing_draft.get("pdf_display_names", [])
+            ecard_data["pdf_item_descs"] = existing_draft.get("pdf_item_descs", [])
+            ecard_data["pdf_existing_urls"] = existing_draft.get("pdf_existing_urls", [])
             _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, ecard_data)
             qrcard.update(ecard_data)
+            _apply_pdf_draft_to_files(qrcard, ecard_data)
             return view_update_pdf.view_update_pdf(app).update_qr_content_html(
                 qrcard=qrcard, url_content=url_content, qr_name=qr_name, short_code=short_code or None, base_url=config.G_BASE_URL
             )
+        ecard_data["pdf_display_names"] = request.form.getlist("pdf_display_names")
+        ecard_data["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
+        ecard_data["pdf_existing_urls"] = request.form.getlist("existing_pdf_urls")
         proc = _qrp.qr_pdf_proc(app)
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             return view_update_pdf.view_update_pdf(app).update_qr_content_html(
@@ -862,7 +886,21 @@ def qr_update_content_pdf(qrcard_id):
             pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
             os.makedirs(pdf_upload_dir, exist_ok=True)
             qrcard_db = proc.get_qrcard(fk_user_id, qrcard_id)
-            existing_files = list(qrcard_db.get("pdf_files", [])) if qrcard_db else []
+            db_files = list(qrcard_db.get("pdf_files", [])) if qrcard_db else []
+            _step_existing_urls = request.form.getlist("existing_pdf_urls")
+            _step_display_names = request.form.getlist("pdf_display_names")
+            _step_item_descs = request.form.getlist("pdf_item_descs")
+            db_map = {f.get("url"): dict(f) for f in db_files}
+            existing_files = []
+            for i, url in enumerate(_step_existing_urls):
+                entry = db_map.get(url, {"name": url.split("/")[-1], "url": url})
+                if not isinstance(entry, dict):
+                    entry = dict(entry)
+                if i < len(_step_display_names) and _step_display_names[i].strip():
+                    entry["display_name"] = _step_display_names[i].strip()
+                if i < len(_step_item_descs):
+                    entry["item_desc"] = _step_item_descs[i].strip()
+                existing_files.append(entry)
             existing_names = set()
             existing_safe_names = set()
             for _f_entry in existing_files:
@@ -871,9 +909,6 @@ def qr_update_content_pdf(qrcard_id):
                 _url = (_f_entry.get("url") or "").strip()
                 if _url:
                     existing_safe_names.add(os.path.basename(_url))
-            _step_display_names = request.form.getlist("pdf_display_names")
-            _step_item_descs = request.form.getlist("pdf_item_descs")
-            _step_existing_urls = request.form.getlist("existing_pdf_urls")
             _new_file_offset = len(_step_existing_urls)
             _new_file_idx = 0
             seen_upload_names = set()
@@ -907,6 +942,10 @@ def qr_update_content_pdf(qrcard_id):
                     base_url=config.G_BASE_URL,
                 )
             proc.update_pdf_files(fk_user_id, qrcard_id, existing_files)
+            ecard_data["pdf_existing_urls"] = [f.get("url") for f in existing_files if f.get("url")]
+            ecard_data["pdf_display_names"] = [f.get("display_name", f.get("name", "")) for f in existing_files]
+            ecard_data["pdf_item_descs"] = [f.get("item_desc", "") for f in existing_files]
+            _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), ecard_data)
     # GET or POST success -> design
     if request.method == "POST" and not request.form.get("back_from_design"):
         return view_update_pdf.view_update_pdf(app).update_qr_design_html(
@@ -915,6 +954,7 @@ def qr_update_content_pdf(qrcard_id):
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
         qrcard.update(draft)
+        _apply_pdf_draft_to_files(qrcard, draft)
         return view_update_pdf.view_update_pdf(app).update_qr_content_html(
             qrcard=qrcard, url_content=draft.get("url_content"), qr_name=draft.get("qr_name"),
             short_code=draft.get("short_code") or None, base_url=config.G_BASE_URL
@@ -1168,7 +1208,7 @@ def user_new_qr_design_pdf():
     short_code = ""
     qr_encode_url = None
     error_msg = None
-    ecard_data = {}
+    pdf_data = {}
     if request.method == "POST":
         url_content = request.form.get("url_content", "qrcardku.com")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
@@ -1178,9 +1218,9 @@ def user_new_qr_design_pdf():
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color", "pdf_title_font", "pdf_title_color",
                       "pdf_text_font", "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc", "pdf_website",
                       "pdf_btn_text", "welcome_time", "welcome_bg_color", "pdf_font_apply_all"]
-        ecard_data = {f: request.form.get(f, "") for f in pdf_fields}
-        ecard_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
-        ecard_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
+        pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
+        pdf_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
+        pdf_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
         tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
         session["pdf_tmp_key"] = tmp_key
         tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
@@ -1242,7 +1282,7 @@ def user_new_qr_design_pdf():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/pdf/" + short_code
-    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, ecard_data=ecard_data)
+    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, pdf_data=pdf_data)
 
 @app.route("/qr/new/web")
 def user_new_qr_web():

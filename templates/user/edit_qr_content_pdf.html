@@ -845,7 +845,7 @@
                                 <!-- Saved PDF files from database -->
                                 {% if qrcard and qrcard.get('pdf_files') %}
                                 <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 10px;"
-                                    id="saved-pdf-list">
+                                    id="saved-pdf-list" data-qrcard-id="{{ qrcard_id }}">
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <div class="pdf-file-item" data-url="{{ pdf.url }}" data-filename="{{ pdf.name }}"
                                         style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
@@ -857,7 +857,7 @@
                                                 <a href="{{ pdf.url }}" target="_blank"
                                                     style="font-size: 12px; font-weight: 500; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none;">{{ pdf.name }}</a>
                                             </div>
-                                            <button type="button" class="remove-saved-pdf-btn" data-url="{{ pdf.url }}"
+                                            <button type="button" class="remove-pdf-btn remove-saved-pdf-btn" data-url="{{ pdf.url }}"
                                                 data-qrcard-id="{{ qrcard_id }}"
                                                 style="background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; flex-shrink: 0;"
                                                 title="Remove this PDF">
@@ -1248,7 +1248,7 @@
                                         <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.get('display_name', pdf.name) }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -1279,7 +1279,7 @@
                                         <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.get('display_name', pdf.name) }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -1320,7 +1320,7 @@
                                         <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.get('display_name', pdf.name) }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -1362,7 +1362,7 @@
                                         <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.get('display_name', pdf.name) }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -2035,20 +2035,14 @@
                         leftSide.appendChild(nameSpan);
                         leftSide.appendChild(sizeSpan);
 
-                        const deleteBtn = document.createElement('i');
-                        deleteBtn.className = 'fa-solid fa-xmark';
-                        deleteBtn.style.cssText = 'color: var(--text-muted); cursor: pointer; padding: 4px; flex-shrink: 0;';
-                        deleteBtn.title = 'Remove file';
-                        deleteBtn.addEventListener('click', () => {
-                            let newAccumulated = new DataTransfer();
-                            Array.from(pdfFileInput.files).forEach((f, i) => {
-                                if (i !== index) newAccumulated.items.add(f);
-                            });
-                            accumulatedPdfFiles = newAccumulated;
-                            pdfFileInput.files = accumulatedPdfFiles.files;
-                            isDeleting = true;
-                            pdfFileInput.dispatchEvent(new Event('change'));
-                        });
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'remove-pdf-btn';
+                        deleteBtn.style.cssText = 'background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px 4px; flex-shrink: 0;';
+                        deleteBtn.title = 'Remove this PDF';
+                        const deleteIcon = document.createElement('i');
+                        deleteIcon.className = 'fa-solid fa-xmark';
+                        deleteBtn.appendChild(deleteIcon);
 
                         headerRow.appendChild(leftSide);
                         headerRow.appendChild(deleteBtn);
@@ -2165,27 +2159,38 @@
 </script>
 
 <script>
-    // Wire up "remove saved PDF" buttons
-    document.querySelectorAll('.remove-saved-pdf-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var fileUrl = this.dataset.url;
-            var qrcardId = this.dataset.qrcardId;
-            var row = this.closest('.pdf-file-item');
-            fetch('/api/qr/remove_pdf_file', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: fileUrl, qrcard_id: qrcardId })
-            })
-                .then(function (res) { return res.json(); })
-                .then(function (data) {
-                    if (data.success && row) {
-                        row.style.transition = 'opacity 0.3s';
-                        row.style.opacity = '0';
-                        setTimeout(function () { row.remove(); }, 300);
-                    }
-                })
-                .catch(function (err) { console.error('Remove PDF failed:', err); });
-        });
+    // Single delegated handler: remove works for both saved (existing) PDFs and new (not-yet-saved) PDFs
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.remove-pdf-btn');
+        if (!btn) return;
+        var row = btn.closest('.pdf-file-item');
+        if (!row) return;
+
+        var savedList = document.getElementById('saved-pdf-list');
+        var newList = document.getElementById('pdf-file-list');
+        var pdfFileInput = document.querySelector('input[name="pdf_files"]');
+
+        if (savedList && row.closest('#saved-pdf-list') === savedList) {
+            // Existing/saved PDF: remove from UI only; actually removed when user clicks Next and saves
+            e.preventDefault();
+            row.style.transition = 'opacity 0.3s';
+            row.style.opacity = '0';
+            setTimeout(function () { row.remove(); }, 300);
+            return;
+        }
+
+        if (newList && pdfFileInput && row.closest('#pdf-file-list') === newList) {
+            // New (not-yet-saved) PDF: remove from file input and re-render list
+            var idx = Array.from(newList.children).indexOf(row);
+            if (idx < 0) return;
+            var dt = new DataTransfer();
+            var files = pdfFileInput.files;
+            for (var i = 0; i < files.length; i++) {
+                if (i !== idx) dt.items.add(files[i]);
+            }
+            pdfFileInput.files = dt.files;
+            pdfFileInput.dispatchEvent(new Event('change'));
+        }
     });
 </script>
 

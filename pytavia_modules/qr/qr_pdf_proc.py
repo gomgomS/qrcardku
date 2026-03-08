@@ -536,7 +536,6 @@ class qr_pdf_proc:
         db_files = list(qrcard_db.get("pdf_files", [])) if qrcard_db else []
         if existing_urls:
             db_map = {f.get("url"): f for f in db_files}
-            existing_url_set = set(existing_urls)
             existing_files = []
             for i, url in enumerate(existing_urls):
                 entry = dict(db_map.get(url, {"name": url.split("/")[-1], "url": url}))
@@ -545,9 +544,6 @@ class qr_pdf_proc:
                 if i < len(item_descs):
                     entry["item_desc"] = item_descs[i].strip()
                 existing_files.append(entry)
-            for db_file in db_files:
-                if db_file.get("url") not in existing_url_set:
-                    existing_files.append(db_file)
         else:
             existing_files = list(db_files)
         pdf_file_list = request.files.getlist("pdf_files")
