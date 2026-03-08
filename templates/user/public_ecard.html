@@ -142,14 +142,23 @@
         .tpl-1 .E-card-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-1 .E-card-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tpl-1 .E-card-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+        .tpl-1 .t1-primary-btn { background: var(--secondary); color: white; border: none; border-radius: 20px; padding: 9px 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
         .tpl-1 .t1-website {
-            text-align: center; margin-top: 16px; font-size: 12px; font-weight: 600; text-decoration: underline;
+            text-align: center; margin-top: 8px; font-size: 11px; font-weight: 600; text-decoration: underline;
             {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: white;{% endif %}
         }
 
         /* ── TEMPLATE 2 ── */
-        .tpl-2 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; overflow-y: auto; }
-        .tpl-2 .t2-card { background: white; border-radius: 20px; width: 100%; max-width: 440px; padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .tpl-2 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; overflow-y: auto; }
+        .tpl-2 .t2-header { width: 100%; height: 45vh; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; }
+        .tpl-2 .t2-header img { width: 100%; height: 100%; object-fit: cover; }
+        .tpl-2 .t2-card-wrap { flex: 1; display: flex; flex-direction: column; padding: 0 20px 32px; min-height: 0; }
+        .tpl-2 .t2-card-wrap.no-header { justify-content: center; }
+        .tpl-2 .t2-card-wrap.with-header { justify-content: flex-start; }
+        .tpl-2 .t2-card { background: white; width: 100%; max-width: 440px; margin: 0 auto; padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); flex: 1; display: flex; flex-direction: column; }
+        .tpl-2 .t2-card.no-header { border-radius: 20px; }
+        .tpl-2 .t2-card.with-header { border-radius: 22px 22px 0 0; margin-top: -18px; }
+        .tpl-2 .t2-primary-btn { background: var(--secondary); color: white; border: none; border-radius: 20px; padding: 9px 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; text-decoration: none; }
         .tpl-2 .t2-company {
             font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px;
             {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: var(--primary);{% endif %}
@@ -169,8 +178,8 @@
         .tpl-2 .E-card-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tpl-2 .E-card-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
         .tpl-2 .t2-website {
-            text-align: center; margin-top: 16px; font-size: 12px; font-weight: 600; text-decoration: underline;
-            {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: white;{% endif %}
+            text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; text-decoration: underline;
+            {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: var(--primary);{% endif %}
         }
 
         /* ── TEMPLATE 3 ── */
@@ -196,8 +205,9 @@
         .tpl-3 .E-card-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-3 .E-card-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tpl-3 .E-card-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+        .tpl-3 .t3-primary-btn { background: var(--secondary); color: white; border: none; border-radius: 20px; padding: 9px 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
         .tpl-3 .t3-website {
-            text-align: center; margin-top: 16px; font-size: 12px; font-weight: 600; text-decoration: underline; width: 100%;
+            text-align: center; margin-top: 4px; font-size: 11px; font-weight: 600; text-decoration: underline; width: 100%;
             {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: white;{% endif %}
         }
 
@@ -225,8 +235,9 @@
         .tpl-4 .E-card-item-text { flex: 1; min-width: 0; overflow: hidden; }
         .tpl-4 .E-card-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tpl-4 .E-card-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+        .tpl-4 .t4-primary-btn { background: var(--secondary); color: white; border: none; border-radius: 20px; padding: 9px 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
         .tpl-4 .t4-website {
-            text-align: center; margin-top: 16px; font-size: 12px; font-weight: 600; text-decoration: underline; width: 100%;
+            text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; text-decoration: underline; width: 100%;
             {% if apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: white;{% endif %}
         }
     </style>
@@ -299,7 +310,7 @@
 
                         {# Contact button - generates vCard download #}
                         <button class="primary-btn" onclick="downloadVCard()" type="button">
-                            <i class="fa-solid fa-address-card"></i> contact
+                            <i class="fa-solid fa-address-card"></i> {{ qrcard.get('E-card_btn_text', 'contact') }}
                         </button>
 
                         {% if qrcard.get('E-card_website') %}
@@ -314,7 +325,7 @@
 
         {# TEMPLATE 1 #}
         {% elif tmpl == 'template1' %}
-        {% set has_t1_img = qrcard.get('E-card_t1_header_img_url') or qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t4_circle_img_url') %}
+        {% set has_t1_img = qrcard.get('E-card_t1_header_img_url') %}
         <div class="tpl-1">
             {% if has_t1_img %}<div class="t1-header"><img src="{{ has_t1_img }}" alt=""></div>{% endif %}
             <div class="t1-card {% if has_t1_img %}with-image{% endif %}">
@@ -344,48 +355,54 @@
                     </a>
                     {% endfor %}
                 </div>
+                <button type="button" class="t1-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ qrcard.get('E-card_btn_text', 'contact') }}</button>
                 {% if qrcard.get('E-card_website') %}<a class="t1-website" href="{{ qrcard.get('E-card_website') }}" target="_blank" rel="noopener">{{ qrcard.get('E-card_website') }}</a>{% endif %}
             </div>
         </div>
 
         {# TEMPLATE 2 #}
         {% elif tmpl == 'template2' %}
+        {% set has_t2_header = qrcard.get('E-card_t1_header_img_url') %}
         <div class="tpl-2">
-            <div class="t2-card">
-                {% if qrcard.get('E-card_company') %}<div class="t2-company">{{ qrcard.get('E-card_company') }}</div>{% endif %}
-                {% if qrcard.get('E-card_title') %}<div class="t2-title">{{ qrcard.get('E-card_title') }}</div>{% endif %}
-                {% if qrcard.get('E-card_desc') %}<div class="t2-desc">{{ qrcard.get('E-card_desc') }}</div>{% endif %}
-                <div class="E-card-list">
-                    {% for p in qrcard.get('E-card_phones', []) %}
-                    <a class="E-card-item" href="tel:{{ p.number }}">
-                        <div class="E-card-item-icon"><i class="fa-solid fa-phone" style="color:#2563eb;font-size:16px;"></i></div>
-                        <div class="E-card-item-text"><span class="E-card-item-name">{{ p.label or 'Phone' }}</span><span class="E-card-item-subdesc">{{ p.number }}</span></div>
-                        <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
-                    </a>
-                    {% endfor %}
-                    {% for e in qrcard.get('E-card_emails', []) %}
-                    <a class="E-card-item" href="mailto:{{ e.value }}">
-                        <div class="E-card-item-icon"><i class="fa-solid fa-envelope" style="color:#ea4335;font-size:16px;"></i></div>
-                        <div class="E-card-item-text"><span class="E-card-item-name">{{ e.label or 'Email' }}</span><span class="E-card-item-subdesc">{{ e.value }}</span></div>
-                        <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
-                    </a>
-                    {% endfor %}
-                    {% for w in qrcard.get('E-card_websites', []) %}
-                    <a class="E-card-item" href="{{ w.value if '://' in w.value else 'https://'+w.value }}" target="_blank" rel="noopener">
-                        <div class="E-card-item-icon"><i class="fa-solid fa-globe" style="color:#10b981;font-size:16px;"></i></div>
-                        <div class="E-card-item-text"><span class="E-card-item-name">{{ w.label or 'Website' }}</span><span class="E-card-item-subdesc">{{ w.value }}</span></div>
-                        <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
-                    </a>
-                    {% endfor %}
+            {% if has_t2_header %}<div class="t2-header"><img src="{{ qrcard.get('E-card_t1_header_img_url') }}" alt=""></div>{% endif %}
+            <div class="t2-card-wrap {% if has_t2_header %}with-header{% else %}no-header{% endif %}">
+                <div class="t2-card {% if has_t2_header %}with-header{% else %}no-header{% endif %}">
+                    {% if qrcard.get('E-card_company') %}<div class="t2-company">{{ qrcard.get('E-card_company') }}</div>{% endif %}
+                    {% if qrcard.get('E-card_title') %}<div class="t2-title">{{ qrcard.get('E-card_title') }}</div>{% endif %}
+                    {% if qrcard.get('E-card_desc') %}<div class="t2-desc">{{ qrcard.get('E-card_desc') }}</div>{% endif %}
+                    <div class="E-card-list">
+                        {% for p in qrcard.get('E-card_phones', []) %}
+                        <a class="E-card-item" href="tel:{{ p.number }}">
+                            <div class="E-card-item-icon"><i class="fa-solid fa-phone" style="color:#2563eb;font-size:16px;"></i></div>
+                            <div class="E-card-item-text"><span class="E-card-item-name">{{ p.label or 'Phone' }}</span><span class="E-card-item-subdesc">{{ p.number }}</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
+                        </a>
+                        {% endfor %}
+                        {% for e in qrcard.get('E-card_emails', []) %}
+                        <a class="E-card-item" href="mailto:{{ e.value }}">
+                            <div class="E-card-item-icon"><i class="fa-solid fa-envelope" style="color:#ea4335;font-size:16px;"></i></div>
+                            <div class="E-card-item-text"><span class="E-card-item-name">{{ e.label or 'Email' }}</span><span class="E-card-item-subdesc">{{ e.value }}</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
+                        </a>
+                        {% endfor %}
+                        {% for w in qrcard.get('E-card_websites', []) %}
+                        <a class="E-card-item" href="{{ w.value if '://' in w.value else 'https://'+w.value }}" target="_blank" rel="noopener">
+                            <div class="E-card-item-icon"><i class="fa-solid fa-globe" style="color:#10b981;font-size:16px;"></i></div>
+                            <div class="E-card-item-text"><span class="E-card-item-name">{{ w.label or 'Website' }}</span><span class="E-card-item-subdesc">{{ w.value }}</span></div>
+                            <i class="fa-solid fa-chevron-right" style="color:var(--primary);font-size:11px;flex-shrink:0;"></i>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="t2-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ qrcard.get('E-card_btn_text', 'contact') }}</button>
+                    {% if qrcard.get('E-card_website') %}<a class="t2-website" href="{{ qrcard.get('E-card_website') }}" target="_blank" rel="noopener">{{ qrcard.get('E-card_website') }}</a>{% endif %}
                 </div>
             </div>
-            {% if qrcard.get('E-card_website') %}<a class="t2-website" href="{{ qrcard.get('E-card_website') }}" target="_blank" rel="noopener">{{ qrcard.get('E-card_website') }}</a>{% endif %}
         </div>
 
         {# TEMPLATE 3 #}
         {% elif tmpl == 'template3' %}
         <div class="tpl-3">
-            {% set t3_img = qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t1_header_img_url') or qrcard.get('E-card_t4_circle_img_url') %}
+            {% set t3_img = qrcard.get('E-card_t3_circle_img_url') %}
             <div class="t3-circle">
                 {% if t3_img %}<img src="{{ t3_img }}" alt="">
                 {% else %}<div class="t3-circle-placeholder"><i class="fa-regular fa-image"></i></div>{% endif %}
@@ -416,6 +433,7 @@
                 </a>
                 {% endfor %}
             </div>
+            <button type="button" class="t3-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ qrcard.get('E-card_btn_text', 'contact') }}</button>
             {% if qrcard.get('E-card_website') %}<a class="t3-website" href="{{ qrcard.get('E-card_website') }}" target="_blank" rel="noopener">{{ qrcard.get('E-card_website') }}</a>{% endif %}
         </div>
 
@@ -423,7 +441,7 @@
         {% elif tmpl == 'template4' %}
         <div class="tpl-4">
             <div class="t4-card">
-                {% set t4_img = qrcard.get('E-card_t4_circle_img_url') or qrcard.get('E-card_t1_header_img_url') or qrcard.get('E-card_t3_circle_img_url') %}
+                {% set t4_img = qrcard.get('E-card_t4_circle_img_url') %}
                 <div class="t4-circle">
                     {% if t4_img %}<img src="{{ t4_img }}" alt="">
                     {% else %}<div class="t4-circle-placeholder"><i class="fa-regular fa-image"></i></div>{% endif %}
@@ -454,6 +472,7 @@
                     </a>
                     {% endfor %}
                 </div>
+                <button type="button" class="t4-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ qrcard.get('E-card_btn_text', 'contact') }}</button>
             </div>
             {% if qrcard.get('E-card_website') %}<a class="t4-website" href="{{ qrcard.get('E-card_website') }}" target="_blank" rel="noopener">{{ qrcard.get('E-card_website') }}</a>{% endif %}
         </div>
@@ -478,8 +497,7 @@
     </script>
     {% endif %}
 
-    {# vCard download for default template contact button #}
-    {% if tmpl == 'default' %}
+    {# vCard download for contact button (all templates) #}
     <script>
     function downloadVCard() {
         var lines = ['BEGIN:VCARD', 'VERSION:3.0'];
@@ -506,7 +524,6 @@
         document.body.removeChild(a);
     }
     </script>
-    {% endif %}
 
 </body>
 </html>

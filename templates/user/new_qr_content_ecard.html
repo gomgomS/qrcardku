@@ -1730,9 +1730,17 @@
         });
     }
     if (secondaryPicker && secondaryHex) {
+        function applySecondaryToAllButtons(color) {
+            if (previewBtn) previewBtn.style.backgroundColor = color;
+            ['t1-preview-btn', 't2-preview-btn', 't3-preview-btn', 't4-preview-btn'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.backgroundColor = color;
+            });
+        }
         secondaryPicker.addEventListener('input', e => {
-            secondaryHex.value = e.target.value.toUpperCase();
-            if (previewBtn) previewBtn.style.backgroundColor = e.target.value;
+            const color = e.target.value;
+            secondaryHex.value = color.toUpperCase();
+            applySecondaryToAllButtons(color);
         });
     }
 
@@ -1746,9 +1754,8 @@
             primaryHex.value = primaryPicker.value.toUpperCase();
             secondaryHex.value = secondaryPicker.value.toUpperCase();
             if (previewTopBlock) previewTopBlock.style.backgroundColor = primaryPicker.value;
-            if (previewBtn) previewBtn.style.backgroundColor = secondaryPicker.value;
-            // Propagate to t1-t4
             primaryPicker.dispatchEvent(new Event('input'));
+            secondaryPicker.dispatchEvent(new Event('input'));
         });
     }
 
@@ -1771,7 +1778,7 @@
             if (secondaryPicker) {
                 secondaryPicker.value = this.dataset.secondary;
                 secondaryHex.value = this.dataset.secondary.toUpperCase();
-                if (previewBtn) previewBtn.style.backgroundColor = this.dataset.secondary;
+                secondaryPicker.dispatchEvent(new Event('input'));
             }
         });
     });
