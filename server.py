@@ -532,6 +532,19 @@ def qr_update_save_ecard(qrcard_id):
     params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled") or draft.get("scan_limit_enabled"))
     raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+    
+    for key in request.form:
+        if key not in ["csrf_token", "url_content", "qr_name", "short_code", "scan_limit_enabled", "scan_limit_value"]:
+            val_list = request.form.getlist(key)
+            if len(val_list) > 1 or key.endswith("[]"):
+                params[key] = val_list
+            else:
+                params[key] = val_list[0] if val_list else ""
+                
+    for key, val in draft.items():
+        if key not in params and key not in ["url_content", "qr_name", "short_code"]:
+            params[key] = val
+            
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
@@ -556,13 +569,13 @@ def qr_update_design_pdf(qrcard_id):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color", "pdf_title_font", "pdf_title_color",
                       "pdf_text_font", "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc", "pdf_website",
                       "pdf_btn_text", "welcome_time", "welcome_bg_color", "scan_limit_enabled", "scan_limit_value", "pdf_font_apply_all"]
-        pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+        ecard_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
         if qrcard.get("welcome_img_url"):
-            pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
+            ecard_data["welcome_img_url"] = qrcard["welcome_img_url"]
         if qrcard.get("welcome_bg_color"):
-            pdf_data["welcome_bg_color"] = qrcard["welcome_bg_color"]
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), pdf_data)
-        qrcard.update(pdf_data)
+            ecard_data["welcome_bg_color"] = qrcard["welcome_bg_color"]
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), ecard_data)
+        qrcard.update(ecard_data)
     else:
         draft = _get_qr_draft(session, qrcard_id)
         if draft:
@@ -619,24 +632,96 @@ def qr_update_design_web(qrcard_id):
 
 @app.route("/qr/update/ecard/qr-design/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_design_ecard(qrcard_id):
-    """Step 2 (design) for E-card."""
+    """Step 2 (design) for E-card. Same pattern as PDF: proc.get_qrcard returns type-specific doc."""
     from flask import request
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     fk_user_id = session.get("fk_user_id")
-    from pytavia_core import database
-    from pytavia_core import config as _cfg
-    qrcard = database.get_db_conn(_cfg.mainDB).db_qrcard.find_one(
-        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
-    )
+    from pytavia_modules.qr import qr_ecard_proc as _qre
+    proc = _qre.qr_ecard_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
+    qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
         url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), None)
+            
+        extra_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"):
+                    extra_data[key] = val_list
+                else:
+                    extra_data[key] = val_list[0] if val_list else ""
+                    
+        import os
+        upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+        
+        if request.form.get("E-card_welcome_img_delete") == "1":
+            qrcard["welcome_img_url"] = ""
+            extra_data["welcome_img_url"] = ""
+            try:
+                from pytavia_core import database as _db_w, config as _cfg_w
+                _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
+            except Exception: pass
+        else:
+            welcome_img = request.files.get("E-card_welcome_img")
+            if welcome_img and welcome_img.filename:
+                welcome_img.seek(0, 2)
+                if welcome_img.tell() <= 1024 * 1024:
+                    welcome_img.seek(0)
+                    ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
+                    os.makedirs(upload_dir, exist_ok=True)
+                    welcome_name = "welcome" + ext
+                    welcome_img.save(os.path.join(upload_dir, welcome_name))
+                    welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                    extra_data["welcome_img_url"] = welcome_url
+                    qrcard["welcome_img_url"] = welcome_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+            elif qrcard.get("welcome_img_url"):
+                extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
+
+        if request.form.get("E-card_profile_img_delete") == "1":
+            for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                extra_data[f] = ""
+                qrcard[f] = ""
+            try:
+                from pytavia_core import database as _db_c, config as _cfg_c
+                _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+            except Exception: pass
+        else:
+            cover_img = request.files.get("E-card_profile_img")
+            if cover_img and cover_img.filename:
+                cover_img.seek(0, 2)
+                if cover_img.tell() <= 2 * 1024 * 1024:
+                    cover_img.seek(0)
+                    ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
+                    os.makedirs(upload_dir, exist_ok=True)
+                    cover_name = "pdf_cover_img" + ext
+                    cover_img.save(os.path.join(upload_dir, cover_name))
+                    cover_url = f"/static/uploads/pdf/{qrcard_id}/{cover_name}"
+                    for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                        extra_data[f] = cover_url
+                        qrcard[f] = cover_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+            else:
+                for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                    if qrcard.get(f): extra_data[f] = qrcard[f]
+                    
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), extra_data)
+        qrcard.update(extra_data)
         qrcard["url_content"] = url_content
         qrcard["name"] = qr_name
     else:
@@ -674,10 +759,10 @@ def qr_update_content_pdf(qrcard_id):
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color", "pdf_title_font", "pdf_title_color",
                       "pdf_text_font", "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc", "pdf_website",
                       "pdf_btn_text", "welcome_time", "welcome_bg_color", "scan_limit_enabled", "scan_limit_value", "pdf_font_apply_all"]
-        pdf_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
+        ecard_data = {f: request.form.get(f, "") for f in pdf_fields if f in request.form}
         if request.form.get("welcome_img_delete") == "1":
             qrcard["welcome_img_url"] = ""
-            pdf_data["welcome_img_url"] = ""
+            ecard_data["welcome_img_url"] = ""
             try:
                 from pytavia_core import database as _db_w, config as _cfg_w
                 _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
@@ -706,7 +791,7 @@ def qr_update_content_pdf(qrcard_id):
                 welcome_name = "welcome" + ext
                 welcome_img.save(os.path.join(upload_dir, welcome_name))
                 welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
-                pdf_data["welcome_img_url"] = welcome_url
+                ecard_data["welcome_img_url"] = welcome_url
                 qrcard["welcome_img_url"] = welcome_url
                 from pytavia_core import database as _db_w, config as _cfg_w
                 _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
@@ -715,13 +800,13 @@ def qr_update_content_pdf(qrcard_id):
                     {"$set": {"welcome_img_url": welcome_url}},
                 )
             elif qrcard.get("welcome_img_url"):
-                pdf_data["welcome_img_url"] = qrcard["welcome_img_url"]
+                ecard_data["welcome_img_url"] = qrcard["welcome_img_url"]
         _cover_img_fields = ["pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url"]
         cover_img = request.files.get("pdf_t1_header_img")
         cover_delete = request.form.get("pdf_t1_header_img_delete") == "1"
         if cover_delete:
             for _f in _cover_img_fields:
-                pdf_data[_f] = ""
+                ecard_data[_f] = ""
                 qrcard[_f] = ""
             from pytavia_core import database as _db_c, config as _cfg_c
             _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
@@ -743,7 +828,7 @@ def qr_update_content_pdf(qrcard_id):
                 cover_img.save(save_path)
                 cover_url = f"/static/uploads/pdf/{qrcard_id}/pdf_cover_img{ext}"
                 for _f in _cover_img_fields:
-                    pdf_data[_f] = cover_url
+                    ecard_data[_f] = cover_url
                     qrcard[_f] = cover_url
                 from pytavia_core import database as _db_c, config as _cfg_c
                 _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
@@ -754,14 +839,14 @@ def qr_update_content_pdf(qrcard_id):
         else:
             existing_cover = (qrcard.get("pdf_t1_header_img_url") or qrcard.get("pdf_t3_circle_img_url") or qrcard.get("pdf_t4_circle_img_url") or "")
             for _f in _cover_img_fields:
-                pdf_data[_f] = existing_cover
+                ecard_data[_f] = existing_cover
                 qrcard[_f] = existing_cover
-        pdf_data["pdf_display_names"] = request.form.getlist("pdf_display_names")
-        pdf_data["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
-        pdf_data["pdf_existing_urls"] = request.form.getlist("existing_pdf_urls")
+        ecard_data["pdf_display_names"] = request.form.getlist("pdf_display_names")
+        ecard_data["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
+        ecard_data["pdf_existing_urls"] = request.form.getlist("existing_pdf_urls")
         if request.form.get("back_from_design"):
-            _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, pdf_data)
-            qrcard.update(pdf_data)
+            _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, ecard_data)
+            qrcard.update(ecard_data)
             return view_update_pdf.view_update_pdf(app).update_qr_content_html(
                 qrcard=qrcard, url_content=url_content, qr_name=qr_name, short_code=short_code or None, base_url=config.G_BASE_URL
             )
@@ -770,8 +855,8 @@ def qr_update_content_pdf(qrcard_id):
             return view_update_pdf.view_update_pdf(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists. Please choose a unique name.", base_url=config.G_BASE_URL
             )
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), pdf_data)
-        qrcard.update(pdf_data)
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), ecard_data)
+        qrcard.update(ecard_data)
         pdf_file_list = request.files.getlist("pdf_files")
         if pdf_file_list and any(f.filename for f in pdf_file_list):
             pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
@@ -815,7 +900,7 @@ def qr_update_content_pdf(qrcard_id):
                     existing_names.add(original_name)
                     existing_safe_names.add(safe_name)
             if duplicate_name:
-                qrcard.update(pdf_data)
+                qrcard.update(ecard_data)
                 return view_update_pdf.view_update_pdf(app).update_qr_content_html(
                     qrcard=qrcard, url_content=url_content, qr_name=qr_name, short_code=short_code or None,
                     error_msg=f"Oops, a PDF named '{duplicate_name}' is already attached to this QR card. Please rename the file or choose a different PDF.",
@@ -881,33 +966,167 @@ def qr_update_content_web(qrcard_id):
     return view_update_web.view_update_web(app).update_qr_content_html(qrcard=qrcard, base_url=config.G_BASE_URL)
 
 
+def _merge_ecard_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
+    """Overlay db_qrcard_ecard document onto qrcard so edit pages get full E-card fields.
+    If no ecard doc exists (e.g. old cards), create one from defaults so future saves persist."""
+    if not qrcard:
+        return qrcard
+    ecard_doc = mgd_db.db_qrcard_ecard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+    )
+    if not ecard_doc:
+        from pytavia_core import database
+        ecard_doc = database.get_record("db_qrcard_ecard")
+        ecard_doc["qrcard_id"] = qrcard_id
+        ecard_doc["fk_user_id"] = fk_user_id
+        ecard_doc["name"] = qrcard.get("name", "")
+        ecard_doc["url_content"] = qrcard.get("url_content", "")
+        ecard_doc["short_code"] = qrcard.get("short_code", "")
+        ecard_doc["status"] = qrcard.get("status", "ACTIVE")
+        try:
+            mgd_db.db_qrcard_ecard.insert_one(ecard_doc)
+        except Exception:
+            pass
+    out = dict(qrcard)
+    for key, value in ecard_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
 @app.route("/qr/update/ecard/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_content_ecard(qrcard_id):
-    """Step 1 (content) for E-card. POST -> design."""
+    """Step 1 (content) for E-card. POST -> design. Uses same pattern as PDF: proc.get_qrcard returns type-specific doc."""
     from flask import request
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     fk_user_id = session.get("fk_user_id")
-    from pytavia_core import database
-    from pytavia_core import config as _cfg
-    qrcard = database.get_db_conn(_cfg.mainDB).db_qrcard.find_one(
-        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
-    )
+    from pytavia_modules.qr import qr_ecard_proc as _qre
+    proc = _qre.qr_ecard_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
+    qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
         qr_name = request.form.get("qr_name", "").strip()
         url_content = request.form.get("url_content", "").strip()
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         short_code = request.form.get("short_code", "").strip()
+        extra_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code"] and not key.endswith("[]"):
+                val_list = request.form.getlist(key)
+                extra_data[key] = val_list[0] if val_list else ""
+
+        # Build structured contact lists from form arrays
+        phone_labels = request.form.getlist("E-card_phone_label[]")
+        phone_numbers = request.form.getlist("E-card_phone_number[]")
+        phones = [{"label": (l or "").strip(), "number": (n or "").strip()} for l, n in zip(phone_labels, phone_numbers) if (n or "").strip()]
+        extra_data["E-card_phones"] = phones
+
+        email_labels = request.form.getlist("E-card_email_label[]")
+        email_values = request.form.getlist("E-card_email_value[]")
+        emails = [{"label": (l or "").strip(), "value": (v or "").strip()} for l, v in zip(email_labels, email_values) if (v or "").strip()]
+        extra_data["E-card_emails"] = emails
+
+        website_labels = request.form.getlist("E-card_website_label[]")
+        website_values = request.form.getlist("E-card_website_value[]")
+        websites = [{"label": (l or "").strip(), "value": (v or "").strip()} for l, v in zip(website_labels, website_values) if (v or "").strip()]
+        extra_data["E-card_websites"] = websites
+        extra_data["E-card_website"] = websites[0]["value"] if websites else ""
+
+        import os
+        upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
+        
+        if request.form.get("E-card_welcome_img_delete") == "1":
+            qrcard["welcome_img_url"] = ""
+            extra_data["welcome_img_url"] = ""
+            try:
+                from pytavia_core import database as _db_w, config as _cfg_w
+                _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
+            except Exception: pass
+        else:
+            welcome_img = request.files.get("E-card_welcome_img")
+            if welcome_img and welcome_img.filename:
+                welcome_img.seek(0, 2)
+                if welcome_img.tell() <= 1024 * 1024:
+                    welcome_img.seek(0)
+                    ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
+                    os.makedirs(upload_dir, exist_ok=True)
+                    welcome_name = "welcome" + ext
+                    welcome_img.save(os.path.join(upload_dir, welcome_name))
+                    welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                    extra_data["welcome_img_url"] = welcome_url
+                    qrcard["welcome_img_url"] = welcome_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+            elif qrcard.get("welcome_img_url"):
+                extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
+
+        if request.form.get("E-card_profile_img_delete") == "1":
+            for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                extra_data[f] = ""
+                qrcard[f] = ""
+            try:
+                from pytavia_core import database as _db_c, config as _cfg_c
+                _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+            except Exception: pass
+        else:
+            cover_img = request.files.get("E-card_profile_img")
+            if cover_img and cover_img.filename:
+                cover_img.seek(0, 2)
+                if cover_img.tell() <= 2 * 1024 * 1024:
+                    cover_img.seek(0)
+                    ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
+                    os.makedirs(upload_dir, exist_ok=True)
+                    cover_name = "ecard_cover_img" + ext
+                    cover_img.save(os.path.join(upload_dir, cover_name))
+                    cover_url = f"/static/uploads/pdf/{qrcard_id}/{cover_name}"
+                    for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                        extra_data[f] = cover_url
+                        qrcard[f] = cover_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+            else:
+                for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                    if qrcard.get(f): extra_data[f] = qrcard[f]
+
         from pytavia_modules.qr import qr_ecard_proc
         proc = qr_ecard_proc.qr_ecard_proc(app)
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             return view_update_ecard.view_update_ecard(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists. Please choose a unique name.", base_url=config.G_BASE_URL
             )
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, None)
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, extra_data)
+        # Save contact info, about, and design fields immediately so public page reflects changes
+        contact_update = {
+            "E-card_phones": phones,
+            "E-card_emails": emails,
+            "E-card_websites": websites,
+            "E-card_website": extra_data.get("E-card_website", ""),
+            "E-card_company": extra_data.get("E-card_company", ""),
+            "E-card_title": extra_data.get("E-card_title", ""),
+            "E-card_desc": extra_data.get("E-card_desc", ""),
+            "E-card_btn_text": extra_data.get("E-card_btn_text", ""),
+            "name": qr_name,
+            "url_content": url_content,
+        }
+        # Include design/visual fields if provided
+        for _dk in ["E-card_template", "E-card_primary_color", "E-card_secondary_color",
+                    "E-card_title_font", "E-card_text_font", "E-card_title_color", "E-card_text_color",
+                    "welcome_time", "welcome_bg_color", "E-card_font_apply_all"]:
+            if _dk in extra_data and extra_data[_dk] != "":
+                contact_update[_dk] = extra_data[_dk]
+        database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": contact_update})
+        database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": contact_update})
+        qrcard.update(extra_data)
         qrcard["url_content"] = url_content
         qrcard["name"] = qr_name
         qrcard["short_code"] = short_code or qrcard.get("short_code")
@@ -949,7 +1168,7 @@ def user_new_qr_design_pdf():
     short_code = ""
     qr_encode_url = None
     error_msg = None
-    pdf_data = {}
+    ecard_data = {}
     if request.method == "POST":
         url_content = request.form.get("url_content", "qrcardku.com")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
@@ -959,9 +1178,9 @@ def user_new_qr_design_pdf():
         pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color", "pdf_title_font", "pdf_title_color",
                       "pdf_text_font", "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc", "pdf_website",
                       "pdf_btn_text", "welcome_time", "welcome_bg_color", "pdf_font_apply_all"]
-        pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
-        pdf_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
-        pdf_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
+        ecard_data = {f: request.form.get(f, "") for f in pdf_fields}
+        ecard_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
+        ecard_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
         tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
         session["pdf_tmp_key"] = tmp_key
         tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
@@ -1023,7 +1242,7 @@ def user_new_qr_design_pdf():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/pdf/" + short_code
-    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, pdf_data=pdf_data)
+    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, ecard_data=ecard_data)
 
 @app.route("/qr/new/web")
 def user_new_qr_web():
@@ -1094,38 +1313,29 @@ def user_new_qr_design_ecard():
     short_code = ""
     qr_encode_url = None
     error_msg = None
-    pdf_data = {}
+    ecard_data = {}
     if request.method == "POST":
         url_content = request.form.get("url_content", "qrcardku.com")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
         short_code = (request.form.get("short_code") or "").strip().lower()
-        pdf_fields = ["pdf_template", "pdf_primary_color", "pdf_secondary_color", "pdf_title_font", "pdf_title_color",
-                      "pdf_text_font", "pdf_text_color", "pdf_company", "pdf_title", "pdf_desc", "pdf_website",
-                      "pdf_btn_text", "welcome_time", "welcome_bg_color", "pdf_font_apply_all"]
-        pdf_data = {f: request.form.get(f, "") for f in pdf_fields}
-        pdf_data["scan_limit_enabled"] = request.form.get("scan_limit_enabled", "")
-        pdf_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
+        
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"):
+                    ecard_data[key] = val_list
+                else:
+                    ecard_data[key] = val_list[0] if val_list else ""
+
         tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
         session["pdf_tmp_key"] = tmp_key
         tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
         os.makedirs(tmp_dir, exist_ok=True)
-        pdf_file_list = request.files.getlist("pdf_files")
-        existing_tmp = session.get("pdf_tmp_files", [])
-        existing_names = {x["name"] for x in existing_tmp}
-        for f in pdf_file_list:
-            if f and f.filename and f.filename.lower().endswith(".pdf"):
-                safe_name = f.filename.replace(" ", "_")
-                if f.filename not in existing_names:
-                    f.save(os.path.join(tmp_dir, safe_name))
-                    existing_tmp.append({"name": f.filename, "safe_name": safe_name})
-                    existing_names.add(f.filename)
-        session["pdf_tmp_files"] = existing_tmp
-        session["pdf_display_names"] = request.form.getlist("pdf_display_names")
-        session["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
+        
         session.modified = True
-        welcome_img = request.files.get("pdf_welcome_img")
+        welcome_img = request.files.get("E-card_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
             if welcome_img.tell() <= 1024 * 1024:
@@ -1139,7 +1349,8 @@ def user_new_qr_design_ecard():
                 session.modified = True
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
-        cover_img = request.files.get("pdf_t1_header_img")
+                
+        cover_img = request.files.get("E-card_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
             if cover_img.tell() <= 2 * 1024 * 1024:
@@ -1168,7 +1379,7 @@ def user_new_qr_design_ecard():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/ecard/" + short_code
-    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, pdf_data=pdf_data)
+    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, ecard_data=ecard_data)
 
 @app.route("/qr/save/pdf", methods=["POST"])
 def qr_save_pdf():
@@ -1187,7 +1398,7 @@ def qr_save_pdf():
         short_code=response.get("short_code", ""),
         qr_encode_url=response.get("qr_encode_url"),
         error_msg=response.get("error_msg", "Save failed."),
-        pdf_data=response.get("pdf_data", {}),
+        ecard_data=response.get("ecard_data", {}),
     )
 
 
@@ -1228,7 +1439,7 @@ def qr_save_ecard():
         short_code=response.get("short_code", ""),
         qr_encode_url=response.get("qr_encode_url"),
         error_msg=response.get("error_msg", "Save failed."),
-        pdf_data=response.get("pdf_data", {}),
+        ecard_data=response.get("ecard_data", {}),
     )
 
 

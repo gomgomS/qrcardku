@@ -178,7 +178,13 @@ class qr_ecard_proc:
             return []
 
     def get_qrcard(self, fk_user_id, qrcard_id):
+        """Return ecard doc for edit (same pattern as PDF: type-specific collection first)."""
         try:
+            doc = self.mgdDB.db_qrcard_ecard.find_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+            )
+            if doc:
+                return doc
             return self.mgdDB.db_qrcard.find_one(
                 {
                     "fk_user_id": fk_user_id,
@@ -202,6 +208,10 @@ class qr_ecard_proc:
                 "name": name,
                 "url_content": url_content,
             }
+            
+            for key, val in params.items():
+                if key.startswith("E-card_") or key in ["welcome_time", "welcome_bg_color", "welcome_img_url", "E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                    update_data[key] = val
 
             if "scan_limit_enabled" in params:
                 update_data["scan_limit_enabled"] = bool(params.get("scan_limit_enabled"))
@@ -302,6 +312,81 @@ class qr_ecard_proc:
                 "qr_encode_url": encode,
             }
         new_qrcard_id = result["message_data"]["qrcard_id"]
+
+        # ---- Persist About You + contact info into db_qrcard and db_qrcard_ecard ----
+        company = (request.form.get("E-card_company") or "").strip()
+        title = (request.form.get("E-card_title") or "").strip()
+        desc = (request.form.get("E-card_desc") or "").strip()
+        btn_text = (request.form.get("E-card_btn_text") or "").strip()
+
+        # Build structured contact lists
+        def _build_contact_list(label_key, value_key):
+            labels = request.form.getlist(label_key)
+            values = request.form.getlist(value_key)
+            items = []
+            for lbl, val in zip(labels, values):
+                lbl = (lbl or "").strip()
+                val = (val or "").strip()
+                if not val:
+                    continue
+                items.append({"label": lbl, "value": val})
+            return items
+
+        phones = []
+        phone_labels = request.form.getlist("E-card_phone_label[]")
+        phone_numbers = request.form.getlist("E-card_phone_number[]")
+        for lbl, num in zip(phone_labels, phone_numbers):
+            lbl = (lbl or "").strip()
+            num = (num or "").strip()
+            if not num:
+                continue
+            phones.append({"label": lbl, "number": num})
+
+        emails = _build_contact_list("E-card_email_label[]", "E-card_email_value[]")
+        websites = _build_contact_list("E-card_website_label[]", "E-card_website_value[]")
+
+        # Backwards‑compat main website field: use first website contact's value, if any
+        main_website = ""
+        if websites:
+            main_website = websites[0].get("value", "").strip()
+
+        about_update = {
+            "E-card_company": company,
+            "E-card_title": title,
+            "E-card_desc": desc,
+            "E-card_website": main_website,
+            "E-card_btn_text": btn_text or "See E-card",
+            "E-card_phones": phones,
+            "E-card_emails": emails,
+            "E-card_websites": websites,
+        }
+
+        # Design fields from design step form (template, colors, fonts, welcome)
+        design_update = {}
+        for key in request.form:
+            if key.startswith("E-card_") or key in ["welcome_time", "welcome_bg_color", "E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                if key.endswith("[]"):
+                    continue
+                val = request.form.get(key)
+                if val is not None and str(val).strip() != "":
+                    design_update[key] = str(val).strip()
+                    
+        if request.form.get("E-card_font_apply_all") in ("on", "true", "1", "yes"):
+            design_update["E-card_font_apply_all"] = True
+        else:
+            design_update["E-card_font_apply_all"] = False
+
+        # Store into main and ecard-specific collections
+        full_update = {**about_update, **design_update}
+        self.mgdDB.db_qrcard.update_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id},
+            {"$set": full_update},
+        )
+        self.mgdDB.db_qrcard_ecard.update_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id},
+            {"$set": full_update},
+            upsert=True,
+        )
         tmp_key = session.pop("pdf_tmp_key", None)
         tmp_files = session.pop("pdf_tmp_files", [])
         welcome_tmp_key = session.pop("welcome_img_tmp_key", None)
@@ -333,11 +418,11 @@ class qr_ecard_proc:
                 cover_url = f"/static/uploads/pdf/{new_qrcard_id}/pdf_cover_img{ext}"
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
-                    {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
+                    {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
                 )
                 self.mgdDB.db_qrcard_ecard.update_one(
                     {"qrcard_id": new_qrcard_id},
-                    {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
+                    {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
                     upsert=True,
                 )
         saved_files = []
@@ -372,13 +457,15 @@ class qr_ecard_proc:
             except Exception:
                 pass
         if saved_files:
+            # For e-card we keep legacy pdf_files on main doc for reuse,
+            # but normalized list lives under E-card_files in db_qrcard_ecard.
             self.mgdDB.db_qrcard.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id},
                 {"$set": {"pdf_files": saved_files}},
             )
             self.mgdDB.db_qrcard_ecard.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id},
-                {"$set": {"pdf_files": saved_files}},
+                {"$set": {"E-card_files": saved_files}},
                 upsert=True,
             )
         return {"success": True}

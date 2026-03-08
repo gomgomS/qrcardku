@@ -691,13 +691,17 @@
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
 
-            {% set E-card_fields = ['E-card_template', 'E-card_primary_color', 'E-card_secondary_color', 'E-card_title_font',
-            'E-card_title_color', 'E-card_text_font', 'E-card_text_color', 'E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website',
-            'E-card_btn_text', 'welcome_time'] %}
-            {% for field in E-card_fields %}
-            {% set f_val = qrcard.get(field, '') if qrcard else (E-card_data.get(field, '') if E-card_data else '') %}
-            <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
+            {% if qrcard %}
+            {% for key, val in qrcard.items() %}
+            {% if val is iterable and val is not string %}
+            {% for item in val %}
+            <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
             {% endfor %}
+            {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+            {% endif %}
+            {% endfor %}
+            {% endif %}
 
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
@@ -714,15 +718,19 @@
     <input type="hidden" name="qr_type" value="{{ qr_type }}" />
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-    
 
-    {% set E-card_fields = ['E-card_template', 'E-card_primary_color', 'E-card_secondary_color', 'E-card_title_font',
-    'E-card_title_color', 'E-card_text_font', 'E-card_text_color', 'E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website',
-    'E-card_btn_text', 'welcome_time'] %}
-    {% for field in E-card_fields %}
-    {% set f_val = qrcard.get(field, '') if qrcard else (E-card_data.get(field, '') if E-card_data else '') %}
-    <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
+
+    {% if qrcard %}
+    {% for key, val in qrcard.items() %}
+    {% if val is iterable and val is not string %}
+    {% for item in val %}
+    <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
     {% endfor %}
+    {% else %}
+    <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+    {% endif %}
+    {% endfor %}
+    {% endif %}
 </form>
 
 <div class="new-qr-container">

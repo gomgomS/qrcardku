@@ -25,7 +25,7 @@ class view_ecard:
                 self.webapp.logger.debug(traceback.format_exc())
             return "Failed to load New QR Content (E-card)"
 
-    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None):
+    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, ecard_data=None):
         try:
             return render_template(
                 "/user/new_qr_design_ecard.html",
@@ -36,7 +36,7 @@ class view_ecard:
                 qr_encode_url=qr_encode_url,
                 msg=msg,
                 error_msg=error_msg,
-                pdf_data=pdf_data,
+                ecard_data=ecard_data,
                 form_action="/qr/save/ecard",
             )
         except Exception:

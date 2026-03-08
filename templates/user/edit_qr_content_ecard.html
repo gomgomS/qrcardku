@@ -505,7 +505,7 @@
                         </div>
                         <div class="sub-collapse-body">
                             <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
-                                <!-- Template Options (Mocked for visual) -->
+                                <!-- Template Options (matching new page) -->
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="E-card_template" value="default" {% if not qrcard or
                                         qrcard.get('E-card_template', 'default' )=='default' %}checked{% endif %}
@@ -732,6 +732,9 @@
                                         4</span>
                                 </label>
                             </div>
+                            <div id="t1-preview-contact"
+                                style="margin-top: 8px; font-size: 10px; color: rgba(255,255,255,0.9); text-align: center; display: none;">
+                            </div>
                         </div>
                     </div>
 
@@ -781,6 +784,7 @@
                                         <div
                                             style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="E-card_primary_hex" name="E-card_primary_color"
+                                                value="{{ qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
                                             <input type="color" id="E-card_primary_picker" value="#2f6bfd"
@@ -793,6 +797,7 @@
                                         <div
                                             style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="E-card_secondary_hex" name="E-card_secondary_color"
+                                                value="{{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
                                             <input type="color" id="E-card_secondary_picker" value="#0e379a"
@@ -834,8 +839,8 @@
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
                                             <input type="color" name="E-card_title_color" id="E-card_title_color_picker"
-                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;"
-                                                value="{{ qrcard.get('E-card_title_color', '#000000') if qrcard else '#000000' }}">
+                                                value="{{ qrcard.get('E-card_title_color', '#000000') if qrcard else '#000000' }}"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
@@ -858,8 +863,8 @@
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
                                             <input type="color" name="E-card_text_color" id="E-card_text_color_picker"
-                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;"
-                                                value="{{ qrcard.get('E-card_text_color', '#000000') if qrcard else '#000000' }}">
+                                                value="{{ qrcard.get('E-card_text_color', '#000000') if qrcard else '#000000' }}"
+                                                style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
@@ -901,94 +906,254 @@
                 </div>
                 <div class="collapse-body">
 
-                    <!-- Profile Image -->
+                    <!-- About you (profile image + main text fields) -->
                     <div>
                         <div class="sub-collapse-header">
-                            <div class="toggle-label-with-icon" style="font-weight: 600;">Profile image</div>
-                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
-                        </div>
-                        <div class="sub-collapse-body">
-                            <div id="E-card-cover-img-section" style="margin-top: 16px; margin-bottom: 0;">
-                                <label class="form-label" style="font-size: 12px;">Profile Image
-                                    <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Used as
-                                        main profile avatar)</span>
-                                </label>
-                                <label
-                                    style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
-                                    <div id="cover-img-preview"
-                                        style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                                        {% set cover_url = qrcard.get('E-card_profile_img_url') if qrcard else '' %}
-                                        {% if cover_url %}
-                                        <img src="{{ cover_url }}" alt="Profile image"
-                                            style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
-                                        {% else %}
-                                        <div
-                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i class="fa-regular fa-user" style="color: #9ca3af;"></i>
-                                        </div>
-                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Profile
-                                            Image</span>
-                                        {% endif %}
-                                    </div>
-                                    <i class="fa-solid fa-cloud-arrow-up"
-                                        style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
-                                    <input type="file" name="E-card_profile_img" accept="image/*" style="display: none;"
-                                        id="E-card_profile_img_input">
-                                </label>
-                                <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                                    <button type="button" id="cover-img-remove-btn" class="btn-outline"
-                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not cover_url %}display: none;{% endif %}">
-                                        <i class="fa-solid fa-xmark"></i> Remove
-                                    </button>
-                                    <input type="hidden" name="E-card_profile_img_delete" id="E-card_profile_img_delete"
-                                        value="0">
-                                </div>
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i
-                                        class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. E-card information -->
-                    <div>
-                        <div class="sub-collapse-header">
-                            <div class="toggle-label-with-icon" style="font-weight: 600;">E-card information</div>
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">About you</div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
                             <div
                                 style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+
+                                <!-- Profile Image -->
+                                <div id="E-card-cover-img-section" style="margin-bottom: 16px;">
+                                    <label class="form-label" style="font-size: 12px;">Image
+                                        <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Used
+                                            as
+                                            main profile avatar)</span>
+                                    </label>
+                                    <label
+                                        style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                        <div id="cover-img-preview"
+                                            style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                            {% set cover_url = (qrcard.get('E-card_t1_header_img_url') or
+                                            qrcard.get('E-card_t3_circle_img_url') or
+                                            qrcard.get('E-card_t4_circle_img_url') or '') if qrcard else '' %}
+                                            {% if cover_url %}
+                                            <img src="{{ cover_url }}" alt="Profile image"
+                                                style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                                            <span style="font-size: 13px; color: var(--text-muted);">Current
+                                                image</span>
+                                            {% else %}
+                                            <div
+                                                style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                <i class="fa-regular fa-user" style="color: #9ca3af;"></i>
+                                            </div>
+                                            <span style="font-size: 13px; color: var(--text-muted);">Upload Profile
+                                                Image</span>
+                                            {% endif %}
+                                        </div>
+                                        <i class="fa-solid fa-cloud-arrow-up"
+                                            style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                                        <input type="file" name="E-card_profile_img" accept="image/*"
+                                            style="display: none;" id="E-card_profile_img_input">
+                                    </label>
+                                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                        <button type="button" id="cover-img-remove-btn" class="btn-outline"
+                                            style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not cover_url %}display: none;{% endif %}">
+                                            <i class="fa-solid fa-xmark"></i> Remove
+                                        </button>
+                                        <input type="hidden" name="E-card_profile_img_delete"
+                                            id="E-card_profile_img_delete" value="0">
+                                    </div>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i
+                                            class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.
+                                    </p>
+                                </div>
+
+                                <!-- Text fields (mapped to preview) -->
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 12px;">Company</label>
+                                    <label class="form-label" style="font-size: 12px;">Full name</label>
                                     <input type="text" name="E-card_company" class="form-control"
-                                        placeholder="Company Name" style="background: white;"
+                                        placeholder="Full name" style="background: white;"
                                         value="{{ qrcard.get('E-card_company', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 12px;">E-card title</label>
-                                    <input type="text" name="E-card_title" class="form-control" placeholder="Title"
-                                        style="background: white;"
+                                    <label class="form-label" style="font-size: 12px;">Title</label>
+                                    <input type="text" name="E-card_title" class="form-control"
+                                        placeholder="Title (e.g. Accountant)" style="background: white;"
                                         value="{{ qrcard.get('E-card_title', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 12px;">Description</label>
-                                    <input type="text" name="E-card_desc" class="form-control" placeholder="Description"
-                                        style="background: white;"
+                                    <label class="form-label" style="font-size: 12px;">Summary</label>
+                                    <input type="text" name="E-card_desc" class="form-control"
+                                        placeholder="Short summary about yourself" style="background: white;"
                                         value="{{ qrcard.get('E-card_desc', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" style="font-size: 12px;">Website</label>
-                                    <input type="text" name="E-card_website" class="form-control" placeholder="https://"
-                                        style="background: white;"
-                                        value="{{ qrcard.get('E-card_website', '') if qrcard else '' }}">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" style="font-size: 12px;">Button</label>
+                                    <label class="form-label" style="font-size: 12px;">Button text</label>
                                     <input type="text" name="E-card_btn_text" class="form-control"
                                         placeholder="E.g.: View E-card"
                                         style="background: white; border-color: var(--primary);"
                                         value="{{ qrcard.get('E-card_btn_text', '') if qrcard else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Contact information</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 20px;">
+
+                                <!-- Telephone -->
+                                <div>
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <label class="form-label"
+                                            style="font-size: 12px; margin-bottom: 0;">Telephone</label>
+                                        <button type="button" class="ecard-add-contact-btn"
+                                            data-ecard-list="ecard-phone-list" data-ecard-type="phone"
+                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add phone
+                                        </button>
+                                    </div>
+                                    <div id="ecard-phone-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% set saved_phones = qrcard.get('E-card_phones', []) if qrcard else [] %}
+                                        {% if saved_phones %}
+                                        {% for p in saved_phones %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_phone_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ p.label or '' }}">
+                                            <input type="text" name="E-card_phone_number[]" class="form-control"
+                                                placeholder="+54 11 0000 0000"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ p.number or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_phone_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;">
+                                            <input type="text" name="E-card_phone_number[]" class="form-control"
+                                                placeholder="+54 11 0000 0000"
+                                                style="flex: 2; background: transparent; border: none;">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Email -->
+                                <div>
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <label class="form-label"
+                                            style="font-size: 12px; margin-bottom: 0;">Email</label>
+                                        <button type="button" class="ecard-add-contact-btn"
+                                            data-ecard-list="ecard-email-list" data-ecard-type="email"
+                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add email
+                                        </button>
+                                    </div>
+                                    <div id="ecard-email-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% set saved_emails = qrcard.get('E-card_emails', []) if qrcard else [] %}
+                                        {% if saved_emails %}
+                                        {% for e in saved_emails %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_email_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ e.label or '' }}">
+                                            <input type="email" name="E-card_email_value[]" class="form-control"
+                                                placeholder="example@mail.com"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ e.value or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_email_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;">
+                                            <input type="email" name="E-card_email_value[]" class="form-control"
+                                                placeholder="example@mail.com"
+                                                style="flex: 2; background: transparent; border: none;">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Website -->
+                                <div>
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <label class="form-label"
+                                            style="font-size: 12px; margin-bottom: 0;">Website</label>
+                                        <button type="button" class="ecard-add-contact-btn"
+                                            data-ecard-list="ecard-website-list" data-ecard-type="website"
+                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            <i class="fa-solid fa-plus"></i>
+                                            Add website
+                                        </button>
+                                    </div>
+                                    <div id="ecard-website-list"
+                                        style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% set saved_websites = qrcard.get('E-card_websites', []) if qrcard else [] %}
+                                        {% if saved_websites %}
+                                        {% for w in saved_websites %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_website_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ w.label or '' }}">
+                                            <input type="url" name="E-card_website_value[]" class="form-control"
+                                                placeholder="https://example.com"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ w.value or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_website_label[]" class="form-control"
+                                                placeholder="Labelâ€¦"
+                                                style="flex: 1; background: transparent; border: none;">
+                                            <input type="url" name="E-card_website_value[]" class="form-control"
+                                                placeholder="https://example.com"
+                                                style="flex: 2; background: transparent; border: none;">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1181,15 +1346,15 @@
                                     <input type="text" name="short_code" id="stats-short-code-input"
                                         placeholder="Letters, numbers, '-' and '_' only"
                                         value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
-                                        pattern="[a-zA-Z0-9_-]{2,32}"
-                                        title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
+                                        pattern="[a-zA-Z0-9_\-]{2,32}"
+                                        title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2â€“32 characters)"
                                         maxlength="32">
                                 </div>
                                 <p id="stats-url-preview"
                                     style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;">
                                 </p>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers,
-                                    '-' and '_' only, no spaces or other symbols (2–32 characters).</p>
+                                    '-' and '_' only, no spaces or other symbols (2â€“32 characters).</p>
                             </div>
                         </div>
                     </div>
@@ -1273,11 +1438,66 @@
                                     style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
                                 <div id="t1-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 1 -->
+                                <div id="t1-preview-contact-list"
+                                    style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.label or 'Phone' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.label or 'Email' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.label or 'Website' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- Contact button for template 1 -->
+                                <div id="t1-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
+                                </div>
                                 <!-- Website link -->
                                 <div id="t1-preview-website"
-                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    style="text-align: center; margin-top: 8px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
                             </div>
                         </div>
@@ -1295,8 +1515,62 @@
                                     style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
                                 <div id="t2-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 2 -->
+                                <div id="t2-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;">
+                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.label or 'Phone' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.label or 'Email' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.label or 'Website' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- Contact button for template 2 -->
+                                <div id="t2-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
+                                </div>
                             </div>
                             <!-- Website below card -->
                             <div id="t2-preview-website"
@@ -1330,11 +1604,66 @@
                                     style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
                                 <div id="t3-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 14px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 3 -->
+                                <div id="t3-preview-contact-list"
+                                    style="display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:8px;">
+                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.label or 'Phone' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.label or 'Email' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.label or 'Website' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- Contact button for template 3 -->
+                                <div id="t3-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
+                                </div>
                                 <!-- Website -->
                                 <div id="t3-preview-website"
-                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
+                                    style="text-align: center; margin-top: 4px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
                             </div>
                         </div>
@@ -1365,8 +1694,62 @@
                                     style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
                                 <div id="t4-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
+                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
                                     {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
+                                <!-- Contact list for template 4 -->
+                                <div id="t4-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;">
+                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.label or 'Phone' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.label or 'Email' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
+                                    <div
+                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                        <div
+                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
+                                        </div>
+                                        <div style="flex:1;min-width:0;"><span
+                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.label or 'Website' }}</span><span
+                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
+                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <!-- Contact button for template 4 -->
+                                <div id="t4-preview-btn"
+                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
+                                </div>
                             </div>
                             <!-- Website below card -->
                             <div id="t4-preview-website"
@@ -1384,46 +1767,107 @@
 
                             <!-- E-card Thumbnail and Navigation -->
                             <div
-                                style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 24px;">
-                                <div id="preview-E-card-prev"
-                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </div>
+                                style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 16px;">
 
                                 <div id="preview-profile-img-container"
-                                    style="width: 130px; height: 130px; border-radius: 50%; background: white; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
+                                    style="width: 120px; height: 120px; border-radius: 50%; background: white; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
                                     <i id="preview-profile-placeholder-icon" class="fa-regular fa-image"
-                                        style="font-size: 48px; color: #d1d5db;"></i>
-                                    <img id="preview-profile-img" src="" alt=""
-                                        style="display: none; width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-
-                                <div id="preview-E-card-next"
-                                    style="display: none; cursor: pointer; padding: 10px; color: {{ preview_primary }}; font-size: 20px;">
-                                    <i class="fa-solid fa-chevron-right"></i>
+                                        style="font-size: 44px; color: #d1d5db; {% if qrcard and (qrcard.get('E-card_t1_header_img_url') or qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t4_circle_img_url')) %}display:none;{% endif %}"></i>
+                                    {% set _pimg = (qrcard.get('E-card_t1_header_img_url') or
+                                    qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t4_circle_img_url') or
+                                    '') if qrcard else '' %}
+                                    <img id="preview-profile-img" src="{{ _pimg }}" alt=""
+                                        style="{% if not _pimg %}display:none;{% endif %} width: 100%; height: 100%; object-fit: cover;">
                                 </div>
                             </div>
 
                             <div id="preview-title-text"
-                                style="color: var(--text-main); font-size: 18px; font-weight: 800; font-family: 'Lato', sans-serif; margin-bottom: 8px; text-align: center; padding: 0 20px; line-height: 1.2; display: none;">
+                                style="color: #111827; font-size: 17px; font-weight: 800; font-family: 'Lato', sans-serif; margin-bottom: 4px; text-align: center; padding: 0 16px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display:none;{% endif %}">
+                                {{ qrcard.get('E-card_title','') if qrcard else '' }}
                             </div>
 
                             <div id="preview-company-text"
-                                style="color: var(--text-main); font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; text-align: center; padding: 0 20px; margin-bottom: 8px; word-break: break-word; display: none;">
+                                style="color: #6b7280; font-size: 13px; font-weight: 600; font-family: 'Lato', sans-serif; text-align: center; padding: 0 16px; margin-bottom: 4px; word-break: break-word; {% if not (qrcard and qrcard.get('E-card_company')) %}display:none;{% endif %}">
+                                {{ qrcard.get('E-card_company','') if qrcard else '' }}
                             </div>
 
                             <div id="preview-desc-text"
-                                style="color: var(--text-muted); font-size: 12px; font-weight: 400; font-family: 'Lato', sans-serif; text-align: center; padding: 0 24px; margin-bottom: 24px; line-height: 1.4; display: none; -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                                style="color: #9ca3af; font-size: 11px; font-weight: 400; font-family: 'Lato', sans-serif; text-align: center; padding: 0 20px; margin-bottom: 12px; line-height: 1.4; {% if not (qrcard and qrcard.get('E-card_desc')) %}display:none;{% endif %}">
+                                {{ qrcard.get('E-card_desc','') if qrcard else '' }}
                             </div>
 
-                            <!-- See E-card Button -->
+                            <!-- Contact rows preview (phones/emails/websites) -->
+                            <div id="preview-contact-list"
+                                style="width:100%; padding: 0 10px; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
+                                {% for p in qrcard.get('E-card_phones', []) if qrcard %}
+                                <div
+                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                    <div
+                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fa-solid fa-phone" style="color:#2563eb;font-size:13px;"></i>
+                                    </div>
+                                    <div style="flex:1;min-width:0;">
+                                        <span
+                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            p.label or 'Phone' }}</span>
+                                        <span
+                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            p.number }}</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right"
+                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                </div>
+                                {% endfor %}
+                                {% for e in qrcard.get('E-card_emails', []) if qrcard %}
+                                <div
+                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                    <div
+                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:13px;"></i>
+                                    </div>
+                                    <div style="flex:1;min-width:0;">
+                                        <span
+                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            e.label or 'Email' }}</span>
+                                        <span
+                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            e.value }}</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right"
+                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                </div>
+                                {% endfor %}
+                                {% for w in qrcard.get('E-card_websites', []) if qrcard %}
+                                <div
+                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
+                                    <div
+                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <i class="fa-solid fa-globe" style="color:#10b981;font-size:13px;"></i>
+                                    </div>
+                                    <div style="flex:1;min-width:0;">
+                                        <span
+                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            w.label or 'Website' }}</span>
+                                        <span
+                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
+                                            w.value }}</span>
+                                    </div>
+                                    <i class="fa-solid fa-chevron-right"
+                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- contact button -->
                             <div id="preview-btn"
-                                style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; font-family: 'Lato', sans-serif; margin-top: auto; width: fit-content; margin-left: auto; margin-right: auto; white-space: nowrap;">
-                                See E-card
+                                style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 13px; font-weight: 600; font-family: 'Lato', sans-serif; width: fit-content; margin: 0 auto 8px; white-space: nowrap; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-address-card"></i>
+                                {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
                             </div>
 
                             <div id="preview-website-text"
-                                style="color: {{ preview_primary }}; font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 12px; display: none; text-align: center; text-decoration: underline;">
+                                style="color: {{ preview_primary }}; font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 4px; {% if not (qrcard and qrcard.get('E-card_website')) %}display:none;{% endif %} text-align: center; text-decoration: underline;">
+                                {{ qrcard.get('E-card_website','') if qrcard else '' }}
                             </div>
                         </div>
 
@@ -1441,7 +1885,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/E-card.js/2.16.105/E-card.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
@@ -1481,8 +1925,7 @@
         checkContentValid();
         // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
         (function () {
-            var baseUrl = {{ (base_url or '') | tojson
-    }};
+            var baseUrl = {{ (base_url or '') | tojson }};
     var prefixEl = document.getElementById('stats-url-prefix');
     var shortInput = document.getElementById('stats-short-code-input');
     var previewEl = document.getElementById('stats-url-preview');
@@ -1522,6 +1965,7 @@
     const attachCollapseListener = (selector) => {
         const headers = document.querySelectorAll(selector);
         headers.forEach(header => {
+            header.dataset.collapseBound = '1';
             header.addEventListener('click', function () {
                 const body = this.nextElementSibling;
                 const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
@@ -1609,24 +2053,12 @@
         });
     });
 
-    // Button text sync
-    const btnTextInput = document.querySelector('input[name="E-card_btn_text"]');
-    if (btnTextInput && previewBtn) {
-        btnTextInput.addEventListener('input', e => {
-            previewBtn.textContent = e.target.value || 'See E-card';
-        });
-    }
+    // Button text sync is handled below by btnTextInput2 (preserves icon)
 
-    // Company, Title, Desc, Website sync
+    // Company, Title, Desc sync â€” live updates only (initial values pre-filled by Jinja2 in HTML)
     const companyInput = document.querySelector('input[name="E-card_company"]');
     const previewCompany = document.getElementById('preview-company-text');
     if (companyInput && previewCompany) {
-        // Initial check in case it's an edit page with pre-filled values
-        if (companyInput.value) {
-            previewCompany.textContent = companyInput.value;
-            previewCompany.style.display = 'block';
-        }
-
         companyInput.addEventListener('input', e => {
             previewCompany.textContent = e.target.value;
             previewCompany.style.display = e.target.value ? 'block' : 'none';
@@ -1636,11 +2068,6 @@
     const titleInput = document.querySelector('input[name="E-card_title"]');
     const previewTitle = document.getElementById('preview-title-text');
     if (titleInput && previewTitle) {
-        if (titleInput.value) {
-            previewTitle.textContent = titleInput.value;
-            previewTitle.style.display = 'block';
-        }
-
         titleInput.addEventListener('input', e => {
             previewTitle.textContent = e.target.value;
             previewTitle.style.display = e.target.value ? 'block' : 'none';
@@ -1650,29 +2077,215 @@
     const descInput = document.querySelector('input[name="E-card_desc"]');
     const previewDesc = document.getElementById('preview-desc-text');
     if (descInput && previewDesc) {
-        if (descInput.value) {
-            previewDesc.textContent = descInput.value;
-            previewDesc.style.display = '-webkit-box';
-        }
-
         descInput.addEventListener('input', e => {
             previewDesc.textContent = e.target.value;
-            // Use webkit-box for line clamp to work alongside display none
-            previewDesc.style.display = e.target.value ? '-webkit-box' : 'none';
+            previewDesc.style.display = e.target.value ? 'block' : 'none';
         });
     }
 
     const websiteInput = document.querySelector('input[name="E-card_website"]');
     const previewWebsite = document.getElementById('preview-website-text');
     if (websiteInput && previewWebsite) {
-        if (websiteInput.value) {
-            previewWebsite.textContent = websiteInput.value;
-            previewWebsite.style.display = 'block';
-        }
-
         websiteInput.addEventListener('input', e => {
             previewWebsite.textContent = e.target.value;
             previewWebsite.style.display = e.target.value ? 'block' : 'none';
+        });
+    }
+
+    // Contact list preview (default template) â€” standalone rebuild, no IIFE dependency
+    function rebuildContactListPreview() {
+        console.log('[DEFAULT-TEMPLATE] rebuildContactListPreview() called');
+        var listEl = document.getElementById('preview-contact-list');
+        if (!listEl) {
+            console.warn('[DEFAULT-TEMPLATE] #preview-contact-list NOT FOUND in DOM!');
+            return;
+        }
+        console.log('[DEFAULT-TEMPLATE] #preview-contact-list found:', listEl);
+        listEl.innerHTML = '';
+        var bgColor = '#f9fafb';
+        var border = '1px solid #e5e7eb';
+
+        function makeRow(iconClass, iconColor, labelVal, subVal) {
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;padding:8px 10px;background:' + bgColor + ';border:' + border + ';border-radius:8px;gap:8px;';
+            var box = document.createElement('div');
+            box.style.cssText = 'width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+            var ico = document.createElement('i');
+            ico.className = iconClass;
+            ico.style.cssText = 'color:' + iconColor + ';font-size:12px;';
+            box.appendChild(ico);
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'flex:1;min-width:0;';
+            var s1 = document.createElement('span');
+            s1.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            s1.textContent = labelVal || '\u2014';
+            var s2 = document.createElement('span');
+            s2.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            s2.textContent = subVal || '';
+            wrap.appendChild(s1); wrap.appendChild(s2);
+            var chev = document.createElement('i');
+            chev.className = 'fa-solid fa-chevron-right';
+            chev.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+            row.appendChild(box); row.appendChild(wrap); row.appendChild(chev);
+            return row;
+        }
+
+        var phoneRows = document.querySelectorAll('#ecard-phone-list .ecard-contact-row');
+        console.log('[DEFAULT-TEMPLATE] Phone rows found:', phoneRows.length);
+        phoneRows.forEach(function (row) {
+            var lbl = (row.querySelector('input[name="E-card_phone_label[]"]') || {}).value || 'Phone';
+            var num = (row.querySelector('input[name="E-card_phone_number[]"]') || {}).value || '';
+            console.log('[DEFAULT-TEMPLATE] Phone:', lbl, num);
+            if (num) listEl.appendChild(makeRow('fa-solid fa-phone', '#2563eb', lbl, num));
+        });
+        var emailRows = document.querySelectorAll('#ecard-email-list .ecard-contact-row');
+        console.log('[DEFAULT-TEMPLATE] Email rows found:', emailRows.length);
+        emailRows.forEach(function (row) {
+            var lbl = (row.querySelector('input[name="E-card_email_label[]"]') || {}).value || 'Email';
+            var v = (row.querySelector('input[name="E-card_email_value[]"]') || {}).value || '';
+            console.log('[DEFAULT-TEMPLATE] Email:', lbl, v);
+            if (v) listEl.appendChild(makeRow('fa-solid fa-envelope', '#ea4335', lbl, v));
+        });
+        var webRows = document.querySelectorAll('#ecard-website-list .ecard-contact-row');
+        console.log('[DEFAULT-TEMPLATE] Website rows found:', webRows.length);
+        webRows.forEach(function (row) {
+            var lbl = (row.querySelector('input[name="E-card_website_label[]"]') || {}).value || 'Website';
+            var v = (row.querySelector('input[name="E-card_website_value[]"]') || {}).value || '';
+            console.log('[DEFAULT-TEMPLATE] Website:', lbl, v);
+            if (v) listEl.appendChild(makeRow('fa-solid fa-globe', '#10b981', lbl, v));
+        });
+        console.log('[DEFAULT-TEMPLATE] Preview list now has', listEl.children.length, 'rows rendered');
+    }
+    window.rebuildContactListPreview = rebuildContactListPreview;
+    // Call immediately on page load to populate preview from pre-filled form data
+    if (document.readyState === 'loading') {
+        console.log('[DEFAULT-TEMPLATE] DOM still loading, deferring rebuildContactListPreview to DOMContentLoaded');
+        document.addEventListener('DOMContentLoaded', rebuildContactListPreview);
+    } else {
+        console.log('[DEFAULT-TEMPLATE] DOM ready, calling rebuildContactListPreview immediately');
+        rebuildContactListPreview();
+    }
+
+    // Dynamic contact lists (phone, email, website)
+    function createContactRow(type) {
+        const row = document.createElement('div');
+        row.className = 'ecard-contact-row';
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;';
+
+        let inner = '';
+        if (type === 'phone') {
+            inner = ''
+                + '<input type="text" name="E-card_phone_label[]" class="form-control" placeholder="Labelâ€¦" '
+                + 'style="flex:1;background:transparent;border:none;">'
+                + '<input type="text" name="E-card_phone_number[]" class="form-control" placeholder="+54 11 0000 0000" '
+                + 'style="flex:2;background:transparent;border:none;">';
+        } else if (type === 'email') {
+            inner = ''
+                + '<input type="text" name="E-card_email_label[]" class="form-control" placeholder="Labelâ€¦" '
+                + 'style="flex:1;background:transparent;border:none;">'
+                + '<input type="email" name="E-card_email_value[]" class="form-control" placeholder="example@mail.com" '
+                + 'style="flex:2;background:transparent;border:none;">';
+        } else if (type === 'website') {
+            inner = ''
+                + '<input type="text" name="E-card_website_label[]" class="form-control" placeholder="Labelâ€¦" '
+                + 'style="flex:1;background:transparent;border:none;">'
+                + '<input type="url" name="E-card_website_value[]" class="form-control" placeholder="https://example.com" '
+                + 'style="flex:2;background:transparent;border:none;">';
+        }
+
+        row.innerHTML = inner
+            + '<button type="button" class="ecard-remove-contact-btn" '
+            + 'style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;">'
+            + '<i class="fa-solid fa-trash-can"></i>'
+            + '</button>';
+
+        return row;
+    }
+
+    document.querySelectorAll('.ecard-add-contact-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const listId = this.dataset.ecardList;
+            const type = this.dataset.ecardType;
+            const list = document.getElementById(listId);
+            if (!list) return;
+            const row = createContactRow(type);
+            list.appendChild(row);
+
+            // Dispatch a bubbling input event to update the preview
+            const firstInput = row.querySelector('input');
+            if (firstInput) {
+                firstInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    });
+
+    ['ecard-phone-list', 'ecard-email-list', 'ecard-website-list'].forEach(listId => {
+        const list = document.getElementById(listId);
+        if (!list) return;
+        list.addEventListener('click', function (e) {
+            if (e.target.closest('.ecard-remove-contact-btn')) {
+                const row = e.target.closest('.ecard-contact-row');
+                if (row && this.children.length > 1) {
+                    row.remove();
+                    // trigger input event on remaining input to reset preview
+                    const remainingInput = this.querySelector('input');
+                    if (remainingInput) remainingInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+    });
+
+    // Document-level delegation â€” fires for ALL contact inputs (existing + newly added rows)
+    // Handles ALL templates (default + t1-t4) in one place
+    var CONTACT_NAMES = {
+        'E-card_phone_label[]': true, 'E-card_phone_number[]': true,
+        'E-card_email_label[]': true, 'E-card_email_value[]': true,
+        'E-card_website_label[]': true, 'E-card_website_value[]': true
+    };
+    document.addEventListener('input', function (e) {
+        if (e.target && e.target.tagName === 'INPUT' && CONTACT_NAMES[e.target.name]) {
+            var active = document.querySelector('input[name="E-card_template"]:checked');
+            var tpl = active ? active.value : 'default';
+            console.log('[CONTACT-INPUT] input event fired on:', e.target.name, '| value:', e.target.value, '| active template:', tpl);
+            if (tpl === 'template1' && window.rebuildTemplateContactList) {
+                console.log('[CONTACT-INPUT] -> calling rebuildTemplateContactList for t1');
+                window.rebuildTemplateContactList('t1-preview-contact-list', 'white');
+            } else if (tpl === 'template2' && window.rebuildTemplateContactList) {
+                console.log('[CONTACT-INPUT] -> calling rebuildTemplateContactList for t2');
+                window.rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
+            } else if (tpl === 'template3' && window.rebuildTemplateContactList) {
+                console.log('[CONTACT-INPUT] -> calling rebuildTemplateContactList for t3');
+                window.rebuildTemplateContactList('t3-preview-contact-list', 'white');
+            } else if (tpl === 'template4' && window.rebuildTemplateContactList) {
+                console.log('[CONTACT-INPUT] -> calling rebuildTemplateContactList for t4');
+                window.rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
+            } else {
+                console.log('[CONTACT-INPUT] -> default template â€” calling rebuildContactListPreview()');
+                console.log('[CONTACT-INPUT] window.rebuildTemplateContactList available?', typeof window.rebuildTemplateContactList);
+                rebuildContactListPreview();
+            }
+        }
+    });
+
+    // Sync btn text to ALL template preview buttons (default + t1â€“4)
+    var btnTextInput2 = document.querySelector('input[name="E-card_btn_text"]');
+    if (btnTextInput2) {
+        btnTextInput2.addEventListener('input', function (e) {
+            var newText = e.target.value || 'contact';
+
+            function updateBtnText(id) {
+                var btn = document.getElementById(id);
+                if (!btn) return;
+                var textNodes = Array.from(btn.childNodes).filter(function (n) { return n.nodeType === 3; });
+                if (textNodes.length > 0) {
+                    textNodes[textNodes.length - 1].nodeValue = ' ' + newText;
+                } else {
+                    btn.appendChild(document.createTextNode(' ' + newText));
+                }
+            }
+
+            updateBtnText('preview-btn'); // Default template
+            ['t1-preview-btn', 't2-preview-btn', 't3-preview-btn', 't4-preview-btn'].forEach(updateBtnText);
         });
     }
 
@@ -1694,7 +2307,7 @@
     }
 
     function applyEcardFonts() {
-        if (!isFontToggleOn()) return; // toggle OFF → do nothing
+        if (!isFontToggleOn()) return; // toggle OFF â†’ do nothing
 
         var quote = function (name) { return name.indexOf(' ') >= 0 ? "'" + name + "'" : name; };
         var titleFF = titleFontSelect ? quote(titleFontSelect.value) + ", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" : '';
@@ -1720,7 +2333,7 @@
     }
 
     function applyEcardTextColors() {
-        if (!isFontToggleOn()) return; // toggle OFF → do nothing
+        if (!isFontToggleOn()) return; // toggle OFF â†’ do nothing
 
         const titleColor = titleColorPicker ? titleColorPicker.value : '#000000';
         const textColor = textColorPicker ? textColorPicker.value : '#6b7280';
@@ -1746,14 +2359,14 @@
     function resetAllFontsToDefault() {
         var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
 
-        // Default template — natural colors
+        // Default template â€” natural colors
         if (previewTitleEl) { previewTitleEl.style.color = '#111827'; previewTitleEl.style.fontFamily = ''; }
         if (previewCompanyEl) { previewCompanyEl.style.color = '#6b7280'; previewCompanyEl.style.fontFamily = ''; }
         if (previewDescEl) { previewDescEl.style.color = '#6b7280'; previewDescEl.style.fontFamily = ''; }
         if (previewWebsiteEl) { previewWebsiteEl.style.color = '#6b7280'; previewWebsiteEl.style.fontFamily = ''; }
 
 
-        // t1 / t3: colored bg → white text
+        // t1 / t3: colored bg â†’ white text
         ['t1', 't3'].forEach(function (pfx) {
             var titleEl = document.getElementById(pfx + '-preview-title');
             var companyEl = document.getElementById(pfx + '-preview-company');
@@ -1763,7 +2376,7 @@
             if (descEl) { descEl.style.color = 'rgba(255,255,255,0.8)'; descEl.style.fontFamily = ''; }
         });
 
-        // t2 / t4: white card → company=primary, title=dark, desc=gray
+        // t2 / t4: white card â†’ company=primary, title=dark, desc=gray
         ['t2', 't4'].forEach(function (pfx) {
             var titleEl = document.getElementById(pfx + '-preview-title');
             var companyEl = document.getElementById(pfx + '-preview-company');
@@ -1780,7 +2393,7 @@
         });
     }
 
-    // Toggle is a master switch: ON → apply custom fonts+colors; OFF → restore natural look
+    // Toggle is a master switch: ON â†’ apply custom fonts+colors; OFF â†’ restore natural look
     var fontApplyAllToggle = document.getElementById('E-card_font_apply_all');
     if (fontApplyAllToggle) {
         fontApplyAllToggle.addEventListener('change', function () {
@@ -1893,6 +2506,7 @@
             checkContentValid();
         });
     }
+});
 </script>
 
 <script>
@@ -1949,8 +2563,6 @@
     });
 </script>
 
-</script>
-
 <script>
     // Welcome screen preview: show image for welcome_time then smooth fade to E-card content
     (function () {
@@ -1980,8 +2592,7 @@
             }, sec);
         }
 
-        var initialUrl = {{ (qrcard.get('welcome_img_url') or '') | tojson
-    }};
+        var initialUrl = {{ (qrcard.get('welcome_img_url') or '') | tojson }};
     var currentObjectUrl = null;
     function getPreviewSrc() {
         var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
@@ -2061,17 +2672,17 @@
 
 
 <script>
-    // ── Template Selection & Template 1 Logic ──────────────────────────────────
+    // â”€â”€ Template Selection & Template 1â€“4 Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     (function () {
         'use strict';
 
-        // ── helpers ──────────────────────────────────────────────────────────────
+        // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function val(name) {
             var el = document.querySelector('[name="' + name + '"]');
             return el ? el.value.trim() : '';
         }
 
-        // ── Template card border highlight ────────────────────────────────────────
+        // â”€â”€ Template card border highlight â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function syncTemplateCardBorders() {
             document.querySelectorAll('input[name="E-card_template"]').forEach(function (radio) {
                 var card = radio.closest('label').querySelector('.template-card');
@@ -2088,142 +2699,135 @@
             });
         }
 
-        // ── Get file name & desc from DOM item ────────────────────────────────────
-        function getEcardItemMeta(itemBlock) {
-            var n = itemBlock.querySelector('input[name="E-card_file_name[]"]');
-            var d = itemBlock.querySelector('input[name="E-card_file_desc[]"]');
-            return {
-                displayName: n && n.value.trim() ? n.value.trim() : 'Document',
-                desc: d ? d.value.trim() : ''
-            };
-        }
-        var botBlock = document.getElementById('preview-bottom-block');
-
-        // Hide all template previews first
-        [t1Preview, t2Preview, t3Preview, t4Preview].forEach(function (el) { if (el) el.style.display = 'none'; });
-        if (topBlock) topBlock.style.display = 'none';
-        if (botBlock) botBlock.style.display = 'none';
-
-        if (template === 'template1') {
-            if (t1Preview) t1Preview.style.display = 'flex';
-            updateT1TextPreview();
-            updateT1EcardList();
-        } else if (template === 'template2') {
-            if (t2Preview) t2Preview.style.display = 'flex';
-            updateT2TextPreview();
-            updateT2EcardList();
-        } else if (template === 'template3') {
-            if (t3Preview) t3Preview.style.display = 'flex';
-            updateT3TextPreview();
-            updateT3EcardList();
-        } else if (template === 'template4') {
-            if (t4Preview) t4Preview.style.display = 'flex';
-            updateT4TextPreview();
-            updateT4EcardList();
-        } else {
-            if (topBlock) topBlock.style.display = '';
-            if (botBlock) botBlock.style.display = '';
-        }
-    }
-
-        // ── Sync text fields into template 1 preview ─────────────────────────────
-        function updateT1TextPreview() {
-        function set(id, value) {
-            var el = document.getElementById(id);
-            if (!el) return;
-            el.textContent = value;
-            el.style.display = value ? 'block' : 'none';
-        }
-        set('t1-preview-company', val('E-card_company'));
-        set('t1-preview-title', val('E-card_title'));
-        set('t1-preview-desc', val('E-card_desc'));
-        set('t1-preview-website', val('E-card_website'));
-        // Ensure card body background matches current primary color
-        var picker = document.getElementById('E-card_primary_picker');
-        var cardBody = document.getElementById('t1-preview-card-body');
-        if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
-    }
-
-    // ── Build E-card list in template 1 preview ─────────────────────────────────
-    // Helper: read display name + desc from a .E-card-file-item element
-    function getEcardItemMeta(item) {
-        var nameInput = item.querySelector('.E-card-display-name-input');
-        var itemDescInput = item.querySelector('.E-card-item-desc-input');
-        var fallbackName = (item.querySelector('a') || {}).textContent || (item.dataset.name || '');
-        var displayName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : fallbackName.trim();
-        var desc = itemDescInput ? itemDescInput.value.trim() : '';
-        return { displayName: displayName, desc: desc };
-    }
-
-    function buildT1EcardItem(name, desc, url) {
-        var a = document.createElement('a');
-        a.href = url || '#';
-        a.target = url ? '_blank' : '';
-        if (url) a.setAttribute('download', '');
-        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
-
-        var iconBox = document.createElement('div');
-        iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
-        var ico = document.createElement('i');
-        ico.className = 'fa-regular fa-file-E-card';
-        ico.style.cssText = 'color:#ef4444;font-size:14px;';
-        iconBox.appendChild(ico);
-
-        // Name + optional desc stacked
-        var textWrap = document.createElement('div');
-        textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
-        var nameSpan = document.createElement('span');
-        nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-        nameSpan.textContent = name;
-        textWrap.appendChild(nameSpan);
-        if (desc) {
-            var descSpan = document.createElement('span');
-            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
-            descSpan.textContent = desc;
-            textWrap.appendChild(descSpan);
-        }
-
-        var chevron = document.createElement('i');
-        chevron.className = 'fa-solid fa-chevron-right';
-        chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
-
-        a.appendChild(iconBox);
-        a.appendChild(textWrap);
-        a.appendChild(chevron);
-        return a;
+        // â”€â”€ Switch template preview in phone mockup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function switchEcardTemplate(template) {
             var t1Preview = document.getElementById('preview-template1');
             var t2Preview = document.getElementById('preview-template2');
             var t3Preview = document.getElementById('preview-template3');
             var t4Preview = document.getElementById('preview-template4');
             var topBlock = document.getElementById('preview-top-block');
+            var botBlock = document.getElementById('preview-bottom-block');
 
-            // ── Sync text fields into template 2 preview ─────────────────────────────
-            function updateT2TextPreview() {
-                function set(id, value) {
-                    var el = document.getElementById(id);
-                    if (!el) return;
-                    el.textContent = value;
-                    el.style.display = value ? 'block' : 'none';
-                }
-                set('t2-preview-company', val('E-card_company'));
-                set('t2-preview-title', val('E-card_title'));
-                set('t2-preview-desc', val('E-card_desc'));
-                set('t2-preview-website', val('E-card_website'));
-                var picker = document.getElementById('E-card_primary_picker');
-                var t2el = document.getElementById('preview-template2');
-                var compEl = document.getElementById('t2-preview-company');
-                if (picker) {
-                    if (t2el) t2el.style.backgroundColor = picker.value;
-                    if (compEl) compEl.style.color = picker.value;
-                }
+            // Hide all template previews first
+            [t1Preview, t2Preview, t3Preview, t4Preview].forEach(function (el) { if (el) el.style.display = 'none'; });
+            if (topBlock) topBlock.style.display = 'none';
+            if (botBlock) botBlock.style.display = 'none';
+
+            if (template === 'template1') {
+                if (t1Preview) t1Preview.style.display = 'flex';
+                updateT1TextPreview();
+                updateT1EcardList();
+            } else if (template === 'template2') {
+                if (t2Preview) t2Preview.style.display = 'flex';
+                updateT2TextPreview();
+                updateT2EcardList();
+            } else if (template === 'template3') {
+                if (t3Preview) t3Preview.style.display = 'flex';
+                updateT3TextPreview();
+                updateT3EcardList();
+            } else if (template === 'template4') {
+                if (t4Preview) t4Preview.style.display = 'flex';
+                updateT4TextPreview();
+                updateT4EcardList();
+            } else {
+                if (topBlock) topBlock.style.display = '';
+                if (botBlock) botBlock.style.display = '';
+                updateDefaultTextPreview();
+                if (window.rebuildContactListPreview) window.rebuildContactListPreview();
             }
-
-            function updateT2TextPreview() {
-            });
         }
 
-        // ── Template 3: text sync, E-card list, circle image ────────────────────────
+        // â”€â”€ Sync text fields into template 1 preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function updateT1TextPreview() {
+            function set(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? 'block' : 'none';
+            }
+            set('t1-preview-company', val('E-card_company'));
+            set('t1-preview-title', val('E-card_title'));
+            set('t1-preview-desc', val('E-card_desc'));
+            set('t1-preview-website', val('E-card_website'));
+            var picker = document.getElementById('E-card_primary_picker');
+            var cardBody = document.getElementById('t1-preview-card-body');
+            if (picker && cardBody) cardBody.style.backgroundColor = picker.value;
+        }
+
+        // â”€â”€ Helper: read display name + desc from a .E-card-file-item element â”€â”€â”€â”€â”€â”€â”€â”€
+        function getEcardItemMeta(item) {
+            var nameInput = item.querySelector('.E-card-display-name-input');
+            var itemDescInput = item.querySelector('.E-card-item-desc-input');
+            var fallbackName = (item.querySelector('a') || {}).textContent || (item.dataset.name || '');
+            var displayName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : fallbackName.trim();
+            var desc = itemDescInput ? itemDescInput.value.trim() : '';
+            return { displayName: displayName, desc: desc };
+        }
+
+        // â”€â”€ Build E-card list item for template 1 & 3 (white bg, gray chevron) â”€â”€â”€â”€â”€â”€
+        function buildT1EcardItem(name, desc, url) {
+            var a = document.createElement('a');
+            a.href = url || '#';
+            a.target = url ? '_blank' : '';
+            if (url) a.setAttribute('download', '');
+            a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+            var iconBox = document.createElement('div');
+            iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+            var ico = document.createElement('i');
+            ico.className = 'fa-regular fa-file-pdf';
+            ico.style.cssText = 'color:#ef4444;font-size:14px;';
+            iconBox.appendChild(ico);
+            var textWrap = document.createElement('div');
+            textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
+            var nameSpan = document.createElement('span');
+            nameSpan.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            nameSpan.textContent = name;
+            textWrap.appendChild(nameSpan);
+            if (desc) {
+                var descSpan = document.createElement('span');
+                descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+                descSpan.textContent = desc;
+                textWrap.appendChild(descSpan);
+            }
+            var chevron = document.createElement('i');
+            chevron.className = 'fa-solid fa-chevron-right';
+            chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+            a.appendChild(iconBox);
+            a.appendChild(textWrap);
+            a.appendChild(chevron);
+            return a;
+        }
+
+        function updateT1EcardList() {
+            rebuildTemplateContactList('t1-preview-contact-list', 'white');
+        }
+
+        // â”€â”€ Sync text fields into template 2 preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function updateT2TextPreview() {
+            function set(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? 'block' : 'none';
+            }
+            set('t2-preview-company', val('E-card_company'));
+            set('t2-preview-title', val('E-card_title'));
+            set('t2-preview-desc', val('E-card_desc'));
+            set('t2-preview-website', val('E-card_website'));
+            var picker = document.getElementById('E-card_primary_picker');
+            var t2el = document.getElementById('preview-template2');
+            var compEl = document.getElementById('t2-preview-company');
+            if (picker) {
+                if (t2el) t2el.style.backgroundColor = picker.value;
+                if (compEl) compEl.style.color = picker.value;
+            }
+        }
+
+        function updateT2EcardList() {
+            rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
+        }
+
+        // â”€â”€ Template 3: text sync, E-card list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function updateT3TextPreview() {
             function set(id, value) {
                 var el = document.getElementById(id);
@@ -2240,22 +2844,11 @@
             if (picker && t3el) t3el.style.backgroundColor = picker.value;
         }
 
-        function updateT3E-cardList() {
-            var listEl = document.getElementById('t3-preview-E-card-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, item.dataset.url));
-            });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT1EcardItem(meta.displayName, meta.desc, null));
-            });
+        function updateT3EcardList() {
+            rebuildTemplateContactList('t3-preview-contact-list', 'white');
         }
 
-
-        // ── Template 4: text sync, E-card list, circle image ────────────────────────
+        // â”€â”€ Template 4: text sync, E-card list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         function updateT4TextPreview() {
             function set(id, value, isBlock) {
                 var el = document.getElementById(id);
@@ -2267,7 +2860,6 @@
             set('t4-preview-title', val('E-card_title'));
             set('t4-preview-desc', val('E-card_desc'));
             set('t4-preview-website', val('E-card_website'));
-            // Company uses primary color
             var picker = document.getElementById('E-card_primary_picker');
             var t4el = document.getElementById('preview-template4');
             var compEl = document.getElementById('t4-preview-company');
@@ -2277,36 +2869,74 @@
             }
         }
 
-        function updateT4E-cardList() {
-            var listEl = document.getElementById('t4-preview-E-card-list');
-            if (!listEl) return;
-            listEl.innerHTML = '';
-            var primary = (document.getElementById('E-card_primary_picker') || {}).value || '#2f6bfd';
-            document.querySelectorAll('#saved-E-card-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, item.dataset.url, primary));
-            });
-            document.querySelectorAll('#E-card-file-list .E-card-file-item').forEach(function (item) {
-                var meta = getEcardItemMeta(item);
-                listEl.appendChild(buildT4EcardItem(meta.displayName, meta.desc, null, primary));
-            });
+        function updateT4EcardList() {
+            rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
         }
 
-        function buildT4E-cardItem(name, desc, url, primaryColor) {
+        // â”€â”€ Shared: rebuild contact list for any template preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // bgColor: row background colour; bordered: whether to add a 1px border
+        function rebuildTemplateContactList(listId, bgColor, bordered) {
+            var listEl = document.getElementById(listId);
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            var border = bordered ? '1px solid #e5e7eb' : 'none';
+
+            function makeRow(iconClass, iconColor, labelVal, subVal) {
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;padding:8px 10px;background:' + bgColor + ';border:' + border + ';border-radius:8px;gap:8px;';
+                var box = document.createElement('div');
+                box.style.cssText = 'width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+                var ico = document.createElement('i');
+                ico.className = iconClass;
+                ico.style.cssText = 'color:' + iconColor + ';font-size:12px;';
+                box.appendChild(ico);
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'flex:1;min-width:0;';
+                var s1 = document.createElement('span');
+                s1.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                s1.textContent = labelVal || '\u2014';
+                var s2 = document.createElement('span');
+                s2.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                s2.textContent = subVal || '';
+                wrap.appendChild(s1); wrap.appendChild(s2);
+                var chev = document.createElement('i');
+                chev.className = 'fa-solid fa-chevron-right';
+                chev.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+                row.appendChild(box); row.appendChild(wrap); row.appendChild(chev);
+                return row;
+            }
+
+            document.querySelectorAll('#ecard-phone-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_phone_label[]"]') || {}).value || 'Phone';
+                var num = (row.querySelector('input[name="E-card_phone_number[]"]') || {}).value || '';
+                if (num) listEl.appendChild(makeRow('fa-solid fa-phone', '#2563eb', lbl, num));
+            });
+            document.querySelectorAll('#ecard-email-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_email_label[]"]') || {}).value || 'Email';
+                var v = (row.querySelector('input[name="E-card_email_value[]"]') || {}).value || '';
+                if (v) listEl.appendChild(makeRow('fa-solid fa-envelope', '#ea4335', lbl, v));
+            });
+            document.querySelectorAll('#ecard-website-list .ecard-contact-row').forEach(function (row) {
+                var lbl = (row.querySelector('input[name="E-card_website_label[]"]') || {}).value || 'Website';
+                var v = (row.querySelector('input[name="E-card_website_value[]"]') || {}).value || '';
+                if (v) listEl.appendChild(makeRow('fa-solid fa-globe', '#10b981', lbl, v));
+            });
+        }
+        window.rebuildTemplateContactList = rebuildTemplateContactList;
+
+        // â”€â”€ Build E-card list item for template 2 & 4 (gray bg, primary chevron) â”€â”€â”€â”€
+        function buildT4EcardItem(name, desc, url, primaryColor) {
             var a = document.createElement('a');
             a.href = url || '#';
             a.target = url ? '_blank' : '';
             if (url) a.setAttribute('download', '');
             a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;gap:8px;';
-
             var iconBox = document.createElement('div');
             iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
             var ico = document.createElement('i');
-            ico.className = 'fa-regular fa-file-E-card';
+            ico.className = 'fa-regular fa-file-pdf';
             ico.style.cssText = 'color:#ef4444;font-size:14px;';
             iconBox.appendChild(ico);
-
-            // Name + optional desc stacked
             var textWrap = document.createElement('div');
             textWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;';
             var nameSpan = document.createElement('span');
@@ -2322,136 +2952,195 @@
             var chevron = document.createElement('i');
             chevron.className = 'fa-solid fa-chevron-right';
             chevron.style.cssText = 'color:' + (primaryColor || '#2f6bfd') + ';font-size:10px;flex-shrink:0;';
-
             a.appendChild(iconBox);
             a.appendChild(textWrap);
             a.appendChild(chevron);
             return a;
         }
 
+        // â”€â”€ Show/hide T1 header zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function showT1Header(hasImage) {
+            var hdr = document.getElementById('t1-preview-header');
+            var cardBody = document.getElementById('t1-preview-card-body');
+            if (hdr) hdr.style.display = hasImage ? 'block' : 'none';
+            if (cardBody) {
+                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+                cardBody.style.marginTop = hasImage ? '-18px' : '0';
+                var picker = document.getElementById('E-card_primary_picker');
+                if (picker) cardBody.style.backgroundColor = picker.value;
+            }
+        }
 
-        // ── Show/hide header zone and adjust card body style ─────────────────────
+        // â”€â”€ Primary color â†’ update all template backgrounds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var primaryPicker = document.getElementById('E-card_primary_picker');
         if (primaryPicker) {
             primaryPicker.addEventListener('input', function (e) {
                 var color = e.target.value;
-                // t1 card body bg
                 var cardBody = document.getElementById('t1-preview-card-body');
                 if (cardBody) cardBody.style.backgroundColor = color;
-                // t2/t3/t4 full bg
                 ['preview-template2', 'preview-template3', 'preview-template4'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.style.backgroundColor = color;
                 });
-                // t2 + t4 company text color = primary
                 ['t2-preview-company', 't4-preview-company'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.style.color = color;
                 });
-            }
+                var active = document.querySelector('input[name="E-card_template"]:checked');
+                if (active) {
+                    if (active.value === 'template2') updateT2EcardList();
+                    if (active.value === 'template4') updateT4EcardList();
+                }
+            });
+        }
 
-        // ── Unified cover image upload (one image shared by all templates) ─────────
-        var t1ImgInput = document.getElementById('E-card_t1_header_img_input');
-            if (t1ImgInput) {
-                t1ImgInput.addEventListener('change', function () {
-                    var file = this.files && this.files[0];
-                    if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) {
-                        alert('Cover image must be 2 MB or smaller.');
-                        this.value = '';
-                        return;
-                    }
-                    var url = URL.createObjectURL(file);
-                    // Update T1 header preview
-                    var t1Img = document.getElementById('t1-preview-header-img');
-                    if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
-                    showT1Header(true);
-                    // Update T3 circle preview
-                    var t3Img = document.getElementById('t3-preview-circle-img');
-                    var t3Ph = document.getElementById('t3-preview-circle-placeholder');
-                    if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
-                    if (t3Ph) { t3Ph.style.display = 'none'; }
-                    // Update T4 circle preview
-                    var t4Img = document.getElementById('t4-preview-circle-img');
-                    var t4Ph = document.getElementById('t4-preview-circle-placeholder');
-                    if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
-                    if (t4Ph) { t4Ph.style.display = 'none'; }
-                    // Update upload thumb
-                    var thumb = document.getElementById('cover-img-preview');
-                    var removeBtn = document.getElementById('cover-img-remove-btn');
-                    var delFlag = document.getElementById('E-card_t1_header_img_delete');
-                    if (thumb) {
-                        thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
-                    }
-                    if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
-                    if (delFlag) { delFlag.value = '0'; }
-                });
-            }
+        // â”€â”€ Cover image upload (shared by all templates) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        var t1ImgInput = document.getElementById('E-card_profile_img_input');
+        if (t1ImgInput) {
+            t1ImgInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Cover image must be 2 MB or smaller.');
+                    this.value = '';
+                    return;
+                }
+                var url = URL.createObjectURL(file);
+                var t1Img = document.getElementById('t1-preview-header-img');
+                if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
+                showT1Header(true);
+                var t3Img = document.getElementById('t3-preview-circle-img');
+                var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+                if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
+                if (t3Ph) { t3Ph.style.display = 'none'; }
+                var t4Img = document.getElementById('t4-preview-circle-img');
+                var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+                if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
+                if (t4Ph) { t4Ph.style.display = 'none'; }
+                var thumb = document.getElementById('cover-img-preview');
+                var removeBtn = document.getElementById('cover-img-remove-btn');
+                var delFlag = document.getElementById('E-card_profile_img_delete');
+                if (thumb) {
+                    thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                }
+                if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
+                if (delFlag) { delFlag.value = '0'; }
+            });
+        }
 
-            var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
-            if (coverRemoveBtn) {
-                coverRemoveBtn.addEventListener('click', function () {
-                    if (t1ImgInput) t1ImgInput.value = '';
-                    var delFlag = document.getElementById('E-card_t1_header_img_delete');
-                    // Clear T1 header preview
-                    var t1Img = document.getElementById('t1-preview-header-img');
-                    if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
-                    showT1Header(false);
-                    // Clear T3 circle preview
-                    var t3Img = document.getElementById('t3-preview-circle-img');
-                    var t3Ph = document.getElementById('t3-preview-circle-placeholder');
-                    if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
-                    if (t3Ph) { t3Ph.style.display = 'flex'; }
-                    // Clear T4 circle preview
-                    var t4Img = document.getElementById('t4-preview-circle-img');
-                    var t4Ph = document.getElementById('t4-preview-circle-placeholder');
-                    if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
-                    if (t4Ph) { t4Ph.style.display = 'flex'; }
-                    // Reset thumb
-                    var thumb = document.getElementById('cover-img-preview');
-                    if (thumb) {
-                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
-                    }
-                    if (delFlag) { delFlag.value = '1'; }
-                    this.style.display = 'none';
-                });
-            }
+        var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
+        if (coverRemoveBtn) {
+            coverRemoveBtn.addEventListener('click', function () {
+                if (t1ImgInput) t1ImgInput.value = '';
+                var delFlag = document.getElementById('E-card_profile_img_delete');
+                var t1Img = document.getElementById('t1-preview-header-img');
+                if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+                showT1Header(false);
+                var t3Img = document.getElementById('t3-preview-circle-img');
+                var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+                if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
+                if (t3Ph) { t3Ph.style.display = 'flex'; }
+                var t4Img = document.getElementById('t4-preview-circle-img');
+                var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+                if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
+                if (t4Ph) { t4Ph.style.display = 'flex'; }
+                var thumb = document.getElementById('cover-img-preview');
+                if (thumb) {
+                    thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-user" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Profile Image</span>';
+                }
+                if (delFlag) { delFlag.value = '1'; }
+                this.style.display = 'none';
+            });
+        }
 
-            // ── Wire text inputs to update the active template preview ───────────────
-            ['E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website'].forEach(function (name) {
-                var input = document.querySelector('input[name="' + name + '"]');
-                if (!input) return;
-                input.addEventListener('input', function () {
-                    var active = document.querySelector('input[name="E-card_template"]:checked');
-                    if (!active) return;
-                    if (active.value === 'template1') updateT1TextPreview();
-                    if (active.value === 'template2') updateT2TextPreview();
-                    if (active.value === 'template3') updateT3TextPreview();
-                    if (active.value === 'template4') updateT4TextPreview();
+        // â”€â”€ Update default template text preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function updateDefaultTextPreview() {
+            function set(id, value) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = value;
+                el.style.display = value ? 'block' : 'none';
+            }
+            set('preview-title-text', val('E-card_title'));
+            set('preview-company-text', val('E-card_company'));
+            set('preview-desc-text', val('E-card_desc'));
+            set('preview-website-text', val('E-card_website'));
+        }
+
+        // â”€â”€ Wire text inputs to update the active template preview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        ['E-card_company', 'E-card_title', 'E-card_desc', 'E-card_website'].forEach(function (name) {
+            var input = document.querySelector('input[name="' + name + '"]');
+            if (!input) return;
+            input.addEventListener('input', function () {
+                var active = document.querySelector('input[name="E-card_template"]:checked');
+                var tpl = active ? active.value : 'default';
+                if (tpl === 'template1') updateT1TextPreview();
+                else if (tpl === 'template2') updateT2TextPreview();
+                else if (tpl === 'template3') updateT3TextPreview();
+                else if (tpl === 'template4') updateT4TextPreview();
+                else updateDefaultTextPreview();
+            });
+        });
+
+        // â”€â”€ Wire contact inputs to update the active template's contact list â”€â”€â”€â”€â”€â”€
+        ['E-card_phone_label[]', 'E-card_phone_number[]', 'E-card_email_label[]', 'E-card_email_value[]',
+            'E-card_website_label[]', 'E-card_website_value[]'].forEach(function (nm) {
+                document.querySelectorAll('input[name="' + nm + '"]').forEach(function (inp) {
+                    inp.addEventListener('input', function () {
+                        var active = document.querySelector('input[name="E-card_template"]:checked');
+                        var tpl = active ? active.value : 'default';
+                        if (tpl === 'template1') rebuildTemplateContactList('t1-preview-contact-list', 'white');
+                        else if (tpl === 'template2') rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
+                        else if (tpl === 'template3') rebuildTemplateContactList('t3-preview-contact-list', 'white');
+                        else if (tpl === 'template4') rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
+                        // default template uses rebuildContactListPreview (defined in the outer script)
+                        else if (window.rebuildContactListPreview) window.rebuildContactListPreview();
+                    });
                 });
             });
 
-
-
-            // ── Radio change listener ─────────────────────────────────────────────────
-            document.querySelectorAll('input[name="E-card_template"]').forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    syncTemplateCardBorders();
-                    switchEcardTemplate(this.value);
-                });
-            });
-
-            // ── Initialize on page load ───────────────────────────────────────────────
-            document.addEventListener('DOMContentLoaded', function () {
-                // Ensure the correct radio is checked (Jinja sets it, but sync to be safe)
-                var savedTemplate = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
-                var savedRadio = document.querySelector('input[name="E-card_template"][value="' + savedTemplate + '"]');
-                if (savedRadio) savedRadio.checked = true;
+        // â”€â”€ Radio change listener â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        document.querySelectorAll('input[name="E-card_template"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
                 syncTemplateCardBorders();
-                switchEcardTemplate(savedTemplate);
+                switchEcardTemplate(this.value);
             });
+        });
 
-        }) ();
+        // â”€â”€ Initialize on page load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        document.addEventListener('DOMContentLoaded', function () {
+            var savedTemplate = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
+            var savedRadio = document.querySelector('input[name="E-card_template"][value="' + savedTemplate + '"]');
+            if (savedRadio) savedRadio.checked = true;
+            syncTemplateCardBorders();
+            switchEcardTemplate(savedTemplate);
+        });
+
+    })();
+</script>
+
+<script>
+    // Fallback: ensure collapse headers work even if earlier JS fails
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.collapse-header, .sub-collapse-header').forEach(function (header) {
+            // Avoid binding twice if another script already handled this
+            if (header.dataset.collapseBound === '1') return;
+            header.dataset.collapseBound = '1';
+
+            header.addEventListener('click', function () {
+                var body = header.nextElementSibling;
+                if (!body) return;
+                body.classList.toggle('show');
+
+                var icon = header.querySelector('.fa-chevron-down, .fa-chevron-up');
+                if (icon) {
+                    icon.classList.toggle('fa-chevron-down');
+                    icon.classList.toggle('fa-chevron-up');
+                }
+            });
+        });
+    });
 </script>
 
 {% endblock %}
+
