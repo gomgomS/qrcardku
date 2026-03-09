@@ -1036,7 +1036,7 @@ def _merge_ecard_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
 
 @app.route("/qr/update/ecard/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_content_ecard(qrcard_id):
-    """Step 1 (content) for E-card. POST -> design. Uses same pattern as PDF: proc.get_qrcard returns type-specific doc."""
+    """Step 1 (content) for E-card. POST -> design; POST back_from_design -> re-show content with data. Uses same pattern as PDF."""
     from flask import request
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
@@ -1048,6 +1048,49 @@ def qr_update_content_ecard(qrcard_id):
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
+        # Back from design: re-show content form with posted data (no file uploads, no DB writes)
+        if request.form.get("back_from_design"):
+            from itertools import zip_longest
+            url_content = (request.form.get("url_content") or "").strip()
+            if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+                url_content = "https://" + url_content
+            qr_name = (request.form.get("qr_name") or "").strip()
+            short_code = (request.form.get("short_code") or "").strip()
+            # Rebuild qrcard from form (scalars + contact arrays)
+            draft = dict(qrcard)
+            draft["url_content"] = url_content or draft.get("url_content") or "qrcardku.com"
+            draft["name"] = qr_name or draft.get("name") or "Untitled QR"
+            draft["short_code"] = short_code or draft.get("short_code") or ""
+            for key in request.form:
+                if key in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
+                    continue
+                if key.endswith("[]"):
+                    continue
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1:
+                    draft[key] = val_list
+                else:
+                    draft[key] = val_list[0] if val_list else ""
+            # Contact arrays from flat form fields (Back form sends E-card_phone_label[], etc.)
+            pl = request.form.getlist("E-card_phone_label[]")
+            pn = request.form.getlist("E-card_phone_number[]")
+            draft["E-card_phones"] = [{"label": (a or "").strip(), "number": (b or "").strip()} for a, b in zip_longest(pl, pn, fillvalue="")]
+            el = request.form.getlist("E-card_email_label[]")
+            ev = request.form.getlist("E-card_email_value[]")
+            draft["E-card_emails"] = [{"label": (a or "").strip(), "value": (b or "").strip()} for a, b in zip_longest(el, ev, fillvalue="")]
+            wl = request.form.getlist("E-card_website_label[]")
+            wv = request.form.getlist("E-card_website_value[]")
+            draft["E-card_websites"] = [{"label": (a or "").strip(), "value": (b or "").strip()} for a, b in zip_longest(wl, wv, fillvalue="")]
+            draft["E-card_website"] = (draft["E-card_websites"][0].get("value", "")) if draft.get("E-card_websites") else ""
+            raw_url = (draft.get("url_content") or "").strip()
+            url_content_display = raw_url[8:] if raw_url.startswith("https://") else (raw_url[7:] if raw_url.startswith("http://") else raw_url)
+            return view_update_ecard.view_update_ecard(app).update_qr_content_html(
+                qrcard=draft,
+                url_content=url_content_display or "qrcardku.com",
+                qr_name=draft.get("name") or "",
+                short_code=draft.get("short_code") or "",
+                base_url=config.G_BASE_URL,
+            )
         qr_name = request.form.get("qr_name", "").strip()
         url_content = request.form.get("url_content", "").strip()
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
@@ -1058,6 +1101,9 @@ def qr_update_content_ecard(qrcard_id):
             if key not in ["csrf_token", "url_content", "qr_name", "short_code"] and not key.endswith("[]"):
                 val_list = request.form.getlist(key)
                 extra_data[key] = val_list[0] if val_list else ""
+
+        # Unchecked checkboxes are not in request.form; set explicitly so "off" is saved and preserved on Back
+        extra_data["E-card_font_apply_all"] = "1" if request.form.get("E-card_font_apply_all") else ""
 
         # Build structured contact lists from form arrays
         phone_labels = request.form.getlist("E-card_phone_label[]")
@@ -1161,9 +1207,11 @@ def qr_update_content_ecard(qrcard_id):
         # Include design/visual fields if provided
         for _dk in ["E-card_template", "E-card_primary_color", "E-card_secondary_color",
                     "E-card_title_font", "E-card_text_font", "E-card_title_color", "E-card_text_color",
-                    "welcome_time", "welcome_bg_color", "E-card_font_apply_all"]:
+                    "welcome_time", "welcome_bg_color"]:
             if _dk in extra_data and extra_data[_dk] != "":
                 contact_update[_dk] = extra_data[_dk]
+        # Checkbox: always persist so "off" clears the previous "on"
+        contact_update["E-card_font_apply_all"] = extra_data.get("E-card_font_apply_all", "")
         database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": contact_update})
         database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": contact_update})
         qrcard.update(extra_data)
@@ -1329,12 +1377,80 @@ def user_new_qr_design_web():
         qr_encode_url = config.G_BASE_URL + "/web/" + short_code
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg)
 
-@app.route("/qr/new/ecard")
+@app.route("/qr/new/ecard", methods=["GET"])
+@app.route("/qr/new/ecard/back", methods=["POST"])
 def user_new_qr_ecard():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
+    from flask import request
     from pytavia_modules.view import view_ecard
-    return view_ecard.view_ecard(app).new_qr_content_html(base_url=config.G_BASE_URL)
+    v = view_ecard.view_ecard(app)
+    if request.method == "POST":
+        # Back from design: re-show content form with saved data
+        from itertools import zip_longest
+        from flask import url_for
+        url_content = request.form.get("url_content", "qrcardku.com")
+        if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+            url_content = "https://" + url_content
+        qr_name = request.form.get("qr_name", "Untitled QR")
+        short_code = (request.form.get("short_code") or "").strip().lower()
+        ecard_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"):
+                    ecard_data[key] = val_list
+                else:
+                    ecard_data[key] = val_list[0] if val_list else ""
+        # Restore profile/cover and welcome image URLs from session (files were saved on content->design POST)
+        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
+            cover_url = url_for(
+                "static",
+                filename="uploads/pdf/_tmp/{}/{}".format(
+                    session["cover_img_tmp_key"], session["cover_img_tmp_name"]
+                ),
+            )
+            ecard_data["E-card_t1_header_img_url"] = cover_url
+            ecard_data["E-card_t3_circle_img_url"] = cover_url
+            ecard_data["E-card_t4_circle_img_url"] = cover_url
+        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
+            ecard_data["welcome_img_url"] = url_for(
+                "static",
+                filename="uploads/pdf/_tmp/{}/{}".format(
+                    session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]
+                ),
+            )
+        # Build contact row lists for template (normalize to list of {label, number/value})
+        def _to_list(x):
+            if x is None:
+                return []
+            return x if isinstance(x, (list, tuple)) else [x]
+        labels = _to_list(ecard_data.get("E-card_phone_label[]"))
+        numbers = _to_list(ecard_data.get("E-card_phone_number[]"))
+        phone_list = [{"label": a or "", "number": b or ""} for a, b in zip_longest(labels, numbers, fillvalue="")]
+        if not phone_list:
+            phone_list = [{"label": "", "number": ""}]
+        labels = _to_list(ecard_data.get("E-card_email_label[]"))
+        values = _to_list(ecard_data.get("E-card_email_value[]"))
+        email_list = [{"label": a or "", "value": b or ""} for a, b in zip_longest(labels, values, fillvalue="")]
+        if not email_list:
+            email_list = [{"label": "", "value": ""}]
+        labels = _to_list(ecard_data.get("E-card_website_label[]"))
+        values = _to_list(ecard_data.get("E-card_website_value[]"))
+        website_list = [{"label": a or "", "value": b or ""} for a, b in zip_longest(labels, values, fillvalue="")]
+        if not website_list:
+            website_list = [{"label": "", "value": ""}]
+        return v.new_qr_content_html(
+            base_url=config.G_BASE_URL,
+            url_content=url_content,
+            qr_name=qr_name,
+            short_code=short_code,
+            ecard_data=ecard_data,
+            phone_list=phone_list,
+            email_list=email_list,
+            website_list=website_list,
+        )
+    return v.new_qr_content_html(base_url=config.G_BASE_URL)
 
 @app.route("/qr/new/ecard/qr-design", methods=["GET", "POST"])
 def user_new_qr_design_ecard():
@@ -1419,6 +1535,25 @@ def user_new_qr_design_ecard():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/ecard/" + short_code
+        # Put tmp image URLs into ecard_data so the Back form includes them and they survive when user clicks Back
+        from flask import url_for as _url_for
+        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
+            _cover_url = _url_for(
+                "static",
+                filename="uploads/pdf/_tmp/{}/{}".format(
+                    session["cover_img_tmp_key"], session["cover_img_tmp_name"]
+                ),
+            )
+            ecard_data["E-card_t1_header_img_url"] = _cover_url
+            ecard_data["E-card_t3_circle_img_url"] = _cover_url
+            ecard_data["E-card_t4_circle_img_url"] = _cover_url
+        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
+            ecard_data["welcome_img_url"] = _url_for(
+                "static",
+                filename="uploads/pdf/_tmp/{}/{}".format(
+                    session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]
+                ),
+            )
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, ecard_data=ecard_data)
 
 @app.route("/qr/save/pdf", methods=["POST"])

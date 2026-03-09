@@ -1017,6 +1017,25 @@
                                         </button>
                                     </div>
                                     <div id="ecard-phone-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% if phone_list is defined and phone_list %}
+                                        {% for p in phone_list %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_phone_label[]" class="form-control"
+                                                placeholder="Label…"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ p.label or '' }}">
+                                            <input type="text" name="E-card_phone_number[]" class="form-control"
+                                                placeholder="+54 11 0000 0000"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ p.number or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
                                         <div class="ecard-contact-row"
                                             style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_phone_label[]" class="form-control"
@@ -1030,6 +1049,7 @@
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -1047,6 +1067,25 @@
                                         </button>
                                     </div>
                                     <div id="ecard-email-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% if email_list is defined and email_list %}
+                                        {% for e in email_list %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_email_label[]" class="form-control"
+                                                placeholder="Label…"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ e.label or '' }}">
+                                            <input type="email" name="E-card_email_value[]" class="form-control"
+                                                placeholder="jane@foster.com"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ e.value or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
                                         <div class="ecard-contact-row"
                                             style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_email_label[]" class="form-control"
@@ -1060,6 +1099,7 @@
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -1078,6 +1118,25 @@
                                     </div>
                                     <div id="ecard-website-list"
                                         style="display: flex; flex-direction: column; gap: 8px;">
+                                        {% if website_list is defined and website_list %}
+                                        {% for w in website_list %}
+                                        <div class="ecard-contact-row"
+                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            <input type="text" name="E-card_website_label[]" class="form-control"
+                                                placeholder="Label…"
+                                                style="flex: 1; background: transparent; border: none;"
+                                                value="{{ w.label or '' }}">
+                                            <input type="url" name="E-card_website_value[]" class="form-control"
+                                                placeholder="https://qrfy.com/"
+                                                style="flex: 2; background: transparent; border: none;"
+                                                value="{{ w.value or '' }}">
+                                            <button type="button" class="ecard-remove-contact-btn"
+                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                        {% else %}
                                         <div class="ecard-contact-row"
                                             style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_website_label[]" class="form-control"
@@ -1091,6 +1150,7 @@
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1535,9 +1595,9 @@
                                 <div id="preview-profile-img-container"
                                     style="width: 130px; height: 130px; border-radius: 50%; background: white; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
                                     <i id="preview-profile-placeholder-icon" class="fa-regular fa-image"
-                                        style="font-size: 48px; color: #d1d5db;"></i>
-                                    <img id="preview-profile-img" src="" alt=""
-                                        style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                                        style="font-size: 48px; color: #d1d5db; {% if cover_url %}display: none;{% endif %}"></i>
+                                    <img id="preview-profile-img" src="{{ cover_url if cover_url else '' }}" alt=""
+                                        style="width: 100%; height: 100%; object-fit: cover; {% if not cover_url %}display: none;{% endif %}">
                                 </div>
 
                                 <div id="preview-E-card-next"

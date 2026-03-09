@@ -707,8 +707,27 @@
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
         {% else %}
-        <a href="{{ back_url | default('/qr/new/' ~ qr_type) }}" class="btn-outline"><i
-                class="fa-solid fa-arrow-left"></i> Back</a>
+        <form id="design-back-form" method="POST" action="/qr/new/ecard/back" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="back_from_design" value="1" />
+            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
+            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+
+            {% if ecard_data %}
+            {% for key, val in ecard_data.items() %}
+            {% if val is iterable and val is not string %}
+            {% for item in val %}
+            <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
+            {% endfor %}
+            {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+
+            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        </form>
         {% endif %}
         <button form="design-form" type="submit" class="btn-next">Complete</button>
     </div>

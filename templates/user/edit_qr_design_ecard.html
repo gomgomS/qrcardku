@@ -690,15 +690,32 @@
             <input type="hidden" name="back_from_design" value="1" />
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
 
             {% if qrcard %}
+            {% for p in qrcard.get('E-card_phones', []) %}
+            <input type="hidden" name="E-card_phone_label[]" value="{{ p.get('label', '') | e }}" />
+            <input type="hidden" name="E-card_phone_number[]" value="{{ p.get('number', '') | e }}" />
+            {% endfor %}
+            {% for e in qrcard.get('E-card_emails', []) %}
+            <input type="hidden" name="E-card_email_label[]" value="{{ e.get('label', '') | e }}" />
+            <input type="hidden" name="E-card_email_value[]" value="{{ e.get('value', '') | e }}" />
+            {% endfor %}
+            {% for w in qrcard.get('E-card_websites', []) %}
+            <input type="hidden" name="E-card_website_label[]" value="{{ w.get('label', '') | e }}" />
+            <input type="hidden" name="E-card_website_value[]" value="{{ w.get('value', '') | e }}" />
+            {% endfor %}
             {% for key, val in qrcard.items() %}
-            {% if val is iterable and val is not string %}
+            {% if key != 'E-card_phones' and key != 'E-card_emails' and key != 'E-card_websites' %}
+            {% if val is iterable and val is not string and val is not mapping %}
             {% for item in val %}
             <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
             {% endfor %}
             {% else %}
+            {% if val is not none and val != '' %}
             <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+            {% endif %}
+            {% endif %}
             {% endif %}
             {% endfor %}
             {% endif %}

@@ -8,8 +8,10 @@ class view_ecard:
     def __init__(self, app=None):
         self.webapp = app
 
-    def new_qr_content_html(self, msg=None, error_msg=None, base_url=None, url_content=None, qr_name=None, short_code=None):
+    def new_qr_content_html(self, msg=None, error_msg=None, base_url=None, url_content=None, qr_name=None, short_code=None, ecard_data=None, phone_list=None, email_list=None, website_list=None):
         try:
+            # When returning from design (Back), ecard_data is passed as qrcard so the form pre-fills
+            qrcard = ecard_data if ecard_data else None
             return render_template(
                 "/user/new_qr_content_ecard.html",
                 qr_type="ecard",
@@ -19,6 +21,10 @@ class view_ecard:
                 url_content=url_content or "",
                 qr_name=qr_name or "",
                 short_code=short_code or "",
+                qrcard=qrcard,
+                phone_list=phone_list,
+                email_list=email_list,
+                website_list=website_list,
             )
         except Exception:
             if self.webapp:
