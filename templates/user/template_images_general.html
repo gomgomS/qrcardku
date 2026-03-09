@@ -1,0 +1,443 @@
+{# =====================================================================
+template_images_general.html — Single Source of Truth for Images Gallery UI
+Include with:
+{% set images_mode = 'preview' %} (inside phone-mockup / mockup-inner)
+{% set images_mode = 'public' %} (standalone public page body)
+===================================================================== #}
+
+{# ── Variable setup (shared by both modes) ─────────────────────────── #}
+{% set _qrc = qrcard if qrcard else {} %}
+{% set _tmpl = _qrc.get('images_template', '1col') %}
+{% set _primary = _qrc.get('images_primary_color', '#2F6BFD') %}
+{% set _secondary= _qrc.get('images_secondary_color', '#0E379A') %}
+{% set _gtitle = _qrc.get('images_gallery_title', '') %}
+{% set _gdesc = _qrc.get('images_gallery_desc', '') %}
+{% set _gallery = _qrc.get('images_gallery_files', []) %}
+{% set _welcome_img = _qrc.get('welcome_img_url', '') %}
+{% set _welcome_time = _qrc.get('welcome_time', 2.5) | float %}
+{% set _welcome_bg = _qrc.get('welcome_bg_color', _primary) %}
+{% set _apply_fonts = _qrc.get('images_font_apply_all', '') %}
+{% set _title_font = _qrc.get('images_title_font', 'Lato') %}
+{% set _text_font = _qrc.get('images_text_font', 'Lato') %}
+{% set _title_color = _qrc.get('images_title_color','#111827') %}
+{% set _text_color = _qrc.get('images_text_color', '#6b7280') %}
+
+{# Determine columns based on template #}
+{% set _cols = 1 %}
+{% if _tmpl == '2col' %}{% set _cols = 2 %}{% endif %}
+{% if _tmpl == '3col' %}{% set _cols = 3 %}{% endif %}
+
+{# =====================================================================
+PUBLIC MODE
+===================================================================== #}
+{% if images_mode == 'public' %}
+
+<style>
+    :root {
+        --primary: {
+                {
+                _primary
+            }
+        }
+
+        ;
+
+        --secondary: {
+                {
+                _secondary
+            }
+        }
+
+        ;
+
+        --title-font: {
+                {
+                _title_font | tojson | safe
+            }
+        }
+
+        ;
+
+        --text-font: {
+                {
+                _text_font | tojson | safe
+            }
+        }
+
+        ;
+
+        --title-color: {
+                {
+                _title_color
+            }
+        }
+
+        ;
+
+        --text-color: {
+                {
+                _text_color
+            }
+        }
+
+        ;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f172a;
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+    }
+
+    .phone-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    /* Welcome overlay */
+    .welcome-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 100;
+
+        background: {
+                {
+                _welcome_bg
+            }
+        }
+
+        ;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: auto;
+    }
+
+    .welcome-overlay.hide {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .welcome-overlay img {
+        max-width: 200px;
+        max-height: 280px;
+        object-fit: contain;
+        display: block;
+    }
+
+    /* Gallery wrapper */
+    .gallery-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: #f9fafb;
+    }
+
+    .gallery-header {
+        background: var(--primary);
+        padding: 40px 24px 28px;
+        text-align: center;
+    }
+
+    .gallery-header-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 6px;
+
+            {
+            % if _apply_fonts %
+        }
+
+        font-family: var(--title-font),
+        system-ui,
+        sans-serif;
+
+            {
+            % endif %
+        }
+    }
+
+    .gallery-header-desc {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.4;
+
+            {
+            % if _apply_fonts %
+        }
+
+        font-family: var(--text-font),
+        system-ui,
+        sans-serif;
+
+            {
+            % endif %
+        }
+    }
+
+    .gallery-grid {
+        display: grid;
+
+        grid-template-columns: repeat({
+                {
+                _cols
+            }
+        }
+
+        , 1fr);
+    gap: 16px;
+    padding: 20px;
+    flex: 1;
+    }
+
+    .gallery-item {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: transform 0.2s;
+    }
+
+    .gallery-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .gallery-item img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        display: block;
+    }
+
+    .gallery-item-info {
+        padding: 12px;
+    }
+
+    .gallery-item-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+
+            {
+            % if _apply_fonts %
+        }
+
+        font-family: var(--title-font),
+        system-ui,
+        sans-serif;
+        color: var(--title-color);
+
+            {
+            % endif %
+        }
+    }
+
+    .gallery-item-desc {
+        font-size: 12px;
+        color: #6b7280;
+        line-height: 1.4;
+
+            {
+            % if _apply_fonts %
+        }
+
+        font-family: var(--text-font),
+        system-ui,
+        sans-serif;
+        color: var(--text-color);
+
+            {
+            % endif %
+        }
+    }
+
+    .gallery-footer {
+        text-align: center;
+        padding: 16px 20px 32px;
+        font-size: 11px;
+        color: #9ca3af;
+    }
+
+    /* Lightbox */
+    .lightbox-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(0, 0, 0, 0.9);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox-overlay.show {
+        display: flex;
+    }
+
+    .lightbox-overlay img {
+        max-width: 90%;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        color: white;
+        font-size: 28px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        z-index: 201;
+    }
+</style>
+
+<div class="phone-wrapper">
+
+    {# Welcome overlay #}
+    {% if _welcome_img %}
+    <div class="welcome-overlay" id="welcome-overlay">
+        <img src="{{ _welcome_img }}" alt="Welcome">
+    </div>
+    {% endif %}
+
+    <div class="gallery-wrapper">
+        <div class="gallery-header">
+            {% if _gtitle %}<div class="gallery-header-title">{{ _gtitle }}</div>{% endif %}
+            {% if _gdesc %}<div class="gallery-header-desc">{{ _gdesc }}</div>{% endif %}
+        </div>
+        <div class="gallery-grid">
+            {% for img in _gallery %}
+            <div class="gallery-item" onclick="openLightbox('{{ img.url }}')" style="cursor:pointer;">
+                <img src="{{ img.url }}" alt="{{ img.name or '' }}" loading="lazy">
+                {% if img.name or img.desc %}
+                <div class="gallery-item-info">
+                    {% if img.name %}<div class="gallery-item-name">{{ img.name }}</div>{% endif %}
+                    {% if img.desc %}<div class="gallery-item-desc">{{ img.desc }}</div>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% if not _gallery %}
+            <div style="text-align:center;padding:60px 20px;color:#9ca3af;grid-column:1/-1;">
+                <i class="fa-regular fa-images" style="font-size:48px;margin-bottom:12px;display:block;"></i>
+                <div style="font-size:14px;">No images yet</div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="gallery-footer">Powered by QRCardKu</div>
+    </div>
+
+    {# Lightbox #}
+    <div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+</div>{# /phone-wrapper #}
+
+{# Welcome overlay dismissal #}
+{% if _welcome_img %}
+<script>
+    (function () {
+        var overlay = document.getElementById('welcome-overlay');
+        var t = {{ _welcome_time|default(0) }};
+        if (overlay && t > 0) {
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () { overlay.style.display = 'none'; }, 800);
+            }, t * 1000);
+        }
+    })();
+</script>
+{% endif %}
+
+<script>
+    function openLightbox(url) {
+        var ov = document.getElementById('lightbox-overlay');
+        var im = document.getElementById('lightbox-img');
+        im.src = url;
+        ov.classList.add('show');
+    }
+    function closeLightbox() {
+        var ov = document.getElementById('lightbox-overlay');
+        ov.classList.remove('show');
+        document.getElementById('lightbox-img').src = '';
+    }
+</script>
+
+{# =====================================================================
+PREVIEW MODE — shown inside phone mockup
+===================================================================== #}
+{% elif images_mode == 'preview' %}
+
+{# ── Welcome overlay ──────────────────────────────────────────────── #}
+<div id="preview-welcome-overlay" class="preview-welcome-overlay"
+    style="display:none;position:absolute;inset:0;z-index:100;align-items:center;justify-content:center;background:{{ _welcome_bg }};opacity:1;transition:opacity 0.8s ease;pointer-events:auto;">
+    <img id="preview-welcome-img" src="{{ _welcome_img }}" alt="Welcome"
+        style="max-width:60%;max-height:70%;object-fit:contain;{% if not _welcome_img %}display:none;{% endif %}">
+</div>
+
+{# ── Gallery preview ─────────────────────────────────────────────── #}
+<div id="preview-images-gallery"
+    style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#f9fafb;overflow-y:auto;overflow-x:hidden;">
+
+    {# Header #}
+    <div id="preview-gallery-header"
+        style="background:{{ _primary }};padding:20px 14px 16px;text-align:center;flex-shrink:0;">
+        <div id="preview-gallery-title"
+            style="font-size:15px;font-weight:800;color:white;margin-bottom:4px;{% if not _gtitle %}display:none;{% endif %}">
+            {{ _gtitle }}</div>
+        <div id="preview-gallery-desc"
+            style="font-size:11px;color:rgba(255,255,255,0.85);{% if not _gdesc %}display:none;{% endif %}">{{ _gdesc }}
+        </div>
+    </div>
+
+    {# Grid #}
+    <div id="preview-gallery-grid"
+        style="display:grid;grid-template-columns:repeat({{ _cols }},1fr);gap:8px;padding:10px;flex:1;">
+        {% for img in _gallery %}
+        <div class="preview-gallery-item"
+            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+            <img src="{{ img.url }}" alt="{{ img.name or '' }}"
+                style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy">
+            {% if img.name or img.desc %}
+            <div style="padding:6px 8px;">
+                {% if img.name %}<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">{{
+                    img.name }}</div>{% endif %}
+                {% if img.desc %}<div style="font-size:9px;color:#6b7280;line-height:1.3;">{{ img.desc }}</div>{% endif
+                %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% if not _gallery %}
+        <div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">
+            <i class="fa-regular fa-images" style="font-size:32px;margin-bottom:8px;display:block;"></i>
+            <div style="font-size:11px;">No images</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="text-align:center;padding:8px;font-size:9px;color:#9ca3af;">Powered by QRCardKu</div>
+</div>
+
+{% endif %}

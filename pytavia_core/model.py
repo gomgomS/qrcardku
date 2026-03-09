@@ -474,6 +474,42 @@ db = {
         "timestamp"                 : 0,
     },
 
+    # Dedicated collection for images-type QR cards (image gallery)
+    "db_qrcard_images": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "images",
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+        # Design and typography
+        "images_template"           : "1col",   # 1col | 2col | 3col
+        "images_primary_color"      : "#2F6BFD",
+        "images_secondary_color"    : "#0E379A",
+        "images_title_font"         : "Lato",
+        "images_title_color"        : "#000000",
+        "images_text_font"          : "Lato",
+        "images_text_color"         : "#000000",
+        # Gallery info
+        "images_gallery_title"      : "",
+        "images_gallery_desc"       : "",
+        # Gallery files - list of {url, name, desc}
+        "images_gallery_files"      : [],
+        # Welcome screen
+        "welcome_time"              : "5.0",
+        "welcome_bg_color"          : "#2F6BFD",
+        "welcome_img_url"           : "",
+        # Font apply
+        "images_font_apply_all"     : False,
+        # Meta
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
     # Dedicated collection for PDF-type QR cards (normalized view of PDF-specific fields)
     "db_qrcard_pdf": {
         "qrcard_id"                 : "",       # link back to master qrcard_id

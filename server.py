@@ -400,6 +400,22 @@ def qr_pdf_redirect(short_code):
     from pytavia_modules.qr.qr_public_pdf_visual_proc import qr_public_pdf_visual_proc
     return qr_public_pdf_visual_proc(app).handle(short_code)
 
+@app.route("/images/<short_code>")
+def qr_images_redirect(short_code):
+    """Public endpoint for image-gallery short URLs."""
+    from pytavia_core import database as _db_img, config as _cfg_img
+    _mgd = _db_img.get_db_conn(_cfg_img.mainDB)
+    qrcard = _mgd.db_qrcard.find_one({"short_code": short_code, "qr_type": "images", "status": "ACTIVE"})
+    if not qrcard:
+        abort(404)
+    # Merge images-specific doc
+    qrcard = _merge_images_into_qrcard(_mgd, qrcard.get("fk_user_id"), qrcard["qrcard_id"], qrcard)
+    # Bump scan count
+    _mgd.db_qrcard.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
+    _mgd.db_qrcard_images.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
+    return render_template("user/public_images.html", qrcard=qrcard)
+
+
 @app.route("/qr/new")
 def user_new_qr():
     if "fk_user_id" not in session:
@@ -1034,6 +1050,33 @@ def _merge_ecard_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
     return out
 
 
+def _merge_images_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
+    """Overlay db_qrcard_images document onto qrcard so edit pages get full Images fields."""
+    if not qrcard:
+        return qrcard
+    images_doc = mgd_db.db_qrcard_images.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+    )
+    if not images_doc:
+        from pytavia_core import database
+        images_doc = database.get_record("db_qrcard_images")
+        images_doc["qrcard_id"] = qrcard_id
+        images_doc["fk_user_id"] = fk_user_id
+        images_doc["name"] = qrcard.get("name", "")
+        images_doc["url_content"] = qrcard.get("url_content", "")
+        images_doc["short_code"] = qrcard.get("short_code", "")
+        images_doc["status"] = qrcard.get("status", "ACTIVE")
+        try:
+            mgd_db.db_qrcard_images.insert_one(images_doc)
+        except Exception:
+            pass
+    out = dict(qrcard)
+    for key, value in images_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
 @app.route("/qr/update/ecard/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_content_ecard(qrcard_id):
     """Step 1 (content) for E-card. POST -> design; POST back_from_design -> re-show content with data. Uses same pattern as PDF."""
@@ -1616,6 +1659,311 @@ def qr_save_ecard():
         error_msg=response.get("error_msg", "Save failed."),
         ecard_data=response.get("ecard_data", {}),
     )
+
+
+@app.route("/qr/new/images", methods=["GET"])
+@app.route("/qr/new/images/back", methods=["POST"])
+def user_new_qr_images():
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.view import view_images
+    v = view_images.view_images(app)
+    if request.method == "POST":
+        url_content = request.form.get("url_content", "qrcardku.com")
+        if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+            url_content = "https://" + url_content
+        qr_name = request.form.get("qr_name", "Untitled QR")
+        short_code = (request.form.get("short_code") or "").strip().lower()
+        images_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"):
+                    images_data[key] = val_list
+                else:
+                    images_data[key] = val_list[0] if val_list else ""
+        
+        from flask import url_for as _url_for
+        tmp_gallery = session.get("images_tmp_gallery", [])
+        if tmp_gallery:
+            images_data["images_gallery_files"] = []
+            for f_info in tmp_gallery:
+                url = _url_for("static", filename=f"uploads/images/_tmp/{session.get('images_tmp_key')}/{f_info['safe_name']}")
+                images_data["images_gallery_files"].append({"url": url, "name": f_info.get("name",""), "desc": f_info.get("desc","")})
+        
+        return v.new_qr_content_html(base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
+    return v.new_qr_content_html(base_url=config.G_BASE_URL)
+
+@app.route("/qr/new/images/qr-design", methods=["GET", "POST"])
+def user_new_qr_design_images():
+    from flask import request
+    import os
+    import re
+    import uuid as _uuid
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    from pytavia_modules.view import view_images
+    from pytavia_modules.qr import qr_images_proc
+    v = view_images.view_images(app)
+    proc = qr_images_proc.qr_images_proc(app)
+    url_content = "qrcardku.com"
+    qr_name = "Untitled QR"
+    short_code = ""
+    qr_encode_url = None
+    error_msg = None
+    images_data = {}
+    
+    if request.method == "POST":
+        url_content = request.form.get("url_content", "qrcardku.com")
+        if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+            url_content = "https://" + url_content
+        qr_name = request.form.get("qr_name", "Untitled QR")
+        short_code = (request.form.get("short_code") or "").strip().lower()
+        
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "images_files"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"): images_data[key] = val_list
+                else: images_data[key] = val_list[0] if val_list else ""
+                
+        tmp_key = session.get("images_tmp_key") or _uuid.uuid4().hex
+        session["images_tmp_key"] = tmp_key
+        tmp_dir = os.path.join(app.root_path, "static", "uploads", "images", "_tmp", tmp_key)
+        os.makedirs(tmp_dir, exist_ok=True)
+        session.modified = True
+        
+        files = request.files.getlist("images_files")
+        images_names = request.form.getlist("images_name[]")
+        images_descs = request.form.getlist("images_desc[]")
+        
+        tmp_gallery = session.get("images_tmp_gallery", [])
+        new_file_offset = len(tmp_gallery)
+        for i, f in enumerate(files):
+            if f and f.filename and f.filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
+                f.seek(0, 2)
+                if f.tell() <= 2 * 1024 * 1024:
+                    f.seek(0)
+                    ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
+                    safe_name = _uuid.uuid4().hex + ext
+                    f.save(os.path.join(tmp_dir, safe_name))
+                    form_idx = new_file_offset + i
+                    name = images_names[form_idx] if form_idx < len(images_names) else ""
+                    desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
+                    tmp_gallery.append({"safe_name": safe_name, "name": name, "desc": desc})
+                else:
+                    error_msg = f"Image {f.filename} exceeds 2MB limit."
+        
+        # Update existing items in the gallery
+        for i in range(min(len(tmp_gallery), len(images_names))):
+            tmp_gallery[i]["name"] = images_names[i]
+            if i < len(images_descs): tmp_gallery[i]["desc"] = images_descs[i]
+            
+        session["images_tmp_gallery"] = tmp_gallery
+        
+        if error_msg:
+            return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
+            
+        if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
+            error_msg = "A QR card with this name already exists. Please choose a unique name."
+            return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
+        if short_code:
+            if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
+                error_msg = "Address identifier must be 2–32 characters: letters, numbers, '-' or '_', no spaces or other symbols."
+                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
+            if not proc.is_short_code_unique(short_code):
+                error_msg = "This address identifier is already in use. Please choose another."
+                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
+        else:
+            short_code = proc._generate_short_code()
+            while not proc.is_short_code_unique(short_code):
+                short_code = proc._generate_short_code()
+        qr_encode_url = config.G_BASE_URL + "/images/" + short_code
+        
+    return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, images_data=images_data)
+
+@app.route("/qr/save/images", methods=["POST"])
+def qr_save_images():
+    from flask import request
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_images_proc
+    from pytavia_modules.view import view_images
+    response = qr_images_proc.qr_images_proc(app).complete_images_save(request, session, app.root_path)
+    if response.get("success"):
+        return redirect(url_for("user_qr_list"))
+    return view_images.view_images(app).new_qr_design_html(
+        url_content=response.get("url_content", ""), qr_name=response.get("qr_name", ""),
+        short_code=response.get("short_code", ""), qr_encode_url=response.get("qr_encode_url"),
+        error_msg=response.get("error_msg", "Save failed.")
+    )
+
+@app.route("/qr/update/images/<qrcard_id>", methods=["GET", "POST"])
+def qr_update_content_images(qrcard_id):
+    from flask import request
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.qr import qr_images_proc as _qrp
+    from pytavia_modules.view import view_update_images
+    proc = _qrp.qr_images_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard: return redirect(url_for("user_qr_list"))
+    qrcard = _merge_images_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
+    
+    if request.method == "POST":
+        if request.form.get("back_from_design"):
+            existing_draft = _get_qr_draft(session, qrcard_id) or {}
+            short_code = request.form.get("short_code", "").strip() or qrcard.get("short_code")
+            return view_update_images.view_update_images(app).update_qr_content_html(
+                qrcard=qrcard, url_content=qrcard.get("url_content"), qr_name=qrcard.get("name"),
+                short_code=short_code, base_url=config.G_BASE_URL
+            )
+            
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
+        if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+            url_content = "https://" + url_content
+            
+        images_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design", "images_files"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"): images_data[key] = val_list
+                else: images_data[key] = val_list[0] if val_list else ""
+                
+        import os, uuid as _uuid
+        upload_dir = os.path.join(app.root_path, "static", "uploads", "images", qrcard_id)
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        new_files = request.files.getlist("images_files")
+        images_names = request.form.getlist("images_name[]")
+        images_descs = request.form.getlist("images_desc[]")
+        existing_urls = request.form.getlist("images_existing_url[]")
+        
+        db_files = list(qrcard.get("images_gallery_files", []))
+        db_map = {f.get("url"): dict(f) for f in db_files}
+        
+        updated_gallery = []
+        for i, url in enumerate(existing_urls):
+            entry = db_map.get(url, {"url": url})
+            if i < len(images_names): entry["name"] = images_names[i]
+            if i < len(images_descs): entry["desc"] = images_descs[i]
+            updated_gallery.append(entry)
+            
+        new_file_offset = len(existing_urls)
+        for i, f in enumerate(new_files):
+            if f and f.filename and f.filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
+                f.seek(0, 2)
+                if f.tell() <= 2 * 1024 * 1024:
+                    f.seek(0)
+                    ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
+                    safe_name = _uuid.uuid4().hex + ext
+                    f.save(os.path.join(upload_dir, safe_name))
+                    form_idx = new_file_offset + i
+                    name = images_names[form_idx] if form_idx < len(images_names) else ""
+                    desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
+                    updated_gallery.append({
+                        "url": f"/static/uploads/images/{qrcard_id}/{safe_name}",
+                        "name": name,
+                        "desc": desc
+                    })
+                    
+        qrcard["images_gallery_files"] = updated_gallery
+        images_data["images_gallery_files"] = updated_gallery
+        
+        # Save straight to DB so design step has it
+        try:
+            database.get_db_conn(config.mainDB).db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"images_gallery_files": updated_gallery}})
+            database.get_db_conn(config.mainDB).db_qrcard_images.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"images_gallery_files": updated_gallery}}, upsert=True)
+        except Exception: pass
+        
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), images_data)
+        qrcard.update(images_data)
+        
+        if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
+            return view_update_images.view_update_images(app).update_qr_content_html(
+                qrcard=qrcard, error_msg="A QR card with this name already exists.", base_url=config.G_BASE_URL
+            )
+            
+        return view_update_images.view_update_images(app).update_qr_design_html(qrcard=qrcard, url_content=url_content, qr_name=qr_name)
+    
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft: qrcard.update(draft)
+    from pytavia_modules.view import view_update_images
+    return view_update_images.view_update_images(app).update_qr_content_html(
+        qrcard=qrcard, url_content=qrcard.get("url_content"), qr_name=qrcard.get("name"),
+        short_code=qrcard.get("short_code") or None, base_url=config.G_BASE_URL
+    )
+
+@app.route("/qr/update/images/qr-design/<qrcard_id>", methods=["GET", "POST"])
+def qr_update_design_images(qrcard_id):
+    from flask import request
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.qr import qr_images_proc as _qrp
+    from pytavia_modules.view import view_update_images
+    proc = _qrp.qr_images_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard: return redirect(url_for("user_qr_list"))
+    qrcard = _merge_images_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
+    
+    if request.method == "POST":
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
+        if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+            url_content = "https://" + url_content
+            
+        images_data = {}
+        for key in request.form:
+            if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
+                val_list = request.form.getlist(key)
+                if len(val_list) > 1 or key.endswith("[]"): images_data[key] = val_list
+                else: images_data[key] = val_list[0] if val_list else ""
+                
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), images_data)
+        qrcard.update(images_data)
+        qrcard["url_content"] = url_content
+        qrcard["name"] = qr_name
+    else:
+        draft = _get_qr_draft(session, qrcard_id)
+        if draft: qrcard.update(draft)
+        
+    qr_encode_url = config.G_BASE_URL + "/images/" + (qrcard["short_code"] if qrcard.get("short_code") else "")
+    return view_update_images.view_update_images(app).update_qr_design_html(
+        qrcard=qrcard, url_content=qrcard.get("url_content"), qr_name=qrcard.get("name"), qr_encode_url=qr_encode_url
+    )
+
+@app.route("/qr/update/save/images/<qrcard_id>", methods=["POST"])
+def qr_update_save_images(qrcard_id):
+    from flask import request
+    if "fk_user_id" not in session: return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    draft = _get_qr_draft(session, qrcard_id) or {}
+    url_content = (request.form.get("url_content") or "").strip() or draft.get("url_content") or ""
+    if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
+        url_content = "https://" + url_content
+    qr_name = (request.form.get("qr_name") or "").strip() or draft.get("qr_name") or "Untitled QR"
+    short_code = (request.form.get("short_code") or "").strip().lower() or (draft.get("short_code") or "").strip().lower()
+    
+    from pytavia_modules.qr import qr_images_proc
+    proc = qr_images_proc.qr_images_proc(app)
+    params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "name": qr_name, "url_content": url_content}
+    if short_code: params["short_code"] = short_code
+    
+    params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled") or draft.get("scan_limit_enabled"))
+    raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
+    params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+    
+    for key in request.form:
+        if key not in ["csrf_token", "url_content", "qr_name", "short_code", "scan_limit_enabled", "scan_limit_value"]:
+            val_list = request.form.getlist(key)
+            if len(val_list) > 1 or key.endswith("[]"): params[key] = val_list
+            else: params[key] = val_list[0] if val_list else ""
+            
+    for key, val in draft.items():
+        if key not in params and key not in ["url_content", "qr_name", "short_code"]:
+            params[key] = val
+            
+    proc.edit_qrcard(params)
+    _clear_qr_draft(session, qrcard_id)
+    return redirect(url_for("user_qr_list"))
 
 
 @app.route("/api/qr/remove_pdf_file", methods=["POST"])
