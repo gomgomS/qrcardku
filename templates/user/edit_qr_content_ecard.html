@@ -1412,474 +1412,8 @@
                 <div class="phone-mockup">
                     <div class="mockup-inner"
                         style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
-                        {% set preview_primary = qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD'
-                        %}
-                        <!-- Welcome screen overlay: shown first, then smooth fade to E-card preview -->
-                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
-                            <img id="preview-welcome-img" src="" alt="Welcome">
-                        </div>
-
-                        <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
-                        <div id="preview-template1"
-                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: #f3f4f6; overflow-y: auto; overflow-x: hidden;">
-                            <!-- Header image area (light bg so image looks natural) -->
-                            <div id="t1-preview-header"
-                                style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('E-card_t1_header_img_url')) %}display: none;{% endif %}">
-                                <img id="t1-preview-header-img"
-                                    src="{% if qrcard and qrcard.get('E-card_t1_header_img_url') %}{{ qrcard.get('E-card_t1_header_img_url') }}{% endif %}"
-                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                            </div>
-                            <!-- Colored card body (primary color bg, white text) -->
-                            <div id="t1-preview-card-body"
-                                style="background: {{ preview_primary }}; {% if qrcard and qrcard.get('E-card_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 14px 14px 20px; min-height: 0; overflow-y: auto;">
-                                <div id="t1-preview-company"
-                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
-                                <div id="t1-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
-                                <div id="t1-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
-                                <!-- Contact list for template 1 -->
-                                <div id="t1-preview-contact-list"
-                                    style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
-                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.label or 'Phone' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.label or 'Email' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.label or 'Website' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- Contact button for template 1 -->
-                                <div id="t1-preview-btn"
-                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
-                                    <i class="fa-solid fa-address-card"></i>
-                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
-                                </div>
-                                <!-- Website link -->
-                                <div id="t1-preview-website"
-                                    style="text-align: center; margin-top: 8px; font-size: 11px; font-weight: 600; color: white; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Template 2 Preview: header image + floating white card -->
-                        <div id="preview-template2"
-                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
-                            <!-- Header image area -->
-                            <div id="t2-preview-header"
-                                style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('E-card_t1_header_img_url')) %}display: none;{% endif %}">
-                                <img id="t2-preview-header-img"
-                                    src="{% if qrcard and qrcard.get('E-card_t1_header_img_url') %}{{ qrcard.get('E-card_t1_header_img_url') }}{% endif %}"
-                                    alt="" style="width: 100%; height: 100%; object-fit: cover;">
-                            </div>
-                            <!-- White floating card body -->
-                            <div id="t2-preview-card-body"
-                                style="background: white; {% if qrcard and qrcard.get('E-card_t1_header_img_url') %}border-radius: 22px 22px 0 0; margin-top: -18px;{% else %}border-radius: 0;{% endif %} position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 20px 16px; min-height: 0; overflow-y: auto;">
-                                <div id="t2-preview-company"
-                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
-                                <div id="t2-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
-                                <div id="t2-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
-                                <!-- Contact list for template 2 -->
-                                <div id="t2-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;">
-                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.label or 'Phone' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.label or 'Email' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.label or 'Website' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- Contact button for template 2 -->
-                                <div id="t2-preview-btn"
-                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
-                                    <i class="fa-solid fa-address-card"></i>
-                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
-                                </div>
-                                <!-- Website inside card -->
-                                <div id="t2-preview-website"
-                                    style="text-align: center; margin-top: 12px; font-size: 11px; font-weight: 600; color: {{ preview_primary }}; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Template 3 Preview: primary bg + circle image at top -->
-                        <div id="preview-template3"
-                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden;">
-                            <div
-                                style="flex: 1; display: flex; flex-direction: column; padding: 20px 14px 20px; overflow-y: auto; align-items: center;">
-                                <!-- Circle image -->
-                                <div
-                                    style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 3px solid white; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; flex-shrink: 0; box-shadow: 0 0 0 5px rgba(255,255,255,0.15);">
-                                    <img id="t3-preview-circle-img"
-                                        src="{% if qrcard and qrcard.get('E-card_t3_circle_img_url') %}{{ qrcard.get('E-card_t3_circle_img_url') }}{% endif %}"
-                                        alt=""
-                                        style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('E-card_t3_circle_img_url')) %}display: none;{% endif %}">
-                                    <div id="t3-preview-circle-placeholder"
-                                        style="display: {% if qrcard and qrcard.get('E-card_t3_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%;">
-                                        <i class="fa-regular fa-image"
-                                            style="font-size: 26px; color: rgba(255,255,255,0.5);"></i>
-                                    </div>
-                                </div>
-                                <!-- Text -->
-                                <div id="t3-preview-company"
-                                    style="font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.75); text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 2px; width: 100%; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
-                                <div id="t3-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: white; text-align: center; margin-bottom: 2px; line-height: 1.2; width: 100%; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
-                                <div id="t3-preview-desc"
-                                    style="font-size: 11px; color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 8px; width: 100%; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
-                                <!-- Contact list for template 3 -->
-                                <div id="t3-preview-contact-list"
-                                    style="display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:8px;">
-                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.label or 'Phone' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.label or 'Email' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.label or 'Website' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- Contact button for template 3 -->
-                                <div id="t3-preview-btn"
-                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 8px auto; white-space: nowrap; display:flex; align-items:center; gap:5px;">
-                                    <i class="fa-solid fa-address-card"></i>
-                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
-                                </div>
-                                <!-- Website -->
-                                <div id="t3-preview-website"
-                                    style="text-align: center; margin-top: 4px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Template 4 Preview: primary bg + floating white card + circle image overlapping top -->
-                        <div id="preview-template4"
-                            style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
-                            <!-- White floating card -->
-                            <div
-                                style="background: white; border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
-                                <!-- Circle image overlapping top of card -->
-                                <div
-                                    style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center;">
-                                    <img id="t4-preview-circle-img"
-                                        src="{% if qrcard and qrcard.get('E-card_t4_circle_img_url') %}{{ qrcard.get('E-card_t4_circle_img_url') }}{% endif %}"
-                                        alt=""
-                                        style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('E-card_t4_circle_img_url')) %}display: none;{% endif %}">
-                                    <div id="t4-preview-circle-placeholder"
-                                        style="display: {% if qrcard and qrcard.get('E-card_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e5e7eb;">
-                                        <i class="fa-regular fa-image" style="font-size: 22px; color: #9ca3af;"></i>
-                                    </div>
-                                </div>
-                                <!-- Text inside card -->
-                                <div id="t4-preview-company"
-                                    style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('E-card_company')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_company', '') if qrcard else '' }}</div>
-                                <div id="t4-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_title', '') if qrcard else '' }}</div>
-                                <div id="t4-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 10px; {% if not (qrcard and qrcard.get('E-card_desc')) %}display: none;{% endif %}">
-                                    {{ qrcard.get('E-card_desc', '') if qrcard else '' }}</div>
-                                <!-- Contact list for template 4 -->
-                                <div id="t4-preview-contact-list" style="display:flex;flex-direction:column;gap:6px;">
-                                    {% for p in qrcard.get('E-card_phones',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-phone" style="color:#2563eb;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.label or 'Phone' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                p.number }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for e in qrcard.get('E-card_emails',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.label or 'Email' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                e.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                    {% for w in qrcard.get('E-card_websites',[]) if qrcard %}
-                                    <div
-                                        style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                        <div
-                                            style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                            <i class="fa-solid fa-globe" style="color:#10b981;font-size:12px;"></i>
-                                        </div>
-                                        <div style="flex:1;min-width:0;"><span
-                                                style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.label or 'Website' }}</span><span
-                                                style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                                w.value }}</span></div><i class="fa-solid fa-chevron-right"
-                                            style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                                <!-- Contact button for template 4 -->
-                                <div id="t4-preview-btn"
-                                    style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 9px 20px; border-radius: 20px; font-size: 12px; font-weight: 600; width: fit-content; margin: 10px auto 0; white-space: nowrap; display:flex; align-items:center; gap:5px;">
-                                    <i class="fa-solid fa-address-card"></i>
-                                    {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
-                                </div>
-                            </div>
-                            <!-- Website below card -->
-                            <div id="t4-preview-website"
-                                style="text-align: center; margin-top: 14px; font-size: 11px; font-weight: 600; color: white; width: 100%; {% if not (qrcard and qrcard.get('E-card_website')) %}display: none;{% endif %}">
-                                {{ qrcard.get('E-card_website', '') if qrcard else '' }}</div>
-                        </div>
-
-                        <!-- E-card Default Template Preview -->
-                        <div id="preview-top-block"
-                            style="background-color: {{ preview_primary }}; width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 40px; padding-bottom: 70px; flex-shrink: 0;">
-                        </div>
-
-                        <div id="preview-bottom-block"
-                            style="background-color: #ffffff; width: 100%; margin-top: -30px; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; align-items: center; z-index: 2; position: relative; padding-bottom: 40px; flex-grow: 1;">
-
-                            <!-- E-card Thumbnail and Navigation -->
-                            <div
-                                style="display: flex; align-items: center; justify-content: center; width: 100%; margin-top: -50px; margin-bottom: 16px;">
-
-                                <div id="preview-profile-img-container"
-                                    style="width: 120px; height: 120px; border-radius: 50%; background: white; border: 4px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                                    <i id="preview-profile-placeholder-icon" class="fa-regular fa-image"
-                                        style="font-size: 44px; color: #d1d5db; {% if qrcard and (qrcard.get('E-card_t1_header_img_url') or qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t4_circle_img_url')) %}display:none;{% endif %}"></i>
-                                    {% set _pimg = (qrcard.get('E-card_t1_header_img_url') or
-                                    qrcard.get('E-card_t3_circle_img_url') or qrcard.get('E-card_t4_circle_img_url') or
-                                    '') if qrcard else '' %}
-                                    <img id="preview-profile-img" src="{{ _pimg }}" alt=""
-                                        style="{% if not _pimg %}display:none;{% endif %} width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                            </div>
-
-                            <div id="preview-title-text"
-                                style="color: #111827; font-size: 17px; font-weight: 800; font-family: 'Lato', sans-serif; margin-bottom: 4px; text-align: center; padding: 0 16px; line-height: 1.2; {% if not (qrcard and qrcard.get('E-card_title')) %}display:none;{% endif %}">
-                                {{ qrcard.get('E-card_title','') if qrcard else '' }}
-                            </div>
-
-                            <div id="preview-company-text"
-                                style="color: #6b7280; font-size: 13px; font-weight: 600; font-family: 'Lato', sans-serif; text-align: center; padding: 0 16px; margin-bottom: 4px; word-break: break-word; {% if not (qrcard and qrcard.get('E-card_company')) %}display:none;{% endif %}">
-                                {{ qrcard.get('E-card_company','') if qrcard else '' }}
-                            </div>
-
-                            <div id="preview-desc-text"
-                                style="color: #9ca3af; font-size: 11px; font-weight: 400; font-family: 'Lato', sans-serif; text-align: center; padding: 0 20px; margin-bottom: 12px; line-height: 1.4; {% if not (qrcard and qrcard.get('E-card_desc')) %}display:none;{% endif %}">
-                                {{ qrcard.get('E-card_desc','') if qrcard else '' }}
-                            </div>
-
-                            <!-- Contact rows preview (phones/emails/websites) -->
-                            <div id="preview-contact-list"
-                                style="width:100%; padding: 0 10px; display:flex; flex-direction:column; gap:6px; margin-bottom:12px;">
-                                {% for p in qrcard.get('E-card_phones', []) if qrcard %}
-                                <div
-                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                    <div
-                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <i class="fa-solid fa-phone" style="color:#2563eb;font-size:13px;"></i>
-                                    </div>
-                                    <div style="flex:1;min-width:0;">
-                                        <span
-                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            p.label or 'Phone' }}</span>
-                                        <span
-                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            p.number }}</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right"
-                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                </div>
-                                {% endfor %}
-                                {% for e in qrcard.get('E-card_emails', []) if qrcard %}
-                                <div
-                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                    <div
-                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <i class="fa-solid fa-envelope" style="color:#ea4335;font-size:13px;"></i>
-                                    </div>
-                                    <div style="flex:1;min-width:0;">
-                                        <span
-                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            e.label or 'Email' }}</span>
-                                        <span
-                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            e.value }}</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right"
-                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                </div>
-                                {% endfor %}
-                                {% for w in qrcard.get('E-card_websites', []) if qrcard %}
-                                <div
-                                    style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;">
-                                    <div
-                                        style="width:30px;height:30px;background:#f3f4f6;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <i class="fa-solid fa-globe" style="color:#10b981;font-size:13px;"></i>
-                                    </div>
-                                    <div style="flex:1;min-width:0;">
-                                        <span
-                                            style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            w.label or 'Website' }}</span>
-                                        <span
-                                            style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{
-                                            w.value }}</span>
-                                    </div>
-                                    <i class="fa-solid fa-chevron-right"
-                                        style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
-                                </div>
-                                {% endfor %}
-                            </div>
-
-                            <!-- contact button -->
-                            <div id="preview-btn"
-                                style="background-color: {{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}; color: white; padding: 10px 24px; border-radius: 20px; font-size: 13px; font-weight: 600; font-family: 'Lato', sans-serif; width: fit-content; margin: 0 auto 8px; white-space: nowrap; display:flex; align-items:center; gap:6px;">
-                                <i class="fa-solid fa-address-card"></i>
-                                {{ qrcard.get('E-card_btn_text', 'contact') if qrcard else 'contact' }}
-                            </div>
-
-                            <div id="preview-website-text"
-                                style="color: {{ preview_primary }}; font-size: 12px; font-weight: 500; font-family: 'Lato', sans-serif; margin-top: 4px; {% if not (qrcard and qrcard.get('E-card_website')) %}display:none;{% endif %} text-align: center; text-decoration: underline;">
-                                {{ qrcard.get('E-card_website','') if qrcard else '' }}
-                            </div>
-                        </div>
-
-
+                        {% set ecard_mode = 'preview' %}
+                        {% include 'user/template_ecard_general.html' %}
                     </div>
                 </div>
 
@@ -2086,22 +1620,22 @@
 
     // Button text sync is handled below by btnTextInput2 (preserves icon)
 
-    // Company, Title, Desc sync â€” live updates only (initial values pre-filled by Jinja2 in HTML)
+    // E-card_company (full name) -> preview-title-text (big); E-card_title (job title) -> preview-company-text (small)
     const companyInput = document.querySelector('input[name="E-card_company"]');
-    const previewCompany = document.getElementById('preview-company-text');
-    if (companyInput && previewCompany) {
+    const previewTitle = document.getElementById('preview-title-text');
+    if (companyInput && previewTitle) {
         companyInput.addEventListener('input', e => {
-            previewCompany.textContent = e.target.value;
-            previewCompany.style.display = e.target.value ? 'block' : 'none';
+            previewTitle.textContent = e.target.value;
+            previewTitle.style.display = e.target.value ? 'block' : 'none';
         });
     }
 
     const titleInput = document.querySelector('input[name="E-card_title"]');
-    const previewTitle = document.getElementById('preview-title-text');
-    if (titleInput && previewTitle) {
+    const previewCompany = document.getElementById('preview-company-text');
+    if (titleInput && previewCompany) {
         titleInput.addEventListener('input', e => {
-            previewTitle.textContent = e.target.value;
-            previewTitle.style.display = e.target.value ? 'block' : 'none';
+            previewCompany.textContent = e.target.value;
+            previewCompany.style.display = e.target.value ? 'block' : 'none';
         });
     }
 
@@ -2776,8 +2310,8 @@
                 el.textContent = value;
                 el.style.display = value ? 'block' : 'none';
             }
-            set('t1-preview-company', val('E-card_company'));
-            set('t1-preview-title', val('E-card_title'));
+            set('t1-preview-company', val('E-card_title'));
+            set('t1-preview-title', val('E-card_company'));
             set('t1-preview-desc', val('E-card_desc'));
             set('t1-preview-website', val('E-card_website'));
             var picker = document.getElementById('E-card_primary_picker');
@@ -2841,8 +2375,8 @@
                 el.textContent = value;
                 el.style.display = value ? 'block' : 'none';
             }
-            set('t2-preview-company', val('E-card_company'));
-            set('t2-preview-title', val('E-card_title'));
+            set('t2-preview-company', val('E-card_title'));
+            set('t2-preview-title', val('E-card_company'));
             set('t2-preview-desc', val('E-card_desc'));
             set('t2-preview-website', val('E-card_website'));
             var picker = document.getElementById('E-card_primary_picker');
@@ -2866,8 +2400,8 @@
                 el.textContent = value;
                 el.style.display = value ? 'block' : 'none';
             }
-            set('t3-preview-company', val('E-card_company'));
-            set('t3-preview-title', val('E-card_title'));
+            set('t3-preview-company', val('E-card_title'));
+            set('t3-preview-title', val('E-card_company'));
             set('t3-preview-desc', val('E-card_desc'));
             set('t3-preview-website', val('E-card_website'));
             var picker = document.getElementById('E-card_primary_picker');
@@ -2887,8 +2421,8 @@
                 el.textContent = value;
                 el.style.display = value ? (isBlock || 'block') : 'none';
             }
-            set('t4-preview-company', val('E-card_company'));
-            set('t4-preview-title', val('E-card_title'));
+            set('t4-preview-company', val('E-card_title'));
+            set('t4-preview-title', val('E-card_company'));
             set('t4-preview-desc', val('E-card_desc'));
             set('t4-preview-website', val('E-card_website'));
             var picker = document.getElementById('E-card_primary_picker');

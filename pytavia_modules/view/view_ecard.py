@@ -1,5 +1,6 @@
 from flask import render_template
 import traceback
+from pytavia_modules.qr.qr_public_visual_helper import normalize_ecard_contact_lists
 
 
 class view_ecard:
@@ -11,7 +12,7 @@ class view_ecard:
     def new_qr_content_html(self, msg=None, error_msg=None, base_url=None, url_content=None, qr_name=None, short_code=None, ecard_data=None, phone_list=None, email_list=None, website_list=None):
         try:
             # When returning from design (Back), ecard_data is passed as qrcard so the form pre-fills
-            qrcard = ecard_data if ecard_data else None
+            qrcard = normalize_ecard_contact_lists(ecard_data) if ecard_data else None
             return render_template(
                 "/user/new_qr_content_ecard.html",
                 qr_type="ecard",

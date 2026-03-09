@@ -1,5 +1,6 @@
 from flask import render_template
 import traceback
+from pytavia_modules.qr.qr_public_visual_helper import normalize_ecard_contact_lists
 
 
 class view_update_ecard:
@@ -11,6 +12,7 @@ class view_update_ecard:
     def update_qr_content_html(self, qrcard, url_content=None, qr_name=None, short_code=None, msg=None, error_msg=None, base_url=None):
         """Step 1 (content): edit_qr_content_ecard.html with /qr/update/ecard/<id> and /qr/update/ecard/qr-design/<id>."""
         try:
+            qrcard = normalize_ecard_contact_lists(qrcard)
             cid = qrcard.get("qrcard_id")
             raw_url = (url_content if url_content is not None else (qrcard.get("url_content") or "")).strip()
             if raw_url.startswith("https://"):

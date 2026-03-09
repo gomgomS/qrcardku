@@ -1,6 +1,7 @@
 from flask import render_template
 import sys
 import traceback
+from pytavia_modules.qr.qr_public_visual_helper import normalize_ecard_contact_lists
 
 class view_user:
 
@@ -78,6 +79,8 @@ class view_user:
     def update_qr_content_html(self, qr_type, qrcard, url_content=None, qr_name=None, short_code=None, msg=None, error_msg=None, base_url=None):
         """Step-based update: content step (reuses new_qr_content layout with update URLs and prefills). url_content/qr_name optional when re-rendering from Back from design."""
         try:
+            if qr_type == "ecard":
+                qrcard = normalize_ecard_contact_lists(qrcard)
             raw_url = (url_content if url_content is not None else (qrcard.get("url_content") or "")).strip()
             if raw_url.startswith("https://"):
                 url_content_display = raw_url[8:]

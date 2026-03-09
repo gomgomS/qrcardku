@@ -5,7 +5,7 @@ sys.path.append("pytavia_core")
 from flask import abort, render_template
 from pytavia_core import database, config
 
-from .qr_public_visual_helper import enforce_scan_limit_and_increment
+from .qr_public_visual_helper import enforce_scan_limit_and_increment, normalize_ecard_contact_lists
 
 
 class qr_public_ecard_visual_proc:
@@ -44,4 +44,5 @@ class qr_public_ecard_visual_proc:
                 qrcard = merged
         except Exception:
             pass
+        qrcard = normalize_ecard_contact_lists(qrcard)
         return render_template("/user/public_ecard.html", qrcard=qrcard)
