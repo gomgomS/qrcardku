@@ -2240,6 +2240,7 @@
             var bgInput = document.getElementById('welcome_bg_color_picker');
             if (bgInput) overlay.style.backgroundColor = bgInput.value;
             imgEl.src = src;
+            imgEl.style.display = 'block';
             overlay.style.display = 'flex';
             overlay.classList.remove('hide');
             var sec = getWelcomeTimeSec() * 1000;
@@ -2251,7 +2252,7 @@
             }, sec);
         }
 
-        var initialUrl = '';
+        var initialUrl = {{ ((qrcard.get('welcome_img_url') or '') if (qrcard is defined and qrcard) else '') | tojson }};
         var currentObjectUrl = null;
         function getPreviewSrc() {
             var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
@@ -2668,12 +2669,17 @@
         function showT2Header(hasImage) {
             var hdr = document.getElementById('t2-preview-header');
             var cardBody = document.getElementById('t2-preview-card-body');
+            var cardWrap = document.getElementById('t2-preview-card-wrap');
             if (hdr) {
                 hdr.style.display = hasImage ? 'block' : 'none';
+                hdr.style.margin = hasImage ? '10px 12px 0' : '0';
             }
             if (cardBody) {
-                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '14px';
                 cardBody.style.marginTop = hasImage ? '-18px' : '0';
+            }
+            if (cardWrap) {
+                cardWrap.style.justifyContent = hasImage ? 'flex-start' : 'center';
             }
         }
 

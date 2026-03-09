@@ -2146,6 +2146,7 @@
             var bgInput = document.getElementById('welcome_bg_color_picker');
             if (bgInput) overlay.style.backgroundColor = bgInput.value;
             imgEl.src = src;
+            imgEl.style.display = 'block';
             overlay.style.display = 'flex';
             overlay.classList.remove('hide');
             var sec = getWelcomeTimeSec() * 1000;
@@ -2540,10 +2541,17 @@
         function showT2Header(hasImage) {
             var hdr = document.getElementById('t2-preview-header');
             var cardBody = document.getElementById('t2-preview-card-body');
-            if (hdr) hdr.style.display = hasImage ? 'block' : 'none';
+            var cardWrap = document.getElementById('t2-preview-card-wrap');
+            if (hdr) {
+                hdr.style.display = hasImage ? 'block' : 'none';
+                hdr.style.margin = hasImage ? '10px 12px 0' : '0';
+            }
             if (cardBody) {
-                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '0';
+                cardBody.style.borderRadius = hasImage ? '22px 22px 0 0' : '14px';
                 cardBody.style.marginTop = hasImage ? '-18px' : '0';
+            }
+            if (cardWrap) {
+                cardWrap.style.justifyContent = hasImage ? 'flex-start' : 'center';
             }
         }
 
