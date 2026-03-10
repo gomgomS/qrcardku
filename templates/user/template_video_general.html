@@ -1,26 +1,26 @@
 {# =====================================================================
-template_images_general.html — Single Source of Truth for Images Gallery UI
+template_video_general.html — Single Source of Truth for Video Gallery UI
 Include with:
-{% set images_mode = 'preview' %} (inside phone-mockup / mockup-inner)
-{% set images_mode = 'public' %} (standalone public page body)
+{% set video_mode = 'preview' %} (inside phone-mockup / mockup-inner)
+{% set video_mode = 'public' %} (standalone public page body)
 ===================================================================== #}
 
 {# ── Variable setup (shared by both modes) ─────────────────────────── #}
 {% set _qrc = qrcard if qrcard else {} %}
-{% set _tmpl = _qrc.get('images_template', '1col') %}
-{% set _primary = _qrc.get('images_primary_color', '#2F6BFD') %}
-{% set _secondary= _qrc.get('images_secondary_color', '#0E379A') %}
-{% set _gtitle = _qrc.get('images_gallery_title', '') %}
-{% set _gdesc = _qrc.get('images_gallery_desc', '') %}
-{% set _gallery = _qrc.get('images_gallery_files', []) %}
+{% set _tmpl = _qrc.get('video_template', '1col') %}
+{% set _primary = _qrc.get('video_primary_color', '#2F6BFD') %}
+{% set _secondary= _qrc.get('video_secondary_color', '#0E379A') %}
+{% set _gtitle = _qrc.get('video_title', '') %}
+{% set _gdesc = _qrc.get('video_desc', '') %}
+{% set _videos = _qrc.get('video_links', []) %}
 {% set _welcome_img = _qrc.get('welcome_img_url', '') %}
 {% set _welcome_time = _qrc.get('welcome_time', 2.5) | float %}
 {% set _welcome_bg = _qrc.get('welcome_bg_color', _primary) %}
-{% set _apply_fonts = _qrc.get('images_font_apply_all', '') %}
-{% set _title_font = _qrc.get('images_title_font', 'Lato') %}
-{% set _text_font = _qrc.get('images_text_font', 'Lato') %}
-{% set _title_color = _qrc.get('images_title_color','#111827') %}
-{% set _text_color = _qrc.get('images_text_color', '#6b7280') %}
+{% set _apply_fonts = _qrc.get('video_font_apply_all', '') %}
+{% set _title_font = _qrc.get('video_title_font', 'Lato') %}
+{% set _text_font = _qrc.get('video_text_font', 'Lato') %}
+{% set _title_color = _qrc.get('video_title_color','#111827') %}
+{% set _text_color = _qrc.get('video_text_color', '#6b7280') %}
 
 {# Determine columns based on template #}
 {% set _cols = 1 %}
@@ -30,7 +30,7 @@ Include with:
 {# =====================================================================
 PUBLIC MODE
 ===================================================================== #}
-{% if images_mode == 'public' %}
+{% if video_mode == 'public' %}
 
 <style>
     :root {
@@ -203,6 +203,7 @@ PUBLIC MODE
     gap: 16px;
     padding: 20px;
     flex: 1;
+    align-content: start;
     }
 
     .gallery-item {
@@ -211,6 +212,8 @@ PUBLIC MODE
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: transform 0.2s;
+        display: flex;
+        flex-direction: column;
     }
 
     .gallery-item:hover {
@@ -218,15 +221,18 @@ PUBLIC MODE
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
 
-    .gallery-item img {
+    .gallery-item iframe,
+    .gallery-item video {
         width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
+        aspect-ratio: 16 / 9;
+        border: none;
         display: block;
+        background: #000;
     }
 
     .gallery-item-info {
         padding: 12px;
+        flex: 1;
     }
 
     .gallery-item-name {
@@ -274,40 +280,6 @@ PUBLIC MODE
         font-size: 11px;
         color: #9ca3af;
     }
-
-    /* Lightbox */
-    .lightbox-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        z-index: 200;
-        background: rgba(0, 0, 0, 0.9);
-        align-items: center;
-        justify-content: center;
-    }
-
-    .lightbox-overlay.show {
-        display: flex;
-    }
-
-    .lightbox-overlay img {
-        max-width: 90%;
-        max-height: 85vh;
-        object-fit: contain;
-        border-radius: 8px;
-    }
-
-    .lightbox-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        color: white;
-        font-size: 28px;
-        cursor: pointer;
-        background: none;
-        border: none;
-        z-index: 201;
-    }
 </style>
 
 <div class="phone-wrapper">
@@ -325,31 +297,29 @@ PUBLIC MODE
             {% if _gdesc %}<div class="gallery-header-desc">{{ _gdesc }}</div>{% endif %}
         </div>
         <div class="gallery-grid">
-            {% for img in _gallery %}
-            <div class="gallery-item" onclick="openLightbox('{{ img.url }}')" style="cursor:pointer;">
-                <img src="{{ img.url }}" alt="{{ img.name or '' }}" loading="lazy">
-                {% if img.name or img.desc %}
+            {% for vid in _videos %}
+            <div class="gallery-item">
+                {% if 'youtube.com' in vid.url or 'youtu.be' in vid.url or 'vimeo.com' in vid.url %}
+                <iframe src="{{ vid.url }}" allowfullscreen loading="lazy"></iframe>
+                {% else %}
+                <video src="{{ vid.url }}" controls preload="metadata"></video>
+                {% endif %}
+                {% if vid.name or vid.desc %}
                 <div class="gallery-item-info">
-                    {% if img.name %}<div class="gallery-item-name">{{ img.name }}</div>{% endif %}
-                    {% if img.desc %}<div class="gallery-item-desc">{{ img.desc }}</div>{% endif %}
+                    {% if vid.name %}<div class="gallery-item-name">{{ vid.name }}</div>{% endif %}
+                    {% if vid.desc %}<div class="gallery-item-desc">{{ vid.desc }}</div>{% endif %}
                 </div>
                 {% endif %}
             </div>
             {% endfor %}
-            {% if not _gallery %}
+            {% if not _videos %}
             <div style="text-align:center;padding:60px 20px;color:#9ca3af;grid-column:1/-1;">
-                <i class="fa-regular fa-images" style="font-size:48px;margin-bottom:12px;display:block;"></i>
-                <div style="font-size:14px;">No images yet</div>
+                <i class="fa-solid fa-play" style="font-size:48px;margin-bottom:12px;display:block;"></i>
+                <div style="font-size:14px;">No videos yet</div>
             </div>
             {% endif %}
         </div>
         <div class="gallery-footer">Powered by QRCardKu</div>
-    </div>
-
-    {# Lightbox #}
-    <div class="lightbox-overlay" id="lightbox-overlay" onclick="closeLightbox()">
-        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-        <img id="lightbox-img" src="" alt="">
     </div>
 
 </div>{# /phone-wrapper #}
@@ -371,24 +341,10 @@ PUBLIC MODE
 </script>
 {% endif %}
 
-<script>
-    function openLightbox(url) {
-        var ov = document.getElementById('lightbox-overlay');
-        var im = document.getElementById('lightbox-img');
-        im.src = url;
-        ov.classList.add('show');
-    }
-    function closeLightbox() {
-        var ov = document.getElementById('lightbox-overlay');
-        ov.classList.remove('show');
-        document.getElementById('lightbox-img').src = '';
-    }
-</script>
-
 {# =====================================================================
 PREVIEW MODE — shown inside phone mockup
 ===================================================================== #}
-{% elif images_mode == 'preview' %}
+{% elif video_mode == 'preview' %}
 
 {# ── Welcome overlay ──────────────────────────────────────────────── #}
 <div id="preview-welcome-overlay" class="preview-welcome-overlay"
@@ -398,7 +354,7 @@ PREVIEW MODE — shown inside phone mockup
 </div>
 
 {# ── Gallery preview ─────────────────────────────────────────────── #}
-<div id="preview-images-gallery"
+<div id="preview-video-gallery"
     style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#f9fafb;overflow-y:auto;overflow-x:hidden;">
 
     {# Header #}
@@ -414,26 +370,28 @@ PREVIEW MODE — shown inside phone mockup
 
     {# Grid #}
     <div id="preview-gallery-grid"
-        style="display:grid;grid-template-columns:repeat({{ _cols }},1fr);gap:8px;padding:10px;flex:1;">
-        {% for img in _gallery %}
+        style="display:grid;grid-template-columns:repeat({{ _cols }},1fr);gap:8px;padding:10px;flex:1;align-content:start;">
+        {% for vid in _videos %}
         <div class="preview-gallery-item"
-            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-            <img src="{{ img.url }}" alt="{{ img.name or '' }}"
-                style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy">
-            {% if img.name or img.desc %}
+            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;">
+            <div
+                style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;">
+                <i class="fa-solid fa-play" style="font-size:24px;opacity:0.8;"></i>
+            </div>
+            {% if vid.name or vid.desc %}
             <div style="padding:6px 8px;">
-                {% if img.name %}<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">{{
-                    img.name }}</div>{% endif %}
-                {% if img.desc %}<div style="font-size:9px;color:#6b7280;line-height:1.3;">{{ img.desc }}</div>{% endif
+                {% if vid.name %}<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">{{
+                    vid.name }}</div>{% endif %}
+                {% if vid.desc %}<div style="font-size:9px;color:#6b7280;line-height:1.3;">{{ vid.desc }}</div>{% endif
                 %}
             </div>
             {% endif %}
         </div>
         {% endfor %}
-        {% if not _gallery %}
+        {% if not _videos %}
         <div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">
-            <i class="fa-regular fa-images" style="font-size:32px;margin-bottom:8px;display:block;"></i>
-            <div style="font-size:11px;">No images</div>
+            <i class="fa-solid fa-play" style="font-size:32px;margin-bottom:8px;display:block;"></i>
+            <div style="font-size:11px;">No videos</div>
         </div>
         {% endif %}
     </div>

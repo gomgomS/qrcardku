@@ -1,0 +1,1908 @@
+﻿{% extends "user/base.html" %}
+
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+<style>
+    .new-qr-container {
+        display: flex;
+        gap: 32px;
+        height: 100%;
+    }
+
+    .form-column {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-column {
+        width: 400px;
+        flex-shrink: 0;
+    }
+
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+    }
+
+    /* Tabs */
+    .design-tabs {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .design-tab {
+        padding: 0 0 12px 0;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .design-tab.active {
+        color: var(--primary);
+    }
+
+    .design-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: var(--primary);
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Name input */
+    .name-qr-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    .name-qr-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* Content editor area */
+    .editor-panel {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+
+    .editor-panel h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--text-main);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    /* Section items */
+    .section-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        position: relative;
+        transition: all 0.2s;
+    }
+
+    .section-item:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .section-item.inactive {
+        opacity: 0.5;
+        background: #f9fafb;
+    }
+
+    .section-item .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-item .drag-handle {
+        cursor: move;
+        color: var(--text-muted);
+        padding: 4px;
+    }
+
+    .section-item .section-title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .section-item .section-key {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .section-item .section-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .section-item .section-actions button {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: white;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+    }
+
+    .section-item .section-actions button:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .section-item .section-actions .btn-edit {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+
+    .section-item .section-actions .btn-delete {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #b91c1c;
+    }
+
+    .section-item .section-actions .btn-toggle-active {
+        min-width: 80px;
+    }
+
+    .section-item .section-actions .btn-toggle-active.active-btn {
+        background: #dcfce7;
+        border-color: #16a34a;
+        color: #166534;
+    }
+
+    .section-item .section-actions .btn-toggle-active.inactive-btn {
+        background: #f3f4f6;
+        border-color: #6b7280;
+        color: #374151;
+    }
+
+    .inactive-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #6b7280;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    /* Content blocks */
+    .block-container {
+        margin-top: 16px;
+    }
+
+    .content-block {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        background: #fafbfc;
+        position: relative;
+    }
+
+    .content-block .block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .content-block .block-type-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .content-block .block-type-badge.type-content {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .content-block .block-type-badge.type-html_editor {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .content-block .block-type-badge.type-maps {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .content-block .block-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .content-block .block-actions button {
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 4px;
+        font-size: 14px;
+    }
+
+    .content-block .block-actions button:hover {
+        color: var(--primary);
+    }
+
+    .quill-editor-container {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        min-height: 200px;
+        background: white;
+    }
+
+    .ql-toolbar.ql-snow {
+        border: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .ql-container.ql-snow {
+        border: none !important;
+        border-radius: 0 0 6px 6px;
+        min-height: 150px;
+    }
+
+    .html-code-editor {
+        width: 100%;
+        min-height: 200px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        resize: vertical;
+        box-sizing: border-box;
+    }
+
+    .html-preview {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 8px;
+        min-height: 80px;
+        background: white;
+    }
+
+    /* Buttons */
+    .btn-add-block {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: white;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .btn-add-block:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-add-block.btn-primary {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .btn-add-block.btn-warning {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #92400e;
+    }
+
+    .btn-add-block.btn-success {
+        background: #dcfce7;
+        border-color: #16a34a;
+        color: #166534;
+    }
+
+    .btn-add-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px;
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+
+    .btn-add-section:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    /* Background color */
+    .bg-color-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .bg-color-row label {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .bg-color-row input[type="text"] {
+        flex: 1;
+        padding: 6px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .bg-color-row input[type="color"] {
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .bg-color-preview {
+        width: 60px;
+        height: 32px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+    }
+
+    /* Stats section */
+    .url-prefix-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f9fafb;
+    }
+
+    .url-prefix {
+        padding: 10px 14px;
+        color: var(--text-muted);
+        font-size: 14px;
+        border-right: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+
+    .url-prefix-group input {
+        flex: 1;
+        border: none;
+        padding: 10px 14px;
+        background: white;
+    }
+
+    .url-prefix-group input:focus {
+        outline: none;
+    }
+
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-bottom: 8px;
+    }
+
+    .toggle-label-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e5e7eb;
+        transition: .3s;
+        border-radius: 20px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(16px);
+    }
+
+    /* Welcome Screen */
+    .sub-collapse-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        padding: 12px 0;
+    }
+
+    .sub-collapse-body {
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+        padding: 0;
+    }
+
+    .sub-collapse-body.show {
+        max-height: 600px;
+        opacity: 1;
+        padding: 8px 0 16px 0;
+    }
+
+    /* Phone preview */
+    .phone-container {
+        position: sticky;
+        top: 24px;
+    }
+
+    .phone-mockup {
+        width: 100%;
+        height: 600px;
+        background-color: white;
+        border: 12px solid #1a1a1a;
+        border-radius: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .mockup-inner {
+        width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: #f9fafb;
+        position: relative;
+    }
+
+    .preview-section {
+        padding: 16px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .preview-section:last-child {
+        border-bottom: none;
+    }
+
+    .preview-section h4 {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .preview-disclaimer {
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .preview-welcome-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 15;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: none;
+    }
+
+    .preview-welcome-overlay.hide {
+        opacity: 0;
+    }
+
+    .preview-welcome-overlay img {
+        max-width: 200px;
+        max-height: 280px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* Edit mode overlay */
+    .edit-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 100;
+        display: none;
+    }
+
+    .edit-overlay.show {
+        display: block;
+    }
+
+    .edit-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 600px;
+        max-width: 90vw;
+        height: 100vh;
+        background: white;
+        z-index: 101;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        padding: 24px;
+    }
+
+    .edit-panel.show {
+        transform: translateX(0);
+    }
+
+    .edit-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .edit-panel-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .edit-panel-close {
+        border: none;
+        background: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--text-muted);
+        padding: 4px;
+    }
+
+    /* Maps block */
+    .maps-inputs {
+        display: flex;
+        gap: 12px;
+    }
+
+    .maps-inputs .form-group {
+        flex: 1;
+    }
+
+    /* Tag Editor */
+    .tag-editor-panel {
+        display: none;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+    }
+
+    .tag-editor-panel.active {
+        display: block;
+    }
+
+    .tag-editor-panel .tag-editor-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0369a1;
+    }
+
+    .tag-editor-panel .tag-editor-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .tag-editor-panel .tag-editor-actions button {
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid;
+    }
+
+    .tag-editor-panel .btn-save-tag {
+        background: #0ea5e9;
+        color: white;
+        border-color: #0ea5e9;
+    }
+
+    .tag-editor-panel .btn-close-tag {
+        background: white;
+        color: #64748b;
+        border-color: #cbd5e1;
+    }
+
+    .tag-editor-panel .btn-delete-tag {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-color: #fca5a5;
+    }
+
+    /* Editable elements in preview */
+    .html-preview [data-editable-tag] {
+        cursor: pointer;
+        outline: 1px dashed transparent;
+        transition: outline-color 0.2s, background 0.2s;
+    }
+
+    .html-preview [data-editable-tag]:hover {
+        outline-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.08);
+    }
+
+    .html-preview [data-editable-tag].selected {
+        outline: 2px solid #0ea5e9;
+        background: rgba(14, 165, 233, 0.12);
+    }
+
+    /* Image inserter modal */
+    .img-inserter-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .img-inserter-overlay.show {
+        display: flex;
+    }
+
+    .img-inserter-modal {
+        background: white;
+        border-radius: 12px;
+        max-width: 480px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .img-inserter-modal h4 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .img-inserter-modal .img-tab-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .img-inserter-modal .img-tab {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        background: white;
+    }
+
+    .img-inserter-modal .img-tab.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .img-inserter-modal .img-tab-content {
+        display: none;
+    }
+
+    .img-inserter-modal .img-tab-content.active {
+        display: block;
+    }
+
+    .img-drop-zone {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+    }
+
+    .img-drop-zone:hover,
+    .img-drop-zone.drag-over {
+        border-color: var(--primary);
+    }
+
+    .btn-insert-img {
+        width: 100%;
+        padding: 10px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
+            Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn">Next <i
+                class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/special/qr-design') }}"
+    enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="special_sections" id="specialSectionsData" value="[]" />
+
+    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+
+    <div class="new-qr-container">
+        <!-- Left form section -->
+        <div class="form-column">
+            {% if error_msg %}
+            <div
+                style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+
+            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required>
+
+            <div class="design-tabs">
+                <div class="design-tab active" data-tab="content">Content</div>
+                <div class="design-tab" data-tab="stats">Stats</div>
+            </div>
+
+            <!-- Content Tab -->
+            <div class="tab-content active" id="tab-content">
+
+                <!-- Welcome Screen Section -->
+                <div class="editor-panel" style="margin-bottom: 20px;">
+                    <div class="sub-collapse-header"
+                        onclick="this.nextElementSibling.classList.toggle('show'); var ch=this.querySelector('i.fa-solid'); ch.classList.toggle('fa-chevron-down'); ch.classList.toggle('fa-chevron-up');">
+                        <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                        <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                    </div>
+                    <div class="sub-collapse-body">
+                        <div style="margin-top: 8px;">
+                            <label
+                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                            <label
+                                style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                <div id="welcome-img-preview"
+                                    style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                    <div
+                                        style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                    </div>
+                                    <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                </div>
+                                <input type="file" name="special_welcome_img" accept="image/*" style="display: none;"
+                                    id="special_welcome_img_input">
+                            </label>
+                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                <button type="button" id="welcome-preview-btn" class="btn-outline"
+                                    style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                <button type="button" id="welcome-delete-btn" class="btn-outline"
+                                    style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; display: none;">Remove</button>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <label
+                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background
+                                color</label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="#2F6BFD"
+                                    style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                <input type="text" id="welcome_bg_color_hex" readonly
+                                    style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px;">
+                            <label
+                                style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+                                Time (seconds) <i class="fa-regular fa-circle-question"
+                                    style="color: var(--text-muted); font-size: 14px;"></i>
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
+                                    style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider" value="2.5">
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                <span id="welcome-time-display">2.5 seconds</span>
+                                <span>10 seconds</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-add-section" onclick="addNewSection()">
+                    <i class="fa-solid fa-plus"></i> Add New Section
+                </button>
+
+                <div id="sectionsContainer">
+                    <!-- Sections rendered by JS -->
+                    <p class="text-muted" id="noSectionsMsg"
+                        style="text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 13px;">
+                        No sections yet. Click "Add New Section" to start building your page.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Stats Tab -->
+            <div class="tab-content" id="tab-stats">
+                <div class="editor-panel">
+                    <h3><i class="fa-solid fa-chart-bar" style="color: var(--primary);"></i> Stats & URL</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Custom URL Path</label>
+                        <div class="url-prefix-group">
+                            <span class="url-prefix">{{ base_url | default('qrcardku.com') }}/special/</span>
+                            <input type="text" name="short_code" placeholder="my-page"
+                                value="{{ short_code | default('', true) }}" pattern="[a-z0-9_\-]{2,32}">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 11px;">2-32 chars: a-z, 0-9, dash,
+                            underscore. Leave empty for auto-generated.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">URL Content (fallback)</label>
+                        <input type="text" name="url_content" class="form-control" placeholder="qrcardku.com"
+                            value="{{ url_content | default('qrcardku.com', true) }}">
+                    </div>
+
+                    <div class="toggle-row">
+                        <div class="toggle-label-with-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Enable scan limit</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" name="scan_limit_enabled" id="scanLimitToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="scanLimitField" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">Maximum scans</label>
+                            <input type="number" name="scan_limit_value" id="scanLimitValue" class="form-control"
+                                min="1" value="100" placeholder="100" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right preview -->
+        <div class="preview-column">
+            <div class="phone-container">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                    <div
+                        style="display:flex; align-items:center; gap:8px; color:var(--primary); font-size:13px; font-weight:600;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Special
+                    </div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="mockup-inner" id="previewContainer">
+                        <!-- Welcome overlay -->
+                        <div class="preview-welcome-overlay" id="preview-welcome-overlay" style="display:none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome" style="display:none;">
+                        </div>
+                        <div id="preview-content">
+                            <div style="text-align:center; padding: 40px 20px; color: var(--text-muted);">
+                                <i class="fa-solid fa-wand-magic-sparkles"
+                                    style="font-size:48px; opacity:0.2; margin-bottom:16px;"></i>
+                                <p style="font-size:12px;">Add sections to see preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> Preview is approximate
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Edit Section Side Panel -->
+<div class="edit-overlay" id="editOverlay"></div>
+<div class="edit-panel" id="editPanel">
+    <div class="edit-panel-header">
+        <h3 id="editPanelTitle">Edit Section</h3>
+        <button class="edit-panel-close" onclick="closeEditPanel()">&times;</button>
+    </div>
+    <div id="editPanelBody">
+        <div class="form-group" style="display:none;">
+            <label class="form-label">Section Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" class="form-control" id="editNavName" placeholder="e.g., about, hero, services">
+            <small style="color: var(--text-muted); font-size: 11px;">Unique identifier (lowercase, no spaces)</small>
+        </div>
+        <div class="form-group" style="display:none;">
+            <label class="form-label">Label <span style="color:#ef4444;">*</span></label>
+            <input type="text" class="form-control" id="editNavLabel" placeholder="e.g., About Us, Hero, Services">
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <label class="form-label" style="margin-bottom:0;"><strong>Content Blocks</strong></label>
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-add-block btn-primary" onclick="addBlock('content')">
+                    <i class="fa-solid fa-edit"></i> Rich Text
+                </button>
+                <button type="button" class="btn-add-block btn-warning" onclick="addBlock('html_editor')">
+                    <i class="fa-solid fa-code"></i> HTML
+                </button>
+                <button type="button" class="btn-add-block btn-success" onclick="addBlock('maps')">
+                    <i class="fa-solid fa-map-marker-alt"></i> Maps
+                </button>
+            </div>
+        </div>
+        <div id="editBlocksContainer">
+            <p class="text-muted" id="noBlocksMsg"
+                style="text-align:center; color:var(--text-muted); padding:20px 0; font-size:12px;">
+                No blocks yet. Add blocks using the buttons above.
+            </p>
+        </div>
+
+        <div class="bg-color-row">
+            <label><i class="fa-solid fa-palette"></i> Background</label>
+            <input type="text" id="editBgColor" placeholder="#ffffff or gradient...">
+            <input type="color" id="editBgColorPicker" value="#ffffff">
+            <div class="bg-color-preview" id="editBgPreview"></div>
+        </div>
+
+        <div
+            style="display:flex; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
+            <button type="button"
+                style="flex:1; padding:10px; border:1px solid var(--border-color); border-radius:8px; background:white; cursor:pointer; font-size:14px;"
+                onclick="closeEditPanel()">Cancel</button>
+            <button type="button"
+                style="flex:1; padding:10px; border:none; border-radius:8px; background:var(--primary); color:white; cursor:pointer; font-size:14px; font-weight:600;"
+                onclick="saveEditPanel()">
+                <i class="fa-solid fa-check"></i> Save Section
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Image Inserter Modal -->
+<div class="img-inserter-overlay" id="imgInserterOverlay">
+    <div class="img-inserter-modal">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <h4 style="margin:0;"><i class="fa-solid fa-image"></i> Insert Image</h4>
+            <button type="button"
+                style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted);"
+                onclick="closeImgInserter()">&times;</button>
+        </div>
+        <div class="img-tab-bar">
+            <button type="button" class="img-tab active" data-img-tab="upload" onclick="switchImgTab('upload')"><i
+                    class="fa-solid fa-upload"></i> Upload</button>
+            <button type="button" class="img-tab" data-img-tab="url" onclick="switchImgTab('url')"><i
+                    class="fa-solid fa-link"></i> From URL</button>
+        </div>
+        <div class="img-tab-content active" id="imgTabUpload">
+            <div class="img-drop-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
+                <i class="fa-solid fa-cloud-arrow-up"
+                    style="font-size:32px; color:var(--text-muted); margin-bottom:8px;"></i>
+                <p style="font-size:13px; color:var(--text-muted); margin:0;">Drag & drop an image or click to browse
+                </p>
+                <input type="file" id="imgFileInput" accept="image/*" style="display:none;"
+                    onchange="handleImgFileSelect(this)">
+            </div>
+            <div id="imgUploadPreview" style="display:none; margin-top:12px; text-align:center;">
+                <img id="imgUploadPreviewImg" src="" style="max-width:100%; max-height:200px; border-radius:6px;">
+            </div>
+        </div>
+        <div class="img-tab-content" id="imgTabUrl">
+            <div class="form-group">
+                <label class="form-label">Image URL</label>
+                <input type="text" class="form-control" id="imgUrlInput" placeholder="https://example.com/image.jpg">
+            </div>
+            <div id="imgUrlPreview" style="display:none; margin-top:8px; text-align:center;">
+                <img id="imgUrlPreviewImg" src="" style="max-width:100%; max-height:200px; border-radius:6px;">
+            </div>
+            <button type="button"
+                style="margin-top:8px; padding:6px 12px; background:white; border:1px solid var(--border-color); border-radius:6px; font-size:12px; cursor:pointer;"
+                onclick="previewImgUrl()">Preview</button>
+        </div>
+        <button type="button" class="btn-insert-img" onclick="insertImgConfirm()"><i class="fa-solid fa-check"></i>
+            Insert Image</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    // ==================== STATE ====================
+    let sections = [];
+    let editingIndex = -1;
+    let editBlocks = [];
+    let editQuillInstances = {};
+    let currentImgBlockId = null;  // for image inserter
+    let pendingImgDataUrl = null;  // for upload preview
+    // Load initial data from server
+    try {
+        const initial = {{ special_sections | default ([], true) | tojson | safe
+    }};
+    if (Array.isArray(initial) && initial.length > 0) sections = initial;
+    } catch (e) { console.error('Error loading initial sections:', e); }
+
+    // ==================== TAB SWITCHING ====================
+    document.querySelectorAll('.design-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.design-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.getElementById('scanLimitToggle').addEventListener('change', function () {
+        document.getElementById('scanLimitField').style.display = this.checked ? 'block' : 'none';
+        document.getElementById('scanLimitValue').disabled = !this.checked;
+    });
+
+    // ==================== SECTIONS LIST ====================
+    function renderSections() {
+        const container = document.getElementById('sectionsContainer');
+        if (sections.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:40px 0; font-size:13px;">No sections yet. Click "Add New Section" to start building your page.</p>';
+        } else {
+            container.innerHTML = sections.map((sec, i) => {
+                const isActive = sec.active !== false;
+                const blockCount = (sec.blocks || []).length;
+                return `
+                <div class="section-item ${isActive ? '' : 'inactive'}" data-index="${i}">
+                    ${!isActive ? '<span class="inactive-badge">Inactive</span>' : ''}
+                    <div class="section-header">
+                        <div class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                        <div>
+                            <div class="section-title">${escHtml(sec.label || 'Untitled')}</div>
+                            <div class="section-key"><i class="fa-solid fa-tag"></i> ${escHtml(sec.key || '')} &middot; ${blockCount} block${blockCount !== 1 ? 's' : ''}</div>
+                        </div>
+                    </div>
+                    <div class="section-actions">
+                        <button type="button" class="btn-toggle-active ${isActive ? 'active-btn' : 'inactive-btn'}" onclick="toggleSection(${i})">
+                            <i class="fa-solid ${isActive ? 'fa-check-circle' : 'fa-times-circle'}"></i> ${isActive ? 'Active' : 'Inactive'}
+                        </button>
+                        <button type="button" class="btn-edit" onclick="editSection(${i})">
+                            <i class="fa-solid fa-edit"></i> Edit
+                        </button>
+                        <button type="button" class="btn-delete" onclick="deleteSection(${i})">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        updateHiddenField();
+        renderPreview();
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(container, {
+                handle: '.drag-handle', animation: 200,
+                onEnd: function (evt) {
+                    const item = sections.splice(evt.oldIndex, 1)[0];
+                    sections.splice(evt.newIndex, 0, item);
+                    sections.forEach((s, i) => s.order = i);
+                    renderSections();
+                }
+            });
+        }
+    }
+
+    function addNewSection() {
+        editingIndex = -1;
+        editBlocks = [];
+        document.getElementById('editNavName').value = '';
+        document.getElementById('editNavLabel').value = '';
+        document.getElementById('editBgColor').value = '';
+        document.getElementById('editBgColorPicker').value = '#ffffff';
+        document.getElementById('editBgPreview').style.background = '#ffffff';
+        document.getElementById('editPanelTitle').textContent = 'Add New Section';
+        renderEditBlocks();
+        openEditPanel();
+    }
+
+    function editSection(index) {
+        editingIndex = index;
+        const sec = sections[index];
+        editBlocks = JSON.parse(JSON.stringify(sec.blocks || []));
+        document.getElementById('editNavName').value = sec.key || '';
+        document.getElementById('editNavLabel').value = sec.label || '';
+        const bgColor = (sec.plugin && sec.plugin.background_color) || '';
+        document.getElementById('editBgColor').value = bgColor;
+        try { document.getElementById('editBgColorPicker').value = bgColor.startsWith('#') ? bgColor : '#ffffff'; } catch (e) { }
+        document.getElementById('editBgPreview').style.background = bgColor || '#ffffff';
+        document.getElementById('editPanelTitle').textContent = 'Edit Section: ' + (sec.label || '');
+        renderEditBlocks();
+        openEditPanel();
+    }
+
+    function deleteSection(index) {
+        if (!confirm('Delete this section?')) return;
+        sections.splice(index, 1);
+        sections.forEach((s, i) => s.order = i);
+        renderSections();
+    }
+
+    function toggleSection(index) {
+        sections[index].active = sections[index].active === false ? true : false;
+        renderSections();
+    }
+
+    function updateHiddenField() {
+        document.getElementById('specialSectionsData').value = JSON.stringify(sections);
+    }
+
+    // ==================== EDIT PANEL ====================
+    function openEditPanel() {
+        document.getElementById('editOverlay').classList.add('show');
+        document.getElementById('editPanel').classList.add('show');
+    }
+
+    function closeEditPanel() {
+        document.getElementById('editOverlay').classList.remove('show');
+        document.getElementById('editPanel').classList.remove('show');
+        editQuillInstances = {};
+    }
+
+    function saveEditPanel() {
+        let navName = document.getElementById('editNavName').value.trim().toLowerCase().replace(/\s+/g, '-');
+        let navLabel = document.getElementById('editNavLabel').value.trim();
+        const bgColor = document.getElementById('editBgColor').value.trim();
+        if (!navName) { navName = 'section-' + Date.now(); document.getElementById('editNavName').value = navName; }
+        if (!navLabel) { navLabel = 'Section ' + (sections.length + 1); document.getElementById('editNavLabel').value = navLabel; }
+        const duplicate = sections.findIndex((s, i) => s.key === navName && i !== editingIndex);
+        if (duplicate >= 0) { navName += '-' + Math.floor(Math.random() * 1000); }
+        saveEditBlockContent();
+        const section = {
+            key: navName, label: navLabel,
+            order: editingIndex >= 0 ? sections[editingIndex].order : sections.length,
+            active: editingIndex >= 0 ? (sections[editingIndex].active !== false) : true,
+            blocks: editBlocks, plugin: {}
+        };
+        if (bgColor) section.plugin.background_color = bgColor;
+        if (editingIndex >= 0) sections[editingIndex] = section;
+        else sections.push(section);
+        closeEditPanel();
+        renderSections();
+    }
+
+    // ==================== EDIT BLOCKS ====================
+    function addBlock(type) {
+        const blockId = 'block_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        saveEditBlockContent();
+        editBlocks.push({
+            id: blockId, type: type,
+            data: type === 'maps' ? { latitude: '', longitude: '' } : ''
+        });
+        renderEditBlocks();
+        setTimeout(() => {
+            if (type === 'content') {
+                const q = editQuillInstances[blockId]; if (q) q.focus();
+            } else if (type === 'html_editor') {
+                const ta = document.querySelector(`[data-block-id="${blockId}"] .html-code-editor`);
+                if (ta) ta.focus();
+            }
+        }, 300);
+    }
+
+    function removeBlock(blockId) {
+        editBlocks = editBlocks.filter(b => b.id !== blockId);
+        if (editQuillInstances[blockId]) delete editQuillInstances[blockId];
+        renderEditBlocks();
+    }
+
+    function moveBlockUp(blockId) {
+        saveEditBlockContent();
+        const idx = editBlocks.findIndex(b => b.id === blockId);
+        if (idx > 0) { [editBlocks[idx - 1], editBlocks[idx]] = [editBlocks[idx], editBlocks[idx - 1]]; renderEditBlocks(); }
+    }
+
+    function moveBlockDown(blockId) {
+        saveEditBlockContent();
+        const idx = editBlocks.findIndex(b => b.id === blockId);
+        if (idx >= 0 && idx < editBlocks.length - 1) { [editBlocks[idx], editBlocks[idx + 1]] = [editBlocks[idx + 1], editBlocks[idx]]; renderEditBlocks(); }
+    }
+
+    function saveEditBlockContent() {
+        editBlocks.forEach(block => {
+            if (block.type === 'content' && editQuillInstances[block.id]) {
+                block.data = editQuillInstances[block.id].root.innerHTML;
+            } else if (block.type === 'html_editor') {
+                const ta = document.querySelector(`[data-block-id="${block.id}"] .html-code-editor`);
+                if (ta) block.data = ta.value;
+            } else if (block.type === 'maps') {
+                const div = document.querySelector(`[data-block-id="${block.id}"]`);
+                if (div) {
+                    const lat = div.querySelector('.map-lat');
+                    const lng = div.querySelector('.map-lng');
+                    block.data = {
+                        latitude: lat ? parseFloat(lat.value) || '' : '',
+                        longitude: lng ? parseFloat(lng.value) || '' : ''
+                    };
+                }
+            }
+        });
+    }
+
+    function renderEditBlocks() {
+        editQuillInstances = {};
+        const container = document.getElementById('editBlocksContainer');
+        if (editBlocks.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px 0; font-size:12px;">No blocks yet. Add blocks using the buttons above.</p>';
+            return;
+        }
+        container.innerHTML = editBlocks.map((block, i) => {
+            let typeLabel = block.type;
+            if (block.type === 'content') typeLabel = 'Rich Text';
+            else if (block.type === 'html_editor') typeLabel = 'HTML Editor';
+            else if (block.type === 'maps') typeLabel = 'Maps';
+
+            let body = '';
+            if (block.type === 'content') {
+                body = `<div class="quill-editor-container" id="quill-${block.id}"></div>`;
+            } else if (block.type === 'html_editor') {
+                body = `
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" class="btn-add-block" style="font-size:11px; padding:4px 10px;" onclick="openImgInserter('${block.id}')">
+                        <i class="fa-solid fa-image"></i> Insert Image
+                    </button>
+                </div>
+                <textarea class="html-code-editor" id="htmlCodeEditor_${block.id}" placeholder="<div>Your HTML here...</div>">${escHtml(block.data || '')}</textarea>
+                <div style="font-size:11px; color:#0369a1; margin:6px 0 2px; font-weight:600;">
+                    <i class="fa-solid fa-mouse-pointer"></i> Click any element below to edit its content:
+                </div>
+                <div class="html-preview" id="htmlPreview_${block.id}">${block.data || '<em style="color:#999;">Preview will appear here</em>'}</div>
+                <div class="tag-editor-panel" id="tagEditor_${block.id}">
+                    <div class="tag-editor-header">
+                        <span id="tagName_${block.id}"></span>
+                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')" style="padding:2px 6px; font-size:10px;">âœ•</button>
+                    </div>
+                    <div id="tagContentGroup_${block.id}">
+                        <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Text content:</label>
+                        <textarea id="tagContent_${block.id}" class="form-control" rows="2" style="font-size:12px; padding:6px;"></textarea>
+                    </div>
+                    <div id="tagImageGroup_${block.id}" style="display:none;">
+                        <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Image src:</label>
+                        <input type="text" id="tagImageSrc_${block.id}" class="form-control" style="font-size:12px; padding:6px;" placeholder="https://...">
+                    </div>
+                    <div class="tag-editor-actions">
+                        <button type="button" class="btn-save-tag" onclick="saveTagContent('${block.id}')"><i class="fa-solid fa-check"></i> Save</button>
+                        <button type="button" class="btn-delete-tag" onclick="deleteTag('${block.id}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')">Cancel</button>
+                    </div>
+                </div>`;
+            } else if (block.type === 'maps') {
+                const lat = (block.data && block.data.latitude) || '';
+                const lng = (block.data && block.data.longitude) || '';
+                body = `
+                <div class="maps-inputs">
+                    <div class="form-group"><label class="form-label">Latitude</label><input type="number" step="any" class="form-control map-lat" placeholder="-6.2088" value="${lat}"></div>
+                    <div class="form-group"><label class="form-label">Longitude</label><input type="number" step="any" class="form-control map-lng" placeholder="106.8456" value="${lng}"></div>
+                </div>`;
+            }
+
+            return `
+            <div class="content-block" data-block-id="${block.id}">
+                <div class="block-header">
+                    <span class="block-type-badge type-${block.type}">${typeLabel}</span>
+                    <div class="block-actions">
+                        <button type="button" onclick="moveBlockUp('${block.id}')" title="Move up"><i class="fa-solid fa-chevron-up"></i></button>
+                        <button type="button" onclick="moveBlockDown('${block.id}')" title="Move down"><i class="fa-solid fa-chevron-down"></i></button>
+                        <button type="button" onclick="removeBlock('${block.id}')" title="Remove" style="color:#ef4444;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                ${body}
+            </div>`;
+        }).join('');
+
+        // Initialize Quill editors and HTML preview listeners
+        editBlocks.forEach(block => {
+            if (block.type === 'content') {
+                const quillContainer = document.getElementById('quill-' + block.id);
+                if (quillContainer) {
+                    const quill = new Quill(quillContainer, {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                [{ 'header': [1, 2, 3, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'color': [] }, { 'background': [] }],
+                                [{ 'align': [] }],
+                                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                ['link', 'image'],
+                                ['clean']
+                            ]
+                        }
+                    });
+                    if (block.data) quill.root.innerHTML = block.data;
+                    editQuillInstances[block.id] = quill;
+                }
+            }
+            if (block.type === 'html_editor') {
+                const blockDiv = document.querySelector(`[data-block-id="${block.id}"]`);
+                if (blockDiv) {
+                    const textarea = blockDiv.querySelector('.html-code-editor');
+                    const preview = blockDiv.querySelector('.html-preview');
+                    if (textarea && preview) {
+                        textarea.addEventListener('input', () => {
+                            preview.innerHTML = textarea.value || '<em style="color:#999;">Preview will appear here</em>';
+                            makeElementsEditable(preview, block.id);
+                        });
+                        // Make existing preview elements editable
+                        makeElementsEditable(preview, block.id);
+                    }
+                }
+            }
+        });
+    }
+
+    // ==================== TAG EDITING ====================
+    function makeElementsEditable(element, blockId, path) {
+        if (!path) path = [];
+        Array.from(element.children).forEach((child, index) => {
+            const currentPath = [...path, index];
+            const pathStr = currentPath.join('-');
+            const tagName = child.tagName.toLowerCase();
+            child.setAttribute('data-editable-tag', pathStr);
+            child.setAttribute('data-tag-name', tagName);
+            child.style.cursor = 'pointer';
+            child.onclick = function (e) {
+                e.stopPropagation();
+                selectTagForEditing(blockId, child);
+            };
+            if (child.children.length > 0) {
+                makeElementsEditable(child, blockId, currentPath);
+            }
+        });
+    }
+
+    function selectTagForEditing(blockId, element) {
+        const preview = document.getElementById(`htmlPreview_${blockId}`);
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        const tagName = document.getElementById(`tagName_${blockId}`);
+        const tagContent = document.getElementById(`tagContent_${blockId}`);
+        const tagContentGroup = document.getElementById(`tagContentGroup_${blockId}`);
+        const tagImageGroup = document.getElementById(`tagImageGroup_${blockId}`);
+        const tagImageSrc = document.getElementById(`tagImageSrc_${blockId}`);
+        if (!preview || !tagEditor || !tagName || !tagContent) return;
+
+        // Remove previous selection
+        preview.querySelectorAll('[data-editable-tag].selected').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+
+        const path = element.getAttribute('data-editable-tag');
+        const tag = element.getAttribute('data-tag-name');
+        const isImgTag = tag.toLowerCase() === 'img';
+
+        if (isImgTag) {
+            if (tagContentGroup) tagContentGroup.style.display = 'none';
+            if (tagImageGroup) tagImageGroup.style.display = 'block';
+            const currentSrc = element.getAttribute('src') || '';
+            if (tagImageSrc) tagImageSrc.value = currentSrc;
+        } else {
+            if (tagContentGroup) tagContentGroup.style.display = 'block';
+            if (tagImageGroup) tagImageGroup.style.display = 'none';
+            const textNodes = Array.from(element.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
+            tagContent.value = textNodes.map(n => n.textContent).join('').trim();
+        }
+
+        tagEditor.classList.add('active');
+        tagName.textContent = `<${tag}> [${path}]`;
+        tagContent.setAttribute('data-editing-path', path);
+        if (isImgTag && tagImageSrc) tagImageSrc.focus();
+        else tagContent.focus();
+        tagEditor.setAttribute('data-current-element', path);
+    }
+
+    function closeTagEditor(blockId) {
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        const preview = document.getElementById(`htmlPreview_${blockId}`);
+        if (tagEditor) tagEditor.classList.remove('active');
+        if (preview) preview.querySelectorAll('[data-editable-tag].selected').forEach(el => el.classList.remove('selected'));
+    }
+
+    function saveTagContent(blockId) {
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        const tagContent = document.getElementById(`tagContent_${blockId}`);
+        const tagImageSrc = document.getElementById(`tagImageSrc_${blockId}`);
+        const tagContentGroup = document.getElementById(`tagContentGroup_${blockId}`);
+        const preview = document.getElementById(`htmlPreview_${blockId}`);
+        const textarea = document.getElementById(`htmlCodeEditor_${blockId}`);
+        if (!tagEditor || !preview || !textarea) return;
+
+        const path = tagContent.getAttribute('data-editing-path');
+        const isImageEdit = tagContentGroup && tagContentGroup.style.display === 'none';
+        const block = editBlocks.find(b => b.id === blockId);
+        if (!block) return;
+
+        // Update via temp DOM
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = textarea.value;
+            const pathParts = path.split('-').map(Number);
+            let targetElement = tempDiv;
+            for (let i = 0; i < pathParts.length; i++) {
+                const children = Array.from(targetElement.children);
+                if (pathParts[i] < children.length) targetElement = children[pathParts[i]];
+                else break;
+            }
+            if (targetElement && targetElement !== tempDiv) {
+                if (isImageEdit && tagImageSrc) {
+                    targetElement.setAttribute('src', tagImageSrc.value.trim());
+                } else {
+                    const newContent = tagContent.value;
+                    const textNodes = Array.from(targetElement.childNodes).filter(n => n.nodeType === Node.TEXT_NODE);
+                    if (textNodes.length > 0) textNodes[0].textContent = newContent;
+                    else if (targetElement.children.length === 0) targetElement.textContent = newContent;
+                }
+                textarea.value = tempDiv.innerHTML;
+                block.data = tempDiv.innerHTML;
+            }
+        } catch (e) { console.error('Error updating HTML:', e); }
+
+        // Refresh preview
+        preview.innerHTML = textarea.value || '<em style="color:#999;">Preview will appear here</em>';
+        makeElementsEditable(preview, blockId);
+        closeTagEditor(blockId);
+    }
+
+    function deleteTag(blockId) {
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        const preview = document.getElementById(`htmlPreview_${blockId}`);
+        const textarea = document.getElementById(`htmlCodeEditor_${blockId}`);
+        if (!tagEditor || !preview || !textarea) return;
+
+        const path = tagEditor.getAttribute('data-current-element');
+        if (!path) return;
+        const selectedEl = preview.querySelector(`[data-editable-tag="${path}"]`);
+        const tagNameStr = selectedEl ? selectedEl.getAttribute('data-tag-name') : 'element';
+        if (!confirm(`Delete this <${tagNameStr}> element?`)) return;
+
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = textarea.value;
+            const pathParts = path.split('-').map(Number);
+            if (pathParts.length === 1) {
+                const children = Array.from(tempDiv.children);
+                if (pathParts[0] < children.length) tempDiv.removeChild(children[pathParts[0]]);
+            } else {
+                let parentElement = tempDiv;
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    const children = Array.from(parentElement.children);
+                    if (pathParts[i] < children.length) parentElement = children[pathParts[i]];
+                    else return;
+                }
+                const targetIdx = pathParts[pathParts.length - 1];
+                const children = Array.from(parentElement.children);
+                if (targetIdx < children.length) parentElement.removeChild(children[targetIdx]);
+            }
+            textarea.value = tempDiv.innerHTML;
+            const block = editBlocks.find(b => b.id === blockId);
+            if (block) block.data = tempDiv.innerHTML;
+        } catch (e) { console.error('Error deleting tag:', e); }
+
+        closeTagEditor(blockId);
+        preview.innerHTML = textarea.value || '<em style="color:#999;">Preview will appear here</em>';
+        makeElementsEditable(preview, blockId);
+    }
+
+    // ==================== IMAGE INSERTER ====================
+    function openImgInserter(blockId) {
+        currentImgBlockId = blockId;
+        pendingImgDataUrl = null;
+        document.getElementById('imgFileInput').value = '';
+        document.getElementById('imgUploadPreview').style.display = 'none';
+        document.getElementById('imgUrlInput').value = '';
+        document.getElementById('imgUrlPreview').style.display = 'none';
+        switchImgTab('upload');
+        document.getElementById('imgInserterOverlay').classList.add('show');
+    }
+
+    function closeImgInserter() {
+        document.getElementById('imgInserterOverlay').classList.remove('show');
+        currentImgBlockId = null;
+        pendingImgDataUrl = null;
+    }
+
+    function switchImgTab(tab) {
+        document.querySelectorAll('.img-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.img-tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelector(`[data-img-tab="${tab}"]`).classList.add('active');
+        document.getElementById(tab === 'upload' ? 'imgTabUpload' : 'imgTabUrl').classList.add('active');
+    }
+
+    function handleImgFileSelect(inp) {
+        const file = inp.files && inp.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            pendingImgDataUrl = e.target.result;
+            document.getElementById('imgUploadPreviewImg').src = pendingImgDataUrl;
+            document.getElementById('imgUploadPreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function previewImgUrl() {
+        const url = document.getElementById('imgUrlInput').value.trim();
+        if (!url) return;
+        document.getElementById('imgUrlPreviewImg').src = url;
+        document.getElementById('imgUrlPreview').style.display = 'block';
+    }
+
+    function insertImgConfirm() {
+        let imgSrc = '';
+        const activeTab = document.querySelector('.img-tab.active');
+        const tabType = activeTab ? activeTab.getAttribute('data-img-tab') : 'upload';
+        if (tabType === 'upload') {
+            imgSrc = pendingImgDataUrl || '';
+        } else {
+            imgSrc = document.getElementById('imgUrlInput').value.trim();
+        }
+        if (!imgSrc) { alert('Please select or enter an image first.'); return; }
+        if (!currentImgBlockId) return;
+
+        const textarea = document.getElementById(`htmlCodeEditor_${currentImgBlockId}`);
+        if (!textarea) return;
+
+        const imgTag = `<img src="${imgSrc}" alt="image" style="max-width: 100%; height: auto;">`;
+        const cursorPos = textarea.selectionStart || textarea.value.length;
+        const textBefore = textarea.value.substring(0, cursorPos);
+        const textAfter = textarea.value.substring(cursorPos);
+        textarea.value = textBefore + '\n' + imgTag + '\n' + textAfter;
+
+        const block = editBlocks.find(b => b.id === currentImgBlockId);
+        if (block) block.data = textarea.value;
+
+        // Refresh preview
+        const preview = document.getElementById(`htmlPreview_${currentImgBlockId}`);
+        if (preview) {
+            preview.innerHTML = textarea.value;
+            makeElementsEditable(preview, currentImgBlockId);
+        }
+
+        closeImgInserter();
+    }
+
+    // Setup drag and drop for image inserter
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropZone = document.getElementById('imgDropZone');
+        if (dropZone) {
+            ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); }));
+            ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('drag-over'); }));
+            dropZone.addEventListener('drop', function (e) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    document.getElementById('imgFileInput').files = files;
+                    handleImgFileSelect(document.getElementById('imgFileInput'));
+                }
+            });
+        }
+    });
+
+    // ==================== PREVIEW ====================
+    function renderPreview() {
+        const container = document.getElementById('previewContainer');
+        const activeSections = sections.filter(s => s.active !== false);
+        if (activeSections.length === 0) {
+            container.innerHTML = `
+            <div id="preview-content">
+                                <div style="text-align:center; padding: 40px 20px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-wand-magic-sparkles"
+                                        style="font-size:48px; opacity:0.2; margin-bottom:16px;"></i>
+                                    <p style="font-size:12px;">Add sections to see preview</p>
+                                </div>
+                            </div>`;
+            return;
+        }
+        container.innerHTML = activeSections.map(sec => {
+            const bgStyle = (sec.plugin && sec.plugin.background_color) ? `background:${sec.plugin.background_color};` : '';
+            const blocksHtml = (sec.blocks || []).map(block => {
+                if (block.type === 'content' || block.type === 'html_editor') {
+                    return `<div style="font-size:11px; line-height:1.5;">${block.data || ''}</div>`;
+                } else if (block.type === 'maps' && block.data && block.data.latitude && block.data.longitude) {
+                    return `<div style="background:#e5e7eb; border-radius:4px; padding:8px; text-align:center; font-size:10px; color:var(--text-muted);">
+                    <i class="fa-solid fa-map-marker-alt"></i> Map: ${block.data.latitude}, ${block.data.longitude}
+                </div>`;
+                }
+                return '';
+            }).join('');
+            return `<div class="preview-section" style="${bgStyle}">
+            ${blocksHtml || '<p style="font-size:11px; color:#999; font-style:italic;">Empty section</p>'}
+        </div>`;
+        }).join('');
+    }
+
+    // ==================== BACKGROUND COLOR ====================
+    document.getElementById('editBgColorPicker').addEventListener('input', function () {
+        document.getElementById('editBgColor').value = this.value;
+        document.getElementById('editBgPreview').style.background = this.value;
+    });
+    document.getElementById('editBgColor').addEventListener('input', function () {
+        document.getElementById('editBgPreview').style.background = this.value || '#ffffff';
+        try { if (this.value.startsWith('#') && this.value.length <= 7) document.getElementById('editBgColorPicker').value = this.value; } catch (e) { }
+    });
+
+    document.getElementById('editOverlay').addEventListener('click', closeEditPanel);
+
+    // ==================== FORM SUBMIT ====================
+    document.getElementById('content-form').addEventListener('submit', function (e) {
+        saveEditBlockContent();
+        updateHiddenField();
+        var val = document.getElementById('specialSectionsData').value;
+        console.log('[DEBUG] Form submitting. sections count:', sections.length, 'hidden field length:', val.length);
+        console.log('[DEBUG] hidden field value:', val.substring(0, 500));
+        if (sections.length === 0) {
+            alert('WARNING: No sections to save! The hidden field is empty. sections array length = ' + sections.length);
+        }
+    });
+
+    // ==================== UTILS ====================
+    function escHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ==================== WELCOME SCREEN ====================
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('special_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+        var timeDisplay = document.getElementById('welcome-time-display');
+
+        if (timeSlider && timeDisplay) {
+            timeDisplay.textContent = timeSlider.value + ' seconds';
+            timeSlider.addEventListener('input', function () {
+                timeDisplay.textContent = this.value + ' seconds';
+            });
+        }
+
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            var bgInput = document.getElementById('welcome_bg_color_picker');
+            if (bgInput) overlay.style.backgroundColor = bgInput.value;
+            imgEl.src = src;
+            imgEl.style.display = 'block';
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () { overlay.style.display = 'none'; }, 800);
+            }, sec);
+        }
+
+        var currentObjectUrl = null;
+        function getPreviewSrc() {
+            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+            if (file && file.type.indexOf('image') !== -1) {
+                if (file.size > 1024 * 1024) return null;
+                if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+                currentObjectUrl = URL.createObjectURL(file);
+                return currentObjectUrl;
+            }
+            return null;
+        }
+
+        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+        if (welcomeBgPicker && welcomeBgHex) {
+            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+            welcomeBgPicker.addEventListener('input', function () {
+                welcomeBgHex.value = this.value.toUpperCase();
+            });
+        }
+
+        if (overlay && imgEl) {
+            var thumb = document.getElementById('welcome-img-preview');
+            var deleteBtn = document.getElementById('welcome-delete-btn');
+            if (welcomeInput) {
+                welcomeInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    if (file.size > 1024 * 1024) { alert('Image must be 1 MB or smaller.'); this.value = ''; return; }
+                    if (file.type.indexOf('image') !== -1) {
+                        var url = getPreviewSrc();
+                        if (url && thumb) { thumb.innerHTML = '<img src="' + url + '" alt="Welcome" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>'; }
+                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                        if (url) playWelcomePreview(url);
+                    }
+                });
+            }
+            if (deleteBtn && welcomeInput) {
+                deleteBtn.addEventListener('click', function () {
+                    welcomeInput.value = '';
+                    if (thumb) { thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>'; }
+                    this.style.display = 'none';
+                });
+            }
+            var previewBtn = document.getElementById('welcome-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function () {
+                    var src = getPreviewSrc();
+                    if (src) playWelcomePreview(src);
+                    else alert('Upload an image first (max 1 MB).');
+                });
+            }
+        }
+    })();
+
+    // ==================== INIT ====================
+    renderSections();
+</script>
+{% endblock %}

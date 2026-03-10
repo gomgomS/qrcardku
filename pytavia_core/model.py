@@ -510,6 +510,38 @@ db = {
         "timestamp"                 : 0,
     },
 
+    # Dedicated collection for video-type QR cards (video gallery)
+    "db_qrcard_video": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "video",
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+        # Design and typography
+        "video_template"            : "1col",   # 1col | 2col | 3col
+        "video_primary_color"       : "#2F6BFD",
+        "video_secondary_color"     : "#0E379A",
+        "video_title_font"          : "Lato",
+        "video_title_color"         : "#000000",
+        "video_text_font"           : "Lato",
+        "video_text_color"          : "#000000",
+        # Gallery info
+        "video_title"               : "",
+        "video_desc"                : "",
+        # Video links - list of {url, name, desc}
+        "video_links"               : [],
+        # Font apply
+        "video_font_apply_all"      : False,
+        # Meta
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
     # Dedicated collection for PDF-type QR cards (normalized view of PDF-specific fields)
     "db_qrcard_pdf": {
         "qrcard_id"                 : "",       # link back to master qrcard_id
@@ -545,6 +577,28 @@ db = {
         "stats"                     : {
             "scan_count": 0
         },
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for special-type QR cards (custom HTML builder)
+    "db_qrcard_special": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "special",
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+        # Layers / content blocks stored as a JSON string (json.dumps of list).
+        # Storing as string avoids MongoDB 16 MB BSON nested-document depth issues
+        # with large HTML payloads and makes the field easy to audit/query as text.
+        # Always serialize with json.dumps() on write and json.loads() on read.
+        "special_sections"          : "",
+        # Meta
+        "stats"                     : {"scan_count": 0},
         "scan_limit_enabled"        : False,
         "scan_limit_value"          : 0,
         "status"                    : "ACTIVE",

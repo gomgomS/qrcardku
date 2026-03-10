@@ -1,0 +1,1011 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<link
+    href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap"
+    rel="stylesheet">
+<style>
+    .new-qr-container {
+        display: flex;
+        gap: 32px;
+        height: 100%;
+    }
+
+    .form-column {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .preview-column {
+        width: 340px;
+        flex-shrink: 0;
+    }
+
+    .page-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .collapse-section {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+
+    .collapse-header {
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        background-color: white;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .collapse-header:last-child {
+        border-bottom: none;
+    }
+
+    .header-left-col {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .header-icon {
+        color: var(--primary);
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .header-text h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 2px;
+    }
+
+    .header-text p {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .collapse-body {
+        padding: 0 24px 24px 24px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+    }
+
+    .collapse-body.show {
+        padding: 24px;
+        max-height: 6000px;
+        opacity: 1;
+    }
+
+    .sub-collapse-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        cursor: pointer;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .sub-collapse-header:first-child {
+        border-top: none;
+    }
+
+    .sub-collapse-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        opacity: 0;
+        padding-bottom: 0;
+    }
+
+    .sub-collapse-body.show {
+        max-height: 500px;
+        opacity: 1;
+        padding-bottom: 16px;
+    }
+
+    .sub-collapse-body.show.sub-collapse-body-lg {
+        max-height: 4000px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .name-qr-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* Toggle Switch Styles */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-bottom: 8px;
+    }
+
+    .toggle-label-with-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+        font-weight: 500;
+    }
+
+    .toggle-label-with-icon i {
+        color: var(--text-muted);
+        font-size: 14px;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #e5e7eb;
+        transition: .3s;
+        border-radius: 20px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .3s;
+        border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(16px);
+    }
+
+    /* URL Config Row */
+    .url-prefix-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f9fafb;
+    }
+
+    .url-prefix {
+        padding: 10px 14px;
+        color: var(--text-muted);
+        font-size: 14px;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .url-prefix-group input {
+        flex: 1;
+        border: none;
+        padding: 10px 14px;
+        background: white;
+    }
+
+    .url-prefix-group input:focus {
+        outline: none;
+    }
+
+    /* Phone Mockup Styling */
+    .phone-container {
+        position: sticky;
+        top: 24px;
+    }
+
+    .phone-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .phone-type-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .phone-mockup {
+        width: 100%;
+        height: 600px;
+        background-color: white;
+        border: 12px solid #1a1a1a;
+        border-radius: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .mockup-inner {
+        width: 100%;
+        height: 100%;
+        background-color: #f9fafb;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .preview-disclaimer {
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    /* Video item in form */
+    .gallery-form-item {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: #f9fafb;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        align-items: flex-start;
+    }
+
+    .gallery-form-item-fields {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .gallery-form-item-fields input,
+    .gallery-form-item-fields textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .gallery-form-item-fields textarea {
+        resize: vertical;
+        min-height: 40px;
+        max-height: 80px;
+        margin-bottom: 0;
+    }
+
+    .gallery-form-item-remove {
+        flex-shrink: 0;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    .gallery-form-item-remove:hover {
+        background: #fee2e2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true"
+            style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
+            Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i
+                class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/' ~ qr_type ~ '/qr-design') }}"
+    enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+
+    <div class="new-qr-container">
+        <!-- Left form section -->
+        <div class="form-column">
+            {% if error_msg %}
+            <div
+                style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Basic Information Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #f0fdf4;"><i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div class="header-text">
+                            <h3>About Video</h3>
+                            <p>Video gallery title and description.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div class="form-group">
+                        <label class="form-label">Title Video</label>
+                        <input type="text" class="form-control" name="video_title" id="video_title"
+                            placeholder="e.g. My Video Collection" value="{{ qrcard.video_title if qrcard else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description Video</label>
+                        <textarea class="form-control" name="video_desc" id="video_desc" rows="3"
+                            placeholder="Describe your video gallery...">{{ qrcard.video_desc if qrcard else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Videos Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #fef3c7;"><i class="fa-solid fa-play"></i></div>
+                        <div class="header-text">
+                            <h3>Videos</h3>
+                            <p>Add and manage your videos.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div id="video-items-list"></div>
+
+                    <input type="file" id="video-file-input" name="video_files" multiple
+                        accept="video/mp4,video/webm,video/ogg" style="display:none;"
+                        onchange="handleVideoUploads(event)">
+
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button type="button" class="btn-outline" onclick="addVideoLinkItem()"
+                            style="flex: 1; border-style: dashed; padding: 16px; color: var(--text-muted);">
+                            <i class="fa-solid fa-link"></i> Add Video Link
+                        </button>
+                        <button type="button" class="btn-outline"
+                            onclick="document.getElementById('video-file-input').click()"
+                            style="flex: 1; border-style: dashed; padding: 16px; color: var(--text-muted);">
+                            <i class="fa-solid fa-upload"></i> Upload Video
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-text">
+                            <h3>Appearance</h3>
+                            <p>Customize the style and template.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+
+                    <!-- Select Template -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Select Template</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                                <!-- Template 1: 1 Column -->
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="video_template" value="1col" {% if not qrcard or
+                                        qrcard.get('video_template', '1col' )=='1col' %}checked{% endif %}
+                                        class="hidden-radio" style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="background: #e5e7eb; width: 100%; height: 35%; border-radius: 4px; margin-bottom: 6px;">
+                                        </div>
+                                        <div
+                                            style="background: #d1d5db; width: 100%; height: 35%; border-radius: 4px; margin-bottom: 6px;">
+                                        </div>
+                                        <div style="background: #e5e7eb; width: 100%; height: 20%; border-radius: 4px;">
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-main);">1
+                                        Column</span>
+                                </label>
+
+                                <!-- Template 2: 2 Columns -->
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="video_template" value="2col" {% if qrcard and
+                                        qrcard.get('video_template')=='2col' %}checked{% endif %} class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;height:100%;">
+                                            <div style="background: #e5e7eb; border-radius: 3px;"></div>
+                                            <div style="background: #d1d5db; border-radius: 3px;"></div>
+                                            <div style="background: #d1d5db; border-radius: 3px;"></div>
+                                            <div style="background: #e5e7eb; border-radius: 3px;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">2
+                                        Columns</span>
+                                </label>
+
+                                <!-- Template 3: 3 Columns -->
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="video_template" value="3col" {% if qrcard and
+                                        qrcard.get('video_template')=='3col' %}checked{% endif %} class="hidden-radio"
+                                        style="display:none;">
+                                    <div class="template-card"
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div
+                                            style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;height:100%;">
+                                            <div style="background: #e5e7eb; border-radius: 2px;"></div>
+                                            <div style="background: #d1d5db; border-radius: 2px;"></div>
+                                            <div style="background: #e5e7eb; border-radius: 2px;"></div>
+                                            <div style="background: #d1d5db; border-radius: 2px;"></div>
+                                            <div style="background: #e5e7eb; border-radius: 2px;"></div>
+                                            <div style="background: #d1d5db; border-radius: 2px;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">3
+                                        Columns</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Design (Colors) -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Design</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div
+                                style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;">
+                                <div class="color-preset active" data-primary="#2f6bfd" data-secondary="#0e379a"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 2px solid var(--primary); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #2f6bfd; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #0e379a; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#10b981" data-secondary="#047857"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#f59e0b" data-secondary="#b45309"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #f59e0b; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b45309; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6"
+                                    style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
+                                    <div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div>
+                                </div>
+                            </div>
+
+                            <div
+                                style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 24px;">
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="video_primary_hex" name="video_primary_color"
+                                                value="{{ qrcard.get('video_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="video_primary_picker" value="#2f6bfd"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
+                                        <div
+                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="video_secondary_hex" name="video_secondary_color"
+                                                value="{{ qrcard.get('video_secondary_color', '#0E379A') if qrcard else '#0E379A' }}"
+                                                style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
+                                                readonly>
+                                            <input type="color" id="video_secondary_picker" value="#0e379a"
+                                                style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Font -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Font</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div class="toggle-row">
+                                <span class="toggle-label-with-icon"><i class="fa-solid fa-font"></i> Apply custom
+                                    fonts</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="video_font_apply_all" value="1" {% if qrcard and
+                                        qrcard.get('video_font_apply_all') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Title Font</label>
+                                <select class="form-control" name="video_title_font" id="video_title_font">
+                                    {% set _cur_tf = qrcard.get('video_title_font','Lato') if qrcard else 'Lato' %}
+                                    <option value="Lato" {% if _cur_tf=='Lato' %}selected{% endif %}>Lato</option>
+                                    <option value="Roboto" {% if _cur_tf=='Roboto' %}selected{% endif %}>Roboto</option>
+                                    <option value="Open Sans" {% if _cur_tf=='Open Sans' %}selected{% endif %}>Open Sans
+                                    </option>
+                                    <option value="Montserrat" {% if _cur_tf=='Montserrat' %}selected{% endif %}>
+                                        Montserrat</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Text Font</label>
+                                <select class="form-control" name="video_text_font" id="video_text_font">
+                                    {% set _cur_xf = qrcard.get('video_text_font','Lato') if qrcard else 'Lato' %}
+                                    <option value="Lato" {% if _cur_xf=='Lato' %}selected{% endif %}>Lato</option>
+                                    <option value="Roboto" {% if _cur_xf=='Roboto' %}selected{% endif %}>Roboto</option>
+                                    <option value="Open Sans" {% if _cur_xf=='Open Sans' %}selected{% endif %}>Open Sans
+                                    </option>
+                                    <option value="Montserrat" {% if _cur_xf=='Montserrat' %}selected{% endif %}>
+                                        Montserrat</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Content Section (URL Config + Stats) -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #fef3c7;"><i class="fa-solid fa-gear"></i></div>
+                        <div class="header-text">
+                            <h3>Content</h3>
+                            <p>URL configuration and settings.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header" style="border-top:none;">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">URL Configuration</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div class="form-group">
+                                <label class="form-label">Address</label>
+                                <div class="url-prefix-group">
+                                    <span class="url-prefix">{{ base_url | default('https://qrcardku.com')
+                                        }}/video/</span>
+                                    <input type="text" name="short_code" placeholder="custom-url"
+                                        value="{{ short_code | default('', true) }}" style="font-size:14px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">URL Content</label>
+                                <input type="text" class="form-control" name="url_content" placeholder="qrcardku.com"
+                                    value="{{ url_content | default('qrcardku.com', true) }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Stats</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div class="toggle-row">
+                                <span class="toggle-label-with-icon"><i class="fa-solid fa-chart-simple"></i> Limit
+                                    scans</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="scan_limit_enabled" value="1" id="scan-limit-toggle" {%
+                                        if qrcard and qrcard.get('scan_limit_enabled') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="scan-limit-row" style="display:none;">
+                                <div class="form-group">
+                                    <label class="form-label">Max scans</label>
+                                    <input type="number" class="form-control" name="scan_limit_value" min="0"
+                                        value="{{ qrcard.get('scan_limit_value', 0) if qrcard else 0 }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right preview panel -->
+        <div class="preview-column">
+            <div class="phone-container">
+                <div class="phone-header">
+                    <div class="phone-type-badge">
+                        <i class="fa-solid fa-play"></i> Video
+                    </div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="mockup-inner" style="position:relative;">
+                        {% set video_mode = 'preview' %}
+                        {% include 'user/template_video_general.html' %}
+                    </div>
+                </div>
+                <div class="preview-disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> This is a preview
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    (function () {
+        // ── Accordion logic ──
+        document.querySelectorAll('.collapse-header').forEach(function (header) {
+            header.addEventListener('click', function () {
+                var body = this.nextElementSibling;
+                if (!body || !body.classList.contains('collapse-body')) return;
+                var icon = this.querySelector('.fa-chevron-down, .fa-chevron-up');
+                if (body.classList.contains('show')) {
+                    body.classList.remove('show');
+                    if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+                } else {
+                    body.classList.add('show');
+                    if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+                }
+            });
+        });
+        document.querySelectorAll('.sub-collapse-header').forEach(function (header) {
+            header.addEventListener('click', function () {
+                var body = this.nextElementSibling;
+                if (!body || !body.classList.contains('sub-collapse-body')) return;
+                var icon = this.querySelector('.fa-chevron-down, .fa-chevron-up');
+                if (body.classList.contains('show')) {
+                    body.classList.remove('show');
+                    if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+                } else {
+                    body.classList.add('show');
+                    if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+                }
+            });
+        });
+
+        // ── Next button enable on name ──
+        var nameInput = document.querySelector('.name-qr-input');
+        var nextBtn = document.getElementById('content-next-btn');
+        var step3Link = document.getElementById('step3-link');
+        function checkName() {
+            var ok = nameInput && nameInput.value.trim().length > 0;
+            if (nextBtn) { nextBtn.disabled = !ok; }
+            if (step3Link) { step3Link.disabled = !ok; step3Link.setAttribute('aria-disabled', ok ? 'false' : 'true'); }
+        }
+        if (nameInput) { nameInput.addEventListener('input', checkName); checkName(); }
+
+        // ── Color presets ──
+        var presets = document.querySelectorAll('.color-preset');
+        var priHex = document.getElementById('video_primary_hex');
+        var secHex = document.getElementById('video_secondary_hex');
+        var priPick = document.getElementById('video_primary_picker');
+        var secPick = document.getElementById('video_secondary_picker');
+        presets.forEach(function (p) {
+            p.addEventListener('click', function () {
+                presets.forEach(function (x) { x.style.borderColor = 'var(--border-color)'; x.style.borderWidth = '1px'; x.classList.remove('active'); });
+                this.style.borderColor = 'var(--primary)'; this.style.borderWidth = '2px'; this.classList.add('active');
+                var pri = this.dataset.primary;
+                var sec = this.dataset.secondary;
+                if (priHex) { priHex.value = pri; }
+                if (secHex) { secHex.value = sec; }
+                if (priPick) { priPick.value = pri; }
+                if (secPick) { secPick.value = sec; }
+                updatePreviewColors(pri, sec);
+            });
+        });
+        if (priPick) { priPick.addEventListener('input', function () { if (priHex) priHex.value = this.value.toUpperCase(); updatePreviewColors(this.value, secPick ? secPick.value : '#0e379a'); }); }
+        if (secPick) { secPick.addEventListener('input', function () { if (secHex) secHex.value = this.value.toUpperCase(); updatePreviewColors(priPick ? priPick.value : '#2f6bfd', this.value); }); }
+
+        function updatePreviewColors(pri, sec) {
+            var header = document.getElementById('preview-gallery-header');
+            if (header) header.style.background = pri;
+        }
+
+        // ── Scan limit toggle ──
+        var scanToggle = document.getElementById('scan-limit-toggle');
+        var scanRow = document.getElementById('scan-limit-row');
+        function toggleScanLimit() { if (scanRow) scanRow.style.display = scanToggle && scanToggle.checked ? 'block' : 'none'; }
+        if (scanToggle) { scanToggle.addEventListener('change', toggleScanLimit); toggleScanLimit(); }
+
+        // ── Live preview updates ──
+        var titleInput = document.getElementById('video_title');
+        var descInput = document.getElementById('video_desc');
+        if (titleInput) {
+            titleInput.addEventListener('input', function () {
+                var el = document.getElementById('preview-gallery-title');
+                if (el) { el.textContent = this.value; el.style.display = this.value ? 'block' : 'none'; }
+            });
+        }
+        if (descInput) {
+            descInput.addEventListener('input', function () {
+                var el = document.getElementById('preview-gallery-desc');
+                if (el) { el.textContent = this.value; el.style.display = this.value ? 'block' : 'none'; }
+            });
+        }
+
+        // ── Template switching (update preview grid columns) ──
+        document.querySelectorAll('input[name="video_template"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var grid = document.getElementById('preview-gallery-grid');
+                if (!grid) return;
+                var cols = 1;
+                if (this.value === '2col') cols = 2;
+                if (this.value === '3col') cols = 3;
+                grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
+                // Update template card borders
+                document.querySelectorAll('.template-card').forEach(function (c) { c.style.border = '1px solid var(--border-color)'; });
+                var card = this.parentElement.querySelector('.template-card');
+                if (card) card.style.border = '2px solid var(--primary)';
+            });
+        });
+
+        // ── Video Link Logic ──
+        var itemsList = document.getElementById('video-items-list');
+        var galleryVideos = []; // [{type: 'link'|'upload', url: '', name: '', desc: '', fileIndex: null}]
+        var uploadedFiles = []; // Array of actual File objects
+
+        function renderVideoItems() {
+            if (!itemsList) return;
+            itemsList.innerHTML = '';
+            galleryVideos.forEach(function (vid, idx) {
+                var div = document.createElement('div');
+                div.className = 'gallery-form-item';
+
+                var sourceField = '';
+                if (vid.type === 'link') {
+                    sourceField = '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" onchange="updateVideoUrl(' + idx + ',this.value)">';
+                } else {
+                    sourceField = '<div style="padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; margin-bottom: 8px; background: #e5e7eb; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><i class="fa-solid fa-file-video text-muted"></i> ' + escapeHtml(vid.url) + '</div>';
+                }
+
+                div.innerHTML =
+                    '<div class="gallery-form-item-fields">' +
+                    sourceField +
+                    '<input type="text" placeholder="Video name" value="' + escapeHtml(vid.name) + '" onchange="updateVideoName(' + idx + ',this.value)">' +
+                    '<textarea placeholder="Description" onchange="updateVideoDesc(' + idx + ',this.value)">' + escapeHtml(vid.desc) + '</textarea>' +
+                    '</div>' +
+                    '<div class="gallery-form-item-remove" onclick="removeVideoItem(' + idx + ')">' +
+                    '<i class="fa-solid fa-trash-can"></i></div>';
+                itemsList.appendChild(div);
+            });
+            updateHiddenInputs();
+        }
+
+        function updateHiddenInputs() {
+            document.querySelectorAll('.video-hidden-input').forEach(function (el) { el.remove(); });
+            var form = document.getElementById('content-form');
+            galleryVideos.forEach(function (vid, idx) {
+                var typeInput = document.createElement('input');
+                typeInput.type = 'hidden'; typeInput.name = 'video_type[]'; typeInput.value = vid.type;
+                typeInput.className = 'video-hidden-input';
+                form.appendChild(typeInput);
+
+                var urlInput = document.createElement('input');
+                urlInput.type = 'hidden'; urlInput.name = 'video_url[]'; urlInput.value = vid.url;
+                urlInput.className = 'video-hidden-input';
+                form.appendChild(urlInput);
+
+                var nameInput = document.createElement('input');
+                nameInput.type = 'hidden'; nameInput.name = 'video_name[]'; nameInput.value = vid.name;
+                nameInput.className = 'video-hidden-input';
+                form.appendChild(nameInput);
+
+                var descInput = document.createElement('input');
+                descInput.type = 'hidden'; descInput.name = 'video_desc[]'; descInput.value = vid.desc;
+                descInput.className = 'video-hidden-input';
+                form.appendChild(descInput);
+            });
+
+            // Sync files to a DataTransfer object to append to the actual input
+            var dt = new DataTransfer();
+            uploadedFiles.forEach(f => {
+                if (f) dt.items.add(f);
+            });
+            document.getElementById('video-file-input').files = dt.files;
+        }
+
+        function updatePreviewGallery() {
+            var grid = document.getElementById('preview-gallery-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (galleryVideos.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">' +
+                    '<i class="fa-solid fa-play" style="font-size:32px;margin-bottom:8px;display:block;"></i>' +
+                    '<div style="font-size:11px;">No videos</div></div>';
+                return;
+            }
+            galleryVideos.forEach(function (vid) {
+                var item = document.createElement('div');
+                item.className = 'preview-gallery-item';
+                item.style.cssText = 'background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;';
+                var html = '<div style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;"><i class="fa-solid fa-play" style="font-size:24px;opacity:0.8;"></i></div>';
+                if (vid.name || vid.desc) {
+                    html += '<div style="padding:6px 8px;">';
+                    if (vid.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(vid.name) + '</div>';
+                    if (vid.desc) html += '<div style="font-size:9px;color:#6b7280;line-height:1.3;">' + escapeHtml(vid.desc) + '</div>';
+                    html += '</div>';
+                }
+                item.innerHTML = html;
+                grid.appendChild(item);
+            });
+        }
+
+        window.addVideoLinkItem = function () {
+            galleryVideos.push({ type: 'link', url: '', name: '', desc: '', fileIndex: null });
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        window.handleVideoUploads = function (event) {
+            var files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var newIndex = uploadedFiles.length;
+                uploadedFiles.push(file);
+
+                galleryVideos.push({
+                    type: 'upload',
+                    url: file.name,
+                    name: file.name.replace(/\.[^/.]+$/, ""), // Name without extension
+                    desc: '',
+                    fileIndex: newIndex
+                });
+            }
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        window.updateVideoUrl = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].url = val;
+            updateHiddenInputs();
+        };
+        window.updateVideoName = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].name = val;
+            updateHiddenInputs();
+            updatePreviewGallery();
+        };
+        window.updateVideoDesc = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].desc = val;
+            updateHiddenInputs();
+            updatePreviewGallery();
+        };
+        window.removeVideoItem = function (idx) {
+            var vid = galleryVideos[idx];
+            if (vid.type === 'upload' && vid.fileIndex !== null) {
+                uploadedFiles[vid.fileIndex] = null; // Mark as removed to keep index sync
+            }
+            galleryVideos.splice(idx, 1);
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    })();
+</script>
+{% endblock %}
