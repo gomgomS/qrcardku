@@ -1552,10 +1552,35 @@
                     </button>
                 </div>
                 <textarea class="html-code-editor" id="htmlCodeEditor_${block.id}" placeholder="<div>Your HTML here...</div>">${escHtml(block.data || '')}</textarea>
-                <div style="font-size:11px; color:#0369a1; margin:6px 0 2px; font-weight:600;">
-                    <i class="fa-solid fa-mouse-pointer"></i> Click any element below to edit its content:
+                <div style="font-size:11px; color:#0369a1; margin:6px 0 2px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
+                    <div><i class="fa-solid fa-mouse-pointer"></i> Click any element below to edit its content</div>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" style="font-size:11px; padding:2px 8px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="imageSizeBtn_${block.id}">
+                            <i class="fa-solid fa-expand-arrows-alt"></i> Image Size: <span id="imageSizeValue_${block.id}">300px</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: 250px;" onclick="event.stopPropagation()">
+                            <h6 class="dropdown-header px-0" style="font-size:12px;">Preview Image Size</h6>
+                            <div class="px-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted" style="font-size:10px;">10px</small>
+                                    <small class="text-muted" style="font-size:10px;">800px</small>
+                                </div>
+                                <input type="range" class="custom-range w-100" min="10" max="800" step="10" value="300" id="imageSizeSlider_${block.id}" 
+                                       oninput="updatePreviewImageSize('${block.id}', this.value)">
+                                <div class="text-center mt-2">
+                                    <span class="badge badge-primary" id="imageSizeDisplay_${block.id}">300px</span>
+                                </div>
+                                <div class="d-flex justify-content-between mt-3 gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 100)">100px</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 300)">300px</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 500)">500px</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 800)">800px</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="html-preview" id="htmlPreview_${block.id}">${block.data || '<em style="color:#999;">Preview will appear here</em>'}</div>
+                <div class="html-preview" id="htmlPreview_${block.id}" data-image-size="300">${block.data || '<em style="color:#999;">Preview will appear here</em>'}</div>
                 <div class="tag-editor-panel" id="tagEditor_${block.id}">
                     <div class="tag-editor-header">
                         <span id="tagName_${block.id}"></span>
@@ -1738,6 +1763,16 @@
             if (tagImageGroup) tagImageGroup.style.display = 'block';
             const currentSrc = element.getAttribute('src') || '';
             if (tagImageSrc) tagImageSrc.value = currentSrc;
+
+            // Sync preview image slider with actual size
+            const actualImageSize = extractImageSizeFromElement(element);
+            if (actualImageSize) {
+                const imageSizeSlider = document.getElementById(`imageSizeSlider_${blockId}`);
+                if (imageSizeSlider) {
+                    imageSizeSlider.value = actualImageSize;
+                    updatePreviewImageSize(blockId, actualImageSize, false);
+                }
+            }
         } else {
             if (tagContentGroup) tagContentGroup.style.display = 'block';
             if (tagImageGroup) tagImageGroup.style.display = 'none';
@@ -1974,7 +2009,86 @@
         }
     });
 
-    // ==================== IMAGE RESIZE ====================
+    // ==================== PREVIEW IMAGE SIZE SLIDER ====================
+    function updatePreviewImageSize(blockId, sizeValue, updateCode = true) {
+        const preview = document.getElementById(`htmlPreview_${blockId}`);
+        const displayBadge = document.getElementById(`imageSizeDisplay_${blockId}`);
+        const buttonLabel = document.getElementById(`imageSizeValue_${blockId}`);
+
+        if (preview) {
+            preview.style.setProperty('--preview-image-size', sizeValue + 'px');
+            preview.setAttribute('data-image-size', sizeValue);
+        }
+        if (displayBadge) displayBadge.textContent = sizeValue + 'px';
+        if (buttonLabel) buttonLabel.textContent = sizeValue + 'px';
+
+        if (updateCode) {
+            const selectedImage = preview ? preview.querySelector('[data-editable-tag].selected[data-tag-name="img"]') : null;
+            if (selectedImage) {
+                updateSelectedImageSizeInCode(blockId, selectedImage, sizeValue);
+            }
+        }
+    }
+
+    function updateSelectedImageSizeInCode(blockId, imgElement, newSize) {
+        const path = imgElement.getAttribute('data-editable-tag');
+        if (!path) return;
+        const blockDiv = document.querySelector(`[data-block-id="${blockId}"]`);
+        if (!blockDiv) return;
+        const textarea = blockDiv.querySelector('.html-code-editor');
+        if (!textarea) return;
+
+        try {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = textarea.value;
+            const parts = path.split('-').map(Number);
+            let targetElement = tmp;
+
+            for (let i = 0; i < parts.length; i++) {
+                const children = Array.from(targetElement.children);
+                if (parts[i] < children.length) targetElement = children[parts[i]];
+                else return;
+            }
+
+            if (targetElement && targetElement.tagName.toLowerCase() === 'img') {
+                let currentStyle = targetElement.getAttribute('style') || '';
+                currentStyle = currentStyle.replace(/max-width:\s*[^;]+;?/gi, '');
+                currentStyle = currentStyle.replace(/width:\s*[^;]+;?/gi, '');
+                currentStyle += ` max-width: ${newSize}px; height: auto;`;
+                targetElement.setAttribute('style', currentStyle.trim().replace(/\s+/g, ' '));
+
+                textarea.value = tmp.innerHTML;
+                const block = editBlocks.find(b => b.id === blockId);
+                if (block) block.data = tmp.innerHTML;
+
+                imgElement.style.maxWidth = newSize + 'px';
+                imgElement.style.height = 'auto';
+            }
+        } catch (e) { console.error('Error updating image size in code:', e); }
+    }
+
+    function setPreviewImageSize(blockId, sizeValue) {
+        const slider = document.getElementById(`imageSizeSlider_${blockId}`);
+        if (slider) {
+            slider.value = sizeValue;
+            updatePreviewImageSize(blockId, sizeValue);
+        }
+    }
+
+    function extractImageSizeFromElement(imgElement) {
+        if (!imgElement) return null;
+        const styleAttr = imgElement.getAttribute('style') || '';
+        let match = styleAttr.match(/max-width:\s*(\d+)px/i);
+        if (match) return parseInt(match[1]);
+        match = styleAttr.match(/width:\s*(\d+)px/i);
+        if (match) return parseInt(match[1]);
+        if (imgElement.style.maxWidth && imgElement.style.maxWidth.includes('px')) return parseInt(imgElement.style.maxWidth);
+        if (imgElement.style.width && imgElement.style.width.includes('px')) return parseInt(imgElement.style.width);
+        if (imgElement.hasAttribute('width')) return parseInt(imgElement.getAttribute('width'));
+        return null;
+    }
+
+    // ==================== OLD IMAGE RESIZE ====================
     function setupImageResize(blockId, preview) {
         preview.querySelectorAll('[data-tag-name="img"]').forEach(imgEl => {
             imgEl.querySelectorAll('.image-resize-handle').forEach(handle => {
