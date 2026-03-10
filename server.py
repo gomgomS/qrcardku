@@ -1835,6 +1835,54 @@ def qr_save_special():
         special_sections=response.get("special_sections", []),
     )
 
+@app.route("/qr/special/upload-image", methods=["POST"])
+def qr_special_upload_image():
+    """API endpoint to handle image uploads from the HTML editor in Special QR."""
+    import os
+    import uuid as _uuid
+    import re as _re
+    from flask import request, jsonify
+
+    if "fk_user_id" not in session:
+        return jsonify({"success": False, "message": "unauthorized"}), 401
+    
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+        
+    file.seek(0, 2)
+    if file.tell() > 2 * 1024 * 1024:
+        return jsonify({"success": False, "message": "File too large (max 2MB)"}), 400
+    file.seek(0)
+    
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"):
+        return jsonify({"success": False, "message": "Invalid file type"}), 400
+        
+    safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", file.filename)
+    if ".." in safe_name: safe_name = safe_name.replace("..", "_")
+    
+    # Prepend uuid to avoid collisions in same day
+    unique_name = _uuid.uuid4().hex[:8] + "_" + safe_name
+    
+    # We will put these in a shared "images" folder under static/uploads/special
+    upload_dir = os.path.join(app.root_path, "static", "uploads", "special", "images")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_path = os.path.join(upload_dir, unique_name)
+    file.save(file_path)
+    
+    file_url = f"/static/uploads/special/images/{unique_name}"
+    
+    return jsonify({
+        "success": True, 
+        "file": {
+            "url": file_url,
+            "original_filename": file.filename
+        }
+    })
+
+
 
 @app.route("/qr/update/special/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_content_special(qrcard_id):
