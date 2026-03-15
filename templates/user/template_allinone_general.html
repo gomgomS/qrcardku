@@ -1,0 +1,989 @@
+{# =====================================================================
+   template_allinone_general.html — Single Source of Truth for All-in-One UI
+   Include with:
+     {% set allinone_mode = 'preview' %}  (inside phone-mockup / mockup-inner)
+     {% set allinone_mode = 'public'  %}  (standalone public page body)
+   ===================================================================== #}
+
+{# ── Variable setup (shared by both modes) ─────────────────────────── #}
+{% set _qrc       = qrcard if qrcard else {} %}
+{% set _tmpl      = _qrc.get('Allinone_template', 'default') %}
+{% set _primary   = _qrc.get('Allinone_primary_color',   '#2F6BFD') %}
+{% set _secondary = _qrc.get('Allinone_secondary_color', '#0E379A') %}
+{% set _title     = _qrc.get('Allinone_title', '') %}
+{% set _desc      = _qrc.get('Allinone_desc', '') %}
+{% set _cover_img = _qrc.get('Allinone_cover_img_url', '') %}
+{% set _sections  = _qrc.get('Allinone_sections', []) %}
+{% set _welcome_img  = _qrc.get('welcome_img_url', '') %}
+{% set _welcome_time = _qrc.get('welcome_time', 2.5) | float %}
+{% set _welcome_bg   = _qrc.get('welcome_bg_color', _primary) %}
+{% set _title_font   = _qrc.get('Allinone_title_font', 'Lato') %}
+{% set _text_font    = _qrc.get('Allinone_text_font',  'Lato') %}
+{% set _title_color  = _qrc.get('Allinone_title_color','#111827') %}
+{% set _text_color   = _qrc.get('Allinone_text_color', '#6b7280') %}
+{% set _show_default = _tmpl not in ['template1', 'template2'] %}
+
+{# ── Section rendering macro ─────────────────────────────────────────── #}
+{% macro render_section(s, preview=false) %}
+{% set stype = s.get('type','') %}
+{% set bstyle = s.get('block_style', '1') %}
+{% set bcolor = s.get('block_color', '#10b981') %}
+{% if stype == 'contact' %}
+  {% set subtype = s.get('v4', 'phone') %}
+  {% set val = s.get('v1', '') %}
+  {% set label = s.get('v2', '') %}
+  {% if val %}
+  {% if subtype == 'phone' %}
+    {% set href = 'tel:' + val %}
+    {% set icon = 'fa-solid fa-phone' %}
+  {% elif subtype == 'email' %}
+    {% set href = 'mailto:' + val %}
+    {% set icon = 'fa-solid fa-envelope' %}
+  {% else %}
+    {% set href = val if '://' in val else 'https://' + val %}
+    {% set icon = 'fa-solid fa-globe' %}
+  {% endif %}
+  {% if not preview and bstyle == '1' %}
+  <a class="ct-1-item" href="{{ href }}">
+    <div class="ct-1-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:22px;"></i></div>
+    <div class="ct-1-text">
+      <div class="ct-1-label">{{ label or (subtype|capitalize) }}</div>
+      <span class="ct-1-val">{{ val }}</span>
+    </div>
+  </a>
+  {% elif not preview and bstyle == '2' %}
+  <a class="ct-2-item" href="{{ href }}">
+    <div class="ct-2-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:22px;"></i></div>
+    <div class="ct-2-text">
+      <div class="ct-2-label">{{ (label or subtype)|upper }}</div>
+      <span class="ct-2-val">{{ val }}</span>
+    </div>
+  </a>
+  {% elif not preview and bstyle == '3' %}
+  <a class="ct-3-item" href="{{ href }}">
+    <div class="ct-3-icon"><i class="{{ icon }}" style="font-size:22px;"></i></div>
+    <div class="ct-3-text">
+      <div class="ct-3-label">{{ label or (subtype|capitalize) }}</div>
+      <span class="ct-3-val">{{ val }}</span>
+    </div>
+  </a>
+  {% elif not preview and bstyle == '4' %}
+  <a class="ct-4-item" href="{{ href }}">
+    <div class="ct-4-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:26px;"></i></div>
+    <div class="ct-4-label">{{ label or (subtype|capitalize) }}</div>
+    <span class="ct-4-val">{{ val }}</span>
+  </a>
+  {% else %}
+  <a class="section-item" href="{{ href }}">
+    <div class="section-item-icon"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:{{ '13px' if preview else '16px' }};"></i></div>
+    <div class="section-item-text">
+      <span class="section-item-name">{{ label or (subtype | capitalize) }}</span>
+      <span class="section-item-sub">{{ val }}</span>
+    </div>
+    <i class="fa-solid fa-chevron-right section-chevron"></i>
+  </a>
+  {% endif %}
+  {% endif %}
+{% elif stype == 'link' %}
+  {% set url = s.get('v1','') %}
+  {% set name = s.get('v2','') %}
+  {% set desc = s.get('v3','') %}
+  {% if url %}
+  {% set href = url if '://' in url else 'https://' + url %}
+  {% if not preview and bstyle == '1' %}
+  <a class="lk-1-item" href="{{ href }}" target="_blank" rel="noopener">
+    <div class="lk-1-icon" style="background:{{ bcolor }}22;"><i class="fa-solid fa-link" style="color:{{ bcolor }};font-size:20px;"></i></div>
+    <div class="lk-1-text">
+      <div class="lk-1-name">{{ name or url }}</div>
+      {% if desc %}<span class="lk-1-desc">{{ desc }}</span>{% endif %}
+    </div>
+    <i class="fa-solid fa-chevron-right lk-1-chev"></i>
+  </a>
+  {% elif not preview and bstyle == '2' %}
+  <a class="lk-2-item" href="{{ href }}" target="_blank" rel="noopener">
+    <div class="lk-2-icon" style="background:{{ bcolor }}22;"><i class="fa-solid fa-link" style="color:{{ bcolor }};font-size:20px;"></i></div>
+    <div class="lk-2-text">
+      <div class="lk-2-name">{{ name or url }}</div>
+      {% if desc %}<span class="lk-2-desc">{{ desc }}</span>{% endif %}
+    </div>
+    <i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:12px;flex-shrink:0;"></i>
+  </a>
+  {% elif not preview and bstyle == '3' %}
+  <a class="lk-3-item" href="{{ href }}" target="_blank" rel="noopener" style="background:{{ bcolor }};">
+    <span class="lk-3-name">{{ name or url }}</span>
+    {% if desc %}<span class="lk-3-desc">{{ desc }}</span>{% endif %}
+  </a>
+  {% elif not preview and bstyle == '4' %}
+  <a class="lk-4-item" href="{{ href }}" target="_blank" rel="noopener">
+    <div class="lk-4-text">
+      <div class="lk-4-name">{{ name or url }}</div>
+      {% if desc %}<span class="lk-4-desc">{{ desc }}</span>{% endif %}
+    </div>
+    <i class="fa-solid fa-arrow-right" style="color:{{ bcolor }};font-size:12px;flex-shrink:0;"></i>
+  </a>
+  {% else %}
+  <a class="section-item" href="{{ href }}" target="_blank" rel="noopener">
+    <div class="section-item-icon"><i class="fa-solid fa-link" style="color:{{ bcolor }};font-size:{{ '13px' if preview else '16px' }};"></i></div>
+    <div class="section-item-text">
+      <span class="section-item-name">{{ name or url }}</span>
+      {% if desc %}<span class="section-item-sub">{{ desc }}</span>{% endif %}
+    </div>
+    <i class="fa-solid fa-chevron-right section-chevron"></i>
+  </a>
+  {% endif %}
+  {% endif %}
+{% elif stype == 'sosmed' %}
+  {% set icon = s.get('v1','fa-brands fa-globe') %}
+  {% set handle = s.get('v2','') %}
+  {% set desc = s.get('v3','') %}
+  {% set sm_href = handle if '://' in handle else '' %}
+  {% set _sm_names = {'fa-brands fa-instagram':'Instagram','fa-brands fa-facebook':'Facebook','fa-brands fa-x-twitter':'X / Twitter','fa-brands fa-tiktok':'TikTok','fa-brands fa-youtube':'YouTube','fa-brands fa-linkedin':'LinkedIn','fa-brands fa-whatsapp':'WhatsApp','fa-brands fa-telegram':'Telegram','fa-brands fa-pinterest':'Pinterest','fa-brands fa-snapchat':'Snapchat','fa-brands fa-github':'GitHub','fa-brands fa-discord':'Discord','fa-brands fa-line':'Line'} %}
+  {% set platform = _sm_names.get(icon, 'Social') %}
+  {% if not preview and bstyle == '1' %}
+  <div class="sm-1-item">
+    <div class="sm-1-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:20px;"></i></div>
+    <div class="sm-1-text">
+      <div class="sm-1-name">{{ platform }}</div>
+      {% if handle %}<span class="sm-1-handle">{{ handle }}</span>{% endif %}
+    </div>
+  </div>
+  {% elif not preview and bstyle == '2' %}
+  <div class="sm-2-item">
+    <div class="sm-2-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:22px;"></i></div>
+    <div class="sm-2-text">
+      <div class="sm-2-name">{{ platform }}</div>
+      {% if handle %}<span class="sm-2-handle">{{ handle }}</span>{% endif %}
+    </div>
+  </div>
+  {% elif not preview and bstyle == '3' %}
+  <div class="sm-3-item" style="border-color:{{ bcolor }};color:{{ bcolor }};">
+    <i class="{{ icon }}" style="font-size:16px;flex-shrink:0;"></i>
+    <span class="sm-3-name">{{ platform }}</span>
+  </div>
+  {% elif not preview and bstyle == '4' %}
+  <div class="sm-4-item">
+    <div class="sm-4-text">
+      <div class="sm-4-name">{{ platform }}</div>
+      {% if handle %}<span class="sm-4-handle">{{ handle }}</span>{% endif %}
+    </div>
+    <i class="{{ icon }}" style="color:{{ bcolor }};font-size:18px;flex-shrink:0;"></i>
+  </div>
+  {% elif not preview and bstyle == '5' %}
+  {% if sm_href %}
+  <a class="sm-5-icon" href="{{ sm_href }}" target="_blank" rel="noopener" style="background:{{ bcolor }};"><i class="{{ icon }}" style="font-size:22px;color:white;"></i></a>
+  {% else %}
+  <div class="sm-5-icon" style="background:{{ bcolor }};"><i class="{{ icon }}" style="font-size:22px;color:white;"></i></div>
+  {% endif %}
+  {% else %}
+  <div class="section-item section-item-noclick">
+    <div class="section-item-icon"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:{{ '13px' if preview else '16px' }};"></i></div>
+    <div class="section-item-text">
+      <span class="section-item-name">{{ platform }}</span>
+      {% if handle %}<span class="section-item-sub">{{ handle }}</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+{% elif stype == 'image' %}
+  {% set url = s.get('v1','') %}
+  {% set cap = s.get('v2','') %}
+  {% if url %}
+  {% if not preview and bstyle == '2' %}
+  <div class="si-img-b">
+    <img src="{{ url }}" alt="{{ cap }}" style="width:80%;border-radius:16px;display:block;">
+    {% if cap %}<p class="section-image-caption">{{ cap }}</p>{% endif %}
+  </div>
+  {% elif not preview and bstyle == '3' %}
+  <div class="si-img-c">
+    <img src="{{ url }}" alt="{{ cap }}">
+    {% if cap %}<p class="si-img-c-cap">{{ cap }}</p>{% endif %}
+  </div>
+  {% elif not preview and bstyle == '4' %}
+  <div class="img-4-card">
+    <img src="{{ url }}" alt="{{ cap }}">
+    {% if cap %}<div class="img-4-cap">{{ cap }}</div>{% endif %}
+  </div>
+  {% else %}
+  <div class="section-image-block">
+    <img src="{{ url }}" alt="{{ cap }}" style="width:100%;border-radius:8px;display:block;">
+    {% if cap %}<p class="section-image-caption">{{ cap }}</p>{% endif %}
+  </div>
+  {% endif %}
+  {% endif %}
+{% elif stype == 'video' %}
+  {% set url = s.get('v1','') %}
+  {% set vtitle = s.get('v2','') %}
+  {% if url %}
+  {% if not preview and bstyle == '2' %}
+  <a class="si-b si-b-video" href="{{ url }}" target="_blank" rel="noopener">
+    <div class="si-b-icon" style="background:#fecaca;"><i class="fa-solid fa-play" style="color:#ef4444;font-size:14px;"></i></div>
+    <div class="si-b-text"><span class="si-b-name">{{ vtitle or 'Watch Video' }}</span><span class="si-b-val">{{ url }}</span></div>
+    <i class="fa-solid fa-chevron-right si-b-chev"></i>
+  </a>
+  {% elif not preview and bstyle == '3' %}
+  <a class="si-c" href="{{ url }}" target="_blank" rel="noopener">
+    <i class="fa-solid fa-play" style="color:#ef4444;font-size:12px;flex-shrink:0;"></i>
+    <span class="si-c-text">{{ vtitle or 'Watch Video' }}</span>
+  </a>
+  {% elif not preview and bstyle == '4' %}
+  <a class="vd-4-btn" href="{{ url }}" target="_blank" rel="noopener">
+    <i class="fa-solid fa-play"></i>
+    <span>{{ vtitle or 'Watch Video' }}</span>
+  </a>
+  {% else %}
+  <a class="section-item section-video" href="{{ url }}" target="_blank" rel="noopener">
+    <div class="section-item-icon"><i class="fa-solid fa-play" style="color:#ef4444;font-size:{{ '13px' if preview else '16px' }};"></i></div>
+    <div class="section-item-text">
+      <span class="section-item-name">{{ vtitle or 'Watch Video' }}</span>
+      <span class="section-item-sub">{{ url }}</span>
+    </div>
+    <i class="fa-solid fa-chevron-right section-chevron"></i>
+  </a>
+  {% endif %}
+  {% endif %}
+{% elif stype == 'pdf' %}
+  {% set url = s.get('v1','') %}
+  {% set name = s.get('v2','') %}
+  {% if url %}
+  {% if not preview and bstyle == '2' %}
+  <a class="si-b si-b-pdf" href="{{ url }}" target="_blank" rel="noopener">
+    <div class="si-b-icon" style="background:#fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:16px;"></i></div>
+    <div class="si-b-text"><span class="si-b-name">{{ name or 'Download PDF' }}</span></div>
+    <i class="fa-solid fa-arrow-down si-b-chev"></i>
+  </a>
+  {% elif not preview and bstyle == '3' %}
+  <a class="si-c" href="{{ url }}" target="_blank" rel="noopener">
+    <i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:12px;flex-shrink:0;"></i>
+    <span class="si-c-text">{{ name or 'Download PDF' }}</span>
+    <i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
+  </a>
+  {% elif not preview and bstyle == '4' %}
+  <a class="pdf-4-btn" href="{{ url }}" target="_blank" rel="noopener">
+    <i class="fa-solid fa-arrow-down"></i>
+    <span>{{ name or 'Download PDF' }}</span>
+  </a>
+  {% else %}
+  <a class="section-item section-pdf" href="{{ url }}" target="_blank" rel="noopener">
+    <div class="section-item-icon"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:{{ '13px' if preview else '16px' }};"></i></div>
+    <div class="section-item-text">
+      <span class="section-item-name">{{ name or 'Download PDF' }}</span>
+    </div>
+    <i class="fa-solid fa-arrow-down section-chevron"></i>
+  </a>
+  {% endif %}
+  {% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro render_sections_grouped(sections, preview=false) %}
+{% set _icons = {'contact':'fa-solid fa-phone','link':'fa-solid fa-link','sosmed':'fa-solid fa-share-nodes','image':'fa-regular fa-image','video':'fa-solid fa-play','pdf':'fa-solid fa-file-pdf'} %}
+{% set _labels = {'contact':'Contact','link':'Link','sosmed':'Social Media','image':'Image','video':'Video','pdf':'PDF'} %}
+{% set ns = namespace(last_type='', in_group=false, cur_bstyle='1', cur_color='#10b981') %}
+{% for s in sections %}
+{% set cur = s.get('type','') %}
+{% if cur != ns.last_type %}
+{% if ns.in_group %}</div></div>{% endif %}
+{% set ns.last_type = cur %}
+{% set ns.in_group = true %}
+{% set ns.cur_bstyle = s.get('block_style', '1') %}
+{% set ns.cur_color = s.get('block_color', '#10b981') %}
+{% if preview %}
+<div class="pv-section-group" data-type="{{ cur }}" data-block-style="{{ ns.cur_bstyle }}" style="--block-color:{{ ns.cur_color }};">
+<div class="pv-section-group-items">
+{% else %}
+<div class="section-group" data-type="{{ cur }}" data-block-style="{{ ns.cur_bstyle }}" style="--block-color:{{ ns.cur_color }};">
+<div class="section-group-header"><span class="section-group-header-icon"><i class="{{ _icons.get(cur,'fa-solid fa-circle') }}"></i></span><span class="section-group-label">{{ _labels.get(cur, cur|capitalize) }}</span></div>
+<div class="section-group-items">
+{% endif %}
+{% endif %}
+{{ render_section(s, preview) }}
+{% endfor %}
+{% if ns.in_group %}</div></div>{% endif %}
+{% endmacro %}
+
+{# =====================================================================
+   PUBLIC MODE
+   ===================================================================== #}
+{% if allinone_mode == 'public' %}
+
+<style>
+    :root {
+        --primary: {{ _primary }};
+        --secondary: {{ _secondary }};
+        --title-font: {{ _title_font | tojson | safe }};
+        --text-font: {{ _text_font | tojson | safe }};
+        --title-color: {{ _title_color }};
+        --text-color: {{ _text_color }};
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f172a;
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+    }
+    .phone-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        min-height: 100vh;
+    }
+
+    /* Welcome overlay */
+    .welcome-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: {{ _welcome_bg }};
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.8s ease;
+        pointer-events: auto;
+    }
+    .welcome-overlay.hide { opacity: 0; pointer-events: none; }
+    .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
+
+    /* ── DEFAULT TEMPLATE ── */
+    .tpl-default { min-height: 100vh; display: flex; flex-direction: column; }
+    .tpl-default .top-block { background: var(--primary); padding: 40px 24px 72px; }
+    .tpl-default .bottom-block {
+        background: #ffffff;
+        border-radius: 24px 24px 0 0;
+        margin-top: -32px;
+        padding: 60px 20px 40px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+    .tpl-default .profile-circle {
+        position: absolute;
+        top: -50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: white;
+        border: 4px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .tpl-default .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-default .dtitle {
+        font-size: 20px;
+        font-weight: 800;
+        text-align: center;
+        line-height: 1.2;
+        margin-bottom: 6px;
+        font-family: var(--title-font), system-ui, sans-serif;
+        color: var(--title-color);
+    }
+    .tpl-default .ddesc {
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 24px;
+        font-family: var(--text-font), system-ui, sans-serif;
+        color: var(--text-color);
+    }
+
+    /* ── TEMPLATE 1 ── */
+    .tpl-1 { min-height: 100vh; display: flex; flex-direction: column; background: #f3f4f6; overflow-y: auto; }
+    .tpl-1 .t1-header {
+        width: 100%;
+        height: 45vh;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+        background: #e5e7eb;
+    }
+    .tpl-1 .t1-header img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-1 .t1-card {
+        background: white;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 24px 20px 40px;
+        position: relative;
+        z-index: 2;
+    }
+    .tpl-1 .t1-card.with-cover { border-radius: 22px 22px 0 0; margin-top: -18px; }
+    .tpl-1 .t1-title {
+        font-size: 20px;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 4px;
+        line-height: 1.2;
+        font-family: var(--title-font), system-ui, sans-serif;
+        color: var(--title-color);
+    }
+    .tpl-1 .t1-desc {
+        font-size: 13px;
+        text-align: center;
+        margin-bottom: 20px;
+        font-family: var(--text-font), system-ui, sans-serif;
+        color: var(--text-color);
+    }
+
+    /* ── TEMPLATE 2 ── */
+    .tpl-2 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; padding: 40px 20px; overflow-y: auto; }
+    .tpl-2 .t2-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        border: 4px solid rgba(255,255,255,0.6);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+    }
+    .tpl-2 .t2-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-2 .t2-title {
+        font-size: 20px;
+        font-weight: 800;
+        text-align: center;
+        color: white;
+        margin-bottom: 6px;
+        font-family: var(--title-font), system-ui, sans-serif;
+    }
+    .tpl-2 .t2-desc {
+        font-size: 13px;
+        text-align: center;
+        color: rgba(255,255,255,0.85);
+        margin-bottom: 28px;
+        font-family: var(--text-font), system-ui, sans-serif;
+    }
+    .tpl-2 .t2-sections { width: 100%; max-width: 440px; }
+
+    /* ── Section items (shared) ── */
+    .sections-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .section-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 14px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        text-decoration: none;
+        gap: 10px;
+        color: inherit;
+    }
+    .section-item:hover { background: #f3f4f6; }
+    .section-item-noclick { cursor: default; }
+    .section-item-icon {
+        width: 36px;
+        height: 36px;
+        background: #eff6ff;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .section-item-text { flex: 1; min-width: 0; }
+    .section-item-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #111827;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .section-item-sub {
+        font-size: 11px;
+        color: #9ca3af;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 1px;
+    }
+    .section-chevron { color: #9ca3af; font-size: 11px; flex-shrink: 0; }
+    .section-image-block { width: 100%; }
+    .section-image-caption { font-size: 12px; color: #6b7280; text-align: center; margin-top: 6px; }
+
+    /* Template 1 section items on white bg */
+    .tpl-1 .section-item { background: #f9fafb; }
+
+    /* Template 2 section items on primary bg */
+    .tpl-2 .section-item { background: rgba(255,255,255,0.95); }
+    .tpl-2 .section-item-name { color: #111827; }
+
+    /* Section groups (public page) */
+    .section-group { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; width: 100%; }
+    .section-group-header { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+    .section-group[data-type="contact"] .section-group-header { background: #eff6ff; }
+    .section-group[data-type="link"] .section-group-header { background: #f0fdf4; }
+    .section-group[data-type="sosmed"] .section-group-header { background: #faf5ff; }
+    .section-group[data-type="image"] .section-group-header { background: #fff7ed; }
+    .section-group[data-type="video"] .section-group-header { background: #fef2f2; }
+    .section-group[data-type="pdf"] .section-group-header { background: #fef2f2; }
+    .section-group-header-icon { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .section-group[data-type="contact"] .section-group-header-icon { background: #bfdbfe; color: #1d4ed8; }
+    .section-group[data-type="link"] .section-group-header-icon { background: #bbf7d0; color: #15803d; }
+    .section-group[data-type="sosmed"] .section-group-header-icon { background: #ede9fe; color: #6d28d9; }
+    .section-group[data-type="image"] .section-group-header-icon { background: #fed7aa; color: #c2410c; }
+    .section-group[data-type="video"] .section-group-header-icon { background: #fecaca; color: #b91c1c; }
+    .section-group[data-type="pdf"] .section-group-header-icon { background: #fecaca; color: #991b1b; }
+    .section-group-label { font-size: 12px; font-weight: 700; color: #374151; }
+    .section-group-items { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* ── Block Style B — Filled/Card ── */
+    .si-b { display: flex; align-items: center; padding: 12px 16px; border-radius: 10px; text-decoration: none; color: inherit; gap: 12px; }
+    .si-b-contact { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .si-b-video { background: #fef2f2; border: 1px solid #fecaca; }
+    .si-b-pdf { background: #fef2f2; border: 1px solid #fecaca; }
+    .si-b-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: white; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.06); }
+    .si-b-text { flex: 1; min-width: 0; }
+    .si-b-name { font-size: 14px; font-weight: 600; display: block; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .si-b-val { font-size: 11px; color: #9ca3af; display: block; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .si-b-chev { color: #9ca3af; font-size: 11px; flex-shrink: 0; }
+    .si-b-btn { display: block; text-align: center; padding: 13px 20px; background: var(--primary); color: white !important; border-radius: 12px; text-decoration: none; font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+    .si-b-btn:hover { opacity: 0.88; }
+    .section-group[data-type="sosmed"][data-block-style="B"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+    .si-sosmed-b { width: 48px; height: 48px; border-radius: 50%; background: #f3f4f6; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #374151; border: 1px solid #e5e7eb; font-size: 22px; transition: background 0.15s; }
+    .si-sosmed-b:hover { background: #e5e7eb; }
+    .si-img-b { display: flex; flex-direction: column; align-items: center; }
+    /* ── Block Style C — Minimal ── */
+    .section-group[data-block-style="C"] { border: none; border-radius: 0; background: transparent; }
+    .section-group[data-block-style="C"] .section-group-header { display: none; }
+    .section-group[data-block-style="C"] .section-group-items { padding: 0; gap: 0; }
+    .si-c { display: flex; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: inherit; }
+    .si-c:last-child { border-bottom: none; }
+    .si-c-text { font-size: 13px; color: #374151; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .si-c-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 4px; border-bottom: 1px solid #f3f4f6; text-decoration: none; color: var(--primary); font-size: 13px; font-weight: 500; }
+    .si-c-link:last-child { border-bottom: none; }
+    .section-group[data-type="sosmed"][data-block-style="C"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+    .si-sosmed-c { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #f3f4f6; border-radius: 20px; border: 1px solid #e5e7eb; text-decoration: none; color: #374151; font-size: 13px; font-weight: 500; transition: background 0.15s; }
+    .si-sosmed-c:hover { background: #e5e7eb; }
+    .section-group[data-type="image"][data-block-style="C"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 6px; padding: 6px 8px; }
+    .si-img-c { width: calc(50% - 3px); border-radius: 8px; overflow: hidden; }
+    .si-img-c img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .si-img-c-cap { font-size: 11px; color: #6b7280; text-align: center; padding: 3px 4px; }
+    /* ── Contact Style 1 — List with square icons ── */
+    .section-group[data-type="contact"][data-block-style="1"] { background: #f5f5f5; border-radius: 10px; overflow: hidden; border: none; }
+    .section-group[data-type="contact"][data-block-style="1"] .section-group-header { display: none; }
+    .section-group[data-type="contact"][data-block-style="1"] .section-group-items { padding: 0; gap: 0; }
+    .ct-1-item { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-bottom: 1px solid #e0e0e0; text-decoration: none; color: inherit; }
+    .ct-1-item:last-child { border-bottom: none; }
+    .ct-1-icon { width: 52px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ct-1-text { display: flex; flex-direction: column; gap: 4px; }
+    .ct-1-label { font-weight: 600; color: #444; font-size: 15px; line-height: 1.2; }
+    .ct-1-val { font-size: 18px; color: #111; font-weight: 400; line-height: 1.3; }
+    /* ── Contact Style 2 — Cards with shadow ── */
+    .section-group[data-type="contact"][data-block-style="2"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="contact"][data-block-style="2"] .section-group-header { display: none; }
+    .section-group[data-type="contact"][data-block-style="2"] .section-group-items { padding: 0; gap: 12px; }
+    .ct-2-item { display: flex; align-items: center; padding: 18px; background: white; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); text-decoration: none; color: inherit; gap: 16px; }
+    .ct-2-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ct-2-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .ct-2-label { font-size: 12px; color: #888; letter-spacing: 0.7px; text-transform: uppercase; font-weight: 500; }
+    .ct-2-val { font-size: 18px; color: #111; font-weight: 600; line-height: 1.3; }
+    /* ── Contact Style 3 — Gradient card ── */
+    .section-group[data-type="contact"][data-block-style="3"] { border: none; border-radius: 16px; overflow: hidden; background: var(--block-color, #10b981); background-image: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0.12) 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+    .section-group[data-type="contact"][data-block-style="3"] .section-group-header { display: none; }
+    .section-group[data-type="contact"][data-block-style="3"] .section-group-items { padding: 20px; gap: 12px; }
+    .ct-3-item { display: flex; align-items: center; background: rgba(255,255,255,0.18); padding: 16px; border-radius: 10px; text-decoration: none; gap: 14px; }
+    .ct-3-icon { font-size: 22px; flex-shrink: 0; display: flex; align-items: center; }
+    .ct-3-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .ct-3-label { font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 500; }
+    .ct-3-val { font-size: 18px; color: white; font-weight: 600; line-height: 1.3; }
+    /* ── Contact Style 4 — Centered cards ── */
+    .section-group[data-type="contact"][data-block-style="4"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="contact"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="contact"][data-block-style="4"] .section-group-items { padding: 0; gap: 14px; }
+    .ct-4-item { background: white; padding: 24px 20px; border-radius: 14px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.07); text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .ct-4-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .ct-4-label { font-size: 14px; color: #666; font-weight: 500; }
+    .ct-4-val { font-size: 18px; font-weight: 600; color: #111; line-height: 1.3; }
+    /* ── Social Style 1 — Flat list ── */
+    .section-group[data-type="sosmed"][data-block-style="1"] { background: #f5f5f5; border-radius: 10px; overflow: hidden; border: none; }
+    .section-group[data-type="sosmed"][data-block-style="1"] .section-group-header { display: none; }
+    .section-group[data-type="sosmed"][data-block-style="1"] .section-group-items { padding: 0; gap: 0; }
+    .sm-1-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #e0e0e0; }
+    .sm-1-item:last-child { border-bottom: none; }
+    .sm-1-icon { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sm-1-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .sm-1-name { font-size: 15px; font-weight: 600; color: #111; }
+    .sm-1-handle { font-size: 13px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Social Style 2 — Cards with shadow ── */
+    .section-group[data-type="sosmed"][data-block-style="2"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="sosmed"][data-block-style="2"] .section-group-header { display: none; }
+    .section-group[data-type="sosmed"][data-block-style="2"] .section-group-items { padding: 0; gap: 12px; }
+    .sm-2-item { display: flex; align-items: center; padding: 16px 18px; background: white; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); gap: 14px; }
+    .sm-2-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sm-2-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .sm-2-name { font-size: 15px; font-weight: 600; color: #111; }
+    .sm-2-handle { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Social Style 3 — Horizontal pill chips ── */
+    .section-group[data-type="sosmed"][data-block-style="3"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="sosmed"][data-block-style="3"] .section-group-header { display: none; }
+    .section-group[data-type="sosmed"][data-block-style="3"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+    .sm-3-item { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 24px; border: 1.5px solid; cursor: default; }
+    .sm-3-name { font-size: 14px; font-weight: 500; }
+    /* ── Social Style 4 — Minimal with icon right ── */
+    .section-group[data-type="sosmed"][data-block-style="4"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="sosmed"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="sosmed"][data-block-style="4"] .section-group-items { padding: 0; gap: 0; }
+    .sm-4-item { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid #f0f0f0; }
+    .sm-4-item:last-child { border-bottom: none; }
+    .sm-4-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .sm-4-name { font-size: 15px; font-weight: 500; color: #111; }
+    .sm-4-handle { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Social Style 5 — Icon-only grid (4 per row) ── */
+    .section-group[data-type="sosmed"][data-block-style="5"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="sosmed"][data-block-style="5"] .section-group-header { display: none; }
+    .section-group[data-type="sosmed"][data-block-style="5"] .section-group-items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 4px 0; }
+    .sm-5-icon { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border-radius: 50%; text-decoration: none; transition: opacity 0.15s; }
+    .sm-5-icon:hover { opacity: 0.85; }
+    /* ── Link Style 1 — Flat list with icon ── */
+    .section-group[data-type="link"][data-block-style="1"] { background: #f5f5f5; border-radius: 10px; overflow: hidden; border: none; }
+    .section-group[data-type="link"][data-block-style="1"] .section-group-header { display: none; }
+    .section-group[data-type="link"][data-block-style="1"] .section-group-items { padding: 0; gap: 0; }
+    .lk-1-item { display: flex; align-items: center; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #e0e0e0; text-decoration: none; color: inherit; }
+    .lk-1-item:last-child { border-bottom: none; }
+    .lk-1-icon { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lk-1-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .lk-1-name { font-weight: 600; color: #111; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lk-1-desc { font-size: 13px; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lk-1-chev { color: #9ca3af; font-size: 12px; flex-shrink: 0; }
+    /* ── Link Style 2 — Cards with shadow ── */
+    .section-group[data-type="link"][data-block-style="2"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="link"][data-block-style="2"] .section-group-header { display: none; }
+    .section-group[data-type="link"][data-block-style="2"] .section-group-items { padding: 0; gap: 12px; }
+    .lk-2-item { display: flex; align-items: center; padding: 16px 18px; background: white; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); text-decoration: none; color: inherit; gap: 14px; }
+    .lk-2-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lk-2-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .lk-2-name { font-size: 15px; font-weight: 600; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lk-2-desc { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Link Style 3 — Solid color button ── */
+    .section-group[data-type="link"][data-block-style="3"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="link"][data-block-style="3"] .section-group-header { display: none; }
+    .section-group[data-type="link"][data-block-style="3"] .section-group-items { padding: 0; gap: 12px; }
+    .lk-3-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 20px; border-radius: 12px; text-decoration: none; text-align: center; transition: opacity 0.15s; }
+    .lk-3-item:hover { opacity: 0.88; }
+    .lk-3-name { font-size: 16px; font-weight: 600; color: white; }
+    .lk-3-desc { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+    /* ── Link Style 4 — Minimal underline ── */
+    .section-group[data-type="link"][data-block-style="4"] { border: none; background: transparent; border-radius: 0; }
+    .section-group[data-type="link"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="link"][data-block-style="4"] .section-group-items { padding: 0; gap: 0; }
+    .lk-4-item { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid #f0f0f0; text-decoration: none; color: inherit; }
+    .lk-4-item:last-child { border-bottom: none; }
+    .lk-4-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .lk-4-name { font-size: 15px; font-weight: 500; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lk-4-desc { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* ── Image Style 3 — 2-column grid ── */
+    .section-group[data-type="image"][data-block-style="3"] { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .section-group[data-type="image"][data-block-style="3"] .section-group-header { display: none; }
+    .section-group[data-type="image"][data-block-style="3"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 6px; padding: 6px 8px; }
+    /* ── Image Style 4 — Polaroid card ── */
+    .section-group[data-type="image"][data-block-style="4"] { border: none; background: transparent; }
+    .section-group[data-type="image"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="image"][data-block-style="4"] .section-group-items { padding: 0; gap: 14px; }
+    .img-4-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .img-4-card img { width: 100%; display: block; aspect-ratio: 4/3; object-fit: cover; }
+    .img-4-cap { padding: 12px 14px; font-size: 14px; color: #374151; font-weight: 500; }
+    /* ── Video Style 4 — Solid play button ── */
+    .section-group[data-type="video"][data-block-style="4"] { border: none; background: transparent; }
+    .section-group[data-type="video"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="video"][data-block-style="4"] .section-group-items { padding: 0; gap: 12px; }
+    .vd-4-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 20px; border-radius: 12px; text-decoration: none; background: var(--block-color, #ef4444); color: white; font-weight: 600; font-size: 15px; transition: opacity 0.15s; }
+    .vd-4-btn:hover { opacity: 0.88; }
+    /* ── PDF Style 4 — Download button ── */
+    .section-group[data-type="pdf"][data-block-style="4"] { border: none; background: transparent; }
+    .section-group[data-type="pdf"][data-block-style="4"] .section-group-header { display: none; }
+    .section-group[data-type="pdf"][data-block-style="4"] .section-group-items { padding: 0; gap: 12px; }
+    .pdf-4-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 20px; border-radius: 12px; text-decoration: none; background: var(--block-color, #ef4444); color: white; font-weight: 600; font-size: 15px; transition: opacity 0.15s; }
+    .pdf-4-btn:hover { opacity: 0.88; }
+</style>
+
+<div class="phone-wrapper">
+    {% if _welcome_img %}
+    <div class="welcome-overlay" id="welcome-overlay">
+        <img src="{{ _welcome_img }}" alt="Welcome">
+    </div>
+    <script>
+        (function () {
+            var t = {{ _welcome_time | float }};
+            setTimeout(function () {
+                var el = document.getElementById('welcome-overlay');
+                if (el) el.classList.add('hide');
+                setTimeout(function () { if (el) el.style.display = 'none'; }, 900);
+            }, t * 1000);
+        })();
+    </script>
+    {% endif %}
+
+    {% if _show_default %}
+    {# DEFAULT TEMPLATE #}
+    <div class="tpl-default">
+        <div class="top-block"></div>
+        <div class="bottom-block">
+            <div class="profile-circle">
+                {% if _cover_img %}
+                <img src="{{ _cover_img }}" alt="{{ _title }}">
+                {% else %}
+                <i class="fa-regular fa-image" style="font-size:36px;color:#d1d5db;"></i>
+                {% endif %}
+            </div>
+            {% if _title %}<div class="dtitle">{{ _title }}</div>{% endif %}
+            {% if _desc %}<div class="ddesc">{{ _desc }}</div>{% endif %}
+            <div class="sections-list">
+                {{ render_sections_grouped(_sections, preview=false) }}
+            </div>
+        </div>
+    </div>
+
+    {% elif _tmpl == 'template1' %}
+    {# TEMPLATE 1 #}
+    <div class="tpl-1">
+        <div class="t1-header">
+            {% if _cover_img %}<img src="{{ _cover_img }}" alt="{{ _title }}">{% endif %}
+        </div>
+        <div class="t1-card {{ 'with-cover' if _cover_img else '' }}">
+            {% if _title %}<div class="t1-title">{{ _title }}</div>{% endif %}
+            {% if _desc %}<div class="t1-desc">{{ _desc }}</div>{% endif %}
+            <div class="sections-list">
+                {{ render_sections_grouped(_sections, preview=false) }}
+            </div>
+        </div>
+    </div>
+
+    {% elif _tmpl == 'template2' %}
+    {# TEMPLATE 2 #}
+    <div class="tpl-2">
+        <div class="t2-circle">
+            {% if _cover_img %}
+            <img src="{{ _cover_img }}" alt="{{ _title }}">
+            {% else %}
+            <i class="fa-regular fa-image" style="font-size:32px;color:rgba(255,255,255,0.5);"></i>
+            {% endif %}
+        </div>
+        {% if _title %}<div class="t2-title">{{ _title }}</div>{% endif %}
+        {% if _desc %}<div class="t2-desc">{{ _desc }}</div>{% endif %}
+        <div class="t2-sections sections-list">
+            {{ render_sections_grouped(_sections, preview=false) }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# =====================================================================
+   PREVIEW MODE
+   ===================================================================== #}
+{% elif allinone_mode == 'preview' %}
+<style>
+    .allinone-preview-wrap { width: 100%; height: 100%; position: relative; overflow: hidden; }
+
+    /* DEFAULT preview */
+    .allinone-tpl-default { display: flex; flex-direction: column; min-height: 100%; }
+    .allinone-tpl-default .allinone-top { background: {{ _primary }}; padding: 20px 12px 36px; }
+    .allinone-tpl-default .allinone-bottom {
+        background: white;
+        border-radius: 16px 16px 0 0;
+        margin-top: -16px;
+        padding: 44px 10px 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+    .allinone-tpl-default .allinone-circle {
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .allinone-tpl-default .allinone-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-default .allinone-ptitle {
+        font-size: 11px; font-weight: 700; text-align: center; color: #111827;
+        margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+    }
+    .allinone-tpl-default .allinone-pdesc {
+        font-size: 9px; text-align: center; color: #6b7280;
+        margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+    }
+
+    /* TEMPLATE 1 preview */
+    .allinone-tpl-1 { min-height: 100%; display: flex; flex-direction: column; background: #f3f4f6; }
+    .allinone-tpl-1 .t1-hdr { height: 100px; background: #e5e7eb; flex-shrink: 0; overflow: hidden; }
+    .allinone-tpl-1 .t1-hdr img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-1 .t1-body {
+        background: white;
+        border-radius: 10px 10px 0 0;
+        margin-top: -8px;
+        flex: 1;
+        padding: 10px;
+    }
+    .allinone-tpl-1 .t1-title { font-size: 10px; font-weight: 700; text-align: center; color: #111827; margin-bottom: 2px; }
+    .allinone-tpl-1 .t1-desc { font-size: 8px; text-align: center; color: #6b7280; margin-bottom: 8px; }
+
+    /* TEMPLATE 2 preview */
+    .allinone-tpl-2 { min-height: 100%; background: {{ _primary }}; display: flex; flex-direction: column; align-items: center; padding: 16px 10px; }
+    .allinone-tpl-2 .t2-circle-p {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6);
+        overflow: hidden; display: flex; align-items: center; justify-content: center;
+        margin-bottom: 8px; flex-shrink: 0;
+    }
+    .allinone-tpl-2 .t2-circle-p img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-2 .t2-title { font-size: 10px; font-weight: 700; text-align: center; color: white; margin-bottom: 2px; }
+    .allinone-tpl-2 .t2-desc { font-size: 8px; text-align: center; color: rgba(255,255,255,0.85); margin-bottom: 10px; }
+    .allinone-tpl-2 .t2-sections { width: 100%; }
+
+    /* Shared preview section item */
+    .pv-sections { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+    .pv-item {
+        display: flex; align-items: center; padding: 5px 7px; gap: 5px;
+        background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 5px;
+        text-decoration: none; color: inherit;
+    }
+    .allinone-tpl-2 .pv-item { background: rgba(255,255,255,0.92); }
+    .pv-icon {
+        width: 18px; height: 18px; background: #eff6ff; border-radius: 3px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .pv-name { font-size: 8px; font-weight: 500; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .pv-sub { font-size: 7px; color: #9ca3af; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pv-img { width: 100%; border-radius: 4px; display: block; margin: 2px 0; }
+    .pv-img-cap { font-size: 7px; color: #6b7280; text-align: center; }
+
+    /* Preview section group blocks */
+    .pv-sections { gap: 4px; }
+    .pv-section-group { border: 1px solid #e5e7eb; border-radius: 5px; overflow: hidden; }
+    .pv-section-group[data-type="contact"][data-block-style="3"] { background: var(--block-color, #10b981); background-image: linear-gradient(135deg,rgba(255,255,255,0.18) 0%,rgba(0,0,0,0.1) 100%); border: none; }
+    .pv-section-group[data-type="contact"][data-block-style="3"] .pv-section-group-items { padding: 4px; gap: 3px; }
+    .pv-section-group[data-type="contact"][data-block-style="4"] .pv-section-group-items { gap: 3px; }
+    .pv-section-group-items { padding: 3px 4px; display: flex; flex-direction: column; gap: 2px; }
+    /* Preview style B */
+    .pv-item-b { background: #eff6ff; border-left: 2px solid #3b82f6; }
+    .pv-item-b[data-stype="link"] { background: #dbeafe; border-left-color: #2563eb; }
+    .pv-item-b[data-stype="video"] { background: #fef2f2; border-left-color: #ef4444; }
+    .pv-item-b[data-stype="pdf"] { background: #fef2f2; border-left-color: #ef4444; }
+    .pv-item-b[data-stype="sosmed"] { background: #faf5ff; border-left-color: #7c3aed; }
+    .pv-item-b .pv-name { font-weight: 700; }
+    /* Preview style C */
+    .pv-item-c { background: transparent; border-radius: 0; border-bottom: 1px solid #f0f0f0; padding-top: 2px; padding-bottom: 2px; border-left: none; }
+    .pv-item-c .pv-icon { display: none; }
+    .pv-item-c .pv-name { color: #374151; }
+    /* Sosmed style 3 horizontal pills preview */
+    .pv-section-group[data-type="sosmed"][data-block-style="3"] .pv-section-group-items { flex-direction: row; flex-wrap: wrap; gap: 3px; align-items: center; }
+    .pv-sm-pill { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px; border-radius: 8px; border: 1px solid var(--block-color, #10b981); }
+    .pv-sm-pill-name { font-size: 5.5px; color: var(--block-color, #10b981); white-space: nowrap; }
+    /* Sosmed style 5 grid preview */
+    .pv-section-group[data-type="sosmed"][data-block-style="5"] .pv-section-group-items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; }
+    .pv-sm-5 { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border-radius: 50%; }
+    /* Image styles preview */
+    .pv-img-b { display: flex; justify-content: center; }
+    .pv-img-b img { width: 80%; border-radius: 8px; display: block; }
+    .pv-section-group[data-type="image"][data-block-style="3"] .pv-section-group-items { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+    .pv-img-c { width: calc(50% - 1px); border-radius: 3px; overflow: hidden; }
+    .pv-img-c img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .pv-section-group[data-type="image"][data-block-style="4"] .pv-section-group-items { padding: 0; gap: 4px; }
+    /* Video/PDF style 4 preview */
+    .pv-section-group[data-type="video"][data-block-style="4"] .pv-section-group-items,
+    .pv-section-group[data-type="pdf"][data-block-style="4"] .pv-section-group-items { padding: 0; gap: 3px; }
+</style>
+
+<div class="allinone-preview-wrap">
+    {# DEFAULT #}
+    <div class="allinone-tpl-default" id="allinone-preview-default"
+         style="{{ 'display:none;' if _tmpl not in ['default',''] and _tmpl != '' and _tmpl in ['template1','template2'] else '' }}">
+        <div class="allinone-top" id="allinone-preview-top-block"></div>
+        <div class="allinone-bottom">
+            <div class="allinone-circle" id="allinone-preview-profile-circle">
+                {% if _cover_img %}
+                <img src="{{ _cover_img }}" alt="" id="allinone-preview-profile-img">
+                {% else %}
+                <i class="fa-regular fa-image" style="font-size:18px;color:#d1d5db;" id="allinone-preview-profile-placeholder-icon"></i>
+                {% endif %}
+            </div>
+            {% if _title %}
+            <div class="allinone-ptitle" id="allinone-preview-title-text">{{ _title }}</div>
+            {% else %}
+            <div class="allinone-ptitle" id="allinone-preview-title-text" style="display:none;"></div>
+            {% endif %}
+            {% if _desc %}
+            <div class="allinone-pdesc" id="allinone-preview-desc-text">{{ _desc }}</div>
+            {% else %}
+            <div class="allinone-pdesc" id="allinone-preview-desc-text" style="display:none;"></div>
+            {% endif %}
+            <div class="pv-sections" id="allinone-preview-sections-list">
+                {{ render_sections_grouped(_sections, preview=true) }}
+            </div>
+        </div>
+    </div>
+
+    {# TEMPLATE 1 #}
+    <div class="allinone-tpl-1" id="allinone-preview-template1" style="{{ '' if _tmpl == 'template1' else 'display:none;' }}">
+        <div class="t1-hdr" id="allinone-t1-preview-header">
+            {% if _cover_img %}<img src="{{ _cover_img }}" alt="" id="allinone-t1-preview-header-img">{% endif %}
+        </div>
+        <div class="t1-body">
+            {% if _title %}
+            <div class="t1-title" id="allinone-t1-preview-title">{{ _title }}</div>
+            {% else %}
+            <div class="t1-title" id="allinone-t1-preview-title" style="display:none;"></div>
+            {% endif %}
+            {% if _desc %}
+            <div class="t1-desc" id="allinone-t1-preview-desc">{{ _desc }}</div>
+            {% else %}
+            <div class="t1-desc" id="allinone-t1-preview-desc" style="display:none;"></div>
+            {% endif %}
+            <div class="pv-sections" id="allinone-t1-preview-sections-list">
+                {{ render_sections_grouped(_sections, preview=true) }}
+            </div>
+        </div>
+    </div>
+
+    {# TEMPLATE 2 #}
+    <div class="allinone-tpl-2" id="allinone-preview-template2" style="{{ '' if _tmpl == 'template2' else 'display:none;' }}">
+        <div class="t2-circle-p" id="allinone-t2-preview-circle-wrap">
+            {% if _cover_img %}
+            <img src="{{ _cover_img }}" alt="" id="allinone-t2-preview-circle-img">
+            {% else %}
+            <i class="fa-regular fa-image" style="font-size:14px;color:rgba(255,255,255,0.5);" id="allinone-t2-preview-circle-placeholder"></i>
+            {% endif %}
+        </div>
+        {% if _title %}
+        <div class="t2-title" id="allinone-t2-preview-title">{{ _title }}</div>
+        {% else %}
+        <div class="t2-title" id="allinone-t2-preview-title" style="display:none;"></div>
+        {% endif %}
+        {% if _desc %}
+        <div class="t2-desc" id="allinone-t2-preview-desc">{{ _desc }}</div>
+        {% else %}
+        <div class="t2-desc" id="allinone-t2-preview-desc" style="display:none;"></div>
+        {% endif %}
+        <div class="t2-sections pv-sections" id="allinone-t2-preview-sections-list">
+            {{ render_sections_grouped(_sections, preview=true) }}
+        </div>
+    </div>
+</div>
+{% endif %}

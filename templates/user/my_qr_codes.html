@@ -429,6 +429,12 @@
                         displayUrl = window.location.origin + '/images/' + shortCode;
                     } else if (qrType === 'special') {
                         displayUrl = window.location.origin + '/special/' + shortCode;
+                    } else if (qrType === 'links') {
+                        displayUrl = window.location.origin + '/links/' + shortCode;
+                    } else if (qrType === 'sosmed') {
+                        displayUrl = window.location.origin + '/sosmed/' + shortCode;
+                    } else if (qrType === 'allinone') {
+                        displayUrl = window.location.origin + '/allinone/' + shortCode;
                     }
                 }
 
@@ -573,6 +579,9 @@
                         {% elif qr.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
                         {% elif qr.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
                         {% elif qr.qr_type == 'special' %}<i class="fa-solid fa-star"></i> Special Card
+                        {% elif qr.qr_type == 'links' %}<i class="fa-solid fa-list-ul"></i> Links
+                        {% elif qr.qr_type == 'sosmed' %}<i class="fa-regular fa-thumbs-up"></i> Sosmed
+                        {% elif qr.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> All in One
                         {% else %}<i class="fa-solid fa-qrcode"></i> {{ qr.qr_type | capitalize }}{% endif %}
                     </span></td>
                 <td>{{ qr.created_at[:10] }}</td>

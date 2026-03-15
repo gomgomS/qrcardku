@@ -1,0 +1,253 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Design the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<style>
+    .new-qr-container { display: flex; gap: 32px; height: 100%; }
+    .form-column { flex: 1; min-width: 0; }
+    .preview-column { width: 340px; flex-shrink: 0; }
+    .step-item { display: flex; align-items: center; gap: 8px; }
+    .step-num { width: 24px; height: 24px; background-color: #e5e7eb; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+    .step-completed { color: #16a34a; font-weight: 500; }
+    .step-completed .step-num { background-color: #16a34a; color: white; }
+    .step-active { color: var(--primary); font-weight: 500; background-color: #e0e7ff; padding: 4px 12px 4px 4px; border-radius: 20px; }
+    .step-active .step-num { background-color: var(--primary); color: white; border-radius: 50%; }
+    .btn-outline { border: 1px solid var(--border-color); background: white; color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+    .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; }
+    .design-tabs { display: flex; gap: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+    .design-tab { padding: 0 0 12px 0; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; position: relative; }
+    .design-tab.active { color: var(--primary); }
+    .design-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background-color: var(--primary); }
+    .save-template-box { border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; background: white; font-size: 13px; color: var(--text-main); }
+    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; }
+    .header-left-col { display: flex; align-items: center; gap: 12px; }
+    .header-icon { color: var(--primary); font-size: 18px; width: 32px; height: 32px; background: #f0fdf4; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+    .header-text p { font-size: 11px; color: var(--text-muted); }
+    .collapse-body { padding: 0 24px 24px 24px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
+    .collapse-body.show { padding: 24px; max-height: 2000px; opacity: 1; border-top: 1px solid var(--border-color); }
+    .selection-grid.frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: white; padding: 8px; color: var(--text-muted); }
+    .grid-item:hover { border-color: #9ca3af; }
+    .grid-item.active { border-color: var(--primary); background-color: #f0f9ff; color: var(--primary); }
+    .frame-thumb { width: 40px; height: 40px; margin: 0 auto 4px; background: #f9fafb; border: 1px solid #e5e7eb; box-sizing: border-box; }
+    .frame-thumb-none { background: #f3f4f6; border: none; position: relative; }
+    .frame-thumb-none::after { content: ''; position: absolute; inset: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+    .frame-thumb-simple { border: 2px solid #374151; border-radius: 2px; }
+    .frame-thumb-rounded { border: 2px solid #374151; border-radius: 12px; }
+    .frame-thumb-double { border: 3px double #374151; border-radius: 4px; }
+    .frame-thumb-envelope { border: 2px solid #374151; border-radius: 4px; clip-path: polygon(0 20%, 50% 0, 100% 20%, 100% 100%, 0 100%); }
+    .frame-thumb-ticket { border: 2px solid #374151; border-radius: 16px; box-shadow: inset 0 0 0 2px #f9fafb; }
+    .frame-thumb-circle { border: 2px solid #374151; border-radius: 50%; }
+    .frame-thumb-thick { border: 6px solid #374151; border-radius: 12px; }
+    .frame-thumb-shadow { border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .frame-thumb-badge { border: 2px solid #374151; border-radius: 6px; position: relative; }
+    .frame-thumb-badge::before { content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 20px; height: 6px; background: #374151; border-radius: 0 0 4px 4px; }
+    .frame-label { font-size: 10px; color: var(--text-muted); text-align: center; display: block; line-height: 1.2; }
+    .frame-text-row { margin-top: 20px; margin-bottom: 12px; }
+    .frame-text-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+    .frame-text-row input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; }
+    .frame-text-color-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .frame-text-color-row input[type="color"] { width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; padding: 2px; }
+    .qr-preview-frame { width: 100%; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; position: relative; }
+    .qr-preview-frame .qr-inner { width: 100%; max-width: 200px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .qr-preview-frame .qr-inner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .qr-preview-frame .frame-caption { margin-top: 12px; font-size: 14px; font-weight: 600; text-align: center; }
+    .qr-preview-frame.frame-none .qr-inner { border: none; }
+    .qr-preview-frame.frame-simple .qr-inner { border: 2px solid #111; border-radius: 2px; padding: 8px; }
+    .qr-preview-frame.frame-rounded .qr-inner { border: 2px solid #111; border-radius: 16px; padding: 8px; }
+    .qr-preview-frame.frame-double .qr-inner { border: 3px double #111; border-radius: 6px; padding: 8px; }
+    .qr-preview-frame.frame-envelope .qr-inner { border: 2px solid #111; border-radius: 6px; padding: 8px; clip-path: polygon(0 15%, 50% 0, 100% 15%, 100% 100%, 0 100%); }
+    .qr-preview-frame.frame-ticket .qr-inner { border: 2px solid #111; border-radius: 24px; padding: 10px; box-shadow: inset 0 0 0 2px white; }
+    .qr-preview-frame.frame-circle .qr-inner { border: 2px solid #111; border-radius: 50%; padding: 10px; }
+    .qr-preview-frame.frame-thick .qr-inner { border: 8px solid #111; border-radius: 16px; padding: 6px; }
+    .qr-preview-frame.frame-shadow .qr-inner { border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .qr-preview-frame.frame-badge .qr-inner { border: 2px solid #111; border-radius: 10px; padding: 12px 8px 8px; position: relative; }
+    .qr-preview-frame.frame-badge .qr-inner::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 10px; background: #111; border-radius: 0 0 6px 6px; }
+    .preview-container { position: sticky; top: 24px; background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+    .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
+    .qr-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; min-height: 280px; }
+    #qrcode-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <a href="{{ step2_url | default('/qr/new/sosmed') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Content</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </span>
+    </div>
+    <div class="new-qr-step-nav">
+        <form id="design-back-form" method="POST" action="/qr/new/sosmed/back" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="back_from_design" value="1" />
+            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
+            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+
+            {% if sosmed_data %}
+            {% for key, val in sosmed_data.items() %}
+            {% if val is iterable and val is not string %}
+            {% for item in val %}
+            <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
+            {% endfor %}
+            {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+
+            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        </form>
+        <button form="design-form" type="submit" class="btn-next">Complete</button>
+    </div>
+</div>
+
+<form id="design-form" method="POST" action="{{ form_action | default('/qr/save') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="qr_type" value="{{ qr_type }}" />
+    <input type="hidden" name="url_content" value="{{ url_content | e }}" />
+    <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+    {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+
+    {% if sosmed_data %}
+    {% for key, val in sosmed_data.items() %}
+    {% if val is iterable and val is not string %}
+    {% for item in val %}
+    <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
+    {% endfor %}
+    {% else %}
+    <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+</form>
+
+<div class="new-qr-container">
+    <div class="form-column">
+        <div class="page-title">Design the QR</div>
+        <div class="design-tabs">
+            <div class="design-tab active">Personalized design</div>
+            <div class="design-tab">Templates</div>
+        </div>
+        <div class="save-template-box">
+            <input type="checkbox">
+            <span>Save template when finished</span>
+        </div>
+        <div class="collapse-section frame-section">
+            <div class="collapse-header">
+                <div class="header-left-col">
+                    <div class="header-icon"><i class="fa-solid fa-border-all"></i></div>
+                    <div class="header-text">
+                        <h3>Frame</h3>
+                        <p>Define the QR card outline by choosing from preset frames.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-up frame-chevron" style="color: var(--text-muted);"></i>
+            </div>
+            <div class="collapse-body show">
+                <div class="selection-grid frame-grid" style="margin-top: 24px;">
+                    <div class="grid-item frame-option active" data-frame="none" title="No frame"><div class="frame-thumb frame-thumb-none"></div><span class="frame-label">None</span></div>
+                    <div class="grid-item frame-option" data-frame="simple" title="Simple border"><div class="frame-thumb frame-thumb-simple"></div><span class="frame-label">Simple</span></div>
+                    <div class="grid-item frame-option" data-frame="rounded" title="Rounded"><div class="frame-thumb frame-thumb-rounded"></div><span class="frame-label">Rounded</span></div>
+                    <div class="grid-item frame-option" data-frame="double" title="Double border"><div class="frame-thumb frame-thumb-double"></div><span class="frame-label">Double</span></div>
+                    <div class="grid-item frame-option" data-frame="envelope" title="Envelope"><div class="frame-thumb frame-thumb-envelope"></div><span class="frame-label">Envelope</span></div>
+                    <div class="grid-item frame-option" data-frame="ticket" title="Ticket"><div class="frame-thumb frame-thumb-ticket"></div><span class="frame-label">Ticket</span></div>
+                    <div class="grid-item frame-option" data-frame="circle" title="Circle"><div class="frame-thumb frame-thumb-circle"></div><span class="frame-label">Circle</span></div>
+                    <div class="grid-item frame-option" data-frame="thick" title="Thick border"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
+                    <div class="grid-item frame-option" data-frame="shadow" title="Shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
+                    <div class="grid-item frame-option" data-frame="badge" title="Badge"><div class="frame-thumb frame-thumb-badge"></div><span class="frame-label">Badge</span></div>
+                </div>
+                <div class="frame-text-row">
+                    <label for="frame-text">Text</label>
+                    <input type="text" id="frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="32">
+                </div>
+                <div class="frame-text-color-row">
+                    <label for="frame-text-color">Text color</label>
+                    <input type="color" id="frame-text-color" value="#000000" title="Text color">
+                    <span id="frame-color-hex" style="font-size: 12px; color: var(--text-muted);">#000000</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-column">
+        <div class="preview-container">
+            <div class="preview-header">
+                <div class="preview-type-badge">
+                    <i class="fa-regular fa-thumbs-up"></i> Sosmed
+                </div>
+                <div class="preview-controls">
+                    <i class="fa-regular fa-eye active"></i>
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+            </div>
+            <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">Example</span>
+            <div class="qr-card">
+                <div id="qr-preview-frame" class="qr-preview-frame frame-none">
+                    <div class="qr-inner">
+                        <img id="qrcode-img" alt="QR card" />
+                    </div>
+                    <div id="frame-caption" class="frame-caption" style="color: #000000;">Scan me!</div>
+                </div>
+            </div>
+            <div class="preview-disclaimer">
+                <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const qrEncodeUrl = "{{ qr_encode_url or '' }}";
+        const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
+        const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
+        QRCode.toDataURL(finalUrl, { width: 400, margin: 2, color: { dark: '#000000', light: '#ffffff' }, errorCorrectionLevel: 'H' })
+            .then(url => { document.getElementById('qrcode-img').src = url; })
+            .catch(err => { console.error("Error generating QR:", err); });
+        document.querySelectorAll('.collapse-header').forEach(header => {
+            header.addEventListener('click', function () {
+                const body = this.nextElementSibling;
+                const icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
+                if (!body.classList.contains('show')) { body.classList.add('show'); if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); } }
+                else { body.classList.remove('show'); if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); } }
+            });
+        });
+        const framePreview = document.getElementById('qr-preview-frame');
+        const frameCaption = document.getElementById('frame-caption');
+        document.querySelectorAll('.frame-option').forEach(item => {
+            item.addEventListener('click', function () {
+                this.parentElement.querySelectorAll('.grid-item').forEach(s => s.classList.remove('active'));
+                this.classList.add('active');
+                framePreview.className = 'qr-preview-frame frame-' + (this.getAttribute('data-frame') || 'none');
+            });
+        });
+        const frameTextEl = document.getElementById('frame-text');
+        const frameColorEl = document.getElementById('frame-text-color');
+        const frameColorHex = document.getElementById('frame-color-hex');
+        if (frameTextEl) frameTextEl.addEventListener('input', function () { frameCaption.textContent = this.value || 'Scan me!'; });
+        if (frameColorEl) { frameColorEl.addEventListener('input', function () { frameCaption.style.color = this.value; if (frameColorHex) frameColorHex.textContent = this.value; }); }
+        if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
+    });
+</script>
+{% endblock %}
+{% endblock %}

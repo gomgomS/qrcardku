@@ -1,0 +1,726 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Edit QR Content" %}
+{% set active_page = "my_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+    .new-qr-container { display: flex; gap: 32px; height: 100%; }
+    .form-column { flex: 1; min-width: 0; }
+    .preview-column { width: 340px; flex-shrink: 0; }
+    .step-item { display: flex; align-items: center; gap: 8px; }
+    .step-num { width: 24px; height: 24px; background-color: #e5e7eb; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+    .step-completed { color: #16a34a; font-weight: 500; }
+    .step-completed .step-num { background-color: #16a34a; color: white; }
+    .step-active { color: var(--primary); font-weight: 500; }
+    .step-active .step-num { background-color: var(--primary); color: white; }
+    .btn-outline { border: 1px solid var(--border-color); background: white; color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+    .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; text-align: center; }
+    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .header-left-col { display: flex; align-items: center; gap: 12px; }
+    .header-icon { color: var(--primary); font-size: 18px; width: 24px; text-align: center; }
+    .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+    .header-text p { font-size: 12px; color: var(--text-muted); }
+    .collapse-body { padding: 0 24px 24px 24px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
+    .collapse-body.show { padding: 24px; max-height: 6000px; opacity: 1; }
+    .sub-collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; cursor: pointer; border-top: 1px solid var(--border-color); }
+    .sub-collapse-header:first-child { border-top: none; }
+    .sub-collapse-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out; opacity: 0; padding-bottom: 0; }
+    .sub-collapse-body.show { max-height: 500px; opacity: 1; padding-bottom: 16px; }
+    .sub-collapse-body.show.sub-collapse-body-lg { max-height: 4000px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; transition: border-color 0.2s; box-sizing: border-box; }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; }
+    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e7eb; transition: .3s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    input:checked+.slider { background-color: var(--primary); }
+    input:checked+.slider:before { transform: translateX(16px); }
+    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #f9fafb; }
+    .url-prefix { padding: 10px 14px; color: var(--text-muted); font-size: 14px; border-right: 1px solid var(--border-color); white-space: nowrap; }
+    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: white; }
+    .url-prefix-group input:focus { outline: none; }
+    .toggle-label-with-icon { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); font-weight: 500; }
+    .phone-container { position: sticky; top: 24px; }
+    .phone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
+    .phone-mockup { width: 100%; height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; }
+    .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .template-card { transition: border 0.2s; }
+    input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
+    #allinone-blocks-container { display: flex; flex-direction: column; gap: 8px; }
+    .allinone-block-row { background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; position: relative; }
+    .allinone-block-row .block-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .allinone-block-type-badge { font-size: 11px; font-weight: 600; color: var(--primary); background: #eff6ff; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+    .allinone-block-remove-btn { background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 14px; border-radius: 4px; }
+    .allinone-block-remove-btn:hover { color: #ef4444; background: #fee2e2; }
+    .allinone-block-inputs { display: flex; flex-direction: column; gap: 6px; }
+    .allinone-block-img-preview img { max-width: 80px; border-radius: 4px; margin-top: 4px; }
+    .add-block-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .add-block-btn { background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 12px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--primary); }
+    .add-block-btn:hover { background: #eff6ff; border-color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/list') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>My QR codes</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">1</span>
+            <span>Edit content</span>
+        </span>
+        <a href="{{ step3_url }}" class="step-item" style="color: var(--text-muted); text-decoration: none;">
+            <span class="step-num">2</span>
+            <span>QR design</span>
+        </a>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/list') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn">Save <i class="fa-solid fa-check"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="page-title" style="margin-bottom: 24px;">Edit QR Content</div>
+
+    <div class="new-qr-container">
+        <div class="form-column">
+            {% if error_msg %}
+            <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+            {% if msg %}
+            <div style="background-color: #d1fae5; color: #065f46; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-check"></i> {{ msg }}
+            </div>
+            {% endif %}
+
+            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qrcard.get('name', qr_name) | default('', true) }}" required>
+
+            <!-- Appearance Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-text"><h3>Appearance</h3><p>Customize the style and template.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Select Template</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="Allinone_template" value="default" {% if not qrcard or qrcard.get('Allinone_template','default')=='default' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-default">
+                                    <div class="template-card" style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        <div style="background: #2f6bfd; width: 100%; height: 40%; border-radius: 4px 4px 0 0;"></div>
+                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 16px 6px 6px; position: relative;">
+                                            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; background: #e5e7eb; border-radius: 50%;"></div>
+                                            <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="Allinone_template" value="template1" {% if qrcard and qrcard.get('Allinone_template')=='template1' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-template1">
+                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        <div style="background: #2f6bfd; width: 100%; height: 44%;"></div>
+                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px;">
+                                            <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 1</span>
+                                </label>
+                                <label style="cursor: pointer; text-align: center;">
+                                    <input type="radio" name="Allinone_template" value="template2" {% if qrcard and qrcard.get('Allinone_template')=='template2' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-template2">
+                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; padding: 10px 6px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3); margin-bottom: 5px;"></div>
+                                        <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 7px;"></div>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 2</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Design</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 16px;">
+                                <div class="color-preset active" data-primary="#2f6bfd" data-secondary="#0e379a" style="cursor: pointer; display: flex; border-radius: 8px; border: 2px solid var(--primary); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #2f6bfd; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #0e379a; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                                <div class="color-preset" data-primary="#10b981" data-secondary="#047857" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                                <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                            </div>
+                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                                <div style="display: flex; gap: 24px;">
+                                    <div>
+                                        <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
+                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="Allinone_primary_hex" name="Allinone_primary_color" value="{{ qrcard.get('Allinone_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" id="Allinone_primary_picker" value="{{ qrcard.get('Allinone_primary_color', '#2f6bfd') if qrcard else '#2f6bfd' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
+                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            <input type="text" id="Allinone_secondary_hex" name="Allinone_secondary_color" value="{{ qrcard.get('Allinone_secondary_color', '#0E379A') if qrcard else '#0E379A' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" id="Allinone_secondary_picker" value="{{ qrcard.get('Allinone_secondary_color', '#0e379a') if qrcard else '#0e379a' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" id="allinone-btn-invert-colors" style="background: transparent; border: 1px solid var(--border-color); color: var(--primary); font-size: 12px; border-radius: 20px; padding: 6px 12px; cursor: pointer;"><i class="fa-solid fa-arrow-right-arrow-left"></i> Invert</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Fonts</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="Allinone_title_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            {% for f in ['Lato','Roboto','Open Sans','Montserrat'] %}
+                                            <option value="{{ f }}" {% if qrcard and qrcard.get('Allinone_title_font','Lato')==f %}selected{% elif not qrcard and f=='Lato' %}selected{% endif %}>{{ f }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Allinone_title_color_hex" value="{{ qrcard.get('Allinone_title_color','#111827') if qrcard else '#111827' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Allinone_title_color" id="Allinone_title_color_picker" value="{{ qrcard.get('Allinone_title_color','#111827') if qrcard else '#111827' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
+                                    <div style="display: flex; gap: 12px; align-items: center;">
+                                        <select name="Allinone_text_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            {% for f in ['Lato','Roboto','Open Sans','Montserrat'] %}
+                                            <option value="{{ f }}" {% if qrcard and qrcard.get('Allinone_text_font','Lato')==f %}selected{% elif not qrcard and f=='Lato' %}selected{% endif %}>{{ f }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Allinone_text_color_hex" value="{{ qrcard.get('Allinone_text_color','#6b7280') if qrcard else '#6b7280' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Allinone_text_color" id="Allinone_text_color_picker" value="{{ qrcard.get('Allinone_text_color','#6b7280') if qrcard else '#6b7280' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Information -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="header-text"><h3>Basic Information</h3><p>Title, description and cover image.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
+                        <div id="allinone-cover-img-section" style="margin-bottom: 16px;">
+                            <label class="form-label" style="font-size: 12px;">Cover image</label>
+                            <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                <div id="allinone-cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                                    {% set cover_url = qrcard.get('Allinone_cover_img_url','') if qrcard else '' %}
+                                    {% if cover_url %}
+                                    <img src="{{ cover_url }}" alt="Cover image" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                                    <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                    {% else %}
+                                    <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fa-regular fa-image" style="color: #9ca3af;"></i></div>
+                                    <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
+                                    {% endif %}
+                                </div>
+                                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
+                                <input type="file" name="Allinone_profile_img" accept="image/*" style="display: none;" id="allinone_profile_img_input">
+                            </label>
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                <button type="button" id="allinone-cover-img-remove-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not cover_url %}display: none;{% endif %}">
+                                    <i class="fa-solid fa-xmark"></i> Remove
+                                </button>
+                                <input type="hidden" name="Allinone_profile_img_delete" id="allinone_profile_img_delete" value="0">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Title</label>
+                            <input type="text" name="Allinone_title" id="allinone-title-input" class="form-control" placeholder="Title" style="background: white;" value="{{ qrcard.get('Allinone_title','') if qrcard else '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size: 12px;">Description</label>
+                            <input type="text" name="Allinone_desc" id="allinone-desc-input" class="form-control" placeholder="Short description" style="background: white;" value="{{ qrcard.get('Allinone_desc','') if qrcard else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Blocks -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="background: #f0fdf4;"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="header-text"><h3>Content Blocks</h3><p>Add contacts, links, social media, images, videos and PDFs.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body show">
+                    <div class="add-block-btns">
+                        <button type="button" class="add-block-btn" data-block="contact"><i class="fa-solid fa-phone"></i> Contact</button>
+                        <button type="button" class="add-block-btn" data-block="link"><i class="fa-solid fa-link"></i> Link</button>
+                        <button type="button" class="add-block-btn" data-block="sosmed"><i class="fa-solid fa-share-nodes"></i> Social Media</button>
+                        <button type="button" class="add-block-btn" data-block="image"><i class="fa-regular fa-image"></i> Image</button>
+                        <button type="button" class="add-block-btn" data-block="video"><i class="fa-solid fa-play"></i> Video</button>
+                        <button type="button" class="add-block-btn" data-block="pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                    <div id="allinone-blocks-container">
+                        {% set sections = qrcard.get('Allinone_sections', []) if qrcard else [] %}
+                        {% for s in sections %}
+                        {% set i = loop.index0 %}
+                        {% set stype = s.get('type','') %}
+                        <div class="allinone-block-row" data-type="{{ stype }}" data-index="{{ i }}">
+                            <div class="block-row-header">
+                                <span class="allinone-block-type-badge">{{ stype }}</span>
+                                <button type="button" class="allinone-block-remove-btn"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                            <div class="allinone-block-inputs">
+                                <input type="hidden" name="Allinone_section_type[]" value="{{ stype }}">
+                                {% if stype == 'contact' %}
+                                <select class="allinone-contact-subtype form-control" style="background:white;">
+                                    <option value="phone" {% if s.get('v4','phone')=='phone' %}selected{% endif %}>Phone</option>
+                                    <option value="email" {% if s.get('v4','')=='email' %}selected{% endif %}>Email</option>
+                                    <option value="website" {% if s.get('v4','')=='website' %}selected{% endif %}>Website</option>
+                                </select>
+                                <input type="hidden" name="Allinone_section_v4[]" value="{{ s.get('v4','phone') }}" class="allinone-v4-hidden">
+                                <input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="Value" value="{{ s.get('v1','') }}" style="background:white;">
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Label (optional)" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_v3[]" value="{{ s.get('v3','') }}">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                {% elif stype == 'link' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="URL (https://...)" value="{{ s.get('v1','') }}" style="background:white;">
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Name" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="text" name="Allinone_section_v3[]" class="form-control" placeholder="Description (optional)" value="{{ s.get('v3','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                {% elif stype == 'sosmed' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <select name="Allinone_section_v1[]" class="form-control" style="background:white;">
+                                    {% set sosmed_opts = [
+                                        ('fa-brands fa-instagram','Instagram'),('fa-brands fa-facebook','Facebook'),
+                                        ('fa-brands fa-x-twitter','X / Twitter'),('fa-brands fa-tiktok','TikTok'),
+                                        ('fa-brands fa-youtube','YouTube'),('fa-brands fa-linkedin','LinkedIn'),
+                                        ('fa-brands fa-whatsapp','WhatsApp'),('fa-brands fa-telegram','Telegram'),
+                                        ('fa-brands fa-pinterest','Pinterest'),('fa-brands fa-snapchat','Snapchat'),
+                                        ('fa-brands fa-github','GitHub'),('fa-brands fa-discord','Discord'),
+                                        ('fa-brands fa-line','Line')
+                                    ] %}
+                                    {% for val, label in sosmed_opts %}
+                                    <option value="{{ val }}" {% if s.get('v1','') == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Name (@username)" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="text" name="Allinone_section_v3[]" class="form-control" placeholder="Description (optional)" value="{{ s.get('v3','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                {% elif stype == 'image' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="hidden" name="Allinone_section_v1[]" value="{{ s.get('v1','') }}" class="allinone-file-url">
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Caption (optional)" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_v3[]" value="">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="{{ s.get('v1','') }}">
+                                <label style="font-size: 12px; color: var(--text-muted);">Replace image: <input type="file" name="allinone_file_{{ i }}" accept="image/*" class="allinone-block-file"></label>
+                                {% if s.get('v1','') %}
+                                <div class="allinone-block-img-preview" style="display:block;"><img src="{{ s.get('v1','') }}" style="max-width:80px;border-radius:4px;"></div>
+                                {% else %}
+                                <div class="allinone-block-img-preview" style="display:none;"><img style="max-width:80px;border-radius:4px;"></div>
+                                {% endif %}
+                                {% elif stype == 'video' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="Video URL" value="{{ s.get('v1','') }}" style="background:white;">
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Title" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_v3[]" value="">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                {% elif stype == 'pdf' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="hidden" name="Allinone_section_v1[]" value="{{ s.get('v1','') }}" class="allinone-file-url">
+                                <input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Document name" value="{{ s.get('v2','') }}" style="background:white;">
+                                <input type="hidden" name="Allinone_section_v3[]" value="">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="{{ s.get('v1','') }}">
+                                <label style="font-size: 12px; color: var(--text-muted);">Replace PDF: <input type="file" name="allinone_file_{{ i }}" accept=".pdf" class="allinone-block-file"></label>
+                                {% if s.get('v1','') %}
+                                <div style="font-size: 11px; color: var(--text-muted);">Current: {{ s.get('v1','') | truncate(40) }}</div>
+                                {% endif %}
+                                {% else %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="hidden" name="Allinone_section_v1[]" value="">
+                                <input type="hidden" name="Allinone_section_v2[]" value="">
+                                <input type="hidden" name="Allinone_section_v3[]" value="">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p id="allinone-blocks-empty-msg" style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px; {% if sections %}display:none;{% endif %}">
+                        No blocks added yet. Use the buttons above to add content.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
+                        <div class="header-text"><h3>Stats</h3><p>Key metrics and data.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon"><i class="fa-solid fa-link" style="color: var(--text-main);"></i> URL configuration</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div class="form-group" style="margin-top: 8px;">
+                                <label class="form-label" style="font-size: 12px;">URL</label>
+                                <div class="url-prefix-group">
+                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://qrcardku.com') }}/allinone/</div>
+                                    <input type="text" name="short_code" id="stats-short-code-input" placeholder="Letters, numbers, '-' and '_' only" value="{{ qrcard.get('short_code','') if qrcard else (short_code | default('',true)) }}" pattern="[a-zA-Z0-9_\-]{2,32}" maxlength="32">
+                                </div>
+                                <p id="stats-url-preview" style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon"><i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
+                                <div class="toggle-label-with-icon">Enable scan limit</div>
+                                <label class="toggle-switch"><input type="checkbox" name="scan_limit_enabled" id="scan-limit-toggle" {% if qrcard and qrcard.get('scan_limit_enabled') %}checked{% endif %}><span class="slider"></span></label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-size: 12px;">Scan Limit</label>
+                                <input type="number" name="scan_limit_value" id="scan-limit-value" class="form-control" placeholder="e.g. 50" min="1" value="{{ qrcard.get('scan_limit_value','') if qrcard else '' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right preview section -->
+        <div class="preview-column">
+            <div class="phone-container">
+                <div class="phone-header">
+                    <div class="phone-type-badge"><i class="fa-solid fa-layer-group"></i> All-in-One</div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="mockup-inner" style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        {% set allinone_mode = 'preview' %}
+                        {% include 'user/template_allinone_general.html' %}
+                    </div>
+                </div>
+                <div class="preview-disclaimer">
+                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Cover image crop modal -->
+<div id="allinone-profile-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize &amp; crop image</div>
+        <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
+            <img id="allinone-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
+        </div>
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="allinone-crop-cancel" class="btn-outline" style="padding: 8px 16px;">Cancel</button>
+            <button type="button" id="allinone-crop-apply" class="btn-primary" style="padding: 8px 20px;">Apply</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Collapse
+    const attachCollapseListener = (sel) => {
+        document.querySelectorAll(sel).forEach(h => {
+            h.addEventListener('click', function () {
+                const b = this.nextElementSibling, ic = this.querySelector('.fa-chevron-up,.fa-chevron-down');
+                if (!b.classList.contains('show')) { b.classList.add('show'); if (ic) { ic.classList.remove('fa-chevron-down'); ic.classList.add('fa-chevron-up'); } }
+                else { b.classList.remove('show'); if (ic) { ic.classList.remove('fa-chevron-up'); ic.classList.add('fa-chevron-down'); } }
+            });
+        });
+    };
+    attachCollapseListener('.collapse-header');
+    attachCollapseListener('.sub-collapse-header');
+
+    // URL preview
+    (function () {
+        var baseUrl = {{ (base_url or '') | tojson }};
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var shortInput = document.getElementById('stats-short-code-input');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (!shortInput || !previewEl) return;
+        function stripInvalidChars(v) { return (v||'').replace(/[^a-zA-Z0-9_-]/g,''); }
+        function updateUrlPreview() { var c = shortInput.value.trim(); previewEl.textContent = c ? (prefixEl?prefixEl.textContent.trim():(baseUrl+'/allinone/'))+c : ''; }
+        shortInput.addEventListener('input', function () { var f = stripInvalidChars(shortInput.value); if (f!==shortInput.value) shortInput.value=f; updateUrlPreview(); });
+        updateUrlPreview();
+    })();
+
+    // Scan limit
+    (function () {
+        var toggle = document.getElementById('scan-limit-toggle');
+        var input = document.getElementById('scan-limit-value');
+        if (!toggle || !input) return;
+        function sync() { input.disabled = !toggle.checked; }
+        toggle.addEventListener('change', sync); sync();
+    })();
+
+    // Colors
+    const primaryPicker = document.getElementById('Allinone_primary_picker');
+    const primaryHex = document.getElementById('Allinone_primary_hex');
+    const secondaryPicker = document.getElementById('Allinone_secondary_picker');
+    const secondaryHex = document.getElementById('Allinone_secondary_hex');
+    function applyPrimary(c) {
+        ['allinone-preview-top-block','allinone-preview-template2'].forEach(id => { const el=document.getElementById(id); if(el) el.style.backgroundColor=c; });
+    }
+    if (primaryPicker) { primaryPicker.addEventListener('input', e => { primaryHex.value=e.target.value.toUpperCase(); applyPrimary(e.target.value); }); }
+    if (secondaryPicker) { secondaryPicker.addEventListener('input', e => { secondaryHex.value=e.target.value.toUpperCase(); }); }
+    const invertBtn = document.getElementById('allinone-btn-invert-colors');
+    if (invertBtn && primaryPicker && secondaryPicker) {
+        invertBtn.addEventListener('click', () => {
+            const t=primaryPicker.value; primaryPicker.value=secondaryPicker.value; secondaryPicker.value=t;
+            primaryHex.value=primaryPicker.value.toUpperCase(); secondaryHex.value=secondaryPicker.value.toUpperCase();
+            applyPrimary(primaryPicker.value);
+        });
+    }
+    document.querySelectorAll('.color-preset').forEach(p => {
+        p.addEventListener('click', function () {
+            document.querySelectorAll('.color-preset').forEach(x => { x.classList.remove('active'); x.style.border='1px solid var(--border-color)'; });
+            this.classList.add('active'); this.style.border='2px solid var(--primary)';
+            if (primaryPicker) { primaryPicker.value=this.dataset.primary; primaryHex.value=this.dataset.primary.toUpperCase(); applyPrimary(this.dataset.primary); }
+            if (secondaryPicker) { secondaryPicker.value=this.dataset.secondary; secondaryHex.value=this.dataset.secondary.toUpperCase(); }
+        });
+    });
+    const titleCP = document.getElementById('Allinone_title_color_picker');
+    const titleCH = document.getElementById('Allinone_title_color_hex');
+    const textCP = document.getElementById('Allinone_text_color_picker');
+    const textCH = document.getElementById('Allinone_text_color_hex');
+    if (titleCP && titleCH) { titleCH.value=titleCP.value.toUpperCase(); titleCP.addEventListener('input', e => titleCH.value=e.target.value.toUpperCase()); }
+    if (textCP && textCH) { textCH.value=textCP.value.toUpperCase(); textCP.addEventListener('input', e => textCH.value=e.target.value.toUpperCase()); }
+
+    // Template radio
+    document.querySelectorAll('input[name="Allinone_template"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            const tmpl = this.value;
+            const defEl=document.getElementById('allinone-preview-default');
+            const t1El=document.getElementById('allinone-preview-template1');
+            const t2El=document.getElementById('allinone-preview-template2');
+            if (defEl) defEl.style.display=(!['template1','template2'].includes(tmpl))?'':'none';
+            if (t1El) t1El.style.display=(tmpl==='template1')?'':'none';
+            if (t2El) t2El.style.display=(tmpl==='template2')?'':'none';
+        });
+    });
+
+    // Title/desc sync
+    const titleInput = document.getElementById('allinone-title-input');
+    const descInput = document.getElementById('allinone-desc-input');
+    const ALL_TITLE_IDS = ['allinone-preview-title-text','allinone-t1-preview-title','allinone-t2-preview-title'];
+    const ALL_DESC_IDS  = ['allinone-preview-desc-text','allinone-t1-preview-desc','allinone-t2-preview-desc'];
+    if (titleInput) {
+        if (titleInput.value) ALL_TITLE_IDS.forEach(id => { const el=document.getElementById(id); if(el){el.textContent=titleInput.value;el.style.display='';} });
+        titleInput.addEventListener('input', e => { ALL_TITLE_IDS.forEach(id => { const el=document.getElementById(id); if(el){el.textContent=e.target.value;el.style.display=e.target.value?'':'none';} }); });
+    }
+    if (descInput) {
+        if (descInput.value) ALL_DESC_IDS.forEach(id => { const el=document.getElementById(id); if(el){el.textContent=descInput.value;el.style.display='';} });
+        descInput.addEventListener('input', e => { ALL_DESC_IDS.forEach(id => { const el=document.getElementById(id); if(el){el.textContent=e.target.value;el.style.display=e.target.value?'':'none';} }); });
+    }
+
+    // Block counter
+    let allinoneBlockCount = {{ (qrcard.get('Allinone_sections', []) | length) if qrcard else 0 }};
+    const blocksContainer = document.getElementById('allinone-blocks-container');
+    const emptyMsg = document.getElementById('allinone-blocks-empty-msg');
+    function updateEmptyMsg() { if (emptyMsg) emptyMsg.style.display = blocksContainer.children.length===0?'':'none'; }
+
+    function buildPreviewItemHTML(stype, v1, v2, v4) {
+        let iconHtml = '';
+        if (stype==='contact') {
+            if (v4==='email') iconHtml='<i class="fa-solid fa-envelope" style="color:#ea4335;font-size:7px;"></i>';
+            else if (v4==='website') iconHtml='<i class="fa-solid fa-globe" style="color:#10b981;font-size:7px;"></i>';
+            else iconHtml='<i class="fa-solid fa-phone" style="color:#2563eb;font-size:7px;"></i>';
+        } else if (stype==='link') { iconHtml='<i class="fa-solid fa-link" style="color:#2563eb;font-size:7px;"></i>'; }
+        else if (stype==='sosmed') { iconHtml='<i class="'+v1+'" style="color:#374151;font-size:7px;"></i>'; }
+        else if (stype==='video') { iconHtml='<i class="fa-solid fa-play" style="color:#ef4444;font-size:7px;"></i>'; }
+        else if (stype==='pdf') { iconHtml='<i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i>'; }
+        else if (stype==='image') {
+            if (v1) return '<div style="width:100%;margin:2px 0;"><img src="'+v1+'" style="width:100%;border-radius:4px;display:block;"></div>';
+            return '';
+        }
+        const name = v2||v1||stype;
+        return '<div class="pv-item"><div class="pv-icon">'+iconHtml+'</div><span class="pv-name">'+name+'</span></div>';
+    }
+
+    function updateAllinonePreview() {
+        const rows = blocksContainer ? blocksContainer.querySelectorAll('.allinone-block-row') : [];
+        const IDS = ['allinone-preview-sections-list','allinone-t1-preview-sections-list','allinone-t2-preview-sections-list'];
+        IDS.forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=''; });
+        rows.forEach(row => {
+            const stype=row.dataset.type||'';
+            const v1El=row.querySelector('input[name="Allinone_section_v1[]"],select[name="Allinone_section_v1[]"]');
+            const v2El=row.querySelector('input[name="Allinone_section_v2[]"]');
+            const v4El=row.querySelector('.allinone-v4-hidden');
+            const v1=v1El?v1El.value.trim():'', v2=v2El?v2El.value.trim():'', v4=v4El?v4El.value:'';
+            const html=buildPreviewItemHTML(stype,v1,v2,v4);
+            if (html) IDS.forEach(id => { const el=document.getElementById(id); if(el){const t=document.createElement('div');t.innerHTML=html;el.appendChild(t.firstChild);} });
+        });
+    }
+
+    function attachBlockListeners(row) {
+        const removeBtn=row.querySelector('.allinone-block-remove-btn');
+        if (removeBtn) removeBtn.addEventListener('click',function(){row.remove();updateAllinonePreview();updateEmptyMsg();});
+        const subtypeSelect=row.querySelector('.allinone-contact-subtype');
+        const v4Hidden=row.querySelector('.allinone-v4-hidden');
+        if (subtypeSelect&&v4Hidden) subtypeSelect.addEventListener('change',function(){v4Hidden.value=this.value;updateAllinonePreview();});
+        const fileInput=row.querySelector('.allinone-block-file');
+        const imgPreviewDiv=row.querySelector('.allinone-block-img-preview');
+        const fileUrlHidden=row.querySelector('.allinone-file-url');
+        if (fileInput) {
+            fileInput.addEventListener('change',function(e){
+                const file=e.target.files[0]; if(!file) return;
+                if (row.dataset.type==='image'&&imgPreviewDiv) {
+                    const reader=new FileReader();
+                    reader.onload=function(evt){
+                        const img=imgPreviewDiv.querySelector('img'); if(img) img.src=evt.target.result;
+                        imgPreviewDiv.style.display='block';
+                        if(fileUrlHidden) fileUrlHidden.value=evt.target.result;
+                        updateAllinonePreview();
+                    }; reader.readAsDataURL(file);
+                }
+            });
+        }
+        row.querySelectorAll('input[type="text"],select').forEach(el=>{el.addEventListener('input',updateAllinonePreview);el.addEventListener('change',updateAllinonePreview);});
+    }
+
+    if (blocksContainer) blocksContainer.querySelectorAll('.allinone-block-row').forEach(attachBlockListeners);
+    updateEmptyMsg(); updateAllinonePreview();
+
+    const SOSMED_OPTIONS=[['fa-brands fa-instagram','Instagram'],['fa-brands fa-facebook','Facebook'],['fa-brands fa-x-twitter','X / Twitter'],['fa-brands fa-tiktok','TikTok'],['fa-brands fa-youtube','YouTube'],['fa-brands fa-linkedin','LinkedIn'],['fa-brands fa-whatsapp','WhatsApp'],['fa-brands fa-telegram','Telegram'],['fa-brands fa-pinterest','Pinterest'],['fa-brands fa-snapchat','Snapchat'],['fa-brands fa-github','GitHub'],['fa-brands fa-discord','Discord'],['fa-brands fa-line','Line']];
+    function buildSosmedOptions(sel){return SOSMED_OPTIONS.map(([v,l])=>'<option value="'+v+'"'+(v===sel?' selected':'')+'>'+l+'</option>').join('');}
+
+    function createBlockHTML(blockType,idx){
+        let inputsHTML='';
+        const common='<button type="button" class="allinone-block-remove-btn"><i class="fa-solid fa-trash-can"></i></button>';
+        const header='<div class="block-row-header"><span class="allinone-block-type-badge">'+blockType+'</span>'+common+'</div>';
+        if (blockType==='contact') {
+            inputsHTML='<select class="allinone-contact-subtype form-control" style="background:white;"><option value="phone">Phone</option><option value="email">Email</option><option value="website">Website</option></select><input type="hidden" name="Allinone_section_v4[]" value="phone" class="allinone-v4-hidden"><input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="Value" style="background:white;"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Label (optional)" style="background:white;"><input type="hidden" name="Allinone_section_v3[]" value=""><input type="hidden" name="Allinone_section_file_existing[]" value="">';
+        } else if (blockType==='link') {
+            inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="URL (https://...)" style="background:white;"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Name" style="background:white;"><input type="text" name="Allinone_section_v3[]" class="form-control" placeholder="Description (optional)" style="background:white;"><input type="hidden" name="Allinone_section_file_existing[]" value="">';
+        } else if (blockType==='sosmed') {
+            inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><select name="Allinone_section_v1[]" class="form-control" style="background:white;">'+buildSosmedOptions('fa-brands fa-instagram')+'</select><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Name (@username)" style="background:white;"><input type="text" name="Allinone_section_v3[]" class="form-control" placeholder="Description (optional)" style="background:white;"><input type="hidden" name="Allinone_section_file_existing[]" value="">';
+        } else if (blockType==='image') {
+            inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><input type="hidden" name="Allinone_section_v1[]" value="" class="allinone-file-url"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Caption (optional)" style="background:white;"><input type="hidden" name="Allinone_section_v3[]" value=""><input type="hidden" name="Allinone_section_file_existing[]" value=""><label style="font-size:12px;color:var(--text-muted);">Image: <input type="file" name="allinone_file_'+idx+'" accept="image/*" class="allinone-block-file"></label><div class="allinone-block-img-preview" style="display:none;"><img style="max-width:80px;border-radius:4px;"></div>';
+        } else if (blockType==='video') {
+            inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><input type="text" name="Allinone_section_v1[]" class="form-control" placeholder="Video URL (YouTube, etc.)" style="background:white;"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Title" style="background:white;"><input type="hidden" name="Allinone_section_v3[]" value=""><input type="hidden" name="Allinone_section_file_existing[]" value="">';
+        } else if (blockType==='pdf') {
+            inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><input type="hidden" name="Allinone_section_v1[]" value="" class="allinone-file-url"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Document name" style="background:white;"><input type="hidden" name="Allinone_section_v3[]" value=""><input type="hidden" name="Allinone_section_file_existing[]" value=""><label style="font-size:12px;color:var(--text-muted);">PDF: <input type="file" name="allinone_file_'+idx+'" accept=".pdf" class="allinone-block-file"></label>';
+        }
+        const row=document.createElement('div');
+        row.className='allinone-block-row'; row.dataset.type=blockType; row.dataset.index=idx;
+        row.innerHTML=header+'<input type="hidden" name="Allinone_section_type[]" value="'+blockType+'"><div class="allinone-block-inputs">'+inputsHTML+'</div>';
+        return row;
+    }
+
+    document.querySelectorAll('.add-block-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const blockType=this.dataset.block;
+            allinoneBlockCount++;
+            const row=createBlockHTML(blockType,allinoneBlockCount);
+            blocksContainer.appendChild(row); attachBlockListeners(row); updateEmptyMsg(); updateAllinonePreview();
+        });
+    });
+
+    // Cover image
+    const profileInput=document.getElementById('allinone_profile_img_input');
+    const profilePreview=document.getElementById('allinone-cover-img-preview');
+    const removeBtn=document.getElementById('allinone-cover-img-remove-btn');
+    let cropperInstance=null;
+    if (profileInput) {
+        profileInput.addEventListener('change', function(e){
+            const file=e.target.files[0]; if(!file) return;
+            const reader=new FileReader();
+            reader.onload=function(evt){
+                const cropModal=document.getElementById('allinone-profile-crop-modal');
+                const cropImg=document.getElementById('allinone-crop-image');
+                if(cropModal&&cropImg){cropImg.src=evt.target.result;cropModal.style.display='flex';if(cropperInstance){cropperInstance.destroy();cropperInstance=null;}cropperInstance=new Cropper(cropImg,{aspectRatio:1,viewMode:1});}
+            }; reader.readAsDataURL(file);
+        });
+    }
+    const cropCancel=document.getElementById('allinone-crop-cancel');
+    const cropApply=document.getElementById('allinone-crop-apply');
+    if (cropCancel) cropCancel.addEventListener('click',function(){const m=document.getElementById('allinone-profile-crop-modal');if(m)m.style.display='none';if(cropperInstance){cropperInstance.destroy();cropperInstance=null;}if(profileInput)profileInput.value='';});
+    if (cropApply) {
+        cropApply.addEventListener('click',function(){
+            if(!cropperInstance) return;
+            cropperInstance.getCroppedCanvas({width:400,height:400}).toBlob(function(blob){
+                const url=URL.createObjectURL(blob);
+                if(profilePreview)profilePreview.innerHTML='<img src="'+url+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Image selected</span>';
+                const dt=new DataTransfer(); dt.items.add(new File([blob],'allinone_cover.jpg',{type:'image/jpeg'}));
+                if(profileInput) profileInput.files=dt.files;
+                if(removeBtn) removeBtn.style.display='inline-flex';
+                const m=document.getElementById('allinone-profile-crop-modal'); if(m) m.style.display='none';
+                if(cropperInstance){cropperInstance.destroy();cropperInstance=null;}
+            },'image/jpeg',0.9);
+        });
+    }
+    if (removeBtn) {
+        removeBtn.addEventListener('click',function(){
+            if(profilePreview) profilePreview.innerHTML='<div style="width:32px;height:32px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+            if(profileInput) profileInput.value='';
+            document.getElementById('allinone_profile_img_delete').value='1';
+            this.style.display='none';
+        });
+    }
+
+    applyPrimary(primaryPicker ? primaryPicker.value : '#2f6bfd');
+    function applyPrimary(c) { ['allinone-preview-top-block','allinone-preview-template2'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.backgroundColor=c;}); }
+    if (primaryPicker) applyPrimary(primaryPicker.value);
+});
+</script>
+{% endblock %}
