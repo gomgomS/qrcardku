@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
     .new-qr-container { display: flex; gap: 32px; height: 100%; }
@@ -68,6 +69,9 @@
     .add-block-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .add-block-btn { background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 12px; padding: 5px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: var(--primary); }
     .add-block-btn:hover { background: #eff6ff; border-color: var(--primary); }
+    .allinone-quill-wrap .ql-toolbar { border-radius: 6px 6px 0 0; border-color: var(--border-color); background: #f9fafb; }
+    .allinone-quill-wrap .ql-container { border-radius: 0 0 6px 6px; border-color: var(--border-color); font-size: 13px; min-height: 100px; background: white; }
+    .allinone-quill-wrap .ql-editor { min-height: 100px; }
 </style>
 {% endblock %}
 
@@ -299,13 +303,14 @@
                         <button type="button" class="add-block-btn" data-block="image"><i class="fa-regular fa-image"></i> Image</button>
                         <button type="button" class="add-block-btn" data-block="video"><i class="fa-solid fa-play"></i> Video</button>
                         <button type="button" class="add-block-btn" data-block="pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                        <button type="button" class="add-block-btn" data-block="text"><i class="fa-solid fa-align-left"></i> Text</button>
                     </div>
                     <div id="allinone-blocks-container">
                         {% set sections = qrcard.get('Allinone_sections', []) if qrcard else [] %}
                         {% for s in sections %}
                         {% set i = loop.index0 %}
                         {% set stype = s.get('type','') %}
-                        <div class="allinone-block-row" data-type="{{ stype }}" data-index="{{ i }}">
+                        <div class="allinone-block-row" data-type="{{ stype }}" data-index="{{ i }}" data-block-style="{{ s.get('block_style','1') }}" data-block-color="{{ s.get('block_color','#10b981') }}">
                             <div class="block-row-header">
                                 <span class="allinone-block-type-badge">{{ stype }}</span>
                                 <button type="button" class="allinone-block-remove-btn"><i class="fa-solid fa-trash-can"></i></button>
@@ -376,6 +381,15 @@
                                 {% if s.get('v1','') %}
                                 <div style="font-size: 11px; color: var(--text-muted);">Current: {{ s.get('v1','') | truncate(40) }}</div>
                                 {% endif %}
+                                {% elif stype == 'text' %}
+                                <input type="hidden" name="Allinone_section_v4[]" value="">
+                                <input type="hidden" name="Allinone_section_v2[]" value="">
+                                <input type="hidden" name="Allinone_section_v3[]" value="">
+                                <input type="hidden" name="Allinone_section_file_existing[]" value="">
+                                <div class="allinone-quill-wrap">
+                                    <div class="allinone-quill-editor" id="quill-edit-{{ i }}" data-initial-html="{{ s.get('v1','') | e }}"></div>
+                                </div>
+                                <input type="hidden" name="Allinone_section_v1[]" class="allinone-quill-mirror" id="quill-mirror-edit-{{ i }}" value="{{ s.get('v1','') | e }}">
                                 {% else %}
                                 <input type="hidden" name="Allinone_section_v4[]" value="">
                                 <input type="hidden" name="Allinone_section_v1[]" value="">
@@ -390,6 +404,7 @@
                     <p id="allinone-blocks-empty-msg" style="font-size: 12px; color: var(--text-muted); text-align: center; padding: 16px; {% if sections %}display:none;{% endif %}">
                         No blocks added yet. Use the buttons above to add content.
                     </p>
+                    <input type="hidden" name="allinone_sections_json" id="allinone-edit-sections-json" value="">
                 </div>
             </div>
 
@@ -476,8 +491,36 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>
+const QUILL_TOOLBAR = [
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'header': [1, 2, false] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['link', 'clean']
+];
+
+function initQuillEditor(editorEl, mirrorEl, initialHtml, onChangeCallback) {
+    if (!editorEl || !mirrorEl || editorEl._quillInitialized) return;
+    editorEl._quillInitialized = true;
+    const quill = new Quill(editorEl, { theme: 'snow', modules: { toolbar: QUILL_TOOLBAR } });
+    if (initialHtml) quill.clipboard.dangerouslyPasteHTML(initialHtml);
+    mirrorEl.value = initialHtml || '';
+    quill.on('text-change', function() {
+        const html = quill.root.innerHTML;
+        mirrorEl.value = (html === '<p><br></p>') ? '' : html;
+        if (onChangeCallback) onChangeCallback();
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    // Init Quill for all pre-rendered text blocks
+    document.querySelectorAll('.allinone-quill-editor[id]').forEach(function(editorEl) {
+        const mirrorId = editorEl.id.replace('quill-edit-', 'quill-mirror-edit-');
+        const mirrorEl = document.getElementById(mirrorId);
+        const initialHtml = editorEl.getAttribute('data-initial-html') || '';
+        initQuillEditor(editorEl, mirrorEl, initialHtml, function() { updateAllinonePreview(); });
+    });
     // Collapse
     const attachCollapseListener = (sel) => {
         document.querySelectorAll(sel).forEach(h => {
@@ -579,22 +622,90 @@ document.addEventListener('DOMContentLoaded', function () {
     const emptyMsg = document.getElementById('allinone-blocks-empty-msg');
     function updateEmptyMsg() { if (emptyMsg) emptyMsg.style.display = blocksContainer.children.length===0?'':'none'; }
 
-    function buildPreviewItemHTML(stype, v1, v2, v4) {
-        let iconHtml = '';
-        if (stype==='contact') {
-            if (v4==='email') iconHtml='<i class="fa-solid fa-envelope" style="color:#ea4335;font-size:7px;"></i>';
-            else if (v4==='website') iconHtml='<i class="fa-solid fa-globe" style="color:#10b981;font-size:7px;"></i>';
-            else iconHtml='<i class="fa-solid fa-phone" style="color:#2563eb;font-size:7px;"></i>';
-        } else if (stype==='link') { iconHtml='<i class="fa-solid fa-link" style="color:#2563eb;font-size:7px;"></i>'; }
-        else if (stype==='sosmed') { iconHtml='<i class="'+v1+'" style="color:#374151;font-size:7px;"></i>'; }
-        else if (stype==='video') { iconHtml='<i class="fa-solid fa-play" style="color:#ef4444;font-size:7px;"></i>'; }
-        else if (stype==='pdf') { iconHtml='<i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i>'; }
-        else if (stype==='image') {
-            if (v1) return '<div style="width:100%;margin:2px 0;"><img src="'+v1+'" style="width:100%;border-radius:4px;display:block;"></div>';
-            return '';
+    function buildPreviewItemHTML(stype, v1, v2, v3, v4, blockStyle, blockColor) {
+        blockStyle = blockStyle || '1';
+        blockColor = blockColor || '#10b981';
+        const colorAlpha = blockColor + '33';
+        // IMAGE
+        if (stype === 'image') {
+            if (!v1) return '';
+            if (blockStyle === '1') return `<div style="flex:0 0 100%;"><img src="${v1}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:3px;"></div>`;
+            if (blockStyle === '2') return `<img src="${v1}" style="width:100%;border-radius:3px;display:block;">`;
+            if (blockStyle === '3') return `<div class="pv-img-g21"><img src="${v1}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"></div>`;
+            if (blockStyle === '4') return `<div class="pv-img-g12"><img src="${v1}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"></div>`;
+            if (blockStyle === '5') return `<div class="pv-img-gsp"><img src="${v1}" style="width:100%;height:100%;min-height:22px;object-fit:cover;display:block;"></div>`;
+            return `<img src="${v1}" style="width:100%;border-radius:3px;display:block;">`;
         }
-        const name = v2||v1||stype;
-        return '<div class="pv-item"><div class="pv-icon">'+iconHtml+'</div><span class="pv-name">'+name+'</span></div>';
+        // Icon HTML
+        let iconHtml = '';
+        if (stype === 'contact') {
+            if (v4 === 'email') iconHtml = `<i class="fa-solid fa-envelope" style="color:${blockColor};font-size:7px;"></i>`;
+            else if (v4 === 'website') iconHtml = `<i class="fa-solid fa-globe" style="color:${blockColor};font-size:7px;"></i>`;
+            else iconHtml = `<i class="fa-solid fa-phone" style="color:${blockColor};font-size:7px;"></i>`;
+        } else if (stype === 'link') { iconHtml = `<i class="fa-solid fa-link" style="color:${blockColor};font-size:7px;"></i>`; }
+        else if (stype === 'sosmed') { iconHtml = v1 ? `<i class="${v1}" style="font-size:7px;color:#374151;"></i>` : ''; }
+        else if (stype === 'video') { iconHtml = '<i class="fa-solid fa-play" style="color:#ef4444;font-size:7px;"></i>'; }
+        else if (stype === 'pdf') { iconHtml = '<i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i>'; }
+        // SOSMED specific styles
+        if (stype === 'sosmed') {
+            const smPlatform = SOSMED_NAMES[v1] || 'Social';
+            const smHandle = v2 || '';
+            const handleHTML = smHandle ? `<span style="font-size:6.5px;color:#888;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smHandle}</span>` : '';
+            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
+            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
+            if (blockStyle === '3') return `<div style="width:18px;height:18px;border-radius:4px;border:1.5px solid ${blockColor};background:${blockColor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="${v1}" style="font-size:8px;color:${blockColor};"></i></div>`;
+            if (blockStyle === '4') return `<div style="display:flex;align-items:center;gap:4px;padding:4px 2px;border-bottom:1px solid #f0f0f0;"><div style="flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${smPlatform}</span>${handleHTML}</div><i class="${v1}" style="color:${blockColor};font-size:9px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '5') return `<div class="pv-sm-5" style="background:${blockColor};">${iconHtml}</div>`;
+            return `<div class="pv-item"><div class="pv-icon">${iconHtml}</div><span class="pv-name">${smPlatform}</span></div>`;
+        }
+        const name = v2 || v1 || stype;
+        // CONTACT specific styles — v2=label, v1=value (phone/email/url)
+        if (stype === 'contact') {
+            const ctLabel = v2 || (v4 ? v4.charAt(0).toUpperCase()+v4.slice(1) : 'Phone');
+            const ctVal = v1 || '';
+            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:7.5px;color:#444;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
+            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:6px;color:#888;letter-spacing:0.3px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:#111;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
+            if (blockStyle === '3') return `<div style="display:flex;align-items:center;gap:4px;padding:4px 5px;background:rgba(255,255,255,0.2);border-radius:3px;"><div style="width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="${v4==='email'?'fa-solid fa-envelope':v4==='website'?'fa-solid fa-globe':'fa-solid fa-phone'}" style="color:white;font-size:7px;"></i></div><div style="flex:1;min-width:0;overflow:hidden;"><span style="font-size:6.5px;color:rgba(255,255,255,0.8);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:white;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
+            if (blockStyle === '4') return `<div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.08);text-align:center;gap:2px;"><div style="width:18px;height:18px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;">${iconHtml}</div><span style="font-size:6.5px;color:#666;font-weight:500;display:block;">${ctLabel}</span><span style="font-size:8px;font-weight:700;color:#111;display:block;">${ctVal}</span></div>`;
+        }
+        // LINK specific styles
+        if (stype === 'link') {
+            const lkName = v2 || v1 || 'Link';
+            const lkDesc = v3 || '';
+            const descHTML = lkDesc ? `<span style="font-size:6.5px;color:#888;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkDesc}</span>` : '';
+            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkName}</span>${descHTML}</div><i class="fa-solid fa-chevron-right" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkName}</span>${descHTML}</div></div>`;
+            if (blockStyle === '3') return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 8px;border-radius:6px;background:${blockColor};text-align:center;"><span style="font-size:8px;color:white;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${lkName}</span>${lkDesc?`<span style="font-size:6px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${lkDesc}</span>`:''}</div>`;
+            if (blockStyle === '4') return `<div style="display:flex;align-items:center;gap:4px;padding:4px 2px;border-bottom:1px solid #f0f0f0;"><div style="flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${lkName}</span>${descHTML}</div><i class="fa-solid fa-arrow-right" style="color:${blockColor};font-size:7px;flex-shrink:0;"></i></div>`;
+        }
+        // VIDEO specific styles
+        if (stype === 'video') {
+            const vtitle = v2 || 'Watch Video';
+            if (v1 && (v1.startsWith('blob:') || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(v1))) {
+                return `<div style="border-radius:6px;overflow:hidden;background:#000;"><video src="${v1}" controls style="width:100%;display:block;max-height:110px;"></video>${vtitle?`<div style="padding:3px 6px;font-size:7px;color:#374151;font-weight:500;">${vtitle}</div>`:''}</div>`;
+            }
+            return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:6px;background:${blockColor};"><div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-play" style="color:white;font-size:8px;"></i></div><span style="font-size:7px;color:white;font-weight:600;text-align:center;">${vtitle}</span></div>`;
+        }
+        // PDF specific styles
+        if (stype === 'pdf') {
+            const pdfname = v2 || 'Download PDF';
+            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:5px 7px;"><div style="width:16px;height:16px;background:#fecaca;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:500;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 7px;"><div style="width:18px;height:18px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:600;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:6px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '3') return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;flex-shrink:0;"></i><span style="font-size:7px;color:#374151;white-space:nowrap;">${pdfname}</span></div>`;
+            if (blockStyle === '4') return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:6px;background:${blockColor};"><i class="fa-solid fa-arrow-down" style="color:white;font-size:7px;"></i><span style="font-size:8px;color:white;font-weight:700;">${pdfname}</span></div>`;
+        }
+        // TEXT block
+        if (stype === 'text') {
+            if (!v1) return `<div style="font-size:7px;color:#9ca3af;font-style:italic;padding:3px 5px;">No text yet...</div>`;
+            const stripped = v1.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            const excerpt = stripped.length > 80 ? stripped.substring(0, 80) + '...' : stripped;
+            if (blockStyle === '2') return `<div style="background:white;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
+            if (blockStyle === '3') return `<div style="border-radius:4px;padding:4px 6px;background:${blockColor};font-size:7px;color:white;line-height:1.4;">${excerpt}</div>`;
+            return `<div style="padding:3px 5px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
+        }
+        if (blockStyle === '2') return `<div class="pv-item pv-item-b" data-stype="${stype}"><div class="pv-icon">${iconHtml}</div><span class="pv-name">${name}</span></div>`;
+        if (blockStyle === '3') return `<div class="pv-item pv-item-c"><span class="pv-name">${name}</span></div>`;
+        return `<div class="pv-item"><div class="pv-icon">${iconHtml}</div><span class="pv-name">${name}</span></div>`;
     }
 
     function updateAllinonePreview() {
@@ -602,13 +713,22 @@ document.addEventListener('DOMContentLoaded', function () {
         const IDS = ['allinone-preview-sections-list','allinone-t1-preview-sections-list','allinone-t2-preview-sections-list'];
         IDS.forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=''; });
         rows.forEach(row => {
-            const stype=row.dataset.type||'';
-            const v1El=row.querySelector('input[name="Allinone_section_v1[]"],select[name="Allinone_section_v1[]"]');
-            const v2El=row.querySelector('input[name="Allinone_section_v2[]"]');
-            const v4El=row.querySelector('.allinone-v4-hidden');
-            const v1=v1El?v1El.value.trim():'', v2=v2El?v2El.value.trim():'', v4=v4El?v4El.value:'';
-            const html=buildPreviewItemHTML(stype,v1,v2,v4);
-            if (html) IDS.forEach(id => { const el=document.getElementById(id); if(el){const t=document.createElement('div');t.innerHTML=html;el.appendChild(t.firstChild);} });
+            const stype = row.dataset.type || '';
+            const blockStyle = row.dataset.blockStyle || '1';
+            const blockColor = row.dataset.blockColor || '#10b981';
+            const v1El = row.querySelector('input[name="Allinone_section_v1[]"],select[name="Allinone_section_v1[]"]');
+            const v2El = row.querySelector('input[name="Allinone_section_v2[]"]');
+            const v3El = row.querySelector('input[name="Allinone_section_v3[]"]');
+            const v4El = row.querySelector('.allinone-v4-hidden');
+            const subtypeEl = row.querySelector('.allinone-contact-subtype');
+            const v1 = v1El ? v1El.value.trim() : '';
+            const v2 = v2El ? v2El.value.trim() : '';
+            const v3 = v3El ? v3El.value.trim() : '';
+            const v4 = (v4El ? v4El.value : '') || (subtypeEl ? subtypeEl.value : '');
+            const itemHTML = buildPreviewItemHTML(stype, v1, v2, v3, v4, blockStyle, blockColor);
+            if (!itemHTML) return;
+            const groupHTML = `<div class="pv-section-group" data-type="${stype}" data-block-style="${blockStyle}" style="--block-color:${blockColor};"><div class="pv-section-group-items">${itemHTML}</div></div>`;
+            IDS.forEach(id => { const el=document.getElementById(id); if(el){const t=document.createElement('div');t.innerHTML=groupHTML;el.appendChild(t.firstChild);} });
         });
     }
 
@@ -642,6 +762,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateEmptyMsg(); updateAllinonePreview();
 
     const SOSMED_OPTIONS=[['fa-brands fa-instagram','Instagram'],['fa-brands fa-facebook','Facebook'],['fa-brands fa-x-twitter','X / Twitter'],['fa-brands fa-tiktok','TikTok'],['fa-brands fa-youtube','YouTube'],['fa-brands fa-linkedin','LinkedIn'],['fa-brands fa-whatsapp','WhatsApp'],['fa-brands fa-telegram','Telegram'],['fa-brands fa-pinterest','Pinterest'],['fa-brands fa-snapchat','Snapchat'],['fa-brands fa-github','GitHub'],['fa-brands fa-discord','Discord'],['fa-brands fa-line','Line']];
+    const SOSMED_NAMES = Object.fromEntries(SOSMED_OPTIONS);
     function buildSosmedOptions(sel){return SOSMED_OPTIONS.map(([v,l])=>'<option value="'+v+'"'+(v===sel?' selected':'')+'>'+l+'</option>').join('');}
 
     function createBlockHTML(blockType,idx){
@@ -661,18 +782,50 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (blockType==='pdf') {
             inputsHTML='<input type="hidden" name="Allinone_section_v4[]" value=""><input type="hidden" name="Allinone_section_v1[]" value="" class="allinone-file-url"><input type="text" name="Allinone_section_v2[]" class="form-control" placeholder="Document name" style="background:white;"><input type="hidden" name="Allinone_section_v3[]" value=""><input type="hidden" name="Allinone_section_file_existing[]" value=""><label style="font-size:12px;color:var(--text-muted);">PDF: <input type="file" name="allinone_file_'+idx+'" accept=".pdf" class="allinone-block-file"></label>';
         }
+        if (blockType === 'text') return null; // handled separately
         const row=document.createElement('div');
         row.className='allinone-block-row'; row.dataset.type=blockType; row.dataset.index=idx;
         row.innerHTML=header+'<input type="hidden" name="Allinone_section_type[]" value="'+blockType+'"><div class="allinone-block-inputs">'+inputsHTML+'</div>';
         return row;
     }
 
+    function createTextBlockRow() {
+        const editorId = 'quill-dyn-' + Date.now();
+        const mirrorId = 'quill-mirror-dyn-' + Date.now();
+        const row = document.createElement('div');
+        row.className = 'allinone-block-row';
+        row.dataset.type = 'text';
+        row.dataset.blockStyle = '1';
+        row.dataset.blockColor = '#10b981';
+        row.innerHTML = '<div class="block-row-header"><span class="allinone-block-type-badge">text</span><button type="button" class="allinone-block-remove-btn"><i class="fa-solid fa-trash-can"></i></button></div>'
+            + '<input type="hidden" name="Allinone_section_type[]" value="text">'
+            + '<div class="allinone-block-inputs">'
+            + '<input type="hidden" name="Allinone_section_v4[]" value="">'
+            + '<input type="hidden" name="Allinone_section_v2[]" value="">'
+            + '<input type="hidden" name="Allinone_section_v3[]" value="">'
+            + '<input type="hidden" name="Allinone_section_file_existing[]" value="">'
+            + '<div class="allinone-quill-wrap"><div class="allinone-quill-editor" id="' + editorId + '"></div></div>'
+            + '<input type="hidden" name="Allinone_section_v1[]" class="allinone-quill-mirror" id="' + mirrorId + '" value="">'
+            + '</div>';
+        return { row, editorId, mirrorId };
+    }
+
     document.querySelectorAll('.add-block-btn').forEach(btn => {
         btn.addEventListener('click', function () {
-            const blockType=this.dataset.block;
+            const blockType = this.dataset.block;
             allinoneBlockCount++;
-            const row=createBlockHTML(blockType,allinoneBlockCount);
-            blocksContainer.appendChild(row); attachBlockListeners(row); updateEmptyMsg(); updateAllinonePreview();
+            if (blockType === 'text') {
+                const { row, editorId, mirrorId } = createTextBlockRow();
+                blocksContainer.appendChild(row);
+                const editorEl = document.getElementById(editorId);
+                const mirrorEl = document.getElementById(mirrorId);
+                initQuillEditor(editorEl, mirrorEl, '', function() { updateAllinonePreview(); });
+                row.querySelector('.allinone-block-remove-btn').addEventListener('click', function() { row.remove(); updateAllinonePreview(); updateEmptyMsg(); });
+                updateEmptyMsg(); updateAllinonePreview();
+            } else {
+                const row = createBlockHTML(blockType, allinoneBlockCount);
+                if (row) { blocksContainer.appendChild(row); attachBlockListeners(row); updateEmptyMsg(); updateAllinonePreview(); }
+            }
         });
     });
 
@@ -721,6 +874,33 @@ document.addEventListener('DOMContentLoaded', function () {
     applyPrimary(primaryPicker ? primaryPicker.value : '#2f6bfd');
     function applyPrimary(c) { ['allinone-preview-top-block','allinone-preview-template2'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.backgroundColor=c;}); }
     if (primaryPicker) applyPrimary(primaryPicker.value);
+
+    // Serialize sections to JSON on submit (preserves block_style/block_color)
+    const editContentForm = document.getElementById('content-form');
+    const editSectionsJsonInput = document.getElementById('allinone-edit-sections-json');
+    if (editContentForm && editSectionsJsonInput) {
+        editContentForm.addEventListener('submit', function() {
+            const sections = [];
+            document.querySelectorAll('#allinone-blocks-container .allinone-block-row').forEach(function(row) {
+                const stype = row.dataset.type || '';
+                const bstyle = row.dataset.blockStyle || '1';
+                const bcolor = row.dataset.blockColor || '#10b981';
+                const v1El = row.querySelector('[name="Allinone_section_v1[]"]');
+                const v2El = row.querySelector('[name="Allinone_section_v2[]"]');
+                const v3El = row.querySelector('[name="Allinone_section_v3[]"]');
+                const v4El = row.querySelector('.allinone-v4-hidden');
+                const subtypeEl = row.querySelector('.allinone-contact-subtype');
+                const feEl = row.querySelector('[name="Allinone_section_file_existing[]"]');
+                const v1 = v1El ? v1El.value.trim() : '';
+                const v2 = v2El ? v2El.value.trim() : '';
+                const v3 = v3El ? v3El.value.trim() : '';
+                const v4 = (v4El ? v4El.value : '') || (subtypeEl ? subtypeEl.value : '');
+                const fe = feEl ? feEl.value.trim() : '';
+                sections.push({type: stype, block_style: bstyle, block_color: bcolor, v1: v1 || fe, v2: v2, v3: v3, v4: v4});
+            });
+            editSectionsJsonInput.value = JSON.stringify(sections);
+        });
+    }
 });
 </script>
 {% endblock %}

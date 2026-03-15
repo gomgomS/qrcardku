@@ -1,0 +1,380 @@
+{# =====================================================================
+   template_links_general.html — Single Source of Truth for Links UI
+   Include with:
+     {% set links_mode = 'preview' %}  (inside phone-mockup / mockup-inner)
+     {% set links_mode = 'public'  %}  (standalone public page body)
+   ===================================================================== #}
+
+{# ── Variable setup (shared by both modes) ─────────────────────────── #}
+{% set _qrc      = qrcard if qrcard else {} %}
+{% set _tmpl     = _qrc.get('Links_template', 'default') %}
+{% set _primary  = _qrc.get('Links_primary_color',   '#2F6BFD') %}
+{% set _secondary= _qrc.get('Links_secondary_color', '#0E379A') %}
+{% set _title    = _qrc.get('Links_title',   '') %}
+{% set _desc     = _qrc.get('Links_desc',    '') %}
+{% set _cover_img= _qrc.get('Links_cover_img_url', '') %}
+{% set _links    = _qrc.get('Links_links',   []) %}
+{% set _welcome_img  = _qrc.get('welcome_img_url',    '') %}
+{% set _welcome_time = _qrc.get('welcome_time', 2.5) | float %}
+{% set _welcome_bg   = _qrc.get('welcome_bg_color',   _primary) %}
+{% set _apply_fonts  = _qrc.get('Links_font_apply_all', '') %}
+{% set _title_font   = _qrc.get('Links_title_font', 'Lato') %}
+{% set _text_font    = _qrc.get('Links_text_font',  'Lato') %}
+{% set _title_color  = _qrc.get('Links_title_color','#111827') %}
+{% set _text_color   = _qrc.get('Links_text_color', '#6b7280') %}
+{% set _show_default = _tmpl not in ['template1','template2','template3','template4'] %}
+
+{# =====================================================================
+   PUBLIC MODE
+   ===================================================================== #}
+{% if links_mode == 'public' %}
+
+<style>
+    :root {
+        --primary: {{ _primary }};
+        --secondary: {{ _secondary }};
+        --title-font: {{ _title_font | tojson | safe }};
+        --text-font:  {{ _text_font  | tojson | safe }};
+        --title-color: {{ _title_color }};
+        --text-color:  {{ _text_color  }};
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f172a; min-height: 100vh;
+        display: flex; align-items: stretch; justify-content: center;
+    }
+    .phone-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+
+    /* Welcome overlay */
+    .welcome-overlay {
+        position: absolute; inset: 0; z-index: 100;
+        background: {{ _welcome_bg }};
+        display: flex; align-items: center; justify-content: center;
+        opacity: 1; transition: opacity 0.8s ease; pointer-events: auto;
+    }
+    .welcome-overlay.hide { opacity: 0; pointer-events: none; }
+    .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
+
+    /* DEFAULT */
+    .tpl-default .phone-shell { background: #020617; width: 100%; min-height: 100vh; display: flex; }
+    .tpl-default .phone-inner { background: #f9fafb; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .tpl-default .top-block { background: var(--primary); padding: 40px 24px 72px; }
+    .tpl-default .content-block {
+        background: #ffffff; border-radius: 24px 24px 0 0; margin-top: -32px;
+        padding: 56px 20px 32px; flex: 1; display: flex; flex-direction: column; align-items: center;
+    }
+    .tpl-default .dtitle { font-size: 18px; font-weight: 800; text-align: center; line-height: 1.2; margin-top: 24px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
+    .tpl-default .ddesc { font-size: 13px; text-align: center; margin-top: 4px; margin-bottom: 24px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
+    .tpl-default .Links-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .tpl-default .Links-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; text-decoration: none; gap: 10px; }
+    .tpl-default .Links-item-icon { width: 36px; height: 36px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tpl-default .Links-item-text { flex: 1; min-width: 0; overflow: hidden; text-align: left; }
+    .tpl-default .Links-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-default .Links-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+
+    /* TEMPLATE 1 */
+    .tpl-1 { min-height: 100vh; display: flex; flex-direction: column; background: #f3f4f6; overflow-y: auto; }
+    .tpl-1 .t1-header { width: 100%; height: 45vh; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; }
+    .tpl-1 .t1-header img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-1 .t1-card { background: var(--primary); flex: 1; display: flex; flex-direction: column; padding: 20px 20px 32px; position: relative; z-index: 2; }
+    .tpl-1 .t1-card.with-image { border-radius: 22px 22px 0 0; margin-top: -18px; }
+    .tpl-1 .t1-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: white;{% endif %} }
+    .tpl-1 .t1-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: rgba(255,255,255,0.8);{% endif %} }
+    .tpl-1 .Links-list { display: flex; flex-direction: column; gap: 10px; }
+    .tpl-1 .Links-item { display: flex; align-items: center; padding: 12px 14px; background: white; border-radius: 10px; text-decoration: none; gap: 10px; }
+    .tpl-1 .Links-item-icon { width: 36px; height: 36px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tpl-1 .Links-item-text { flex: 1; min-width: 0; overflow: hidden; }
+    .tpl-1 .Links-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-1 .Links-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+
+    /* TEMPLATE 2 */
+    .tpl-2 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; overflow-y: auto; }
+    .tpl-2 .t2-header { margin: 16px 20px 0; height: 40vh; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; border-radius: 14px; }
+    .tpl-2 .t2-header img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-2 .t2-card-wrap { flex: 1; display: flex; flex-direction: column; padding: 0 20px 32px; min-height: 0; }
+    .tpl-2 .t2-card-wrap.no-header { justify-content: center; }
+    .tpl-2 .t2-card-wrap.with-header { justify-content: flex-start; }
+    .tpl-2 .t2-card { background: white; width: 100%; max-width: 440px; margin: 0 auto; padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); flex: 1; display: flex; flex-direction: column; }
+    .tpl-2 .t2-card.no-header { border-radius: 20px; }
+    .tpl-2 .t2-card.with-header { border-radius: 22px 22px 0 0; margin-top: -18px; }
+    .tpl-2 .t2-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
+    .tpl-2 .t2-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
+    .tpl-2 .Links-list { display: flex; flex-direction: column; gap: 10px; }
+    .tpl-2 .Links-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; text-decoration: none; gap: 10px; }
+    .tpl-2 .Links-item-icon { width: 36px; height: 36px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tpl-2 .Links-item-text { flex: 1; min-width: 0; overflow: hidden; }
+    .tpl-2 .Links-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-2 .Links-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+
+    /* TEMPLATE 3 */
+    .tpl-3 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; padding: 40px 20px 32px; overflow-y: auto; }
+    .tpl-3 .t3-circle { width: 96px; height: 96px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 3px solid white; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; flex-shrink: 0; box-shadow: 0 0 0 6px rgba(255,255,255,0.15); }
+    .tpl-3 .t3-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-3 .t3-circle-placeholder { font-size: 32px; color: rgba(255,255,255,0.5); }
+    .tpl-3 .t3-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; width: 100%; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: white;{% endif %} }
+    .tpl-3 .t3-desc { font-size: 13px; text-align: center; margin-bottom: 20px; width: 100%; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: rgba(255,255,255,0.8);{% endif %} }
+    .tpl-3 .Links-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .tpl-3 .Links-item { display: flex; align-items: center; padding: 12px 14px; background: white; border-radius: 10px; text-decoration: none; gap: 10px; }
+    .tpl-3 .Links-item-icon { width: 36px; height: 36px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tpl-3 .Links-item-text { flex: 1; min-width: 0; overflow: hidden; }
+    .tpl-3 .Links-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-3 .Links-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+
+    /* TEMPLATE 4 */
+    .tpl-4 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px 32px; overflow-y: auto; }
+    .tpl-4 .t4-card { background: white; border-radius: 20px; width: 100%; max-width: 440px; position: relative; padding: 56px 20px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .tpl-4 .t4-circle { position: absolute; top: -44px; left: 50%; transform: translateX(-50%); width: 88px; height: 88px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 16px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center; }
+    .tpl-4 .t4-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-4 .t4-circle-placeholder { font-size: 28px; color: #9ca3af; }
+    .tpl-4 .t4-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
+    .tpl-4 .t4-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
+    .tpl-4 .Links-list { display: flex; flex-direction: column; gap: 10px; }
+    .tpl-4 .Links-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; text-decoration: none; gap: 10px; }
+    .tpl-4 .Links-item-icon { width: 36px; height: 36px; background: #eff6ff; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tpl-4 .Links-item-text { flex: 1; min-width: 0; overflow: hidden; }
+    .tpl-4 .Links-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-4 .Links-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+</style>
+
+{# ── Shared links macro (public mode) ──────────────────────────────── #}
+{% macro pub_links(items) %}
+{% for lnk in items %}
+{% set _url = lnk.url if lnk is mapping else lnk %}
+{% set _name = (lnk.name if lnk is mapping else '') or _url %}
+{% set _ldesc = lnk.desc if lnk is mapping else '' %}
+{% if _url %}
+<a class="Links-item" href="{{ _url if '://' in _url else 'https://'+_url }}" target="_blank" rel="noopener">
+    <div class="Links-item-icon"><i class="fa-solid fa-link" style="color:#2563eb;font-size:16px;"></i></div>
+    <div class="Links-item-text"><span class="Links-item-name">{{ _name }}</span><span class="Links-item-subdesc">{{ _ldesc }}</span></div>
+    <i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:11px;flex-shrink:0;"></i>
+</a>
+{% endif %}
+{% endfor %}
+{% endmacro %}
+
+<div class="phone-wrapper">
+
+    {# Welcome overlay #}
+    {% if _welcome_img %}
+    <div class="welcome-overlay" id="welcome-overlay">
+        <img src="{{ _welcome_img }}" alt="Welcome">
+    </div>
+    {% endif %}
+
+    {# DEFAULT #}
+    {% if _tmpl == 'default' %}
+    <div class="tpl-default">
+        <div class="phone-shell">
+            <div class="phone-inner">
+                <div class="top-block"></div>
+                <div class="content-block">
+                    <div style="overflow:hidden;border-radius:50%;width:120px;height:120px;margin-top:-60px;background:white;border:4px solid white;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        {% if _cover_img %}<img src="{{ _cover_img }}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
+                        {% else %}<i class="fa-solid fa-link" style="font-size:44px;color:#cbd5e1;"></i>{% endif %}
+                    </div>
+                    {% if _title %}<div class="dtitle">{{ _title }}</div>{% endif %}
+                    {% if _desc %}<div class="ddesc">{{ _desc }}</div>{% endif %}
+                    <div style="width:100%;margin-top:8px;">
+                        <div class="Links-list">
+                            {{ pub_links(_links) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# TEMPLATE 1 #}
+    {% elif _tmpl == 'template1' %}
+    <div class="tpl-1">
+        {% if _cover_img %}<div class="t1-header"><img src="{{ _cover_img }}" alt=""></div>{% endif %}
+        <div class="t1-card {% if _cover_img %}with-image{% endif %}">
+            {% if _title %}<div class="t1-title">{{ _title }}</div>{% endif %}
+            {% if _desc %}<div class="t1-desc">{{ _desc }}</div>{% endif %}
+            <div class="Links-list">{{ pub_links(_links) }}</div>
+        </div>
+    </div>
+
+    {# TEMPLATE 2 #}
+    {% elif _tmpl == 'template2' %}
+    <div class="tpl-2">
+        {% if _cover_img %}<div class="t2-header"><img src="{{ _cover_img }}" alt=""></div>{% endif %}
+        <div class="t2-card-wrap {% if _cover_img %}with-header{% else %}no-header{% endif %}">
+            <div class="t2-card {% if _cover_img %}with-header{% else %}no-header{% endif %}">
+                {% if _title %}<div class="t2-title">{{ _title }}</div>{% endif %}
+                {% if _desc %}<div class="t2-desc">{{ _desc }}</div>{% endif %}
+                <div class="Links-list">{{ pub_links(_links) }}</div>
+            </div>
+        </div>
+    </div>
+
+    {# TEMPLATE 3 #}
+    {% elif _tmpl == 'template3' %}
+    <div class="tpl-3">
+        <div class="t3-circle">
+            {% if _cover_img %}<img src="{{ _cover_img }}" alt="">
+            {% else %}<div class="t3-circle-placeholder"><i class="fa-regular fa-image"></i></div>{% endif %}
+        </div>
+        {% if _title %}<div class="t3-title">{{ _title }}</div>{% endif %}
+        {% if _desc %}<div class="t3-desc">{{ _desc }}</div>{% endif %}
+        <div class="Links-list">{{ pub_links(_links) }}</div>
+    </div>
+
+    {# TEMPLATE 4 #}
+    {% elif _tmpl == 'template4' %}
+    <div class="tpl-4">
+        <div class="t4-card">
+            <div class="t4-circle">
+                {% if _cover_img %}<img src="{{ _cover_img }}" alt="">
+                {% else %}<div class="t4-circle-placeholder"><i class="fa-regular fa-image"></i></div>{% endif %}
+            </div>
+            {% if _title %}<div class="t4-title">{{ _title }}</div>{% endif %}
+            {% if _desc %}<div class="t4-desc">{{ _desc }}</div>{% endif %}
+            <div class="Links-list">{{ pub_links(_links) }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>{# /phone-wrapper #}
+
+{# Welcome overlay dismissal #}
+{% if _welcome_img %}
+<script>
+(function(){
+    var overlay = document.getElementById('welcome-overlay');
+    var t = {{ _welcome_time }};
+    if(overlay && t > 0){
+        setTimeout(function(){ overlay.classList.add('hide'); setTimeout(function(){ overlay.style.display='none'; },800); }, t*1000);
+    }
+})();
+</script>
+{% endif %}
+
+{# =====================================================================
+   PREVIEW MODE — all templates in DOM, JS switches between them
+   ===================================================================== #}
+{% elif links_mode == 'preview' %}
+
+{# ── Welcome overlay ──────────────────────────────────────────────── #}
+<div id="links-preview-welcome-overlay"
+    style="display:none;position:absolute;inset:0;z-index:100;align-items:center;justify-content:center;background:{{ _welcome_bg }};opacity:1;transition:opacity 0.8s ease;pointer-events:auto;">
+    <img id="links-preview-welcome-img" src="{{ _welcome_img }}" alt="Welcome"
+        style="max-width:60%;max-height:70%;object-fit:contain;{% if not _welcome_img %}display:none;{% endif %}">
+</div>
+
+{# ── Template 1 ───────────────────────────────────────────────────── #}
+<div id="links-preview-template1"
+    style="display:{% if _tmpl == 'template1' %}flex{% else %}none{% endif %};position:absolute;inset:0;z-index:10;flex-direction:column;background:#f3f4f6;overflow-y:auto;overflow-x:hidden;">
+    <div id="links-t1-preview-header"
+        style="width:100%;height:45%;flex-shrink:0;position:relative;overflow:hidden;background:#e5e7eb;{% if not _cover_img %}display:none;{% endif %}">
+        <img id="links-t1-preview-header-img" src="{{ _cover_img }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+    </div>
+    <div id="links-t1-preview-card-body"
+        style="background:{{ _primary }};{% if _cover_img %}border-radius:22px 22px 0 0;margin-top:-18px;{% else %}border-radius:0;{% endif %}position:relative;z-index:2;flex:1;display:flex;flex-direction:column;padding:14px 14px 20px;min-height:0;overflow-y:auto;">
+        <div id="links-t1-preview-title"
+            style="font-size:17px;font-weight:800;color:white;text-align:center;margin-bottom:2px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
+        <div id="links-t1-preview-desc"
+            style="font-size:11px;color:rgba(255,255,255,0.8);text-align:center;margin-bottom:8px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+        <div id="links-t1-preview-links-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+            {% for lnk in _links %}{% set _lu = lnk.url if lnk is mapping else lnk %}{% set _ln = (lnk.name if lnk is mapping else '') or _lu %}{% set _ld = lnk.desc if lnk is mapping else '' %}{% if _lu %}<div style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ln }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ld }}</span></div><i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i></div>{% endif %}{% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── Template 2 ───────────────────────────────────────────────────── #}
+<div id="links-preview-template2"
+    style="display:{% if _tmpl == 'template2' %}flex{% else %}none{% endif %};position:absolute;inset:0;z-index:10;flex-direction:column;background:{{ _primary }};overflow-y:auto;overflow-x:hidden;">
+    <div id="links-t2-preview-header"
+        style="margin:10px 12px 0;height:40%;flex-shrink:0;position:relative;overflow:hidden;background:#e5e7eb;border-radius:10px;{% if not _cover_img %}display:none;{% endif %}">
+        <img id="links-t2-preview-header-img" src="{{ _cover_img }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+    </div>
+    <div id="links-t2-preview-card-wrap"
+        style="flex:1;display:flex;flex-direction:column;padding:0 12px 16px;min-height:0;{% if _cover_img %}justify-content:flex-start;{% else %}justify-content:center;{% endif %}">
+        <div id="links-t2-preview-card-body"
+            style="background:white;width:100%;margin:0 auto;padding:20px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.2);flex:1;display:flex;flex-direction:column;{% if _cover_img %}border-radius:22px 22px 0 0;margin-top:-18px;{% else %}border-radius:14px;{% endif %}overflow-y:auto;">
+            <div id="links-t2-preview-title"
+                style="font-size:17px;font-weight:800;color:#111827;text-align:center;margin-bottom:4px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
+            <div id="links-t2-preview-desc"
+                style="font-size:11px;color:#6b7280;text-align:center;margin-bottom:10px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+            <div id="links-t2-preview-links-list" style="display:flex;flex-direction:column;gap:6px;">
+                {% for lnk in _links %}{% set _lu = lnk.url if lnk is mapping else lnk %}{% set _ln = (lnk.name if lnk is mapping else '') or _lu %}{% set _ld = lnk.desc if lnk is mapping else '' %}{% if _lu %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ln }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ld }}</span></div><i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i></div>{% endif %}{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Template 3 ───────────────────────────────────────────────────── #}
+<div id="links-preview-template3"
+    style="display:{% if _tmpl == 'template3' %}flex{% else %}none{% endif %};position:absolute;inset:0;z-index:10;flex-direction:column;background:{{ _primary }};overflow-y:auto;overflow-x:hidden;">
+    <div style="flex:1;display:flex;flex-direction:column;padding:20px 14px;overflow-y:auto;align-items:center;">
+        <div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.2);border:3px solid white;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:14px;flex-shrink:0;box-shadow:0 0 0 5px rgba(255,255,255,0.15);">
+            <img id="links-t3-preview-circle-img" src="{{ _cover_img }}" alt=""
+                style="width:100%;height:100%;object-fit:cover;{% if not _cover_img %}display:none;{% endif %}">
+            <div id="links-t3-preview-circle-placeholder"
+                style="display:{% if _cover_img %}none{% else %}flex{% endif %};align-items:center;justify-content:center;width:100%;height:100%;">
+                <i class="fa-regular fa-image" style="font-size:26px;color:rgba(255,255,255,0.5);"></i>
+            </div>
+        </div>
+        <div id="links-t3-preview-title"
+            style="font-size:17px;font-weight:800;color:white;text-align:center;margin-bottom:2px;line-height:1.2;width:100%;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
+        <div id="links-t3-preview-desc"
+            style="font-size:11px;color:rgba(255,255,255,0.8);text-align:center;margin-bottom:8px;width:100%;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+        <div id="links-t3-preview-links-list" style="display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:8px;">
+            {% for lnk in _links %}{% set _lu = lnk.url if lnk is mapping else lnk %}{% set _ln = (lnk.name if lnk is mapping else '') or _lu %}{% set _ld = lnk.desc if lnk is mapping else '' %}{% if _lu %}<div style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ln }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ld }}</span></div><i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i></div>{% endif %}{% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── Template 4 ───────────────────────────────────────────────────── #}
+<div id="links-preview-template4"
+    style="display:{% if _tmpl == 'template4' %}flex{% else %}none{% endif %};position:absolute;inset:0;z-index:10;flex-direction:column;background:{{ _primary }};overflow-y:auto;overflow-x:hidden;align-items:center;justify-content:center;padding:20px 14px;">
+    <div style="background:white;border-radius:20px;width:100%;position:relative;padding:50px 16px 20px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+        <div style="position:absolute;top:-38px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;overflow:hidden;border:4px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.15);background:#e5e7eb;display:flex;align-items:center;justify-content:center;">
+            <img id="links-t4-preview-circle-img" src="{{ _cover_img }}" alt=""
+                style="width:100%;height:100%;object-fit:cover;{% if not _cover_img %}display:none;{% endif %}">
+            <div id="links-t4-preview-circle-placeholder"
+                style="display:{% if _cover_img %}none{% else %}flex{% endif %};align-items:center;justify-content:center;width:100%;height:100%;background:#e5e7eb;">
+                <i class="fa-regular fa-image" style="font-size:22px;color:#9ca3af;"></i>
+            </div>
+        </div>
+        <div id="links-t4-preview-title"
+            style="font-size:17px;font-weight:800;color:#111827;text-align:center;margin-bottom:4px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
+        <div id="links-t4-preview-desc"
+            style="font-size:11px;color:#6b7280;text-align:center;margin-bottom:10px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+        <div id="links-t4-preview-links-list" style="display:flex;flex-direction:column;gap:6px;">
+            {% for lnk in _links %}{% set _lu = lnk.url if lnk is mapping else lnk %}{% set _ln = (lnk.name if lnk is mapping else '') or _lu %}{% set _ld = lnk.desc if lnk is mapping else '' %}{% if _lu %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ln }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ld }}</span></div><i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i></div>{% endif %}{% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── Default template (in document flow) ─────────────────────────── #}
+<div id="links-preview-top-block"
+    style="background-color:{{ _primary }};width:100%;display:{% if _show_default %}flex{% else %}none{% endif %};flex-direction:column;align-items:center;padding-top:40px;padding-bottom:70px;flex-shrink:0;">
+</div>
+
+<div id="links-preview-bottom-block"
+    style="background-color:#ffffff;width:100%;margin-top:-30px;border-radius:24px 24px 0 0;display:{% if _show_default %}flex{% else %}none{% endif %};flex-direction:column;align-items:center;z-index:2;position:relative;padding-bottom:40px;flex-grow:1;">
+
+    <div style="display:flex;align-items:center;justify-content:center;width:100%;margin-top:-50px;margin-bottom:16px;">
+        <div id="links-preview-profile-img-container"
+            style="width:120px;height:120px;border-radius:50%;background:white;border:4px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+            <i id="links-preview-profile-placeholder-icon" class="fa-regular fa-image"
+                style="font-size:44px;color:#d1d5db;{% if _cover_img %}display:none;{% endif %}"></i>
+            <img id="links-preview-profile-img" src="{{ _cover_img }}" alt=""
+                style="{% if not _cover_img %}display:none;{% endif %}width:100%;height:100%;object-fit:cover;">
+        </div>
+    </div>
+
+    <div id="links-preview-title-text"
+        style="color:#111827;font-size:17px;font-weight:800;font-family:'Lato',sans-serif;margin-bottom:4px;text-align:center;padding:0 16px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
+
+    <div id="links-preview-desc-text"
+        style="color:#9ca3af;font-size:11px;font-weight:400;font-family:'Lato',sans-serif;text-align:center;padding:0 20px;margin-bottom:12px;line-height:1.4;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+
+    <div id="links-preview-links-list" style="width:100%;padding:0 10px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+        {% for lnk in _links %}{% set _lu = lnk.url if lnk is mapping else lnk %}{% set _ln = (lnk.name if lnk is mapping else '') or _lu %}{% set _ld = lnk.desc if lnk is mapping else '' %}{% if _lu %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ln }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _ld }}</span></div><i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i></div>{% endif %}{% endfor %}
+    </div>
+</div>
+
+{% endif %}

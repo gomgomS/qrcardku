@@ -367,37 +367,72 @@ class qr_allinone_proc:
                     cover_img.save(os.path.join(dest_dir, "allinone_cover" + ext))
                     update_data["Allinone_cover_img_url"] = f"/static/uploads/allinone/{qrcard_id}/allinone_cover{ext}"
 
-        # Rebuild sections from parallel arrays
-        types = request.form.getlist("Allinone_section_type[]")
-        v1s = request.form.getlist("Allinone_section_v1[]")
-        v2s = request.form.getlist("Allinone_section_v2[]")
-        v3s = request.form.getlist("Allinone_section_v3[]")
-        v4s = request.form.getlist("Allinone_section_v4[]")
-        file_existings = request.form.getlist("Allinone_section_file_existing[]")
-
-        from itertools import zip_longest
+        # Prefer allinone_sections_json (rich format with block_style/color) over flat arrays
+        sections_json_str = request.form.get("allinone_sections_json", "").strip()
         sections = []
-        for i, (stype, a, b, c, d, fe) in enumerate(zip_longest(types, v1s, v2s, v3s, v4s, file_existings, fillvalue="")):
-            s = {"type": stype or "", "v1": a or "", "v2": b or "", "v3": c or "", "v4": d or ""}
-            if stype in ("image", "pdf"):
-                fkey = f"allinone_file_{i}"
-                fobj = request.files.get(fkey)
-                if fobj and fobj.filename:
-                    fobj.seek(0, 2)
-                    if fobj.tell() <= MAX_FILE_SIZE:
-                        fobj.seek(0)
-                        ext = os.path.splitext(fobj.filename)[1].lower()
-                        if stype == "image" and ext not in ALLOWED_IMG_EXT:
-                            ext = ".jpg"
-                        elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
-                            ext = ".pdf"
-                        fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
-                        os.makedirs(dest_dir, exist_ok=True)
-                        fobj.save(os.path.join(dest_dir, fname))
-                        s["v1"] = f"/static/uploads/allinone/{qrcard_id}/{fname}"
-                elif fe:
-                    s["v1"] = fe
-            sections.append(s)
+        use_json = False
+        if sections_json_str:
+            try:
+                parsed = json.loads(sections_json_str)
+                if isinstance(parsed, list):
+                    sections = parsed
+                    use_json = True
+            except Exception:
+                pass
+
+        if use_json:
+            # Process file uploads for image/pdf sections by index
+            for i, s in enumerate(sections):
+                s = dict(s)
+                stype = s.get("type", "")
+                if stype in ("image", "pdf"):
+                    fkey = f"allinone_file_{i}"
+                    fobj = request.files.get(fkey)
+                    if fobj and fobj.filename:
+                        fobj.seek(0, 2)
+                        if fobj.tell() <= MAX_FILE_SIZE:
+                            fobj.seek(0)
+                            ext = os.path.splitext(fobj.filename)[1].lower()
+                            if stype == "image" and ext not in ALLOWED_IMG_EXT:
+                                ext = ".jpg"
+                            elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
+                                ext = ".pdf"
+                            fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
+                            os.makedirs(dest_dir, exist_ok=True)
+                            fobj.save(os.path.join(dest_dir, fname))
+                            s["v1"] = f"/static/uploads/allinone/{qrcard_id}/{fname}"
+                sections[i] = s
+        else:
+            # Rebuild sections from parallel arrays (flat format)
+            types = request.form.getlist("Allinone_section_type[]")
+            v1s = request.form.getlist("Allinone_section_v1[]")
+            v2s = request.form.getlist("Allinone_section_v2[]")
+            v3s = request.form.getlist("Allinone_section_v3[]")
+            v4s = request.form.getlist("Allinone_section_v4[]")
+            file_existings = request.form.getlist("Allinone_section_file_existing[]")
+
+            from itertools import zip_longest
+            for i, (stype, a, b, c, d, fe) in enumerate(zip_longest(types, v1s, v2s, v3s, v4s, file_existings, fillvalue="")):
+                s = {"type": stype or "", "v1": a or "", "v2": b or "", "v3": c or "", "v4": d or ""}
+                if stype in ("image", "pdf"):
+                    fkey = f"allinone_file_{i}"
+                    fobj = request.files.get(fkey)
+                    if fobj and fobj.filename:
+                        fobj.seek(0, 2)
+                        if fobj.tell() <= MAX_FILE_SIZE:
+                            fobj.seek(0)
+                            ext = os.path.splitext(fobj.filename)[1].lower()
+                            if stype == "image" and ext not in ALLOWED_IMG_EXT:
+                                ext = ".jpg"
+                            elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
+                                ext = ".pdf"
+                            fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
+                            os.makedirs(dest_dir, exist_ok=True)
+                            fobj.save(os.path.join(dest_dir, fname))
+                            s["v1"] = f"/static/uploads/allinone/{qrcard_id}/{fname}"
+                    elif fe:
+                        s["v1"] = fe
+                sections.append(s)
 
         update_data["Allinone_sections"] = sections
 

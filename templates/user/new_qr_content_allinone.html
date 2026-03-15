@@ -6,6 +6,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
     .new-qr-container { display: flex; gap: 32px; height: 100%; }
@@ -54,7 +55,7 @@
     .phone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
     .phone-mockup { width: 100%; height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-    .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; }
+    .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; overscroll-behavior-y: contain; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
@@ -78,6 +79,11 @@
     .section-card[data-section-type="image"] .section-card-icon { background: #fed7aa; color: #c2410c; }
     .section-card[data-section-type="video"] .section-card-icon { background: #fecaca; color: #b91c1c; }
     .section-card[data-section-type="pdf"] .section-card-icon { background: #fecaca; color: #991b1b; }
+    .section-card[data-section-type="text"] .section-card-header { background: #f0f9ff; }
+    .section-card[data-section-type="text"] .section-card-icon { background: #bae6fd; color: #0369a1; }
+    .allinone-quill-wrap .ql-toolbar { border-radius: 6px 6px 0 0; border-color: var(--border-color); background: #f9fafb; }
+    .allinone-quill-wrap .ql-container { border-radius: 0 0 6px 6px; border-color: var(--border-color); font-size: 13px; min-height: 100px; background: white; }
+    .allinone-quill-wrap .ql-editor { min-height: 100px; }
     .section-card-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
     .section-card-count { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.8); padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); }
     .section-card-actions { display: flex; align-items: center; gap: 4px; }
@@ -201,7 +207,11 @@
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Allinone_template" value="template1" {% if qrcard and qrcard.get('Allinone_template')=='template1' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-template1">
                                     <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
-                                        <div style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;"><div style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;"></div></div>
+                                        {% set _t1_thumb_url = qrcard.get('Allinone_cover_img_url','') if qrcard else '' %}
+                                        <div style="width: 100%; height: 44%; position: relative; overflow: hidden; background: #e5e7eb; flex-shrink: 0;">
+                                            <img id="allinone-t1-thumb-header-img" src="{{ _t1_thumb_url }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;{{ '' if _t1_thumb_url else 'display:none;' }}">
+                                            <div id="allinone-t1-thumb-placeholder" style="position:absolute;inset:0;background:#dbeafe;display:{{ 'none' if _t1_thumb_url else 'flex' }};align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#93c5fd;font-size:14px;"></i></div>
+                                        </div>
                                         <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
                                             <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
                                             <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
@@ -390,6 +400,7 @@
                         <button type="button" class="add-block-btn" data-block="image"><i class="fa-regular fa-image"></i> Image</button>
                         <button type="button" class="add-block-btn" data-block="video"><i class="fa-solid fa-play"></i> Video</button>
                         <button type="button" class="add-block-btn" data-block="pdf"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                        <button type="button" class="add-block-btn" data-block="text"><i class="fa-solid fa-align-left"></i> Text</button>
                     </div>
                     <div id="allinone-sections-container"></div>
                     <p id="allinone-sections-empty-msg" style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;background:#f9fafb;border-radius:8px;border:1px dashed var(--border-color);">No sections yet. Click a type above to get started.</p>
@@ -549,8 +560,20 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Intercept wheel events on phone mockup so scrolling stays inside preview
+    document.querySelectorAll('.phone-mockup').forEach(function(mockupEl) {
+        const innerEl = mockupEl.querySelector('.mockup-inner');
+        if (!innerEl) return;
+        mockupEl.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            innerEl.scrollTop += e.deltaY;
+        }, { passive: false });
+    });
+
     const step3Link = document.getElementById('step3-link');
     const contentNextBtn = document.getElementById('content-next-btn');
     const qrNameInput = document.querySelector('input[name="qr_name"]');
@@ -694,6 +717,7 @@ document.addEventListener('DOMContentLoaded', function () {
         image:   { icon: 'fa-regular fa-image',       label: 'Image',        bg: '#fff7ed', iBg: '#fed7aa', iColor: '#c2410c' },
         video:   { icon: 'fa-solid fa-play',          label: 'Video',        bg: '#fef2f2', iBg: '#fecaca', iColor: '#b91c1c' },
         pdf:     { icon: 'fa-solid fa-file-pdf',      label: 'PDF',          bg: '#fef2f2', iBg: '#fecaca', iColor: '#991b1b' },
+        text:    { icon: 'fa-solid fa-align-left',    label: 'Text',         bg: '#f0f9ff', iBg: '#bae6fd', iColor: '#0369a1' },
     };
 
     const SOSMED_OPTIONS = [
@@ -707,6 +731,15 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
     const SOSMED_OPTIONS_HTML = SOSMED_OPTIONS.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
     const SOSMED_NAMES = Object.fromEntries(SOSMED_OPTIONS);
+
+    function getImageCropAspect(blockStyle, itemIndex) {
+        if (blockStyle === '1') return 16/9;
+        if (blockStyle === '2') return NaN;
+        if (blockStyle === '3') return (itemIndex % 3 === 2) ? 16/9 : 1;
+        if (blockStyle === '4') return (itemIndex % 3 === 0) ? 16/9 : 1;
+        if (blockStyle === '5') { const p = itemIndex % 6; return (p === 0 || p === 5) ? 1/2 : 1; }
+        return NaN;
+    }
 
     let itemCounter = 0;
 
@@ -729,11 +762,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // IMAGE
         if (stype === 'image') {
             if (!v1) return '';
-            const cap = v2 ? `<div class="pv-img-cap">${v2}</div>` : '';
-            if (blockStyle === '2') return `<div class="pv-img-b"><img src="${v1}" style="width:80%;border-radius:8px;display:block;">${cap}</div>`;
-            if (blockStyle === '3') return `<div class="pv-img-c"><img src="${v1}"></div>${cap}`;
-            if (blockStyle === '4') return `<div style="background:white;border-radius:5px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.12);"><img src="${v1}" style="width:100%;display:block;aspect-ratio:4/3;object-fit:cover;">${v2?`<div style="padding:4px 6px;font-size:6.5px;color:#374151;font-weight:500;">${v2}</div>`:''}</div>`;
-            return `<div style="width:100%;margin:2px 0;"><img src="${v1}" style="width:100%;border-radius:4px;display:block;" class="pv-img">${cap}</div>`;
+            if (blockStyle === '1') return `<div style="flex:0 0 100%;"><img src="${v1}" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;border-radius:3px;"></div>`;
+            if (blockStyle === '2') return `<img src="${v1}" style="width:100%;border-radius:3px;display:block;">`;
+            if (blockStyle === '3') return `<div class="pv-img-g21"><img src="${v1}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"></div>`;
+            if (blockStyle === '4') return `<div class="pv-img-g12"><img src="${v1}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;"></div>`;
+            if (blockStyle === '5') return `<div class="pv-img-gsp"><img src="${v1}" style="width:100%;height:100%;min-height:22px;object-fit:cover;display:block;"></div>`;
+            return `<img src="${v1}" style="width:100%;border-radius:3px;display:block;">`;
         }
         // Icon HTML
         let iconHtml = '';
@@ -747,7 +781,7 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (stype === 'pdf') { iconHtml = '<i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i>'; }
         // SOSMED specific styles
         if (stype === 'sosmed') {
-            const smPlatform = SOSMED_NAMES[v1] || 'Social';
+            const smPlatform = v3 || SOSMED_NAMES[v1] || 'Social';
             const smHandle = v2 || '';
             const handleHTML = smHandle ? `<span style="font-size:6.5px;color:#888;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smHandle}</span>` : '';
             if (blockStyle === '1') {
@@ -757,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
             }
             if (blockStyle === '3') {
-                return `<div class="pv-sm-pill"><i class="${v1}" style="font-size:6px;color:${blockColor};flex-shrink:0;"></i><span class="pv-sm-pill-name">${smPlatform}</span></div>`;
+                return `<div style="width:18px;height:18px;border-radius:4px;border:1.5px solid ${blockColor};background:${blockColor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="${v1}" style="font-size:8px;color:${blockColor};"></i></div>`;
             }
             if (blockStyle === '4') {
                 return `<div style="display:flex;align-items:center;gap:4px;padding:4px 2px;border-bottom:1px solid #f0f0f0;"><div style="flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${smPlatform}</span>${handleHTML}</div><i class="${v1}" style="color:${blockColor};font-size:9px;flex-shrink:0;"></i></div>`;
@@ -806,10 +840,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // VIDEO specific styles
         if (stype === 'video') {
             const vtitle = v2 || 'Watch Video';
-            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:5px 7px;"><div style="width:16px;height:16px;background:#fecaca;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-play" style="color:#ef4444;font-size:6px;"></i></div><span style="font-size:8px;font-weight:500;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${vtitle}</span><i class="fa-solid fa-chevron-right" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
-            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 7px;"><div style="width:18px;height:18px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fecaca;"><i class="fa-solid fa-play" style="color:#ef4444;font-size:6px;"></i></div><span style="font-size:8px;font-weight:600;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${vtitle}</span></div>`;
-            if (blockStyle === '3') return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;border:1px solid #fecaca;"><i class="fa-solid fa-play" style="color:#ef4444;font-size:6px;flex-shrink:0;"></i><span style="font-size:7px;color:#374151;white-space:nowrap;">${vtitle}</span></div>`;
-            if (blockStyle === '4') return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:6px;background:${blockColor};"><i class="fa-solid fa-play" style="color:white;font-size:7px;"></i><span style="font-size:8px;color:white;font-weight:700;">${vtitle}</span></div>`;
+            if (v1 && (v1.startsWith('blob:') || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(v1))) {
+                return `<div style="border-radius:6px;overflow:hidden;background:#000;">`
+                    + `<video src="${v1}" controls style="width:100%;display:block;max-height:110px;"></video>`
+                    + (vtitle ? `<div style="padding:3px 6px;font-size:7px;color:#374151;font-weight:500;">${vtitle}</div>` : '')
+                    + `</div>`;
+            }
+            return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:6px;background:${blockColor};"><div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-play" style="color:white;font-size:8px;"></i></div><span style="font-size:7px;color:white;font-weight:600;text-align:center;">${vtitle}</span></div>`;
         }
         // PDF specific styles
         if (stype === 'pdf') {
@@ -818,6 +855,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 7px;"><div style="width:18px;height:18px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:600;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:6px;flex-shrink:0;"></i></div>`;
             if (blockStyle === '3') return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;flex-shrink:0;"></i><span style="font-size:7px;color:#374151;white-space:nowrap;">${pdfname}</span></div>`;
             if (blockStyle === '4') return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:6px;background:${blockColor};"><i class="fa-solid fa-arrow-down" style="color:white;font-size:7px;"></i><span style="font-size:8px;color:white;font-weight:700;">${pdfname}</span></div>`;
+        }
+        // TEXT block
+        if (stype === 'text') {
+            if (!v1) return `<div style="font-size:7px;color:#9ca3af;font-style:italic;padding:3px 5px;">No text yet...</div>`;
+            const stripped = v1.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            const excerpt = stripped.length > 80 ? stripped.substring(0, 80) + '...' : stripped;
+            if (blockStyle === '2') return `<div style="background:white;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
+            if (blockStyle === '3') return `<div style="border-radius:4px;padding:4px 6px;background:${blockColor};font-size:7px;color:white;line-height:1.4;">${excerpt}</div>`;
+            return `<div style="padding:3px 5px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
         }
         if (blockStyle === '2') return `<div class="pv-item pv-item-b" data-stype="${stype}"><div class="pv-icon">${iconHtml}</div><span class="pv-name">${name}</span></div>`;
         if (blockStyle === '3') return `<div class="pv-item pv-item-c"><span class="pv-name">${name}</span></div>`;
@@ -853,6 +899,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 const el = document.getElementById(id);
                 if (el) { const tmp = document.createElement('div'); tmp.innerHTML = groupHTML; el.appendChild(tmp.firstChild); }
             });
+        });
+        initPreviewCarousels();
+    }
+
+    function initPreviewCarousels() {
+        document.querySelectorAll('.pv-section-group[data-type="image"][data-block-style="1"]').forEach(function(group) {
+            const items = Array.from(group.querySelectorAll('.pv-section-group-items > div'));
+            if (items.length <= 1) return;
+            const wrap = group.querySelector('.pv-section-group-items');
+            wrap.style.position = 'relative';
+            wrap.style.overflow = 'hidden';
+            let cur = 0;
+            const track = document.createElement('div');
+            track.style.cssText = 'display:flex;flex-direction:row;transition:transform 0.3s ease;';
+            items.forEach(function(it) { it.style.flex = '0 0 100%'; track.appendChild(it); });
+            wrap.appendChild(track);
+            const prev = document.createElement('button');
+            prev.type = 'button';
+            prev.style.cssText = 'position:absolute;left:3px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:4;';
+            prev.innerHTML = '<i class="fa-solid fa-chevron-left" style="color:white;font-size:5px;"></i>';
+            const next = document.createElement('button');
+            next.type = 'button';
+            next.style.cssText = 'position:absolute;right:3px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:4;';
+            next.innerHTML = '<i class="fa-solid fa-chevron-right" style="color:white;font-size:5px;"></i>';
+            wrap.appendChild(prev); wrap.appendChild(next);
+            function go(n) { cur = ((n % items.length) + items.length) % items.length; track.style.transform = 'translateX(' + (-cur * 100) + '%)'; }
+            prev.addEventListener('click', function() { go(cur - 1); });
+            next.addEventListener('click', function() { go(cur + 1); });
         });
     }
 
@@ -895,7 +969,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <select class="allinone-v1-select form-control" style="background:white;">${opts}</select>
                 <div class="inline-row">
                     <input type="text" class="allinone-v2 form-control" placeholder="@username or URL" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
-                    <input type="text" class="allinone-v3 form-control" placeholder="Description (optional)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:white;">
+                    <input type="text" class="allinone-v3 form-control" placeholder="Label (optional, replaces platform name)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:white;">
                 </div>
             </div>`;
         } else if (stype === 'image') {
@@ -913,8 +987,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 <input type="text" class="allinone-v2 form-control" placeholder="Caption (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
             </div>`;
         } else if (stype === 'video') {
+            const existingUrl = data.v1 || '';
+            const hasFile = existingUrl && !existingUrl.startsWith('http');
+            row.dataset.existingUrl = existingUrl;
+            const vidPreviewBlock = hasFile
+                ? `<div class="allinone-video-preview" style="display:block;"><video src="${existingUrl}" controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`
+                : `<div class="allinone-video-preview" style="display:none;"><video controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`;
             fieldsHTML = `<div class="section-item-fields">
-                <input type="text" class="allinone-v1 form-control" placeholder="Video URL (YouTube, etc.)" value="${(data.v1||'').replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v1 form-control allinone-video-url" placeholder="YouTube URL or paste video link" value="${existingUrl.startsWith('http') ? existingUrl.replace(/"/g,'&quot;') : ''}" style="background:white;">
+                <label class="file-upload-label" style="margin-top:2px;">
+                    <i class="fa-solid fa-film" style="color:var(--primary);"></i>
+                    <span class="file-label-text" style="font-size:12px;color:var(--text-muted);">${hasFile ? 'Replace video file...' : 'Or upload video file...'}</span>
+                    <input type="file" accept="video/*" class="allinone-v1-file" data-item-id="${itemId}" style="display:none;">
+                </label>
+                ${vidPreviewBlock}
                 <input type="text" class="allinone-v2 form-control" placeholder="Title (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
             </div>`;
         } else if (stype === 'pdf') {
@@ -927,6 +1013,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="file" accept=".pdf" class="allinone-v1-file" data-item-id="${itemId}" style="display:none;">
                 </label>
                 <input type="text" class="allinone-v2 form-control" placeholder="Document name" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
+            </div>`;
+        } else if (stype === 'text') {
+            row.dataset.initialHtml = data.v1 || '';
+            fieldsHTML = `<div class="section-item-fields">
+                <div class="allinone-quill-wrap">
+                    <div class="allinone-quill-editor"></div>
+                </div>
+                <input type="hidden" class="allinone-quill-mirror allinone-v1">
             </div>`;
         }
 
@@ -942,13 +1036,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (stype === 'image') {
                     const reader = new FileReader();
                     reader.onload = function(evt) {
-                        const previewDiv = row.querySelector('.allinone-img-preview');
-                        previewDiv.querySelector('img').src = evt.target.result;
-                        previewDiv.style.display = 'block';
-                        row.dataset.previewUrl = evt.target.result;
-                        updateAllinonePreview();
+                        const card = row.closest('.section-card');
+                        const blockStyle = card ? (card.dataset.blockStyle || '1') : '1';
+                        const rows = card ? Array.from(card.querySelectorAll('.section-item-row')) : [];
+                        const itemIndex = rows.indexOf(row);
+                        const aspect = getImageCropAspect(blockStyle, itemIndex);
+                        openCropModal(evt.target.result, aspect, function(url, blob) {
+                            const previewDiv = row.querySelector('.allinone-img-preview');
+                            previewDiv.querySelector('img').src = url;
+                            previewDiv.style.display = 'block';
+                            row.dataset.previewUrl = url;
+                            const dt = new DataTransfer();
+                            dt.items.add(new File([blob], 'img_block.jpg', { type: 'image/jpeg' }));
+                            fileInput.files = dt.files;
+                            updateAllinonePreview();
+                        });
                     };
                     reader.readAsDataURL(file);
+                }
+                if (stype === 'video') {
+                    const urlInput = row.querySelector('.allinone-video-url');
+                    if (urlInput) urlInput.value = '';
+                    const blobUrl = URL.createObjectURL(file);
+                    row.dataset.previewUrl = blobUrl;
+                    row.dataset.existingUrl = '';
+                    const vidPreviewDiv = row.querySelector('.allinone-video-preview');
+                    if (vidPreviewDiv) {
+                        vidPreviewDiv.querySelector('video').src = blobUrl;
+                        vidPreviewDiv.style.display = 'block';
+                    }
+                    updateAllinonePreview();
                 }
             });
         }
@@ -994,33 +1111,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
             <div class="section-card-body">
-                <div class="block-style-picker">
-                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1">
-                        <div class="bsp-thumb bsp-1"><div style="width:10px;height:10px;background:#ddd;border-radius:2px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#bbb;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div></div>
-                        <span>Style 1</span>
-                    </button>
-                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2">
-                        <div class="bsp-thumb bsp-2"><div style="width:10px;height:10px;background:#e0e7ff;border-radius:50%;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#9ca3af;border-radius:1px;width:50%;"></div><div style="height:2px;background:#bbb;border-radius:1px;"></div></div></div>
-                        <span>Style 2</span>
-                    </button>
-                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3">
-                        <div class="bsp-thumb bsp-3" style="background:var(--primary,#2f6bfd);border-radius:3px;padding:2px 4px;gap:2px;"><div style="width:8px;height:8px;background:rgba(255,255,255,0.3);border-radius:2px;flex-shrink:0;"></div><div style="flex:1;height:2px;background:rgba(255,255,255,0.5);border-radius:1px;"></div></div>
-                        <span>Style 3</span>
-                    </button>
-                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4">
-                        <div class="bsp-thumb bsp-4"><div style="width:10px;height:10px;background:#e5e7eb;border-radius:50%;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:60%;"></div></div>
-                        <span>Style 4</span>
-                    </button>
-                </div>
+                ${stype === 'text' ? `<div class="block-style-picker">
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:transparent;border:1px solid #d1d5db;border-radius:3px;padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div><span>Plain</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:white;border:1px solid #e5e7eb;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div><span>Card</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb" style="background:var(--primary,#2f6bfd);border-radius:3px;padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:rgba(255,255,255,0.8);border-radius:1px;"></div><div style="height:2px;background:rgba(255,255,255,0.5);border-radius:1px;width:70%;"></div></div><span>Colored</span></button>
+                </div>` : stype === 'image' ? `<div class="block-style-picker">
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:#f3f4f6;justify-content:space-between;padding:0 3px;"><i class="fa-solid fa-chevron-left" style="font-size:5px;color:#9ca3af;"></i><div style="width:14px;height:12px;background:#d1d5db;border-radius:1px;"></div><i class="fa-solid fa-chevron-right" style="font-size:5px;color:#9ca3af;"></i></div><span>Carousel</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:#f9fafb;flex-direction:column;gap:1px;padding:1px 2px;"><div style="width:100%;height:6px;background:#d1d5db;border-radius:1px;"></div><div style="width:100%;height:6px;background:#e5e7eb;border-radius:1px;"></div></div><span>Vertical</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div></div><span>Grid 2-1</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Grid 1-2</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='5'?' selected':''}" data-style="5"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#bbb;border-radius:1px;grid-row:span 2;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Split</span></button>
+                </div>` : stype === 'video' ? `<div class="block-style-picker"><button type="button" class="block-style-opt selected" data-style="1"><div class="bsp-thumb" style="background:var(--primary,#2f6bfd);border-radius:3px;align-items:center;justify-content:center;"><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-play" style="font-size:5px;color:white;"></i></div></div><span>Player</span></button></div>` : `<div class="block-style-picker">
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb bsp-1"><div style="width:10px;height:10px;background:#ddd;border-radius:2px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#bbb;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div></div><span>Style 1</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb bsp-2"><div style="width:10px;height:10px;background:#e0e7ff;border-radius:50%;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#9ca3af;border-radius:1px;width:50%;"></div><div style="height:2px;background:#bbb;border-radius:1px;"></div></div></div><span>Style 2</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb bsp-3" style="background:var(--primary,#2f6bfd);border-radius:3px;padding:2px 4px;gap:2px;"><div style="width:8px;height:8px;background:rgba(255,255,255,0.3);border-radius:2px;flex-shrink:0;"></div><div style="flex:1;height:2px;background:rgba(255,255,255,0.5);border-radius:1px;"></div></div><span>Style 3</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb bsp-4"><div style="width:10px;height:10px;background:#e5e7eb;border-radius:50%;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:60%;"></div></div><span>Style 4</span></button>
+                </div>`}
                 <div class="block-color-row">
                     <label>Color</label>
                     <input type="color" class="block-color-input" value="${blockColor}">
                     <input type="text" class="block-color-hex" value="${blockColor.toUpperCase()}" maxlength="7" placeholder="#10b981">
                 </div>
                 <div class="section-items-list"></div>
-                <button type="button" class="add-section-item-btn" data-type="${stype}">
+                ${stype !== 'text' ? `<button type="button" class="add-section-item-btn" data-type="${stype}">
                     <i class="fa-solid fa-plus"></i> Add ${cfg.label}
-                </button>
+                </button>` : ''}
             </div>`;
         // Toggle collapse
         card.querySelector('.section-card-toggle-btn').addEventListener('click', function(e) {
@@ -1034,13 +1149,16 @@ document.addEventListener('DOMContentLoaded', function () {
             updateEmptyMsg();
             updateAllinonePreview();
         });
-        // Add item inside card
-        card.querySelector('.add-section-item-btn').addEventListener('click', function() {
-            const itemRow = createItemRow(stype, {});
-            card.querySelector('.section-items-list').appendChild(itemRow);
-            updateSectionCount(card);
-            updateAllinonePreview();
-        });
+        // Add item inside card (not applicable for text type)
+        const addItemBtn = card.querySelector('.add-section-item-btn');
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', function() {
+                const itemRow = createItemRow(stype, {});
+                card.querySelector('.section-items-list').appendChild(itemRow);
+                updateSectionCount(card);
+                updateAllinonePreview();
+            });
+        }
         // Style picker buttons
         card.querySelectorAll('.block-style-opt').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -1073,6 +1191,33 @@ document.addEventListener('DOMContentLoaded', function () {
         return card;
     }
 
+    function initQuillEditors(container) {
+        container.querySelectorAll('.section-item-row[data-type="text"]').forEach(function(row) {
+            if (row._quill) return;
+            const editorEl = row.querySelector('.allinone-quill-editor');
+            const mirrorEl = row.querySelector('.allinone-quill-mirror');
+            if (!editorEl || !mirrorEl) return;
+            const initialHtml = row.dataset.initialHtml || '';
+            const quill = new Quill(editorEl, {
+                theme: 'snow',
+                modules: { toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'header': [1, 2, false] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                    ['link', 'clean']
+                ]}
+            });
+            row._quill = quill;
+            if (initialHtml) quill.clipboard.dangerouslyPasteHTML(initialHtml);
+            mirrorEl.value = initialHtml;
+            quill.on('text-change', function() {
+                const html = quill.root.innerHTML;
+                mirrorEl.value = (html === '<p><br></p>') ? '' : html;
+                updateAllinonePreview();
+            });
+        });
+    }
+
     function addSectionCard(stype, initialItems, blockStyle, blockColor) {
         const card = createSectionCard(stype, blockStyle || '1', blockColor || '#10b981');
         const list = card.querySelector('.section-items-list');
@@ -1087,6 +1232,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         updateSectionCount(card);
         sectionsContainer.appendChild(card);
+        initQuillEditors(card);
         updateEmptyMsg();
         updateAllinonePreview();
         return card;
@@ -1136,8 +1282,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     let v1 = '', v2 = '', v3 = '', v4 = '';
                     if (v1FileEl) {
-                        v1FileEl.name = 'allinone_file_' + flatIdx;
-                        v1 = row.dataset.existingUrl || '';
+                        if (v1FileEl.files && v1FileEl.files.length > 0) {
+                            v1FileEl.name = 'allinone_file_' + flatIdx;
+                            v1 = row.dataset.existingUrl || '';
+                        } else {
+                            v1FileEl.name = '';
+                            const urlEl = row.querySelector('.allinone-video-url') || row.querySelector('.allinone-v1');
+                            v1 = urlEl ? urlEl.value.trim() : (row.dataset.existingUrl || '');
+                        }
                     } else if (v1SelectEl) {
                         v1 = v1SelectEl.value;
                     } else if (v1TextEl) {
@@ -1174,7 +1326,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const profilePreview = document.getElementById('allinone-cover-img-preview');
     const removeBtn = document.getElementById('allinone-cover-img-remove-btn');
     let cropperInstance = null;
-    let croppedBlob = null;
+    let _cropCallback = null;
+
+    function openCropModal(src, aspectRatio, onApply) {
+        const cropModal = document.getElementById('allinone-profile-crop-modal');
+        const cropImg = document.getElementById('allinone-crop-image');
+        if (!cropModal || !cropImg) return;
+        cropImg.src = src;
+        cropModal.style.display = 'flex';
+        if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        cropperInstance = new Cropper(cropImg, { aspectRatio: isNaN(aspectRatio) ? NaN : aspectRatio, viewMode: 1, autoCropArea: 0.9 });
+        _cropCallback = onApply;
+    }
 
     if (profileInput) {
         profileInput.addEventListener('change', function (e) {
@@ -1182,14 +1345,41 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function (evt) {
-                const cropModal = document.getElementById('allinone-profile-crop-modal');
-                const cropImg = document.getElementById('allinone-crop-image');
-                if (cropModal && cropImg) {
-                    cropImg.src = evt.target.result;
-                    cropModal.style.display = 'flex';
-                    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-                    cropperInstance = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1 });
-                }
+                openCropModal(evt.target.result, 1, function(url, blob) {
+                    if (profilePreview) {
+                        profilePreview.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Image selected</span>';
+                    }
+                    const dt = new DataTransfer();
+                    dt.items.add(new File([blob], 'allinone_cover.jpg', { type: 'image/jpeg' }));
+                    if (profileInput) profileInput.files = dt.files;
+                    if (removeBtn) removeBtn.style.display = 'inline-flex';
+                    // Update phone mockup preview profile images
+                    ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) { el.src = url; el.style.display = ''; }
+                    });
+                    // Show template 1 header container + restore body overlap
+                    const t1Hdr = document.getElementById('allinone-t1-preview-header');
+                    if (t1Hdr) t1Hdr.style.display = '';
+                    const t1Body = document.getElementById('allinone-t1-preview-body');
+                    if (t1Body) { t1Body.style.marginTop = ''; t1Body.style.borderRadius = ''; }
+                    // Update template 1 thumbnail in appearance section
+                    const t1ThumbImg = document.getElementById('allinone-t1-thumb-header-img');
+                    if (t1ThumbImg) { t1ThumbImg.src = url; t1ThumbImg.style.display = 'block'; }
+                    const t1ThumbPh = document.getElementById('allinone-t1-thumb-placeholder');
+                    if (t1ThumbPh) t1ThumbPh.style.display = 'none';
+                    // Hide placeholder icons, show img elements
+                    ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
+                    const ph = document.getElementById('allinone-preview-profile-img');
+                    if (!ph) {
+                        // If img doesn't exist yet, insert it
+                        const circle = document.getElementById('allinone-preview-profile-circle');
+                        if (circle) { const img = document.createElement('img'); img.id = 'allinone-preview-profile-img'; img.src = url; img.alt = ''; img.style.cssText = 'width:100%;height:100%;object-fit:cover;'; circle.innerHTML = ''; circle.appendChild(img); }
+                    }
+                });
             };
             reader.readAsDataURL(file);
         });
@@ -1202,27 +1392,22 @@ document.addEventListener('DOMContentLoaded', function () {
             const cropModal = document.getElementById('allinone-profile-crop-modal');
             if (cropModal) cropModal.style.display = 'none';
             if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-            if (profileInput) profileInput.value = '';
+            _cropCallback = null;
         });
     }
     if (cropApply) {
         cropApply.addEventListener('click', function () {
             if (!cropperInstance) return;
-            cropperInstance.getCroppedCanvas({ width: 400, height: 400 }).toBlob(function (blob) {
-                croppedBlob = blob;
+            const data = cropperInstance.getData();
+            const maxSide = 1200;
+            const scale = Math.min(1, maxSide / Math.max(data.width || 800, data.height || 600));
+            cropperInstance.getCroppedCanvas({ width: Math.round((data.width||800)*scale), height: Math.round((data.height||600)*scale) }).toBlob(function (blob) {
                 const url = URL.createObjectURL(blob);
-                if (profilePreview) {
-                    profilePreview.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);margin-left:10px;">Image selected</span>';
-                }
-                // Replace file input with new blob
-                const dt = new DataTransfer();
-                dt.items.add(new File([blob], 'allinone_cover.jpg', { type: 'image/jpeg' }));
-                if (profileInput) profileInput.files = dt.files;
-                if (removeBtn) removeBtn.style.display = 'inline-flex';
+                if (_cropCallback) { _cropCallback(url, blob); _cropCallback = null; }
                 const cropModal = document.getElementById('allinone-profile-crop-modal');
                 if (cropModal) cropModal.style.display = 'none';
                 if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-            }, 'image/jpeg', 0.9);
+            }, 'image/jpeg', 0.88);
         });
     }
     if (removeBtn) {

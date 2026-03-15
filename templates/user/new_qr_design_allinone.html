@@ -127,7 +127,7 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | e }}" />
+            <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | forceescape }}" />
             {% endif %}
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
@@ -168,7 +168,7 @@
             {% endif %}
         {% endif %}
     {% endfor %}
-    <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | e }}" />
+    <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | forceescape }}" />
     {% endif %}
 </form>
 
