@@ -12,6 +12,7 @@ class view_qr_list:
     def my_qr_codes_html(self, fk_user_id, msg=None, error_msg=None):
         """
         Build QR list from db_qr_index + type-specific collections, then render my_qr_codes.html.
+        Each QR type has its own dedicated collection; db_qrcard is grouping only.
         """
         try:
             mgdDB = database.get_db_conn(config.mainDB)
@@ -22,30 +23,79 @@ class view_qr_list:
                 ).sort("timestamp", -1)
             )
 
-            # Enrich with full docs from type-specific collections (template needs stats, url_content, scan_limit_*, etc.)
-            # Types stored in db_qrcard directly
-            DB_QRCARD_TYPES = {"web", "ecard", "web-static", "text"}
-            id_by_type = {"web": [], "pdf": [], "ecard": [], "web-static": [], "text": []}
+            # Collect IDs per type
+            id_by_type = {
+                "web": [], "ecard": [], "pdf": [],
+                "web-static": [], "text": [],
+                "wa-static": [], "email-static": [], "vcard-static": [],
+            }
             for e in index_entries:
                 t = e.get("qr_type") or "web"
                 if t in id_by_type:
                     id_by_type[t].append(e["qrcard_id"])
 
             full_by_id = {}
-            db_qrcard_ids = []
-            for t in DB_QRCARD_TYPES:
-                db_qrcard_ids.extend(id_by_type.get(t, []))
-            if db_qrcard_ids:
+
+            # web and ecard — still read from db_qrcard (legacy)
+            _web_ecard_ids = id_by_type["web"] + id_by_type["ecard"]
+            if _web_ecard_ids:
                 for doc in mgdDB.db_qrcard.find({
                     "fk_user_id": fk_user_id,
-                    "qrcard_id": {"$in": db_qrcard_ids},
+                    "qrcard_id": {"$in": _web_ecard_ids},
                     "status": "ACTIVE",
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
+
+            # pdf — dedicated collection
             if id_by_type["pdf"]:
                 for doc in mgdDB.db_qrcard_pdf.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["pdf"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # web-static — dedicated collection
+            if id_by_type["web-static"]:
+                for doc in mgdDB.db_qrcard_web_static.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["web-static"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # text — dedicated collection
+            if id_by_type["text"]:
+                for doc in mgdDB.db_qrcard_text.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["text"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # wa-static — dedicated collection
+            if id_by_type["wa-static"]:
+                for doc in mgdDB.db_qrcard_wa_static.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["wa-static"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # email-static — dedicated collection
+            if id_by_type["email-static"]:
+                for doc in mgdDB.db_qrcard_email_static.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["email-static"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # vcard-static — dedicated collection
+            if id_by_type["vcard-static"]:
+                for doc in mgdDB.db_qrcard_vcard_static.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["vcard-static"]},
                     "status": "ACTIVE",
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
@@ -57,7 +107,7 @@ class view_qr_list:
                 if full is not None:
                     qr_list.append(full)
                 else:
-                    # Fallback: use index row and add minimal defaults so template does not break
+                    # Fallback: use index row with minimal defaults so template does not break
                     row = dict(e)
                     if "stats" not in row:
                         row["stats"] = {"scan_count": 0}

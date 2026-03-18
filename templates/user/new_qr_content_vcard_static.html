@@ -1,0 +1,406 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<style>
+    .new-qr-container { display: flex; gap: 32px; height: 100%; }
+    .form-column { flex: 1; min-width: 0; }
+    .preview-column { width: 340px; flex-shrink: 0; }
+    .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; }
+    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .header-left-col { display: flex; align-items: center; gap: 12px; }
+    .header-icon { font-size: 18px; width: 24px; text-align: center; }
+    .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+    .header-text p { font-size: 12px; color: var(--text-muted); }
+    .collapse-body { padding: 0 24px 24px; background: white; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease; opacity: 0; }
+    .collapse-body.show { padding: 24px; max-height: 1200px; opacity: 1; }
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-main); }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; }
+
+    /* Phone rows */
+    .phone-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .phone-row { display: flex; align-items: center; gap: 8px; }
+    .phone-type-select { width: 120px; flex-shrink: 0; padding: 10px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: white; cursor: pointer; }
+    .phone-type-select:focus { outline: none; border-color: var(--primary); }
+    .phone-number-input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; }
+    .phone-number-input:focus { outline: none; border-color: var(--primary); }
+    .phone-remove-btn { width: 34px; height: 34px; border: 1px solid #fca5a5; background: #fef2f2; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc2626; font-size: 14px; flex-shrink: 0; }
+    .phone-remove-btn:hover { background: #fee2e2; }
+    .add-phone-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--primary); background: #eff6ff; border: 1px dashed var(--primary); border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
+    .add-phone-btn:hover { background: #dbeafe; }
+
+    /* Preview */
+    .preview-container { position: sticky; top: 24px; background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+    .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
+    .static-badge { background: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+    .vcard-preview-card { border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: white; }
+    .vcard-preview-header { background: linear-gradient(135deg, #2F6BFD, #1d4ed8); padding: 20px 16px; display: flex; align-items: center; gap: 14px; }
+    .vcard-avatar { width: 52px; height: 52px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; flex-shrink: 0; }
+    .vcard-name-block { color: white; }
+    .vcard-preview-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
+    .vcard-preview-name.placeholder { opacity: 0.6; font-weight: 400; font-size: 13px; }
+    .vcard-preview-title { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+    .vcard-preview-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .vcard-preview-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); }
+    .vcard-preview-row i { width: 16px; text-align: center; color: var(--primary); }
+    .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    /* Mobile */
+    .mobile-bottom-bar {
+        display: none; position: fixed;
+        bottom: 0; left: 0; right: 0; height: 60px;
+        background: white; border-top: 1px solid var(--border-color);
+        z-index: 400; align-items: center; justify-content: space-between;
+        padding: 0 16px; gap: 12px;
+    }
+    .mobile-bar-arrow {
+        width: 44px; height: 44px; border: 1px solid var(--border-color);
+        background: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; color: var(--text-main);
+        flex-shrink: 0; text-decoration: none;
+    }
+    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
+    .mobile-bar-preview-btn {
+        flex: 1; height: 40px; background: var(--primary); color: white;
+        border: none; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .mobile-bar-preview-btn:hover { background: var(--primary-hover); }
+    @media (max-width: 768px) {
+        .new-qr-step-bar { justify-content: center; }
+        .new-qr-steps { justify-content: center; }
+        .new-qr-steps .step-item span:last-child { display: none; }
+        .new-qr-step-nav { display: none; }
+        .new-qr-container { flex-direction: column; height: auto; gap: 0; }
+        .form-column { padding-bottom: 76px; }
+        .preview-column {
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0;
+            width: 100vw; bottom: 60px; z-index: 450; background: #f9fafb;
+            overflow-y: auto; padding: 12px 16px 8px; box-sizing: border-box;
+            transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .preview-column.mobile-open { transform: translateY(0); }
+        .preview-container { position: static; }
+        .mobile-bottom-bar { display: flex; }
+        .form-row { grid-template-columns: 1fr; }
+        .phone-type-select { width: 100px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span><span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/vcard-static/qr-design') }}" onsubmit="serializePhones()">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="vcard_phones_json" id="vcard-phones-json" value="{{ vcard_phones_json | default('[]', true) }}" />
+
+    <div class="page-title" style="margin-bottom: 24px;">vCard Details</div>
+
+    <div class="new-qr-container">
+        <div class="form-column">
+            {% if error_msg %}
+            <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input"
+                placeholder="Name QR Card" value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Basic Information -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="color: var(--primary);"><i class="fa-regular fa-id-badge"></i></div>
+                        <div class="header-text"><h3>Basic Information</h3><p>Name, company, and job title.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body show">
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div>
+                                <label class="form-label" for="vc-firstname">First Name <span style="color:#b91c1c;">*</span></label>
+                                <input type="text" name="vcard_first_name" id="vc-firstname" class="form-control"
+                                    placeholder="John" value="{{ vcard_first_name | default('', true) }}" required>
+                            </div>
+                            <div>
+                                <label class="form-label" for="vc-surname">Surname</label>
+                                <input type="text" name="vcard_surname" id="vc-surname" class="form-control"
+                                    placeholder="Doe" value="{{ vcard_surname | default('', true) }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vc-company">Company</label>
+                        <input type="text" name="vcard_company" id="vc-company" class="form-control"
+                            placeholder="Acme Inc." value="{{ vcard_company | default('', true) }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="vc-title">Title / Position</label>
+                        <input type="text" name="vcard_title" id="vc-title" class="form-control"
+                            placeholder="e.g. Product Manager" value="{{ vcard_title | default('', true) }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon" style="color: var(--primary);"><i class="fa-solid fa-address-book"></i></div>
+                        <div class="header-text"><h3>Contact Information</h3><p>Phone numbers, email, and website.</p></div>
+                    </div>
+                    <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body show">
+                    <!-- Phone numbers -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Phone Numbers</label>
+                        <div class="phone-rows" id="phone-rows"></div>
+                        <button type="button" class="add-phone-btn" onclick="addPhoneRow()">
+                            <i class="fa-solid fa-plus"></i> Add phone
+                        </button>
+                    </div>
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="vc-email"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i>Email</label>
+                        <input type="email" name="vcard_email" id="vc-email" class="form-control"
+                            placeholder="john@example.com" value="{{ vcard_email | default('', true) }}">
+                    </div>
+                    <!-- Website -->
+                    <div class="form-group">
+                        <label class="form-label" for="vc-website"><i class="fa-solid fa-globe" style="margin-right:6px;"></i>Personal Website</label>
+                        <input type="text" name="vcard_website" id="vc-website" class="form-control"
+                            placeholder="example.com" value="{{ vcard_website | default('', true) }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile bottom bar -->
+            <div class="mobile-bottom-bar">
+                <a href="{{ back_url | default('/qr/new') }}" class="mobile-bar-arrow" title="Back"><i class="fa-solid fa-arrow-left"></i></a>
+                <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
+                    <i class="fa-regular fa-id-badge"></i> Preview
+                </button>
+                <button type="submit" form="content-form" class="mobile-bar-arrow primary" id="mobile-next-btn" disabled title="Next">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right preview -->
+        <div class="preview-column" id="preview-column">
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="preview-type-badge">
+                        <i class="fa-regular fa-id-badge"></i> vCard
+                        <span class="static-badge">static</span>
+                    </div>
+                </div>
+                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">Contact Preview</span>
+                <div class="vcard-preview-card">
+                    <div class="vcard-preview-header">
+                        <div class="vcard-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div class="vcard-name-block">
+                            <div class="vcard-preview-name placeholder" id="prev-name">Enter first name above</div>
+                            <div class="vcard-preview-title" id="prev-title-company" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="vcard-preview-body" id="prev-body">
+                        <div id="prev-phones-container"></div>
+                        <div class="vcard-preview-row" id="prev-email-row" style="display:none;">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span id="prev-email-text"></span>
+                        </div>
+                        <div class="vcard-preview-row" id="prev-web-row" style="display:none;">
+                            <i class="fa-solid fa-globe"></i>
+                            <span id="prev-web-text"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> Scanning saves this contact to the phone
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% block extra_js %}
+<script>
+function toggleMobilePreview() {
+    var col = document.getElementById('preview-column');
+    var btn = document.getElementById('mobile-preview-btn');
+    var isOpen = col.classList.toggle('mobile-open');
+    btn.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i> Close' : '<i class="fa-regular fa-id-badge"></i> Preview';
+}
+
+var phoneTypeLabels = { office: 'Office', mobile: 'Mobile', fax: 'Fax', others: 'Other' };
+
+function createPhoneRow(type, number) {
+    type = type || 'mobile';
+    number = number || '';
+    var row = document.createElement('div');
+    row.className = 'phone-row';
+    row.innerHTML = '<select class="phone-type-select">' +
+        ['mobile','office','fax','others'].map(function(t){
+            return '<option value="'+t+'"'+(type===t?' selected':'')+'>'+phoneTypeLabels[t]+'</option>';
+        }).join('') +
+    '</select>' +
+    '<input type="text" class="phone-number-input" placeholder="+628123456789" value="'+number+'" inputmode="tel">' +
+    '<button type="button" class="phone-remove-btn" onclick="removePhoneRow(this)" title="Remove"><i class="fa-solid fa-xmark"></i></button>';
+    row.querySelector('.phone-type-select').addEventListener('change', updatePreview);
+    row.querySelector('.phone-number-input').addEventListener('input', updatePreview);
+    return row;
+}
+
+function addPhoneRow(type, number) {
+    var container = document.getElementById('phone-rows');
+    container.appendChild(createPhoneRow(type, number));
+    updatePreview();
+}
+
+function removePhoneRow(btn) {
+    btn.closest('.phone-row').remove();
+    updatePreview();
+}
+
+function getPhones() {
+    var rows = document.querySelectorAll('#phone-rows .phone-row');
+    var phones = [];
+    rows.forEach(function(row) {
+        var t = row.querySelector('.phone-type-select').value;
+        var n = row.querySelector('.phone-number-input').value.trim();
+        if (n) phones.push({ type: t, number: n });
+    });
+    return phones;
+}
+
+function serializePhones() {
+    document.getElementById('vcard-phones-json').value = JSON.stringify(getPhones());
+}
+
+function updatePreview() {
+    var firstName = document.getElementById('vc-firstname').value.trim();
+    var surname = document.getElementById('vc-surname').value.trim();
+    var company = document.getElementById('vc-company').value.trim();
+    var title = document.getElementById('vc-title').value.trim();
+    var email = document.getElementById('vc-email').value.trim();
+    var website = document.getElementById('vc-website').value.trim();
+    var phones = getPhones();
+
+    var prevName = document.getElementById('prev-name');
+    var fullName = (firstName + ' ' + surname).trim();
+    if (fullName) { prevName.textContent = fullName; prevName.classList.remove('placeholder'); }
+    else { prevName.textContent = 'Enter first name above'; prevName.classList.add('placeholder'); }
+
+    var titleCompany = document.getElementById('prev-title-company');
+    var tc = [title, company].filter(Boolean).join(' · ');
+    if (tc) { titleCompany.textContent = tc; titleCompany.style.display = ''; }
+    else { titleCompany.style.display = 'none'; }
+
+    var phonesContainer = document.getElementById('prev-phones-container');
+    phonesContainer.innerHTML = '';
+    phones.forEach(function(p) {
+        var row = document.createElement('div');
+        row.className = 'vcard-preview-row';
+        var label = phoneTypeLabels[p.type] || p.type;
+        row.innerHTML = '<i class="fa-solid fa-phone"></i><span style="color:#6b7280;font-size:11px;min-width:38px;">' + label + '</span><span>' + p.number + '</span>';
+        phonesContainer.appendChild(row);
+    });
+
+    var emailRow = document.getElementById('prev-email-row');
+    var emailText = document.getElementById('prev-email-text');
+    if (email) { emailText.textContent = email; emailRow.style.display = ''; }
+    else { emailRow.style.display = 'none'; }
+
+    var webRow = document.getElementById('prev-web-row');
+    var webText = document.getElementById('prev-web-text');
+    if (website) { webText.textContent = website; webRow.style.display = ''; }
+    else { webRow.style.display = 'none'; }
+
+    checkValid();
+}
+
+function checkValid() {
+    var ok = document.getElementById('vc-firstname').value.trim().length > 0 &&
+             document.getElementById('qr-name-input').value.trim().length > 0;
+    var nextBtn = document.getElementById('content-next-btn');
+    var mobileNext = document.getElementById('mobile-next-btn');
+    var step3 = document.getElementById('step3-link');
+    if (nextBtn) nextBtn.disabled = !ok;
+    if (mobileNext) mobileNext.disabled = !ok;
+    if (step3) {
+        step3.disabled = !ok;
+        if (ok) { step3.classList.remove('step-disabled'); step3.removeAttribute('aria-disabled'); }
+        else { step3.classList.add('step-disabled'); step3.setAttribute('aria-disabled', 'true'); }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Load phones from pre-filled data (edit flow / back nav)
+    var phonesJson = document.getElementById('vcard-phones-json').value;
+    var phones = [];
+    try { phones = JSON.parse(phonesJson); } catch(e) {}
+    if (phones.length === 0) { addPhoneRow('mobile', ''); }
+    else { phones.forEach(function(p) { addPhoneRow(p.type, p.number); }); }
+
+    // Bind other inputs
+    ['vc-firstname','vc-surname','vc-company','vc-title','vc-email','vc-website','qr-name-input'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', updatePreview);
+    });
+    updatePreview();
+
+    // Collapse toggle
+    document.querySelectorAll('.collapse-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            var body = this.nextElementSibling;
+            var icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
+            if (!body.classList.contains('show')) {
+                body.classList.add('show');
+                if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+            } else {
+                body.classList.remove('show');
+                if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

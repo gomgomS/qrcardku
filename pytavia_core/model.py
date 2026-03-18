@@ -643,6 +643,99 @@ db = {
         "timestamp"                 : 0,
     },
 
+    # Dedicated collection for web-static QR cards (URL encoded directly in QR)
+    "db_qrcard_web_static": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "web-static",
+        "name"                      : "",
+        "url_content"               : "",       # URL encoded directly into QR
+        "short_code"                : "",       # always empty for static
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for text QR cards (plain text encoded directly)
+    "db_qrcard_text": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "text",
+        "name"                      : "",
+        "text_content"              : "",       # plain text encoded into QR
+        "url_content"               : "",       # always empty
+        "short_code"                : "",
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for WhatsApp static QR cards
+    "db_qrcard_wa_static": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "wa-static",
+        "name"                      : "",
+        "wa_phone"                  : "",       # phone number (digits only, no spaces)
+        "wa_message"                : "",       # pre-filled message text
+        "url_content"               : "",       # wa.me URL built from phone+message
+        "short_code"                : "",
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for email static QR cards
+    "db_qrcard_email_static": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "email-static",
+        "name"                      : "",
+        "email_address"             : "",       # recipient email
+        "email_subject"             : "",       # pre-filled subject
+        "email_body"                : "",       # pre-filled body
+        "url_content"               : "",       # mailto: URL built from fields
+        "short_code"                : "",
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Dedicated collection for vCard static QR cards
+    "db_qrcard_vcard_static": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "vcard-static",
+        "name"                      : "",
+        "vcard_first_name"          : "",
+        "vcard_surname"             : "",
+        "vcard_company"             : "",
+        "vcard_title"               : "",       # job title within company
+        "vcard_phones"              : [],       # list of {type, number}
+        "vcard_email"               : "",
+        "vcard_website"             : "",
+        "url_content"               : "",       # raw vCard 3.0 text encoded into QR
+        "short_code"                : "",
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
     # Lightweight index of all QR cards (used for listing and routing)
     "db_qr_index": {
         "qrcard_id"                 : "",       # link to type-specific collection

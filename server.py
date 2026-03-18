@@ -1493,8 +1493,8 @@ def user_new_qr_design_text():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
+    from pytavia_modules.qr import qr_text_proc
+    proc = qr_text_proc.qr_text_proc(app)
     text_content = request.form.get("text_content", "")
     qr_name = request.form.get("qr_name", "Untitled QR")
     if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
@@ -1522,8 +1522,8 @@ def qr_save_text():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
+    from pytavia_modules.qr import qr_text_proc
+    proc = qr_text_proc.qr_text_proc(app)
     text_content = request.form.get("text_content", "")
     qr_name = request.form.get("qr_name", "Untitled QR")
     result = proc.add_qrcard_text({
@@ -1569,8 +1569,8 @@ def user_new_qr_design_web_static():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
+    from pytavia_modules.qr import qr_web_static_proc
+    proc = qr_web_static_proc.qr_web_static_proc(app)
     url_content = request.form.get("url_content", "")
     if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
         url_content = "https://" + url_content
@@ -1601,8 +1601,8 @@ def qr_save_web_static():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
+    from pytavia_modules.qr import qr_web_static_proc
+    proc = qr_web_static_proc.qr_web_static_proc(app)
     url_content = request.form.get("url_content", "")
     if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
         url_content = "https://" + url_content
@@ -1630,15 +1630,12 @@ def qr_update_content_web_static(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_core import database as _db, config as _cfg
+    from pytavia_modules.qr import qr_web_static_proc
     fk_user_id = session.get("fk_user_id")
-    qrcard = _db.get_db_conn(_cfg.mainDB).db_qrcard.find_one(
-        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
-    )
+    proc = qr_web_static_proc.qr_web_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
     error_msg = None
     qr_name = qrcard.get("name", "")
     url_content = qrcard.get("url_content", "")
@@ -1662,13 +1659,13 @@ def qr_update_save_web_static(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
+    from pytavia_modules.qr import qr_web_static_proc
     fk_user_id = session.get("fk_user_id")
     url_content = (request.form.get("url_content") or "").strip()
     if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
         url_content = "https://" + url_content
     qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
-    qr_web_proc.qr_web_proc(app).edit_qrcard_static({
+    qr_web_static_proc.qr_web_static_proc(app).edit_qrcard_static({
         "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
         "name": qr_name, "url_content": url_content,
     })
@@ -1679,15 +1676,12 @@ def qr_update_content_text(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_core import database as _db, config as _cfg
+    from pytavia_modules.qr import qr_text_proc
     fk_user_id = session.get("fk_user_id")
-    qrcard = _db.get_db_conn(_cfg.mainDB).db_qrcard.find_one(
-        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
-    )
+    proc = qr_text_proc.qr_text_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
-    from pytavia_modules.qr import qr_web_proc
-    proc = qr_web_proc.qr_web_proc(app)
     error_msg = None
     qr_name = qrcard.get("name", "")
     text_content = qrcard.get("text_content", "")
@@ -1707,13 +1701,439 @@ def qr_update_save_text(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from flask import request
-    from pytavia_modules.qr import qr_web_proc
+    from pytavia_modules.qr import qr_text_proc
     fk_user_id = session.get("fk_user_id")
     text_content = request.form.get("text_content", "")
     qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
-    qr_web_proc.qr_web_proc(app).edit_qrcard_text({
+    qr_text_proc.qr_text_proc(app).edit_qrcard_text({
         "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
         "name": qr_name, "text_content": text_content,
+    })
+    return redirect(url_for("user_qr_list"))
+
+@app.route("/qr/new/wa-static")
+@app.route("/qr/new/wa-static/back", methods=["GET", "POST"])
+def user_new_qr_wa_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    wa_phone = ""
+    wa_message = ""
+    qr_name = ""
+    if request.method == "POST":
+        wa_phone = request.form.get("wa_phone", "")
+        wa_message = request.form.get("wa_message", "")
+        qr_name = request.form.get("qr_name", "")
+    return render_template(
+        "/user/new_qr_content_wa_static.html",
+        qr_type="wa-static",
+        wa_phone=wa_phone,
+        wa_message=wa_message,
+        qr_name=qr_name,
+        form_action="/qr/new/wa-static/qr-design",
+        back_url="/qr/new",
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/new/wa-static/qr-design", methods=["POST"])
+def user_new_qr_design_wa_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_wa_static_proc
+    wa_phone = request.form.get("wa_phone", "").strip()
+    wa_message = request.form.get("wa_message", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    proc = qr_wa_static_proc.qr_wa_static_proc(app)
+    if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
+        return render_template(
+            "/user/new_qr_content_wa_static.html",
+            qr_type="wa-static",
+            error_msg="A QR card with this name already exists. Please choose a unique name.",
+            wa_phone=wa_phone,
+            wa_message=wa_message,
+            qr_name=qr_name,
+            form_action="/qr/new/wa-static/qr-design",
+            back_url="/qr/new",
+            step1_url="/qr/new",
+        )
+    return render_template(
+        "/user/new_qr_design_wa_static.html",
+        qr_type="wa-static",
+        wa_phone=wa_phone,
+        wa_message=wa_message,
+        qr_name=qr_name,
+        form_action="/qr/save/wa-static",
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/save/wa-static", methods=["POST"])
+def qr_save_wa_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_wa_static_proc
+    fk_user_id = session.get("fk_user_id")
+    wa_phone = request.form.get("wa_phone", "").strip()
+    wa_message = request.form.get("wa_message", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    proc = qr_wa_static_proc.qr_wa_static_proc(app)
+    result = proc.add_qrcard_wa_static({
+        "fk_user_id": fk_user_id,
+        "name": qr_name,
+        "wa_phone": wa_phone,
+        "wa_message": wa_message,
+    })
+    if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        return redirect(url_for("user_qr_list"))
+    return render_template(
+        "/user/new_qr_design_wa_static.html",
+        qr_type="wa-static",
+        wa_phone=wa_phone,
+        wa_message=wa_message,
+        qr_name=qr_name,
+        form_action="/qr/save/wa-static",
+        error_msg=result.get("message_desc", "Save failed."),
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/update/wa-static/<qrcard_id>", methods=["GET", "POST"])
+def qr_update_content_wa_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_wa_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_wa_static_proc.qr_wa_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    error_msg = None
+    qr_name = qrcard.get("name", "")
+    wa_phone = qrcard.get("wa_phone", "")
+    wa_message = qrcard.get("wa_message", "")
+    if request.method == "POST":
+        qr_name = request.form.get("qr_name", "").strip()
+        wa_phone = request.form.get("wa_phone", "").strip()
+        wa_message = request.form.get("wa_message", "").strip()
+        if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
+            error_msg = "A QR card with this name already exists. Please choose a unique name."
+        else:
+            return render_template("/user/edit_qr_design_wa_static.html",
+                qrcard_id=qrcard_id, qr_name=qr_name,
+                wa_phone=wa_phone, wa_message=wa_message)
+    return render_template("/user/edit_qr_content_wa_static.html",
+        qrcard_id=qrcard_id, qr_name=qr_name,
+        wa_phone=wa_phone, wa_message=wa_message, error_msg=error_msg)
+
+@app.route("/qr/update/save/wa-static/<qrcard_id>", methods=["POST"])
+def qr_update_save_wa_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_wa_static_proc
+    fk_user_id = session.get("fk_user_id")
+    wa_phone = request.form.get("wa_phone", "").strip()
+    wa_message = request.form.get("wa_message", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    qr_wa_static_proc.qr_wa_static_proc(app).edit_qrcard_wa_static({
+        "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
+        "name": qr_name, "wa_phone": wa_phone, "wa_message": wa_message,
+    })
+    return redirect(url_for("user_qr_list"))
+
+@app.route("/qr/new/vcard-static")
+@app.route("/qr/new/vcard-static/back", methods=["GET", "POST"])
+def user_new_qr_vcard_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    data = {}
+    if request.method == "POST":
+        for k in ["vcard_first_name","vcard_surname","vcard_company","vcard_title","vcard_email","vcard_website","vcard_phones_json","qr_name"]:
+            data[k] = request.form.get(k, "")
+    return render_template("/user/new_qr_content_vcard_static.html", qr_type="vcard-static",
+        form_action="/qr/new/vcard-static/qr-design", back_url="/qr/new", step1_url="/qr/new", **data)
+
+@app.route("/qr/new/vcard-static/qr-design", methods=["POST"])
+def user_new_qr_design_vcard_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    import json as _json
+    from pytavia_modules.qr import qr_vcard_static_proc
+    def _vd(k): return request.form.get(k, "").strip()
+    first_name = _vd("vcard_first_name")
+    surname = _vd("vcard_surname")
+    company = _vd("vcard_company")
+    title = _vd("vcard_title")
+    email = _vd("vcard_email")
+    website = _vd("vcard_website")
+    phones_json = request.form.get("vcard_phones_json", "[]")
+    qr_name = (_vd("qr_name") or "Untitled QR")
+    proc = qr_vcard_static_proc.qr_vcard_static_proc(app)
+    if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
+        return render_template("/user/new_qr_content_vcard_static.html", qr_type="vcard-static",
+            error_msg="A QR card with this name already exists.",
+            vcard_first_name=first_name, vcard_surname=surname, vcard_company=company,
+            vcard_title=title, vcard_email=email, vcard_website=website,
+            vcard_phones_json=phones_json, qr_name=qr_name,
+            form_action="/qr/new/vcard-static/qr-design", back_url="/qr/new", step1_url="/qr/new")
+    return render_template("/user/new_qr_design_vcard_static.html", qr_type="vcard-static",
+        vcard_first_name=first_name, vcard_surname=surname, vcard_company=company,
+        vcard_title=title, vcard_email=email, vcard_website=website,
+        vcard_phones_json=phones_json, qr_name=qr_name,
+        form_action="/qr/save/vcard-static", step1_url="/qr/new")
+
+@app.route("/qr/save/vcard-static", methods=["POST"])
+def qr_save_vcard_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    import json as _json
+    from pytavia_modules.qr import qr_vcard_static_proc
+    def _vd(k): return request.form.get(k, "").strip()
+    phones = []
+    try: phones = _json.loads(request.form.get("vcard_phones_json", "[]"))
+    except Exception: pass
+    result = qr_vcard_static_proc.qr_vcard_static_proc(app).add_qrcard_vcard_static({
+        "fk_user_id": session.get("fk_user_id"),
+        "name": _vd("qr_name") or "Untitled QR",
+        "vcard_first_name": _vd("vcard_first_name"),
+        "vcard_surname": _vd("vcard_surname"),
+        "vcard_company": _vd("vcard_company"),
+        "vcard_title": _vd("vcard_title"),
+        "vcard_phones": phones,
+        "vcard_email": _vd("vcard_email"),
+        "vcard_website": _vd("vcard_website"),
+    })
+    if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        return redirect(url_for("user_qr_list"))
+    phones_json = request.form.get("vcard_phones_json", "[]")
+    return render_template("/user/new_qr_design_vcard_static.html", qr_type="vcard-static",
+        vcard_first_name=_vd("vcard_first_name"), vcard_surname=_vd("vcard_surname"),
+        vcard_company=_vd("vcard_company"), vcard_title=_vd("vcard_title"),
+        vcard_email=_vd("vcard_email"), vcard_website=_vd("vcard_website"),
+        vcard_phones_json=phones_json, qr_name=_vd("qr_name"),
+        form_action="/qr/save/vcard-static",
+        error_msg=result.get("message_desc", "Save failed."), step1_url="/qr/new")
+
+@app.route("/qr/update/vcard-static/<qrcard_id>", methods=["GET", "POST"])
+def qr_update_content_vcard_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    import json as _json
+    from pytavia_modules.qr import qr_vcard_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_vcard_static_proc.qr_vcard_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    error_msg = None
+    qr_name = qrcard.get("name", "")
+    first_name = qrcard.get("vcard_first_name", "")
+    surname = qrcard.get("vcard_surname", "")
+    company = qrcard.get("vcard_company", "")
+    title = qrcard.get("vcard_title", "")
+    phones = qrcard.get("vcard_phones", [])
+    email = qrcard.get("vcard_email", "")
+    website = qrcard.get("vcard_website", "")
+    phones_json = _json.dumps(phones)
+    if request.method == "POST":
+        def _vd(k): return request.form.get(k, "").strip()
+        qr_name = _vd("qr_name") or "Untitled QR"
+        first_name = _vd("vcard_first_name")
+        surname = _vd("vcard_surname")
+        company = _vd("vcard_company")
+        title = _vd("vcard_title")
+        email = _vd("vcard_email")
+        website = _vd("vcard_website")
+        phones_json = request.form.get("vcard_phones_json", "[]")
+        phones = []
+        try: phones = _json.loads(phones_json)
+        except Exception: pass
+        if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
+            error_msg = "A QR card with this name already exists."
+        else:
+            return render_template("/user/edit_qr_design_vcard_static.html",
+                qrcard_id=qrcard_id, qr_name=qr_name, vcard_first_name=first_name,
+                vcard_surname=surname, vcard_company=company, vcard_title=title,
+                vcard_email=email, vcard_website=website, vcard_phones_json=phones_json)
+    return render_template("/user/edit_qr_content_vcard_static.html",
+        qrcard_id=qrcard_id, qr_name=qr_name, vcard_first_name=first_name,
+        vcard_surname=surname, vcard_company=company, vcard_title=title,
+        vcard_email=email, vcard_website=website,
+        vcard_phones_json=phones_json, error_msg=error_msg)
+
+@app.route("/qr/update/save/vcard-static/<qrcard_id>", methods=["POST"])
+def qr_update_save_vcard_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    import json as _json
+    from pytavia_modules.qr import qr_vcard_static_proc
+    def _vd(k): return request.form.get(k, "").strip()
+    phones = []
+    try: phones = _json.loads(request.form.get("vcard_phones_json", "[]"))
+    except Exception: pass
+    qr_vcard_static_proc.qr_vcard_static_proc(app).edit_qrcard_vcard_static({
+        "fk_user_id": session.get("fk_user_id"), "qrcard_id": qrcard_id,
+        "name": _vd("qr_name") or "Untitled QR",
+        "vcard_first_name": _vd("vcard_first_name"),
+        "vcard_surname": _vd("vcard_surname"),
+        "vcard_company": _vd("vcard_company"),
+        "vcard_title": _vd("vcard_title"),
+        "vcard_phones": phones,
+        "vcard_email": _vd("vcard_email"),
+        "vcard_website": _vd("vcard_website"),
+    })
+    return redirect(url_for("user_qr_list"))
+
+@app.route("/qr/new/email-static")
+@app.route("/qr/new/email-static/back", methods=["GET", "POST"])
+def user_new_qr_email_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    email_address = ""
+    email_subject = ""
+    email_body = ""
+    qr_name = ""
+    if request.method == "POST":
+        email_address = request.form.get("email_address", "")
+        email_subject = request.form.get("email_subject", "")
+        email_body = request.form.get("email_body", "")
+        qr_name = request.form.get("qr_name", "")
+    return render_template(
+        "/user/new_qr_content_email_static.html",
+        qr_type="email-static",
+        email_address=email_address,
+        email_subject=email_subject,
+        email_body=email_body,
+        qr_name=qr_name,
+        form_action="/qr/new/email-static/qr-design",
+        back_url="/qr/new",
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/new/email-static/qr-design", methods=["POST"])
+def user_new_qr_design_email_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_email_static_proc
+    email_address = request.form.get("email_address", "").strip()
+    email_subject = request.form.get("email_subject", "").strip()
+    email_body = request.form.get("email_body", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    proc = qr_email_static_proc.qr_email_static_proc(app)
+    if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
+        return render_template(
+            "/user/new_qr_content_email_static.html",
+            qr_type="email-static",
+            error_msg="A QR card with this name already exists. Please choose a unique name.",
+            email_address=email_address,
+            email_subject=email_subject,
+            email_body=email_body,
+            qr_name=qr_name,
+            form_action="/qr/new/email-static/qr-design",
+            back_url="/qr/new",
+            step1_url="/qr/new",
+        )
+    return render_template(
+        "/user/new_qr_design_email_static.html",
+        qr_type="email-static",
+        email_address=email_address,
+        email_subject=email_subject,
+        email_body=email_body,
+        qr_name=qr_name,
+        form_action="/qr/save/email-static",
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/save/email-static", methods=["POST"])
+def qr_save_email_static():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_email_static_proc
+    fk_user_id = session.get("fk_user_id")
+    email_address = request.form.get("email_address", "").strip()
+    email_subject = request.form.get("email_subject", "").strip()
+    email_body = request.form.get("email_body", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    proc = qr_email_static_proc.qr_email_static_proc(app)
+    result = proc.add_qrcard_email_static({
+        "fk_user_id": fk_user_id,
+        "name": qr_name,
+        "email_address": email_address,
+        "email_subject": email_subject,
+        "email_body": email_body,
+    })
+    if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        return redirect(url_for("user_qr_list"))
+    return render_template(
+        "/user/new_qr_design_email_static.html",
+        qr_type="email-static",
+        email_address=email_address,
+        email_subject=email_subject,
+        email_body=email_body,
+        qr_name=qr_name,
+        form_action="/qr/save/email-static",
+        error_msg=result.get("message_desc", "Save failed."),
+        step1_url="/qr/new",
+    )
+
+@app.route("/qr/update/email-static/<qrcard_id>", methods=["GET", "POST"])
+def qr_update_content_email_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_email_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_email_static_proc.qr_email_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    error_msg = None
+    qr_name = qrcard.get("name", "")
+    email_address = qrcard.get("email_address", "")
+    email_subject = qrcard.get("email_subject", "")
+    email_body = qrcard.get("email_body", "")
+    if request.method == "POST":
+        qr_name = request.form.get("qr_name", "").strip()
+        email_address = request.form.get("email_address", "").strip()
+        email_subject = request.form.get("email_subject", "").strip()
+        email_body = request.form.get("email_body", "").strip()
+        if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
+            error_msg = "A QR card with this name already exists. Please choose a unique name."
+        else:
+            return render_template("/user/edit_qr_design_email_static.html",
+                qrcard_id=qrcard_id, qr_name=qr_name,
+                email_address=email_address, email_subject=email_subject, email_body=email_body)
+    return render_template("/user/edit_qr_content_email_static.html",
+        qrcard_id=qrcard_id, qr_name=qr_name,
+        email_address=email_address, email_subject=email_subject, email_body=email_body,
+        error_msg=error_msg)
+
+@app.route("/qr/update/save/email-static/<qrcard_id>", methods=["POST"])
+def qr_update_save_email_static(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from flask import request
+    from pytavia_modules.qr import qr_email_static_proc
+    fk_user_id = session.get("fk_user_id")
+    email_address = request.form.get("email_address", "").strip()
+    email_subject = request.form.get("email_subject", "").strip()
+    email_body = request.form.get("email_body", "").strip()
+    qr_name = (request.form.get("qr_name") or "").strip() or "Untitled QR"
+    qr_email_static_proc.qr_email_static_proc(app).edit_qrcard_email_static({
+        "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
+        "name": qr_name,
+        "email_address": email_address,
+        "email_subject": email_subject,
+        "email_body": email_body,
     })
     return redirect(url_for("user_qr_list"))
 

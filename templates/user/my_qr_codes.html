@@ -458,6 +458,9 @@
             if (qrType === 'web') return '<i class="fa-solid fa-globe"></i> Website';
             if (qrType === 'web-static') return '<i class="fa-solid fa-globe"></i> Website (static)';
             if (qrType === 'text') return '<i class="fa-solid fa-font"></i> Text';
+            if (qrType === 'wa-static') return '<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp';
+            if (qrType === 'email-static') return '<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email';
+            if (qrType === 'vcard-static') return '<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard';
             if (qrType === 'vcard') return '<i class="fa-regular fa-id-badge"></i> vCard Plus';
             if (qrType === 'images') return '<i class="fa-regular fa-images"></i> Images';
             if (qrType === 'video') return '<i class="fa-solid fa-play"></i> Video';
@@ -512,7 +515,8 @@
                 overlay.classList.add('show');
                 overlay.setAttribute('aria-hidden', 'false');
 
-                var content = qrType === 'text' ? (textContent || 'Hello World') : (displayUrl || url || 'https://qrcardku.com');
+                var staticDirect = (qrType === 'wa-static' || qrType === 'email-static' || qrType === 'vcard-static');
+                var content = qrType === 'text' ? (textContent || 'Hello World') : (staticDirect ? (url || displayUrl || '') : (displayUrl || url || 'https://qrcardku.com'));
                 if (typeof QRCode !== 'undefined') {
                     QRCode.toDataURL(content, { width: 400, margin: 2 })
                         .then(function (dataUrl) {
@@ -638,6 +642,9 @@
                         {% if qr.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
                         {% elif qr.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
                         {% elif qr.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
+                        {% elif qr.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp
+                        {% elif qr.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email
+                        {% elif qr.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard
                         {% elif qr.qr_type == 'vcard' %}<i class="fa-regular fa-id-badge"></i> vCard Plus
                         {% elif qr.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
                         {% elif qr.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
