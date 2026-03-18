@@ -386,14 +386,85 @@
             cursor: not-allowed;
         }
 
+        /* Mobile nav bar */
+        .mobile-nav-bar {
+            display: none;
+            height: var(--header-height);
+            background-color: var(--bg-content);
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            flex-shrink: 0;
+            z-index: 5;
+        }
+        .mobile-nav-logo {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mobile-nav-logo i { color: var(--primary); }
+        .mobile-nav-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.3px;
+        }
+        .mobile-nav-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-main);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+        .mobile-nav-toggle:hover { background: #f3f4f6; }
+
+        /* Sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+            .mobile-nav-bar { display: flex; }
+            aside.sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                width: var(--sidebar-width);
+            }
+            aside.sidebar.sidebar-open { left: 0; }
+            .main-wrapper { width: 100%; flex-direction: column; overflow: hidden; }
+            .top-header { display: none !important; }
+            .main-content { padding: 16px; }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="main-sidebar">
         <div class="sidebar-header">
             <i class="fa-solid fa-qrcode"></i> QRCardKu
         </div>
@@ -453,6 +524,14 @@
 
     <!-- Main Content Wrapper -->
     <div class="main-wrapper">
+        <!-- Mobile top nav (always visible on mobile) -->
+        <div class="mobile-nav-bar">
+            <div class="mobile-nav-logo"><i class="fa-solid fa-qrcode"></i></div>
+            <div class="mobile-nav-title">QRCardKu</div>
+            <button class="mobile-nav-toggle" id="sidebar-toggle-btn" aria-label="Toggle menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
 
         <!-- Top Header (hidden on New QR step pages) -->
         {% if hide_top_nav is not defined or not hide_top_nav %}
@@ -491,6 +570,33 @@
     </div>
 
     {% block extra_js %}{% endblock %}
+    <script>
+        (function() {
+            var sidebar = document.getElementById('main-sidebar');
+            var overlay = document.getElementById('sidebar-overlay');
+            var toggleBtn = document.getElementById('sidebar-toggle-btn');
+            function openSidebar() {
+                sidebar.classList.add('sidebar-open');
+                overlay.classList.add('active');
+                toggleBtn.querySelector('i').className = 'fa-solid fa-xmark';
+            }
+            function closeSidebar() {
+                sidebar.classList.remove('sidebar-open');
+                overlay.classList.remove('active');
+                toggleBtn.querySelector('i').className = 'fa-solid fa-bars';
+            }
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.contains('sidebar-open') ? closeSidebar() : openSidebar();
+            });
+            overlay.addEventListener('click', closeSidebar);
+            // Close sidebar when a nav link is clicked on mobile
+            sidebar.querySelectorAll('.nav-item').forEach(function(item) {
+                item.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) closeSidebar();
+                });
+            });
+        })();
+    </script>
 </body>
 
 </html>

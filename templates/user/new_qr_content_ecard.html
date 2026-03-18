@@ -435,6 +435,75 @@
         height: auto;
         object-fit: contain;
     }
+
+    /* Mobile */
+    .mobile-bottom-bar {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 60px;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        z-index: 400;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        gap: 12px;
+    }
+    .mobile-bar-arrow {
+        width: 44px; height: 44px;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--text-main);
+        flex-shrink: 0;
+        text-decoration: none;
+    }
+    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
+    .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
+    .mobile-bar-preview-btn {
+        flex: 1;
+        height: 40px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px;
+    }
+    .mobile-bar-preview-btn:hover { background: var(--primary-hover); }
+    @media (max-width: 768px) {
+        .new-qr-step-bar { justify-content: center; }
+        .new-qr-steps { justify-content: center; }
+        .new-qr-steps .step-item span:last-child { display: none; }
+        .new-qr-step-nav { display: none; }
+        .new-qr-container { flex-direction: column; height: auto; gap: 0; }
+        .form-column { padding-bottom: 76px; }
+        .preview-column {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw;
+            bottom: 60px;
+            z-index: 450;
+            background: white;
+            overflow-y: auto;
+            padding: 12px 16px 8px;
+            box-sizing: border-box;
+            transform: translateY(110%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .preview-column.mobile-open { transform: translateY(0); }
+        .mobile-bottom-bar { display: flex; }
+    }
 </style>
 {% endblock %}
 
@@ -1394,7 +1463,7 @@
         </div>
 
         <!-- Right preview section -->
-        <div class="preview-column">
+        <div class="preview-column" id="preview-column">
             <div class="phone-container">
                 <div class="phone-header">
                     <div class="phone-type-badge">
@@ -1417,6 +1486,19 @@
             </div>
         </div>
     </div>
+
+    <!-- Mobile bottom bar -->
+    <div class="mobile-bottom-bar">
+        <a href="{{ back_url | default('/qr/new') }}" class="mobile-bar-arrow" title="Back">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
+            <i class="fa-regular fa-eye"></i> Preview
+        </button>
+        <button type="submit" form="content-form" class="mobile-bar-arrow primary" title="Next">
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
 </form>
 
 <!-- Profile image crop modal -->
@@ -1436,6 +1518,16 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    function toggleMobilePreview() {
+        var col = document.getElementById('preview-column');
+        var btn = document.getElementById('mobile-preview-btn');
+        var isOpen = col.classList.toggle('mobile-open');
+        btn.innerHTML = isOpen
+            ? '<i class="fa-solid fa-xmark"></i> Close'
+            : '<i class="fa-regular fa-eye"></i> Preview';
+    }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
