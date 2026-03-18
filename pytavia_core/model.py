@@ -606,6 +606,43 @@ db = {
         "timestamp"                 : 0,
     },
 
+    # Dedicated collection for all-in-one QR cards (multi-section page builder)
+    "db_qrcard_allinone": {
+        "qrcard_id"                 : "",
+        "fk_user_id"                : "",
+        "qr_type"                   : "allinone",
+        "name"                      : "",
+        "url_content"               : "",
+        "short_code"                : "",
+        "design_data"               : {},
+        "qr_image_url"              : "",
+        # Allinone design / branding
+        "Allinone_template"         : "default",
+        "Allinone_title"            : "",
+        "Allinone_desc"             : "",
+        "Allinone_cover_img_url"    : "",
+        "Allinone_primary_color"    : "#2F6BFD",
+        "Allinone_secondary_color"  : "#0E379A",
+        "Allinone_title_font"       : "Lato",
+        "Allinone_title_color"      : "#111827",
+        "Allinone_text_font"        : "Lato",
+        "Allinone_text_color"       : "#6b7280",
+        "Allinone_font_apply_all"   : False,
+        # Content sections — list of dicts: {type, v1, v2, v3, v4}
+        "Allinone_sections"         : [],
+        # Welcome screen
+        "welcome_time"              : "5.0",
+        "welcome_bg_color"          : "#2F6BFD",
+        "welcome_img_url"           : "",
+        # Meta
+        "stats"                     : {"scan_count": 0},
+        "scan_limit_enabled"        : False,
+        "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
     # Lightweight index of all QR cards (used for listing and routing)
     "db_qr_index": {
         "qrcard_id"                 : "",       # link to type-specific collection

@@ -1,0 +1,281 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Complete the content of the QR" %}
+{% set active_page = "new_qr" %}
+{% set hide_top_nav = true %}
+
+{% block extra_css %}
+<style>
+    .new-qr-container { display: flex; gap: 32px; height: 100%; }
+    .form-column { flex: 1; min-width: 0; }
+    .preview-column { width: 340px; flex-shrink: 0; }
+    .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; }
+    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .header-left-col { display: flex; align-items: center; gap: 12px; }
+    .header-icon { color: var(--primary); font-size: 18px; width: 24px; text-align: center; }
+    .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+    .header-text p { font-size: 12px; color: var(--text-muted); }
+    .collapse-body { padding: 0 24px 24px; background: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease; opacity: 0; }
+    .collapse-body.show { padding: 24px; max-height: 500px; opacity: 1; }
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+    .form-control:focus { outline: none; border-color: var(--primary); }
+    .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; }
+    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #f9fafb; }
+    .url-prefix { padding: 10px 14px; color: var(--text-muted); font-size: 14px; border-right: 1px solid var(--border-color); white-space: nowrap; }
+    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: white; font-size: 14px; }
+    .url-prefix-group input:focus { outline: none; }
+
+    /* URL preview box */
+    .preview-container { position: sticky; top: 24px; background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+    .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
+    .static-badge { background: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+    .url-preview-card { border: 1px solid var(--border-color); border-radius: 10px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; background: #f9fafb; min-height: 120px; justify-content: center; }
+    .url-preview-icon { width: 48px; height: 48px; background: #eff6ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 22px; }
+    .url-preview-text { font-size: 13px; font-weight: 500; color: var(--text-main); text-align: center; word-break: break-all; }
+    .url-preview-text.placeholder { color: var(--text-muted); font-weight: 400; }
+    .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    /* Mobile */
+    .mobile-bottom-bar {
+        display: none;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: 60px;
+        background: white;
+        border-top: 1px solid var(--border-color);
+        z-index: 400;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        gap: 12px;
+    }
+    .mobile-bar-arrow {
+        width: 44px; height: 44px;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; font-size: 16px; color: var(--text-main);
+        flex-shrink: 0; text-decoration: none;
+    }
+    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
+    .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
+    .mobile-bar-preview-btn {
+        flex: 1; height: 40px;
+        background: var(--primary); color: white;
+        border: none; border-radius: 20px;
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .mobile-bar-preview-btn:hover { background: var(--primary-hover); }
+    @media (max-width: 768px) {
+        .new-qr-step-bar { justify-content: center; }
+        .new-qr-steps { justify-content: center; }
+        .new-qr-steps .step-item span:last-child { display: none; }
+        .new-qr-step-nav { display: none; }
+        .new-qr-container { flex-direction: column; height: auto; gap: 0; }
+        .form-column { padding-bottom: 76px; }
+        .preview-column {
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0;
+            width: 100vw; bottom: 60px;
+            z-index: 450; background: #f9fafb;
+            overflow-y: auto; padding: 12px 16px 8px;
+            box-sizing: border-box;
+            transform: translateY(110%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .preview-column.mobile-open { transform: translateY(0); }
+        .preview-container { position: static; }
+        .mobile-bottom-bar { display: flex; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="new-qr-step-bar">
+    <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
+        <span class="step-item step-active">
+            <span class="step-num">2</span>
+            <span>Content</span>
+        </span>
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
+            <span class="step-num">3</span>
+            <span>QR design</span>
+        </button>
+    </div>
+    <div class="new-qr-step-nav">
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+</div>
+
+<form id="content-form" method="POST" action="{{ form_action | default('/qr/new/web-static/qr-design') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="page-title" style="margin-bottom: 24px;">Basic Information</div>
+
+    <div class="new-qr-container">
+        <div class="form-column">
+            {% if error_msg %}
+            <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+            </div>
+            {% endif %}
+            {% if msg %}
+            <div style="background-color: #d1fae5; color: #065f46; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px;">
+                <i class="fa-solid fa-circle-check"></i> {{ msg }}
+            </div>
+            {% endif %}
+
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input"
+                placeholder="Name QR Card" value="{{ qr_name | default('', true) }}" required>
+
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon"><i class="fa-solid fa-globe"></i></div>
+                        <div class="header-text">
+                            <h3>Website URL</h3>
+                            <p>This URL will be encoded directly into the QR code.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body show">
+                    <div class="form-group">
+                        <label class="form-label">URL</label>
+                        <div class="url-prefix-group">
+                            <span class="url-prefix"><i class="fa-solid fa-lock" style="font-size:12px;"></i> https://</span>
+                            <input type="text" name="url_content" id="url-input"
+                                placeholder="example.com"
+                                value="{{ url_content | default('', true) | replace('https://', '') | replace('http://', '') }}" required>
+                        </div>
+                        <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+                            <i class="fa-solid fa-circle-info"></i> Scanning the QR code opens this URL directly — no redirect involved.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile bottom bar -->
+            <div class="mobile-bottom-bar">
+                <a href="{{ back_url | default('/qr/new') }}" class="mobile-bar-arrow" title="Back">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
+                    <i class="fa-regular fa-eye"></i> Preview
+                </button>
+                <button type="submit" form="content-form" class="mobile-bar-arrow primary" id="mobile-next-btn" disabled title="Next">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right preview -->
+        <div class="preview-column" id="preview-column">
+            <div class="preview-container">
+                <div class="preview-header">
+                    <div class="preview-type-badge">
+                        <i class="fa-solid fa-globe"></i> Website
+                        <span class="static-badge">static</span>
+                    </div>
+                </div>
+                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">URL Preview</span>
+                <div class="url-preview-card">
+                    <div class="url-preview-icon"><i class="fa-solid fa-globe"></i></div>
+                    <div class="url-preview-text placeholder" id="url-preview-text">
+                        {{ url_content or 'Enter a URL above' }}
+                    </div>
+                </div>
+                <div class="preview-disclaimer">
+                    <i class="fa-solid fa-circle-info"></i> Scanning will open this URL directly
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% block extra_js %}
+<script>
+    function toggleMobilePreview() {
+        var col = document.getElementById('preview-column');
+        var btn = document.getElementById('mobile-preview-btn');
+        var isOpen = col.classList.toggle('mobile-open');
+        btn.innerHTML = isOpen
+            ? '<i class="fa-solid fa-xmark"></i> Close'
+            : '<i class="fa-regular fa-eye"></i> Preview';
+    }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var urlInput = document.getElementById('url-input');
+    var previewText = document.getElementById('url-preview-text');
+    var qrNameInput = document.getElementById('qr-name-input');
+    var nextBtn = document.getElementById('content-next-btn');
+    var mobileNextBtn = document.getElementById('mobile-next-btn');
+    var step3Link = document.getElementById('step3-link');
+
+    function checkValid() {
+        var nameOk = qrNameInput && qrNameInput.value.trim().length > 0;
+        var urlOk = urlInput && urlInput.value.trim().length > 0;
+        var ok = nameOk && urlOk;
+        if (nextBtn) nextBtn.disabled = !ok;
+        if (mobileNextBtn) mobileNextBtn.disabled = !ok;
+        if (step3Link) {
+            step3Link.disabled = !ok;
+            if (ok) { step3Link.classList.remove('step-disabled'); step3Link.removeAttribute('aria-disabled'); }
+            else { step3Link.classList.add('step-disabled'); step3Link.setAttribute('aria-disabled', 'true'); }
+        }
+    }
+
+    if (urlInput) {
+        urlInput.addEventListener('input', function () {
+            var val = this.value.trim();
+            if (val) {
+                previewText.textContent = 'https://' + val;
+                previewText.classList.remove('placeholder');
+            } else {
+                previewText.textContent = 'Enter a URL above';
+                previewText.classList.add('placeholder');
+            }
+            checkValid();
+        });
+        // Init preview text from pre-filled value
+        if (urlInput.value.trim()) {
+            previewText.textContent = 'https://' + urlInput.value.trim();
+            previewText.classList.remove('placeholder');
+        }
+    }
+    if (qrNameInput) qrNameInput.addEventListener('input', checkValid);
+    checkValid();
+
+    // Collapse toggle
+    document.querySelectorAll('.collapse-header').forEach(function (header) {
+        header.addEventListener('click', function () {
+            var body = this.nextElementSibling;
+            var icon = this.querySelector('.fa-chevron-up, .fa-chevron-down');
+            if (!body.classList.contains('show')) {
+                body.classList.add('show');
+                if (icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+            } else {
+                body.classList.remove('show');
+                if (icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

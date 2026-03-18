@@ -23,17 +23,22 @@ class view_qr_list:
             )
 
             # Enrich with full docs from type-specific collections (template needs stats, url_content, scan_limit_*, etc.)
-            id_by_type = {"web": [], "pdf": [], "ecard": []}
+            # Types stored in db_qrcard directly
+            DB_QRCARD_TYPES = {"web", "ecard", "web-static", "text"}
+            id_by_type = {"web": [], "pdf": [], "ecard": [], "web-static": [], "text": []}
             for e in index_entries:
                 t = e.get("qr_type") or "web"
                 if t in id_by_type:
                     id_by_type[t].append(e["qrcard_id"])
 
             full_by_id = {}
-            if id_by_type["web"] or id_by_type["ecard"]:
+            db_qrcard_ids = []
+            for t in DB_QRCARD_TYPES:
+                db_qrcard_ids.extend(id_by_type.get(t, []))
+            if db_qrcard_ids:
                 for doc in mgdDB.db_qrcard.find({
                     "fk_user_id": fk_user_id,
-                    "qrcard_id": {"$in": id_by_type["web"] + id_by_type["ecard"]},
+                    "qrcard_id": {"$in": db_qrcard_ids},
                     "status": "ACTIVE",
                 }):
                     full_by_id[doc["qrcard_id"]] = doc

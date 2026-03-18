@@ -301,6 +301,65 @@
     .scan-qr-modal .modal-actions .btn-primary:hover {
         background: var(--primary-hover);
     }
+
+    @media (max-width: 768px) {
+        /* Top actions */
+        .top-actions { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+
+        /* Tabs scrollable */
+        .tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+        .tab { flex-shrink: 0; }
+
+        /* Filter/sort bar */
+        .table-controls { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+        /* Table → card layout */
+        .qr-table { border: none; background: transparent; box-shadow: none; }
+        .qr-table thead { display: none; }
+        .qr-table tbody { display: flex; flex-direction: column; gap: 10px; }
+        .qr-table tr {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            border: 1px solid var(--border-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            gap: 4px;
+        }
+        .qr-table td { border: none !important; padding: 2px 4px; font-size: 13px; }
+
+        /* Checkbox */
+        .qr-table td:nth-child(1) { width: auto; padding: 0; }
+
+        /* Name col — takes remaining width, leave room for action button */
+        .qr-table td:nth-child(2) { flex: 1; min-width: 0; padding: 0 4px; padding-right: 36px; }
+
+        /* QR Type — full width second line */
+        .qr-table td:nth-child(3) { width: 100%; padding-left: 28px; font-size: 12px; }
+
+        /* Hide Created, Edited */
+        .qr-table td:nth-child(4),
+        .qr-table td:nth-child(5) { display: none; }
+
+        /* State badge — inline after type */
+        .qr-table td:nth-child(6) { padding-left: 28px; }
+
+        /* Scans count */
+        .qr-table td:nth-child(7) { font-size: 12px; color: var(--text-muted); }
+
+        /* Actions dropdown — top-right corner */
+        .qr-table td:nth-child(8) {
+            position: absolute;
+            top: 10px; right: 10px;
+            padding: 0;
+        }
+
+        /* Empty state */
+        .qr-table td[colspan] { width: 100%; text-align: center; }
+    }
 </style>
 
 <script>
@@ -398,6 +457,7 @@
         function typeLabel(qrType) {
             if (qrType === 'web') return '<i class="fa-solid fa-globe"></i> Website';
             if (qrType === 'web-static') return '<i class="fa-solid fa-globe"></i> Website (static)';
+            if (qrType === 'text') return '<i class="fa-solid fa-font"></i> Text';
             if (qrType === 'vcard') return '<i class="fa-regular fa-id-badge"></i> vCard Plus';
             if (qrType === 'images') return '<i class="fa-regular fa-images"></i> Images';
             if (qrType === 'video') return '<i class="fa-solid fa-play"></i> Video';
@@ -413,6 +473,7 @@
                 var status = trigger.getAttribute('data-status') || 'Active';
                 var url = normUrl(trigger.getAttribute('data-url') || '');
                 var shortCode = trigger.getAttribute('data-short-code') || '';
+                var textContent = trigger.getAttribute('data-text-content') || '';
                 var editUrl = trigger.getAttribute('data-edit-url') || '#';
 
                 var displayUrl = url;
@@ -451,7 +512,7 @@
                 overlay.classList.add('show');
                 overlay.setAttribute('aria-hidden', 'false');
 
-                var content = displayUrl || url || 'https://qrcardku.com';
+                var content = qrType === 'text' ? (textContent || 'Hello World') : (displayUrl || url || 'https://qrcardku.com');
                 if (typeof QRCode !== 'undefined') {
                     QRCode.toDataURL(content, { width: 400, margin: 2 })
                         .then(function (dataUrl) {
@@ -567,6 +628,7 @@
                         <span class="qr-scan-trigger" data-tooltip="Click to scan" data-name="{{ qr.name }}"
                             data-qr-type="{{ qr.qr_type }}" data-status="{{ qr.status }}"
                             data-url="{{ qr.url_content }}" data-short-code="{{ qr.short_code or '' }}"
+                            data-text-content="{{ qr.text_content or '' }}"
                             data-edit-url="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}" role="button"
                             aria-label="Click to scan QR card"><i class="fa-solid fa-qrcode"></i></span>
                         <div>{{ qr.name }}</div>
@@ -575,6 +637,7 @@
                 <td><span style="color: var(--primary);">
                         {% if qr.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
                         {% elif qr.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
+                        {% elif qr.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
                         {% elif qr.qr_type == 'vcard' %}<i class="fa-regular fa-id-badge"></i> vCard Plus
                         {% elif qr.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
                         {% elif qr.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
