@@ -54,7 +54,7 @@
     .phone-container { position: sticky; top: 24px; }
     .phone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
-    .phone-mockup { width: 100%; height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .phone-mockup { width: 100%; height: calc(100vh - 72px); max-height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; overscroll-behavior-y: contain; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
@@ -123,6 +123,18 @@
     .block-color-row label { font-size: 11px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
     .block-color-input { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px; cursor: pointer; background: transparent; flex-shrink: 0; }
     .block-color-hex { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 5px; padding: 4px 7px; width: 72px; background: #f9fafb; }
+    /* Autocomplete row */
+    .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
+    .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
+    .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
+    .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
+    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
+    .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 </style>
 {% endblock %}
 
@@ -170,6 +182,21 @@
 
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
                 value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Autocomplete / Fill Sample Data -->
+            <div class="autocomplete-row">
+                <div class="autocomplete-row-left">
+                    <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <div class="autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub">Auto-fills appearance, basic info, and all active content blocks</div>
+                    </div>
+                </div>
+                <label class="autocomplete-toggle" title="Toggle autocomplete">
+                    <input type="checkbox" id="allinone-autocomplete-toggle">
+                    <span class="autocomplete-slider"></span>
+                </label>
+            </div>
 
             <!-- Appearance Section -->
             <div class="collapse-section">
@@ -363,6 +390,7 @@
                                     <i class="fa-solid fa-xmark"></i> Remove
                                 </button>
                                 <input type="hidden" name="Allinone_profile_img_delete" id="allinone_profile_img_delete" value="0">
+                                <input type="hidden" name="Allinone_profile_img_autocomplete_url" id="allinone_profile_img_autocomplete_url" value="">
                             </div>
                             <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
                         </div>
@@ -990,6 +1018,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const existingUrl = data.v1 || '';
             const hasFile = existingUrl && !existingUrl.startsWith('http');
             row.dataset.existingUrl = existingUrl;
+            if (hasFile) row.dataset.previewUrl = existingUrl;
             const vidPreviewBlock = hasFile
                 ? `<div class="allinone-video-preview" style="display:block;"><video src="${existingUrl}" controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`
                 : `<div class="allinone-video-preview" style="display:none;"><video controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`;
@@ -1288,7 +1317,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else {
                             v1FileEl.name = '';
                             const urlEl = row.querySelector('.allinone-video-url') || row.querySelector('.allinone-v1');
-                            v1 = urlEl ? urlEl.value.trim() : (row.dataset.existingUrl || '');
+                            const urlVal = urlEl ? urlEl.value.trim() : '';
+                            v1 = urlVal || (row.dataset.existingUrl || '');
                         }
                     } else if (v1SelectEl) {
                         v1 = v1SelectEl.value;
@@ -1416,6 +1446,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 profilePreview.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
             }
             if (profileInput) profileInput.value = '';
+            const acUrl = document.getElementById('allinone_profile_img_autocomplete_url');
+            if (acUrl) acUrl.value = '';
             document.getElementById('allinone_profile_img_delete').value = '1';
             this.style.display = 'none';
         });
@@ -1423,6 +1455,149 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Apply initial colors
     applyAllinonePrimaryColor(primaryPicker ? primaryPicker.value : '#2f6bfd');
+
+    // ── Autocomplete / Fill Sample Data ────────────────────────────────
+    let _dumpCache = null;
+
+    function setColor(pickerId, hexId, value) {
+        const picker = document.getElementById(pickerId);
+        const hex = document.getElementById(hexId);
+        if (picker) { picker.value = value; picker.dispatchEvent(new Event('input')); }
+        if (hex) { hex.value = value.toUpperCase(); }
+    }
+
+    function applyAutocomplete(dump) {
+        // 1. Appearance
+        const ap = dump.appearance || {};
+        if (ap.template) {
+            const radio = document.querySelector(`input[name="Allinone_template"][value="${ap.template}"]`);
+            if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+        }
+        if (ap.primary_color)   setColor('Allinone_primary_picker',    'Allinone_primary_hex',    ap.primary_color);
+        if (ap.secondary_color) setColor('Allinone_secondary_picker',  'Allinone_secondary_hex',  ap.secondary_color);
+        if (ap.title_color)     setColor('Allinone_title_color_picker', 'Allinone_title_color_hex', ap.title_color);
+        if (ap.text_color)      setColor('Allinone_text_color_picker',  'Allinone_text_color_hex',  ap.text_color);
+        ['Allinone_title_font', 'Allinone_text_font'].forEach(name => {
+            const key = name === 'Allinone_title_font' ? 'title_font' : 'text_font';
+            const val = ap[key];
+            if (val) {
+                const sel = document.querySelector(`select[name="${name}"]`);
+                if (sel) { sel.value = val; }
+            }
+        });
+        // Expand appearance section so user sees it's filled
+        const apSection = document.querySelector('.collapse-section:nth-child(2) .collapse-body');
+        if (apSection && !apSection.classList.contains('show')) {
+            const apHeader = document.querySelector('.collapse-section:nth-child(2) .collapse-header');
+            if (apHeader) apHeader.click();
+        }
+
+        // 2. Basic info
+        const bi = dump.basic_info || {};
+        if (bi.title && titleInput) {
+            titleInput.value = bi.title;
+            titleInput.dispatchEvent(new Event('input'));
+        }
+        if (bi.description && descInput) {
+            descInput.value = bi.description;
+            descInput.dispatchEvent(new Event('input'));
+        }
+        if (bi.profile_image && profilePreview) {
+            profilePreview.innerHTML = `<img src="${bi.profile_image}" alt="Cover image" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample cover image</span>`;
+            const acUrl = document.getElementById('allinone_profile_img_autocomplete_url');
+            if (acUrl) acUrl.value = bi.profile_image;
+            document.getElementById('allinone_profile_img_delete').value = '0';
+            if (removeBtn) removeBtn.style.display = '';
+            // Update all template preview images
+            ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function(id) {
+                const el = document.getElementById(id); if (el) { el.src = bi.profile_image; el.style.display = ''; }
+            });
+            const t1Hdr = document.getElementById('allinone-t1-preview-header');
+            if (t1Hdr) t1Hdr.style.display = '';
+            const t1Body = document.getElementById('allinone-t1-preview-body');
+            if (t1Body) { t1Body.style.marginTop = ''; t1Body.style.borderRadius = ''; }
+            ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function(id) {
+                const el = document.getElementById(id); if (el) el.style.display = 'none';
+            });
+            const ph = document.getElementById('allinone-preview-profile-img');
+            if (!ph) {
+                const circle = document.getElementById('allinone-preview-profile-circle');
+                if (circle) { circle.innerHTML = `<img id="allinone-preview-profile-img" src="${bi.profile_image}" alt="" style="width:100%;height:100%;object-fit:cover;">`; }
+            }
+        }
+
+        // 3. Content blocks — fill existing cards, add missing ones
+        if (!dump.blocks) return;
+        const BLOCK_ORDER = ['contact', 'link', 'sosmed', 'image', 'video', 'pdf', 'text'];
+
+        function fillCard(card, stype, blockDump) {
+            const bstyle = blockDump.block_style || '1';
+            const bcolor = blockDump.block_color || '#10b981';
+            card.dataset.blockStyle = bstyle;
+            card.dataset.blockColor = bcolor;
+            card.querySelectorAll('.block-style-opt').forEach(b => {
+                b.classList.toggle('selected', b.dataset.style === bstyle);
+            });
+            const cPicker = card.querySelector('.block-color-input');
+            const cHex = card.querySelector('.block-color-hex');
+            if (cPicker) { cPicker.value = bcolor; cPicker.dispatchEvent(new Event('input')); }
+            if (cHex) cHex.value = bcolor.toUpperCase();
+            const list = card.querySelector('.section-items-list');
+            list.innerHTML = '';
+            blockDump.items.forEach(itemData => {
+                const row = createItemRow(stype, itemData);
+                list.appendChild(row);
+            });
+            if (stype === 'text') initQuillEditors(card);
+            updateSectionCount(card);
+        }
+
+        BLOCK_ORDER.forEach(stype => {
+            const blockDump = dump.blocks[stype];
+            if (!blockDump || !blockDump.items || !blockDump.items.length) return;
+            const existing = sectionsContainer.querySelector(`.section-card[data-section-type="${stype}"]`);
+            if (existing) {
+                fillCard(existing, stype, blockDump);
+            } else {
+                // addSectionCard creates and appends the card with items already added
+                const card = addSectionCard(stype, blockDump.items, blockDump.block_style || '1', blockDump.block_color || '#10b981');
+                // Still apply color/style picker state (addSectionCard uses createSectionCard defaults)
+                const bstyle = blockDump.block_style || '1';
+                const bcolor = blockDump.block_color || '#10b981';
+                card.dataset.blockStyle = bstyle;
+                card.dataset.blockColor = bcolor;
+                card.querySelectorAll('.block-style-opt').forEach(b => b.classList.toggle('selected', b.dataset.style === bstyle));
+                const cPicker = card.querySelector('.block-color-input');
+                const cHex = card.querySelector('.block-color-hex');
+                if (cPicker) { cPicker.value = bcolor; cPicker.dispatchEvent(new Event('input')); }
+                if (cHex) cHex.value = bcolor.toUpperCase();
+            }
+        });
+
+        updateAllinonePreview();
+    }
+
+    const autocompleteToggle = document.getElementById('allinone-autocomplete-toggle');
+    if (autocompleteToggle) {
+        autocompleteToggle.addEventListener('change', function() {
+            if (!this.checked) return;
+            if (_dumpCache) {
+                applyAutocomplete(_dumpCache);
+                return;
+            }
+            const url = '{{ url_for("static", filename="json_file/allinone_dump.json") }}';
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    _dumpCache = data;
+                    applyAutocomplete(data);
+                })
+                .catch(() => {
+                    this.checked = false;
+                    alert('Could not load sample data.');
+                });
+        });
+    }
 });
 </script>
 {% endblock %}

@@ -229,9 +229,10 @@ class qr_allinone_proc:
                 sections = []
 
         # Build content_update
+        _new_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
         content_update = {}
         for key in request.form:
-            if key.startswith("Allinone_") and not key.endswith("[]"):
+            if key.startswith("Allinone_") and not key.endswith("[]") and key not in _new_skip:
                 val = request.form.get(key)
                 if val is not None:
                     content_update[key] = val.strip() if isinstance(val, str) else val
@@ -263,6 +264,11 @@ class qr_allinone_proc:
                 cover_url = f"/static/uploads/allinone/{new_id}/allinone_cover{ext}"
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}}, upsert=True)
+        else:
+            ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
+            if ac_url and ac_url.startswith("/static/"):
+                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
+                self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
 
         # Move tmp section files (image/pdf) from _tmp to permanent
         updated_sections = []
@@ -336,8 +342,9 @@ class qr_allinone_proc:
                 update_data["short_code"] = new_sc
 
         # Allinone_ fields
+        _allinone_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
         for key in request.form:
-            if key.startswith("Allinone_") and not key.endswith("[]") and key != "Allinone_profile_img_delete":
+            if key.startswith("Allinone_") and not key.endswith("[]") and key not in _allinone_skip:
                 val = request.form.get(key)
                 if val is not None:
                     update_data[key] = val.strip() if isinstance(val, str) else val
@@ -366,6 +373,10 @@ class qr_allinone_proc:
                     os.makedirs(dest_dir, exist_ok=True)
                     cover_img.save(os.path.join(dest_dir, "allinone_cover" + ext))
                     update_data["Allinone_cover_img_url"] = f"/static/uploads/allinone/{qrcard_id}/allinone_cover{ext}"
+            else:
+                ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
+                if ac_url and ac_url.startswith("/static/"):
+                    update_data["Allinone_cover_img_url"] = ac_url
 
         # Prefer allinone_sections_json (rich format with block_style/color) over flat arrays
         sections_json_str = request.form.get("allinone_sections_json", "").strip()

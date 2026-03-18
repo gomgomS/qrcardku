@@ -829,6 +829,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Template radio → switch preview panel
+    document.querySelectorAll('input[name="Allinone_template"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const tmpl = this.value;
+            const defEl = document.getElementById('allinone-preview-default');
+            const t1El  = document.getElementById('allinone-preview-template1');
+            const t2El  = document.getElementById('allinone-preview-template2');
+            if (defEl) defEl.style.display = (tmpl === 'default' || !['template1','template2'].includes(tmpl)) ? '' : 'none';
+            if (t1El)  t1El.style.display  = tmpl === 'template1' ? '' : 'none';
+            if (t2El)  t2El.style.display  = tmpl === 'template2' ? '' : 'none';
+        });
+    });
+
     // Cover image
     const profileInput=document.getElementById('allinone_profile_img_input');
     const profilePreview=document.getElementById('allinone-cover-img-preview');
@@ -859,6 +872,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 if(removeBtn) removeBtn.style.display='inline-flex';
                 const m=document.getElementById('allinone-profile-crop-modal'); if(m) m.style.display='none';
                 if(cropperInstance){cropperInstance.destroy();cropperInstance=null;}
+                // Update all template preview images
+                ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function(id){
+                    const el=document.getElementById(id); if(el){el.src=url;el.style.display='';}
+                });
+                const t1Hdr=document.getElementById('allinone-t1-preview-header');
+                if(t1Hdr) t1Hdr.style.display='';
+                const t1Body=document.getElementById('allinone-t1-preview-body');
+                if(t1Body){t1Body.style.marginTop='';t1Body.style.borderRadius='';}
+                ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function(id){
+                    const el=document.getElementById(id); if(el) el.style.display='none';
+                });
+                const ph=document.getElementById('allinone-preview-profile-img');
+                if(!ph){const circle=document.getElementById('allinone-preview-profile-circle');if(circle){const img=document.createElement('img');img.id='allinone-preview-profile-img';img.src=url;img.alt='';img.style.cssText='width:100%;height:100%;object-fit:cover;';circle.innerHTML='';circle.appendChild(img);}}
             },'image/jpeg',0.9);
         });
     }
@@ -868,6 +894,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if(profileInput) profileInput.value='';
             document.getElementById('allinone_profile_img_delete').value='1';
             this.style.display='none';
+            // Clear all template preview images
+            ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function(id){
+                const el=document.getElementById(id); if(el){el.src='';el.style.display='none';}
+            });
+            const t1Hdr=document.getElementById('allinone-t1-preview-header');
+            if(t1Hdr) t1Hdr.style.display='none';
+            ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function(id){
+                const el=document.getElementById(id); if(el) el.style.display='';
+            });
         });
     }
 

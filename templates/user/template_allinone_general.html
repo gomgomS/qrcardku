@@ -138,7 +138,7 @@
   {% set desc = s.get('v3','') %}
   {% set sm_href = handle if '://' in handle else '' %}
   {% set _sm_names = {'fa-brands fa-instagram':'Instagram','fa-brands fa-facebook':'Facebook','fa-brands fa-x-twitter':'X / Twitter','fa-brands fa-tiktok':'TikTok','fa-brands fa-youtube':'YouTube','fa-brands fa-linkedin':'LinkedIn','fa-brands fa-whatsapp':'WhatsApp','fa-brands fa-telegram':'Telegram','fa-brands fa-pinterest':'Pinterest','fa-brands fa-snapchat':'Snapchat','fa-brands fa-github':'GitHub','fa-brands fa-discord':'Discord','fa-brands fa-line':'Line'} %}
-  {% set platform = _sm_names.get(icon, 'Social') %}
+  {% set platform = desc or _sm_names.get(icon, 'Social') %}
   {% if not preview and bstyle == '1' %}
   <div class="sm-1-item">
     <div class="sm-1-icon" style="background:{{ bcolor }}22;"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:20px;"></i></div>
@@ -156,10 +156,11 @@
     </div>
   </div>
   {% elif not preview and bstyle == '3' %}
-  <div class="sm-3-item" style="border-color:{{ bcolor }};color:{{ bcolor }};">
-    <i class="{{ icon }}" style="font-size:16px;flex-shrink:0;"></i>
-    <span class="sm-3-name">{{ platform }}</span>
-  </div>
+  {% if sm_href %}
+  <a class="sm-3-icon" href="{{ sm_href }}" target="_blank" rel="noopener" style="background:{{ bcolor }}22;border-color:{{ bcolor }};"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:20px;"></i></a>
+  {% else %}
+  <div class="sm-3-icon" style="background:{{ bcolor }}22;border-color:{{ bcolor }};"><i class="{{ icon }}" style="color:{{ bcolor }};font-size:20px;"></i></div>
+  {% endif %}
   {% elif not preview and bstyle == '4' %}
   <div class="sm-4-item">
     <div class="sm-4-text">
@@ -187,56 +188,54 @@
   {% set url = s.get('v1','') %}
   {% set cap = s.get('v2','') %}
   {% if url %}
-  {% if not preview and bstyle == '2' %}
-  <div class="si-img-b">
-    <img src="{{ url }}" alt="{{ cap }}" style="width:80%;border-radius:16px;display:block;">
-    {% if cap %}<p class="section-image-caption">{{ cap }}</p>{% endif %}
-  </div>
+  {% if not preview and bstyle == '1' %}
+  <div class="img-sl-item"><img src="{{ url }}" alt="{{ cap }}">{% if cap %}<div class="img-sl-cap">{{ cap }}</div>{% endif %}</div>
+  {% elif not preview and bstyle == '2' %}
+  <div class="img-v-item"><img src="{{ url }}" alt="{{ cap }}">{% if cap %}<div class="img-v-cap">{{ cap }}</div>{% endif %}</div>
   {% elif not preview and bstyle == '3' %}
-  <div class="si-img-c">
-    <img src="{{ url }}" alt="{{ cap }}">
-    {% if cap %}<p class="si-img-c-cap">{{ cap }}</p>{% endif %}
-  </div>
+  <div class="img-g21-item"><img src="{{ url }}" alt="{{ cap }}"></div>
   {% elif not preview and bstyle == '4' %}
-  <div class="img-4-card">
-    <img src="{{ url }}" alt="{{ cap }}">
-    {% if cap %}<div class="img-4-cap">{{ cap }}</div>{% endif %}
-  </div>
+  <div class="img-g12-item"><img src="{{ url }}" alt="{{ cap }}"></div>
+  {% elif not preview and bstyle == '5' %}
+  <div class="img-gsp-item"><img src="{{ url }}" alt="{{ cap }}"></div>
   {% else %}
-  <div class="section-image-block">
-    <img src="{{ url }}" alt="{{ cap }}" style="width:100%;border-radius:8px;display:block;">
-    {% if cap %}<p class="section-image-caption">{{ cap }}</p>{% endif %}
-  </div>
+  <div style="width:100%;margin:2px 0;"><img src="{{ url }}" alt="{{ cap }}" style="width:100%;border-radius:4px;display:block;"></div>
   {% endif %}
   {% endif %}
 {% elif stype == 'video' %}
   {% set url = s.get('v1','') %}
   {% set vtitle = s.get('v2','') %}
   {% if url %}
-  {% if not preview and bstyle == '2' %}
-  <a class="si-b si-b-video" href="{{ url }}" target="_blank" rel="noopener">
-    <div class="si-b-icon" style="background:#fecaca;"><i class="fa-solid fa-play" style="color:#ef4444;font-size:14px;"></i></div>
-    <div class="si-b-text"><span class="si-b-name">{{ vtitle or 'Watch Video' }}</span><span class="si-b-val">{{ url }}</span></div>
-    <i class="fa-solid fa-chevron-right si-b-chev"></i>
+  {% set is_local = url.startswith('/') %}
+  {% set href = url if (is_local or '://' in url) else 'https://' + url %}
+  {% set is_yt = 'youtube.com' in url or 'youtu.be/' in url %}
+  {% set yt_id = '' %}
+  {% if is_yt %}
+    {% if 'youtube.com' in url and 'v=' in url %}{% set yt_id = url.split('v=')[1].split('&')[0] %}
+    {% elif 'youtu.be/' in url %}{% set yt_id = url.split('youtu.be/')[1].split('?')[0] %}
+    {% elif '/embed/' in url %}{% set yt_id = url.split('/embed/')[1].split('?')[0] %}{% endif %}
+  {% endif %}
+  {% if not preview %}
+    {% if is_local %}
+  <div class="vd-native-wrap">
+    <video src="{{ url }}" controls class="vd-native-player" preload="metadata"></video>
+    {% if vtitle %}<div class="vd-embed-title">{{ vtitle }}</div>{% endif %}
+  </div>
+    {% elif is_yt and yt_id %}
+  <div class="vd-embed-wrap">
+    <iframe src="https://www.youtube.com/embed/{{ yt_id }}" frameborder="0" allowfullscreen class="vd-embed-frame"></iframe>
+    {% if vtitle %}<div class="vd-embed-title">{{ vtitle }}</div>{% endif %}
+  </div>
+    {% else %}
+  <a class="vd-play-card" href="{{ href }}" target="_blank" rel="noopener" style="background:var(--block-color, #ef4444);">
+    <div class="vd-play-circle"><i class="fa-solid fa-play"></i></div>
+    {% if vtitle %}<span class="vd-play-title">{{ vtitle }}</span>{% endif %}
   </a>
-  {% elif not preview and bstyle == '3' %}
-  <a class="si-c" href="{{ url }}" target="_blank" rel="noopener">
-    <i class="fa-solid fa-play" style="color:#ef4444;font-size:12px;flex-shrink:0;"></i>
-    <span class="si-c-text">{{ vtitle or 'Watch Video' }}</span>
-  </a>
-  {% elif not preview and bstyle == '4' %}
-  <a class="vd-4-btn" href="{{ url }}" target="_blank" rel="noopener">
-    <i class="fa-solid fa-play"></i>
-    <span>{{ vtitle or 'Watch Video' }}</span>
-  </a>
+    {% endif %}
   {% else %}
-  <a class="section-item section-video" href="{{ url }}" target="_blank" rel="noopener">
-    <div class="section-item-icon"><i class="fa-solid fa-play" style="color:#ef4444;font-size:{{ '13px' if preview else '16px' }};"></i></div>
-    <div class="section-item-text">
-      <span class="section-item-name">{{ vtitle or 'Watch Video' }}</span>
-      <span class="section-item-sub">{{ url }}</span>
-    </div>
-    <i class="fa-solid fa-chevron-right section-chevron"></i>
+  <a class="section-item section-video" href="{{ href }}" target="_blank" rel="noopener">
+    <div class="section-item-icon"><i class="fa-solid fa-play" style="color:#ef4444;font-size:13px;"></i></div>
+    <div class="section-item-text"><span class="section-item-name">{{ vtitle or 'Watch Video' }}</span></div>
   </a>
   {% endif %}
   {% endif %}
@@ -271,12 +270,27 @@
   </a>
   {% endif %}
   {% endif %}
+{% elif stype == 'text' %}
+  {% set html_content = s.get('v1', '') %}
+  {% if html_content %}
+  {% if not preview %}
+    {% if bstyle == '2' %}
+    <div class="txt-2-block">{{ html_content | safe }}</div>
+    {% elif bstyle == '3' %}
+    <div class="txt-3-block" style="background:{{ bcolor }};">{{ html_content | safe }}</div>
+    {% else %}
+    <div class="txt-1-block">{{ html_content | safe }}</div>
+    {% endif %}
+  {% else %}
+  <div class="pv-text-block">{{ html_content | striptags | truncate(80, true, '...') }}</div>
+  {% endif %}
+  {% endif %}
 {% endif %}
 {% endmacro %}
 
 {% macro render_sections_grouped(sections, preview=false) %}
-{% set _icons = {'contact':'fa-solid fa-phone','link':'fa-solid fa-link','sosmed':'fa-solid fa-share-nodes','image':'fa-regular fa-image','video':'fa-solid fa-play','pdf':'fa-solid fa-file-pdf'} %}
-{% set _labels = {'contact':'Contact','link':'Link','sosmed':'Social Media','image':'Image','video':'Video','pdf':'PDF'} %}
+{% set _icons = {'contact':'fa-solid fa-phone','link':'fa-solid fa-link','sosmed':'fa-solid fa-share-nodes','image':'fa-regular fa-image','video':'fa-solid fa-play','pdf':'fa-solid fa-file-pdf','text':'fa-solid fa-align-left'} %}
+{% set _labels = {'contact':'Contact','link':'Link','sosmed':'Social Media','image':'Image','video':'Video','pdf':'PDF','text':'Text'} %}
 {% set ns = namespace(last_type='', in_group=false, cur_bstyle='1', cur_color='#10b981') %}
 {% for s in sections %}
 {% set cur = s.get('type','') %}
@@ -628,12 +642,12 @@
     .sm-2-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
     .sm-2-name { font-size: 15px; font-weight: 600; color: #111; }
     .sm-2-handle { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* ── Social Style 3 — Horizontal pill chips ── */
+    /* ── Social Style 3 — Icon-only grid ── */
     .section-group[data-type="sosmed"][data-block-style="3"] { border: none; background: transparent; border-radius: 0; }
     .section-group[data-type="sosmed"][data-block-style="3"] .section-group-header { display: none; }
-    .section-group[data-type="sosmed"][data-block-style="3"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
-    .sm-3-item { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 24px; border: 1.5px solid; cursor: default; }
-    .sm-3-name { font-size: 14px; font-weight: 500; }
+    .section-group[data-type="sosmed"][data-block-style="3"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 10px; padding: 4px 0; }
+    .sm-3-icon { width: 52px; height: 52px; border-radius: 12px; border: 1.5px solid; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: opacity 0.15s; flex-shrink: 0; }
+    .sm-3-icon:hover { opacity: 0.8; }
     /* ── Social Style 4 — Minimal with icon right ── */
     .section-group[data-type="sosmed"][data-block-style="4"] { border: none; background: transparent; border-radius: 0; }
     .section-group[data-type="sosmed"][data-block-style="4"] .section-group-header { display: none; }
@@ -686,29 +700,95 @@
     .lk-4-text { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
     .lk-4-name { font-size: 15px; font-weight: 500; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lk-4-desc { font-size: 13px; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* ── Image Style 3 — 2-column grid ── */
-    .section-group[data-type="image"][data-block-style="3"] { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    /* ── Image Style 1 — Horizontal Carousel ── */
+    .section-group[data-type="image"][data-block-style="1"] { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+    .section-group[data-type="image"][data-block-style="1"] .section-group-header { display: none; }
+    .section-group[data-type="image"][data-block-style="1"] .section-group-items { position: relative; overflow: hidden; padding: 0; gap: 0; }
+    .img-sl-track { display: flex; flex-direction: row; transition: transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    .img-sl-item { flex: 0 0 100%; }
+    .img-sl-item img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .img-sl-cap { padding: 8px 14px 10px; font-size: 13px; color: #374151; background: white; text-align: center; }
+    .img-sl-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; z-index: 3; transition: background 0.15s; }
+    .img-sl-nav:hover { background: rgba(0,0,0,0.65); }
+    .img-sl-prev { left: 10px; }
+    .img-sl-next { right: 10px; }
+    .img-sl-dots { display: flex; justify-content: center; gap: 5px; padding: 8px 0; background: white; }
+    .img-sl-dot { width: 7px; height: 7px; border-radius: 50%; background: #d1d5db; cursor: pointer; border: none; padding: 0; transition: background 0.15s, transform 0.15s; }
+    .img-sl-dot.active { background: var(--block-color, #10b981); transform: scale(1.2); }
+    /* ── Image Style 2 — Vertical Stack ── */
+    .section-group[data-type="image"][data-block-style="2"] { border: none; background: transparent; }
+    .section-group[data-type="image"][data-block-style="2"] .section-group-header { display: none; }
+    .section-group[data-type="image"][data-block-style="2"] .section-group-items { padding: 0; gap: 12px; }
+    .img-v-item img { width: 100%; border-radius: 10px; display: block; }
+    .img-v-cap { font-size: 13px; color: #6b7280; text-align: center; margin-top: 6px; }
+    /* ── Image Style 3 — Grid 2-1-2-1 ── */
+    .section-group[data-type="image"][data-block-style="3"] { border: none; background: transparent; }
     .section-group[data-type="image"][data-block-style="3"] .section-group-header { display: none; }
-    .section-group[data-type="image"][data-block-style="3"] .section-group-items { flex-direction: row; flex-wrap: wrap; gap: 6px; padding: 6px 8px; }
-    /* ── Image Style 4 — Polaroid card ── */
+    .section-group[data-type="image"][data-block-style="3"] .section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; }
+    .img-g21-item { overflow: hidden; }
+    .img-g21-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .img-g21-item:nth-child(3n) { grid-column: span 2; }
+    .img-g21-item:nth-child(3n) img { aspect-ratio: 16/9; }
+    /* ── Image Style 4 — Grid 1-2-1-2 ── */
     .section-group[data-type="image"][data-block-style="4"] { border: none; background: transparent; }
     .section-group[data-type="image"][data-block-style="4"] .section-group-header { display: none; }
-    .section-group[data-type="image"][data-block-style="4"] .section-group-items { padding: 0; gap: 14px; }
-    .img-4-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
-    .img-4-card img { width: 100%; display: block; aspect-ratio: 4/3; object-fit: cover; }
-    .img-4-cap { padding: 12px 14px; font-size: 14px; color: #374151; font-weight: 500; }
-    /* ── Video Style 4 — Solid play button ── */
-    .section-group[data-type="video"][data-block-style="4"] { border: none; background: transparent; }
-    .section-group[data-type="video"][data-block-style="4"] .section-group-header { display: none; }
-    .section-group[data-type="video"][data-block-style="4"] .section-group-items { padding: 0; gap: 12px; }
-    .vd-4-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 20px; border-radius: 12px; text-decoration: none; background: var(--block-color, #ef4444); color: white; font-weight: 600; font-size: 15px; transition: opacity 0.15s; }
-    .vd-4-btn:hover { opacity: 0.88; }
+    .section-group[data-type="image"][data-block-style="4"] .section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; }
+    .img-g12-item { overflow: hidden; }
+    .img-g12-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .img-g12-item:nth-child(3n+1) { grid-column: span 2; }
+    .img-g12-item:nth-child(3n+1) img { aspect-ratio: 16/9; }
+    /* ── Image Style 5 — Split (alternating 1 tall + 2 stacked) ── */
+    .section-group[data-type="image"][data-block-style="5"] { border: none; background: transparent; }
+    .section-group[data-type="image"][data-block-style="5"] .section-group-header { display: none; }
+    .section-group[data-type="image"][data-block-style="5"] .section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0; grid-auto-flow: dense; }
+    .img-gsp-item { overflow: hidden; min-height: 100px; }
+    .img-gsp-item img { width: 100%; height: 100%; object-fit: cover; display: block; min-height: 100px; }
+    .img-gsp-item:nth-child(6n+1) { grid-column: 1; grid-row: span 2; }
+    .img-gsp-item:nth-child(6n+2) { grid-column: 2; }
+    .img-gsp-item:nth-child(6n+3) { grid-column: 2; }
+    .img-gsp-item:nth-child(6n+4) { grid-column: 1; }
+    .img-gsp-item:nth-child(6n+5) { grid-column: 1; }
+    .img-gsp-item:nth-child(6n+6) { grid-column: 2; grid-row: span 2; }
+    /* ── Video Style 1 — Play Card ── */
+    .section-group[data-type="video"] .section-group-header { display: none; }
+    .section-group[data-type="video"] .section-group-items { padding: 0; gap: 14px; }
+    .vd-embed-wrap { width: 100%; }
+    .vd-embed-frame { width: 100%; aspect-ratio: 16/9; display: block; border-radius: 10px; }
+    .vd-embed-title { font-size: 14px; font-weight: 600; color: #111; margin-top: 8px; padding: 0 2px; }
+    .vd-native-wrap { width: 100%; }
+    .vd-native-player { width: 100%; border-radius: 10px; display: block; background: #000; max-height: 320px; }
+    .vd-play-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 20px; border-radius: 14px; text-decoration: none; color: white; transition: opacity 0.15s; }
+    .vd-play-card:hover { opacity: 0.9; }
+    .vd-play-circle { width: 60px; height: 60px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .vd-play-title { font-size: 16px; font-weight: 600; text-align: center; }
     /* ── PDF Style 4 — Download button ── */
     .section-group[data-type="pdf"][data-block-style="4"] { border: none; background: transparent; }
     .section-group[data-type="pdf"][data-block-style="4"] .section-group-header { display: none; }
     .section-group[data-type="pdf"][data-block-style="4"] .section-group-items { padding: 0; gap: 12px; }
     .pdf-4-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 20px; border-radius: 12px; text-decoration: none; background: var(--block-color, #ef4444); color: white; font-weight: 600; font-size: 15px; transition: opacity 0.15s; }
     .pdf-4-btn:hover { opacity: 0.88; }
+    /* ── Text Block Styles ── */
+    .section-group[data-type="text"] .section-group-header { display: none; }
+    .section-group[data-type="text"] .section-group-items { padding: 0; gap: 0; }
+    .txt-1-block { padding: 8px 2px; color: #374151; font-size: 15px; line-height: 1.7; word-break: break-word; }
+    .txt-1-block h1 { font-size: 22px; font-weight: 800; margin: 0 0 8px; }
+    .txt-1-block h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+    .txt-1-block h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+    .txt-1-block p  { margin: 0 0 8px; }
+    .txt-1-block ul, .txt-1-block ol { padding-left: 20px; margin: 0 0 8px; }
+    .txt-1-block a  { color: var(--primary); }
+    .txt-2-block { background: white; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.07); padding: 18px 20px; color: #374151; font-size: 15px; line-height: 1.7; word-break: break-word; }
+    .txt-2-block h1 { font-size: 22px; font-weight: 800; margin: 0 0 8px; }
+    .txt-2-block h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+    .txt-2-block p  { margin: 0 0 8px; }
+    .txt-2-block ul, .txt-2-block ol { padding-left: 20px; margin: 0 0 8px; }
+    .txt-2-block a  { color: var(--primary); }
+    .txt-3-block { border-radius: 12px; padding: 18px 20px; color: white; font-size: 15px; line-height: 1.7; word-break: break-word; }
+    .txt-3-block h1 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: white; }
+    .txt-3-block h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; color: white; }
+    .txt-3-block p  { margin: 0 0 8px; }
+    .txt-3-block ul, .txt-3-block ol { padding-left: 20px; margin: 0 0 8px; }
+    .txt-3-block a  { color: rgba(255,255,255,0.85); text-decoration: underline; }
 </style>
 
 <div class="phone-wrapper">
@@ -781,13 +861,37 @@
     </div>
     {% endif %}
 </div>
+<script>
+(function(){
+    document.querySelectorAll('.section-group[data-type="image"][data-block-style="1"]').forEach(function(group){
+        var slItems = Array.from(group.querySelectorAll('.img-sl-item'));
+        if(!slItems.length) return;
+        var itemsEl = group.querySelector('.section-group-items');
+        var track = document.createElement('div');
+        track.className = 'img-sl-track';
+        slItems.forEach(function(it){ track.appendChild(it); });
+        itemsEl.appendChild(track);
+        var cur = 0, dots = [];
+        if(slItems.length > 1){
+            var prev = document.createElement('button'); prev.type='button'; prev.className='img-sl-nav img-sl-prev'; prev.innerHTML='<i class="fa-solid fa-chevron-left"></i>';
+            var next = document.createElement('button'); next.type='button'; next.className='img-sl-nav img-sl-next'; next.innerHTML='<i class="fa-solid fa-chevron-right"></i>';
+            var dotsEl = document.createElement('div'); dotsEl.className='img-sl-dots';
+            slItems.forEach(function(_,i){ var d=document.createElement('button'); d.type='button'; d.className='img-sl-dot'+(i===0?' active':''); d.addEventListener('click',function(){go(i);}); dotsEl.appendChild(d); dots.push(d); });
+            itemsEl.appendChild(prev); itemsEl.appendChild(next); group.appendChild(dotsEl);
+            prev.addEventListener('click',function(){go(cur-1);});
+            next.addEventListener('click',function(){go(cur+1);});
+        }
+        function go(n){ cur=((n%slItems.length)+slItems.length)%slItems.length; track.style.transform='translateX('+(-cur*100)+'%)'; dots.forEach(function(d,i){d.classList.toggle('active',i===cur);}); }
+    });
+})();
+</script>
 
 {# =====================================================================
    PREVIEW MODE
    ===================================================================== #}
 {% elif allinone_mode == 'preview' %}
 <style>
-    .allinone-preview-wrap { width: 100%; height: 100%; position: relative; overflow: hidden; }
+    .allinone-preview-wrap { width: 100%; min-height: 100%; position: relative; }
 
     /* DEFAULT preview */
     .allinone-tpl-default { display: flex; flex-direction: column; min-height: 100%; }
@@ -832,14 +936,16 @@
 
     /* TEMPLATE 1 preview */
     .allinone-tpl-1 { min-height: 100%; display: flex; flex-direction: column; background: #f3f4f6; }
-    .allinone-tpl-1 .t1-hdr { height: 100px; background: #e5e7eb; flex-shrink: 0; overflow: hidden; }
-    .allinone-tpl-1 .t1-hdr img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-1 .t1-hdr { height: 220px; background: #e5e7eb; flex-shrink: 0; overflow: hidden; position: relative; }
+    .allinone-tpl-1 .t1-hdr img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .allinone-tpl-1 .t1-body {
         background: white;
-        border-radius: 10px 10px 0 0;
-        margin-top: -8px;
+        border-radius: 14px 14px 0 0;
+        margin-top: -16px;
         flex: 1;
-        padding: 10px;
+        padding: 12px 10px 10px;
+        position: relative;
+        z-index: 1;
     }
     .allinone-tpl-1 .t1-title { font-size: 10px; font-weight: 700; text-align: center; color: #111827; margin-bottom: 2px; }
     .allinone-tpl-1 .t1-desc { font-size: 8px; text-align: center; color: #6b7280; margin-bottom: 8px; }
@@ -892,23 +998,37 @@
     .pv-item-c { background: transparent; border-radius: 0; border-bottom: 1px solid #f0f0f0; padding-top: 2px; padding-bottom: 2px; border-left: none; }
     .pv-item-c .pv-icon { display: none; }
     .pv-item-c .pv-name { color: #374151; }
-    /* Sosmed style 3 horizontal pills preview */
-    .pv-section-group[data-type="sosmed"][data-block-style="3"] .pv-section-group-items { flex-direction: row; flex-wrap: wrap; gap: 3px; align-items: center; }
-    .pv-sm-pill { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px; border-radius: 8px; border: 1px solid var(--block-color, #10b981); }
-    .pv-sm-pill-name { font-size: 5.5px; color: var(--block-color, #10b981); white-space: nowrap; }
+    /* Sosmed style 3 icon-only grid preview */
+    .pv-section-group[data-type="sosmed"][data-block-style="3"] .pv-section-group-items { flex-direction: row; flex-wrap: wrap; gap: 3px; align-items: center; padding: 3px; }
     /* Sosmed style 5 grid preview */
     .pv-section-group[data-type="sosmed"][data-block-style="5"] .pv-section-group-items { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 3px; }
     .pv-sm-5 { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border-radius: 50%; }
-    /* Image styles preview */
-    .pv-img-b { display: flex; justify-content: center; }
-    .pv-img-b img { width: 80%; border-radius: 8px; display: block; }
-    .pv-section-group[data-type="image"][data-block-style="3"] .pv-section-group-items { flex-direction: row; flex-wrap: wrap; gap: 2px; }
-    .pv-img-c { width: calc(50% - 1px); border-radius: 3px; overflow: hidden; }
-    .pv-img-c img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
-    .pv-section-group[data-type="image"][data-block-style="4"] .pv-section-group-items { padding: 0; gap: 4px; }
-    /* Video/PDF style 4 preview */
-    .pv-section-group[data-type="video"][data-block-style="4"] .pv-section-group-items,
+    /* Image preview — all styles */
+    .pv-section-group[data-type="image"][data-block-style="1"] .pv-section-group-items { padding: 0; gap: 0; overflow: hidden; }
+    .pv-section-group[data-type="image"][data-block-style="2"] .pv-section-group-items { padding: 0; gap: 3px; }
+    .pv-section-group[data-type="image"][data-block-style="3"] .pv-section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 0; }
+    .pv-img-g21 { overflow: hidden; }
+    .pv-img-g21:nth-child(3n) { grid-column: span 2; }
+    .pv-section-group[data-type="image"][data-block-style="4"] .pv-section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 0; }
+    .pv-img-g12 { overflow: hidden; }
+    .pv-img-g12:nth-child(3n+1) { grid-column: span 2; }
+    .pv-section-group[data-type="image"][data-block-style="5"] .pv-section-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 0; grid-auto-flow: dense; }
+    .pv-img-gsp { overflow: hidden; min-height: 22px; }
+    .pv-img-gsp:nth-child(6n+1) { grid-column: 1; grid-row: span 2; }
+    .pv-img-gsp:nth-child(6n+2) { grid-column: 2; }
+    .pv-img-gsp:nth-child(6n+3) { grid-column: 2; }
+    .pv-img-gsp:nth-child(6n+4) { grid-column: 1; }
+    .pv-img-gsp:nth-child(6n+5) { grid-column: 1; }
+    .pv-img-gsp:nth-child(6n+6) { grid-column: 2; grid-row: span 2; }
+    /* PDF style 4 preview */
     .pv-section-group[data-type="pdf"][data-block-style="4"] .pv-section-group-items { padding: 0; gap: 3px; }
+    /* Text block preview */
+    .pv-section-group[data-type="text"] { border: none; background: transparent; }
+    .pv-section-group[data-type="text"] .pv-section-group-items { padding: 2px 3px; }
+    .pv-text-block { font-size: 7px; line-height: 1.4; color: #374151; overflow: hidden; max-height: 55px; word-break: break-word; }
+    .pv-section-group[data-type="text"][data-block-style="2"] { background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .pv-section-group[data-type="text"][data-block-style="3"] { background: var(--block-color, #10b981); border-radius: 4px; border: none; }
+    .pv-section-group[data-type="text"][data-block-style="3"] .pv-text-block { color: white; }
 </style>
 
 <div class="allinone-preview-wrap">
@@ -942,10 +1062,10 @@
 
     {# TEMPLATE 1 #}
     <div class="allinone-tpl-1" id="allinone-preview-template1" style="{{ '' if _tmpl == 'template1' else 'display:none;' }}">
-        <div class="t1-hdr" id="allinone-t1-preview-header">
-            {% if _cover_img %}<img src="{{ _cover_img }}" alt="" id="allinone-t1-preview-header-img">{% endif %}
+        <div class="t1-hdr" id="allinone-t1-preview-header" style="{{ '' if _cover_img else 'display:none;' }}">
+            <img src="{{ _cover_img or '' }}" alt="" id="allinone-t1-preview-header-img" style="width:100%;height:100%;object-fit:cover;display:block;">
         </div>
-        <div class="t1-body">
+        <div class="t1-body" id="allinone-t1-preview-body" style="{{ '' if _cover_img else 'margin-top:0;border-radius:0;' }}">
             {% if _title %}
             <div class="t1-title" id="allinone-t1-preview-title">{{ _title }}</div>
             {% else %}
@@ -965,11 +1085,8 @@
     {# TEMPLATE 2 #}
     <div class="allinone-tpl-2" id="allinone-preview-template2" style="{{ '' if _tmpl == 'template2' else 'display:none;' }}">
         <div class="t2-circle-p" id="allinone-t2-preview-circle-wrap">
-            {% if _cover_img %}
-            <img src="{{ _cover_img }}" alt="" id="allinone-t2-preview-circle-img">
-            {% else %}
-            <i class="fa-regular fa-image" style="font-size:14px;color:rgba(255,255,255,0.5);" id="allinone-t2-preview-circle-placeholder"></i>
-            {% endif %}
+            <img src="{{ _cover_img or '' }}" alt="" id="allinone-t2-preview-circle-img" style="{{ '' if _cover_img else 'display:none;' }}">
+            <i class="fa-regular fa-image" style="font-size:14px;color:rgba(255,255,255,0.5);" id="allinone-t2-preview-circle-placeholder"{{ '' if not _cover_img else ' hidden' }}></i>
         </div>
         {% if _title %}
         <div class="t2-title" id="allinone-t2-preview-title">{{ _title }}</div>

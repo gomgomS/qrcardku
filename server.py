@@ -2468,6 +2468,10 @@ def user_new_qr_design_allinone():
         from flask import url_for as _url_for
         if session.get("allinone_cover_tmp_key") and session.get("allinone_cover_tmp_name"):
             allinone_data["Allinone_cover_img_url"] = _url_for("static", filename="uploads/allinone/_tmp/{}/{}".format(session["allinone_cover_tmp_key"], session["allinone_cover_tmp_name"]))
+        elif not allinone_data.get("Allinone_cover_img_url"):
+            ac_url = (allinone_data.get("Allinone_profile_img_autocomplete_url") or "").strip()
+            if ac_url and ac_url.startswith("/static/"):
+                allinone_data["Allinone_cover_img_url"] = ac_url
         allinone_data["Allinone_sections"] = sections
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, allinone_data=allinone_data)
 

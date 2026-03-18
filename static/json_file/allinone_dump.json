@@ -1,0 +1,79 @@
+{
+  "appearance": {
+    "template": "template2",
+    "primary_color": "#6366f1",
+    "secondary_color": "#4338ca",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans",
+    "title_color": "#ffffff",
+    "text_color": "#c7d2fe"
+  },
+  "basic_info": {
+    "title": "John Doe",
+    "description": "Digital Creator & Entrepreneur",
+    "profile_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+  },
+  "blocks": {
+    "contact": {
+      "block_style": "2",
+      "block_color": "#6366f1",
+      "items": [
+        { "v4": "phone", "v1": "+1 (555) 123-4567", "v2": "Mobile" },
+        { "v4": "email", "v1": "hello@johndoe.com", "v2": "Work Email" },
+        { "v4": "website", "v1": "https://johndoe.com", "v2": "Portfolio" }
+      ]
+    },
+    "link": {
+      "block_style": "2",
+      "block_color": "#06b6d4",
+      "items": [
+        { "v1": "https://johndoe.com", "v2": "My Portfolio", "v3": "Explore my latest projects" },
+        { "v1": "https://blog.johndoe.com", "v2": "Blog", "v3": "Tips, stories & inspiration" },
+        { "v1": "https://shop.johndoe.com", "v2": "Shop", "v3": "Merch & digital products" }
+      ]
+    },
+    "sosmed": {
+      "block_style": "3",
+      "block_color": "#a855f7",
+      "items": [
+        { "v1": "fa-brands fa-instagram", "v2": "@johndoe", "v3": "Follow for daily inspiration" },
+        { "v1": "fa-brands fa-youtube", "v2": "John Doe", "v3": "Subscribe to my channel" },
+        { "v1": "fa-brands fa-tiktok", "v2": "@johndoe.create", "v3": "Short-form content" },
+        { "v1": "fa-brands fa-x-twitter", "v2": "@johndoe_x", "v3": "Thoughts & updates" },
+        { "v1": "fa-brands fa-linkedin", "v2": "John Doe", "v3": "Professional network" }
+      ]
+    },
+    "image": {
+      "block_style": "3",
+      "block_color": "#f59e0b",
+      "items": [
+        { "v1": "/static/assets/autocomplete_field_helper/img/random_img_1.png", "v2": "Latest Project" },
+        { "v1": "/static/assets/autocomplete_field_helper/img/random_img_2.png", "v2": "Behind the Scenes" },
+        { "v1": "/static/assets/autocomplete_field_helper/img/random_img_3.png", "v2": "Event Highlight" }
+      ]
+    },
+    "video": {
+      "block_style": "2",
+      "block_color": "#f43f5e",
+      "items": [
+        { "v1": "/static/assets/autocomplete_field_helper/vids/vid1_nocopyright.mp4", "v2": "Introduction" },
+        { "v1": "/static/assets/autocomplete_field_helper/vids/vid2_nocopyright.mp4", "v2": "Behind the Scenes" }
+      ]
+    },
+    "pdf": {
+      "block_style": "2",
+      "block_color": "#3b82f6",
+      "items": [
+        { "v1": "", "v2": "Company Brochure" },
+        { "v1": "", "v2": "Product Catalog" }
+      ]
+    },
+    "text": {
+      "block_style": "2",
+      "block_color": "#6366f1",
+      "items": [
+        { "v1": "<h2>About Me</h2><p>Hi! I'm <strong>John Doe</strong> — a passionate digital creator with 5+ years of experience in content creation, branding &amp; digital marketing.</p><p>I help brands grow their online presence through creative storytelling and strategic content.</p><ul><li><strong>Creative Director</strong> at Studio Doe</li><li><strong>Top Creator</strong> — 500K+ followers</li><li><strong>Speaker</strong> at CreativeCon 2024</li></ul>" }
+      ]
+    }
+  }
+}
