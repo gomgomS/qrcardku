@@ -21,10 +21,11 @@ Include with:
 {% set _text_font = _qrc.get('images_text_font', 'Lato') %}
 {% set _title_color = _qrc.get('images_title_color','#111827') %}
 {% set _text_color = _qrc.get('images_text_color', '#6b7280') %}
+{% set _hide_labels = _qrc.get('images_hide_labels', false) %}
 
-{# Determine columns based on template #}
+{# Determine grid-template-columns based on template #}
 {% set _cols = 1 %}
-{% if _tmpl == '2col' %}{% set _cols = 2 %}{% endif %}
+{% if _tmpl in ['2col', 'grid21', 'grid12', 'split'] %}{% set _cols = 2 %}{% endif %}
 {% if _tmpl == '3col' %}{% set _cols = 3 %}{% endif %}
 
 {# =====================================================================
@@ -34,280 +35,35 @@ PUBLIC MODE
 
 <style>
     :root {
-        --primary: {
-                {
-                _primary
-            }
-        }
-
-        ;
-
-        --secondary: {
-                {
-                _secondary
-            }
-        }
-
-        ;
-
-        --title-font: {
-                {
-                _title_font | tojson | safe
-            }
-        }
-
-        ;
-
-        --text-font: {
-                {
-                _text_font | tojson | safe
-            }
-        }
-
-        ;
-
-        --title-color: {
-                {
-                _title_color
-            }
-        }
-
-        ;
-
-        --text-color: {
-                {
-                _text_color
-            }
-        }
-
-        ;
+        --primary: {{ _primary }};
+        --secondary: {{ _secondary }};
+        --title-font: {{ _title_font | tojson | safe }};
+        --text-font: {{ _text_font | tojson | safe }};
+        --title-color: {{ _title_color }};
+        --text-color: {{ _text_color }};
     }
-
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #0f172a;
-        min-height: 100vh;
-        display: flex;
-        align-items: stretch;
-        justify-content: center;
-    }
-
-    .phone-wrapper {
-        position: relative;
-        width: 100%;
-        max-width: 480px;
-        margin: 0 auto;
-        min-height: 100vh;
-    }
-
-    /* Welcome overlay */
-    .welcome-overlay {
-        position: absolute;
-        inset: 0;
-        z-index: 100;
-
-        background: {
-                {
-                _welcome_bg
-            }
-        }
-
-        ;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 1;
-        transition: opacity 0.8s ease;
-        pointer-events: auto;
-    }
-
-    .welcome-overlay.hide {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .welcome-overlay img {
-        max-width: 200px;
-        max-height: 280px;
-        object-fit: contain;
-        display: block;
-    }
-
-    /* Gallery wrapper */
-    .gallery-wrapper {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        background: #f9fafb;
-    }
-
-    .gallery-header {
-        background: var(--primary);
-        padding: 40px 24px 28px;
-        text-align: center;
-    }
-
-    .gallery-header-title {
-        font-size: 22px;
-        font-weight: 800;
-        color: white;
-        margin-bottom: 6px;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--title-font),
-        system-ui,
-        sans-serif;
-
-            {
-            % endif %
-        }
-    }
-
-    .gallery-header-desc {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
-        line-height: 1.4;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--text-font),
-        system-ui,
-        sans-serif;
-
-            {
-            % endif %
-        }
-    }
-
-    .gallery-grid {
-        display: grid;
-
-        grid-template-columns: repeat({
-                {
-                _cols
-            }
-        }
-
-        , 1fr);
-    gap: 16px;
-    padding: 20px;
-    flex: 1;
-    }
-
-    .gallery-item {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        transition: transform 0.2s;
-    }
-
-    .gallery-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .gallery-item img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        display: block;
-    }
-
-    .gallery-item-info {
-        padding: 12px;
-    }
-
-    .gallery-item-name {
-        font-size: 14px;
-        font-weight: 600;
-        color: #111827;
-        margin-bottom: 4px;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--title-font),
-        system-ui,
-        sans-serif;
-        color: var(--title-color);
-
-            {
-            % endif %
-        }
-    }
-
-    .gallery-item-desc {
-        font-size: 12px;
-        color: #6b7280;
-        line-height: 1.4;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--text-font),
-        system-ui,
-        sans-serif;
-        color: var(--text-color);
-
-            {
-            % endif %
-        }
-    }
-
-    .gallery-footer {
-        text-align: center;
-        padding: 16px 20px 32px;
-        font-size: 11px;
-        color: #9ca3af;
-    }
-
-    /* Lightbox */
-    .lightbox-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        z-index: 200;
-        background: rgba(0, 0, 0, 0.9);
-        align-items: center;
-        justify-content: center;
-    }
-
-    .lightbox-overlay.show {
-        display: flex;
-    }
-
-    .lightbox-overlay img {
-        max-width: 90%;
-        max-height: 85vh;
-        object-fit: contain;
-        border-radius: 8px;
-    }
-
-    .lightbox-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        color: white;
-        font-size: 28px;
-        cursor: pointer;
-        background: none;
-        border: none;
-        z-index: 201;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; min-height: 100vh; display: flex; align-items: stretch; justify-content: center; }
+    .phone-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+    .welcome-overlay { position: absolute; inset: 0; z-index: 100; background: {{ _welcome_bg }}; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: auto; }
+    .welcome-overlay.hide { opacity: 0; pointer-events: none; }
+    .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
+    .gallery-wrapper { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+    .gallery-header { background: var(--primary); padding: 40px 24px 28px; text-align: center; }
+    .gallery-header-title { font-size: 22px; font-weight: 800; color: white; margin-bottom: 6px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif;{% endif %} }
+    .gallery-header-desc { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.4; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif;{% endif %} }
+    .gallery-grid { display: grid; grid-template-columns: repeat({{ _cols }}, 1fr); gap: 16px; padding: 20px; flex: 1; }
+    .gallery-item { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
+    .gallery-item:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+    .gallery-item-info { padding: 12px; }
+    .gallery-item-name { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% endif %} }
+    .gallery-item-desc { font-size: 12px; color: #6b7280; line-height: 1.4; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% endif %} }
+    .gallery-footer { text-align: center; padding: 16px 20px 32px; font-size: 11px; color: #9ca3af; }
+    .lightbox-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+    .lightbox-overlay.show { display: flex; }
+    .lightbox-overlay img { max-width: 90%; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+    .lightbox-close { position: absolute; top: 16px; right: 16px; color: white; font-size: 28px; cursor: pointer; background: none; border: none; z-index: 201; }
 </style>
 
 <div class="phone-wrapper">
@@ -326,9 +82,14 @@ PUBLIC MODE
         </div>
         <div class="gallery-grid">
             {% for img in _gallery %}
-            <div class="gallery-item" onclick="openLightbox('{{ img.url }}')" style="cursor:pointer;">
+            {% set _i = loop.index0 %}
+            {% set _span_style = '' %}
+            {% if _tmpl == 'grid21' and _i == 2 %}{% set _span_style = 'grid-column:span 2;' %}{% endif %}
+            {% if _tmpl == 'grid12' and _i == 0 %}{% set _span_style = 'grid-column:span 2;' %}{% endif %}
+            {% if _tmpl == 'split' and _i == 0 %}{% set _span_style = 'grid-row:span 2;' %}{% endif %}
+            <div class="gallery-item" onclick="openLightbox('{{ img.url }}')" style="cursor:pointer;{{ _span_style }}">
                 <img src="{{ img.url }}" alt="{{ img.name or '' }}" loading="lazy">
-                {% if img.name or img.desc %}
+                {% if not _hide_labels and (img.name or img.desc) %}
                 <div class="gallery-item-info">
                     {% if img.name %}<div class="gallery-item-name">{{ img.name }}</div>{% endif %}
                     {% if img.desc %}<div class="gallery-item-desc">{{ img.desc }}</div>{% endif %}
@@ -416,11 +177,16 @@ PREVIEW MODE — shown inside phone mockup
     <div id="preview-gallery-grid"
         style="display:grid;grid-template-columns:repeat({{ _cols }},1fr);gap:8px;padding:10px;flex:1;">
         {% for img in _gallery %}
+        {% set _i = loop.index0 %}
+        {% set _span_style = '' %}
+        {% if _tmpl == 'grid21' and _i == 2 %}{% set _span_style = 'grid-column:span 2;' %}{% endif %}
+        {% if _tmpl == 'grid12' and _i == 0 %}{% set _span_style = 'grid-column:span 2;' %}{% endif %}
+        {% if _tmpl == 'split' and _i == 0 %}{% set _span_style = 'grid-row:span 2;' %}{% endif %}
         <div class="preview-gallery-item"
-            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);{{ _span_style }}">
             <img src="{{ img.url }}" alt="{{ img.name or '' }}"
                 style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy">
-            {% if img.name or img.desc %}
+            {% if not _hide_labels and (img.name or img.desc) %}
             <div style="padding:6px 8px;">
                 {% if img.name %}<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">{{
                     img.name }}</div>{% endif %}

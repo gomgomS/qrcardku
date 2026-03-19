@@ -33,6 +33,7 @@
 {# profile image for default template preview #}
 {% set _profile_img = (_t1_img or _t3_img or _t4_img or '') if _qrc else (cover_url if cover_url is defined and cover_url else '') %}
 {% set _show_default = _tmpl not in ['template1','template2','template3','template4'] %}
+{% set _gallery = _qrc.get('ecard_gallery_files', []) %}
 
 {# =====================================================================
    PUBLIC MODE
@@ -203,6 +204,18 @@
 {% endfor %}
 {% endmacro %}
 
+{# ── Gallery macro (public mode) ─────────────────────────────────── #}
+{% macro pub_gallery(items, border_color, label_color) %}
+{% if items %}
+<div style="margin-top:16px;padding-top:12px;border-top:1px solid {{ border_color or '#e5e7eb' }};">
+    <div style="font-size:10px;font-weight:700;color:{{ label_color or '#9ca3af' }};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;text-align:center;">Gallery</div>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+        {% for img in items %}<div style="aspect-ratio:1;overflow:hidden;border-radius:8px;background:#e5e7eb;"><img src="{{ img.url }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"></div>{% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
 <div class="phone-wrapper">
 
     {# Welcome overlay #}
@@ -236,6 +249,7 @@
                         <i class="fa-solid fa-address-card"></i> {{ _btn_text }}
                     </button>
                     {% if _website %}<a class="website-link" href="{{ _website }}" target="_blank" rel="noopener">{{ _website }}</a>{% endif %}
+                    {{ pub_gallery(_gallery, '#e5e7eb', '#9ca3af') }}
                 </div>
             </div>
         </div>
@@ -252,6 +266,7 @@
             <div class="E-card-list">{{ pub_phones(_phones) }}{{ pub_emails(_emails) }}{{ pub_websites(_websites) }}</div>
             <button type="button" class="t1-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ _btn_text }}</button>
             {% if _website %}<a class="t1-website" href="{{ _website }}" target="_blank" rel="noopener">{{ _website }}</a>{% endif %}
+            {{ pub_gallery(_gallery, 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.6)') }}
         </div>
     </div>
 
@@ -267,6 +282,7 @@
                 <div class="E-card-list">{{ pub_phones(_phones) }}{{ pub_emails(_emails) }}{{ pub_websites(_websites) }}</div>
                 <button type="button" class="t2-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ _btn_text }}</button>
                 {% if _website %}<a class="t2-website" href="{{ _website }}" target="_blank" rel="noopener">{{ _website }}</a>{% endif %}
+                {{ pub_gallery(_gallery, '#e5e7eb', '#9ca3af') }}
             </div>
         </div>
     </div>
@@ -284,6 +300,7 @@
         <div class="E-card-list">{{ pub_phones(_phones) }}{{ pub_emails(_emails) }}{{ pub_websites(_websites) }}</div>
         <button type="button" class="t3-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ _btn_text }}</button>
         {% if _website %}<a class="t3-website" href="{{ _website }}" target="_blank" rel="noopener">{{ _website }}</a>{% endif %}
+        {{ pub_gallery(_gallery, 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.6)') }}
     </div>
 
     {# TEMPLATE 4 #}
@@ -301,6 +318,7 @@
             <button type="button" class="t4-primary-btn" onclick="downloadVCard()"><i class="fa-solid fa-address-card"></i> {{ _btn_text }}</button>
         </div>
         {% if _website %}<a class="t4-website" href="{{ _website }}" target="_blank" rel="noopener">{{ _website }}</a>{% endif %}
+        {{ pub_gallery(_gallery, 'rgba(255,255,255,0.2)', 'rgba(255,255,255,0.6)') }}
     </div>
     {% endif %}
 
@@ -380,6 +398,10 @@ function downloadVCard(){
         </div>
         <div id="t1-preview-website"
             style="text-align:center;margin-top:8px;font-size:11px;font-weight:600;color:white;{% if not _website %}display:none;{% endif %}">{{ _website }}</div>
+        <div id="preview-ecard-gallery-t1" style="display:none;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.2);">
+            <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;text-align:center;">Gallery</div>
+            <div data-gallery-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;"></div>
+        </div>
     </div>
 </div>
 
@@ -414,6 +436,10 @@ function downloadVCard(){
             </div>
             <div id="t2-preview-website"
                 style="text-align:center;margin-top:10px;font-size:10px;font-weight:600;color:{{ _primary }};text-decoration:underline;{% if not _website %}display:none;{% endif %}">{{ _website }}</div>
+            <div id="preview-ecard-gallery-t2" style="display:none;margin-top:10px;padding-top:8px;border-top:1px solid #e5e7eb;">
+                <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;text-align:center;">Gallery</div>
+                <div data-gallery-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -447,6 +473,10 @@ function downloadVCard(){
         </div>
         <div id="t3-preview-website"
             style="text-align:center;margin-top:4px;font-size:11px;font-weight:600;color:white;width:100%;{% if not _website %}display:none;{% endif %}">{{ _website }}</div>
+        <div id="preview-ecard-gallery-t3" style="display:none;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.2);width:100%;">
+            <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;text-align:center;">Gallery</div>
+            <div data-gallery-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;"></div>
+        </div>
     </div>
 </div>
 
@@ -480,6 +510,10 @@ function downloadVCard(){
     </div>
     <div id="t4-preview-website"
         style="text-align:center;margin-top:14px;font-size:11px;font-weight:600;color:white;width:100%;{% if not _website %}display:none;{% endif %}">{{ _website }}</div>
+    <div id="preview-ecard-gallery-t4" style="display:none;margin-top:10px;width:100%;max-width:280px;">
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;text-align:center;">Gallery</div>
+        <div data-gallery-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;"></div>
+    </div>
 </div>
 
 {# ── Default template (in document flow, shown when no t1-t4 active) ─ #}
@@ -530,6 +564,10 @@ function downloadVCard(){
 
     <div id="preview-website-text"
         style="color:{{ _primary }};font-size:12px;font-weight:500;font-family:'Lato',sans-serif;margin-top:4px;{% if not _website %}display:none;{% endif %}text-align:center;text-decoration:underline;">{{ _website }}</div>
+    <div id="preview-ecard-gallery-default" style="display:none;width:100%;padding:8px 10px 0;margin-top:8px;border-top:1px solid #e5e7eb;">
+        <div style="font-size:9px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;text-align:center;">Gallery</div>
+        <div data-gallery-grid style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px;"></div>
+    </div>
 </div>
 
 {% endif %}

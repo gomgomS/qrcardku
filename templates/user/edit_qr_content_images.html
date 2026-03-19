@@ -434,6 +434,19 @@
         padding: 4px;
     }
 
+    /* Block-style template picker */
+    .block-style-picker { display: flex; gap: 5px; flex-wrap: wrap; }
+    .block-style-opt { cursor: pointer; border: 2px solid #e5e7eb; border-radius: 7px; padding: 5px 4px 4px; font-size: 10px; font-weight: 500; color: #9ca3af; background: white; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; flex: 1; min-width: 52px; }
+    .block-style-opt:hover { border-color: #93c5fd; color: #3b82f6; }
+    .block-style-opt.selected { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .bsp-thumb { width: 100%; height: 28px; border-radius: 3px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+
+    /* Hide labels in gallery list */
+    .gallery-labels-hidden .gallery-form-item-fields input,
+    .gallery-labels-hidden .gallery-form-item-fields textarea { display: none; }
+    .gallery-labels-hidden .gallery-form-item-fields::after { content: 'Labels hidden'; font-size: 10px; color: #9ca3af; font-style: italic; }
+    .gallery-labels-hidden .preview-gallery-item .item-caption { display: none; }
+
     .crop-modal-overlay {
         display: none;
         position: fixed;
@@ -656,53 +669,63 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
-                                {% set _cur_tmpl = qrcard.get('images_template','1col') if qrcard else '1col' %}
-                                <label style="cursor:pointer;text-align:center;">
-                                    <input type="radio" name="images_template" value="1col" {% if _cur_tmpl=='1col'
-                                        %}checked{% endif %} style="display:none;" class="hidden-radio">
-                                    <div class="template-card"
-                                        style="border:{% if _cur_tmpl=='1col' %}2px solid var(--primary){% else %}1px solid var(--border-color){% endif %};border-radius:8px;padding:8px;width:100px;height:140px;background:white;margin-bottom:8px;">
-                                        <div
-                                            style="background:#e5e7eb;width:100%;height:35%;border-radius:4px;margin-bottom:6px;">
-                                        </div>
-                                        <div
-                                            style="background:#d1d5db;width:100%;height:35%;border-radius:4px;margin-bottom:6px;">
-                                        </div>
-                                        <div style="background:#e5e7eb;width:100%;height:20%;border-radius:4px;"></div>
+                            {% set _cur_tmpl = qrcard.get('images_template','1col') if qrcard else '1col' %}
+                            <div class="block-style-picker">
+                                <label class="block-style-opt{% if _cur_tmpl=='1col' %} selected{% endif %}">
+                                    <input type="radio" name="images_template" value="1col" {% if _cur_tmpl=='1col' %}checked{% endif %} style="display:none;">
+                                    <div class="bsp-thumb" style="background:#f9fafb;flex-direction:column;gap:1px;padding:2px 3px;">
+                                        <div style="width:100%;height:7px;background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="width:100%;height:7px;background:#e5e7eb;border-radius:1px;"></div>
+                                        <div style="width:100%;height:7px;background:#d1d5db;border-radius:1px;"></div>
                                     </div>
-                                    <span style="font-size:12px;font-weight:500;">1 Column</span>
+                                    <span>1 Col</span>
                                 </label>
-                                <label style="cursor:pointer;text-align:center;">
-                                    <input type="radio" name="images_template" value="2col" {% if _cur_tmpl=='2col'
-                                        %}checked{% endif %} style="display:none;" class="hidden-radio">
-                                    <div class="template-card"
-                                        style="border:{% if _cur_tmpl=='2col' %}2px solid var(--primary){% else %}1px solid var(--border-color){% endif %};border-radius:8px;padding:8px;width:100px;height:140px;background:white;margin-bottom:8px;">
-                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;height:100%;">
-                                            <div style="background:#e5e7eb;border-radius:3px;"></div>
-                                            <div style="background:#d1d5db;border-radius:3px;"></div>
-                                            <div style="background:#d1d5db;border-radius:3px;"></div>
-                                            <div style="background:#e5e7eb;border-radius:3px;"></div>
-                                        </div>
+                                <label class="block-style-opt{% if _cur_tmpl=='2col' %} selected{% endif %}">
+                                    <input type="radio" name="images_template" value="2col" {% if _cur_tmpl=='2col' %}checked{% endif %} style="display:none;">
+                                    <div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;">
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="background:#e5e7eb;border-radius:1px;"></div>
+                                        <div style="background:#e5e7eb;border-radius:1px;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
                                     </div>
-                                    <span style="font-size:12px;font-weight:500;">2 Columns</span>
+                                    <span>2 Col</span>
                                 </label>
-                                <label style="cursor:pointer;text-align:center;">
-                                    <input type="radio" name="images_template" value="3col" {% if _cur_tmpl=='3col'
-                                        %}checked{% endif %} style="display:none;" class="hidden-radio">
-                                    <div class="template-card"
-                                        style="border:{% if _cur_tmpl=='3col' %}2px solid var(--primary){% else %}1px solid var(--border-color){% endif %};border-radius:8px;padding:8px;width:100px;height:140px;background:white;margin-bottom:8px;">
-                                        <div
-                                            style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;height:100%;">
-                                            <div style="background:#e5e7eb;border-radius:2px;"></div>
-                                            <div style="background:#d1d5db;border-radius:2px;"></div>
-                                            <div style="background:#e5e7eb;border-radius:2px;"></div>
-                                            <div style="background:#d1d5db;border-radius:2px;"></div>
-                                            <div style="background:#e5e7eb;border-radius:2px;"></div>
-                                            <div style="background:#d1d5db;border-radius:2px;"></div>
-                                        </div>
+                                <label class="block-style-opt{% if _cur_tmpl=='grid21' %} selected{% endif %}">
+                                    <input type="radio" name="images_template" value="grid21" {% if _cur_tmpl=='grid21' %}checked{% endif %} style="display:none;">
+                                    <div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;">
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div>
                                     </div>
-                                    <span style="font-size:12px;font-weight:500;">3 Columns</span>
+                                    <span>Grid 2-1</span>
+                                </label>
+                                <label class="block-style-opt{% if _cur_tmpl=='grid12' %} selected{% endif %}">
+                                    <input type="radio" name="images_template" value="grid12" {% if _cur_tmpl=='grid12' %}checked{% endif %} style="display:none;">
+                                    <div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;">
+                                        <div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                    </div>
+                                    <span>Grid 1-2</span>
+                                </label>
+                                <label class="block-style-opt{% if _cur_tmpl=='split' %} selected{% endif %}">
+                                    <input type="radio" name="images_template" value="split" {% if _cur_tmpl=='split' %}checked{% endif %} style="display:none;">
+                                    <div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;">
+                                        <div style="background:#bbb;border-radius:1px;grid-row:span 2;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                        <div style="background:#d1d5db;border-radius:1px;"></div>
+                                    </div>
+                                    <span>Split</span>
+                                </label>
+                            </div>
+
+                            <!-- Hide image labels toggle -->
+                            <div class="toggle-row" style="margin-top:12px;padding:8px 0 0 0;border-top:1px solid var(--border-color);">
+                                <span class="toggle-label-with-icon"><i class="fa-solid fa-eye-slash"></i> Hide image name &amp; description</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="images_hide_labels" id="images_hide_labels" value="1"
+                                        {% if qrcard and qrcard.get('images_hide_labels') %}checked{% endif %}>
+                                    <span class="slider"></span>
                                 </label>
                             </div>
                         </div>
@@ -954,15 +977,45 @@
         if (descInput) descInput.addEventListener('input', function () { var el = document.getElementById('preview-gallery-desc'); if (el) { el.textContent = this.value; el.style.display = this.value ? 'block' : 'none'; } });
 
         // ── Template switching ──
+        function applyTemplateLayout(val) {
+            var grid = document.getElementById('preview-gallery-grid'); if (!grid) return;
+            grid.style.gridTemplateColumns = '';
+            if (val === '1col') grid.style.gridTemplateColumns = '1fr';
+            else if (val === '2col') grid.style.gridTemplateColumns = 'repeat(2,1fr)';
+            else if (val === 'grid21' || val === 'grid12' || val === 'split') grid.style.gridTemplateColumns = 'repeat(2,1fr)';
+            applyGridSpansEdit(val);
+        }
+        function applyGridSpansEdit(val) {
+            var grid = document.getElementById('preview-gallery-grid'); if (!grid) return;
+            var items = grid.querySelectorAll('.preview-gallery-item');
+            items.forEach(function(item, i) { item.style.gridColumn = ''; item.style.gridRow = ''; });
+            if (val === 'grid21') { items.forEach(function(item, i) { if (i === 2) item.style.gridColumn = 'span 2'; }); }
+            else if (val === 'grid12') { items.forEach(function(item, i) { if (i === 0) item.style.gridColumn = 'span 2'; }); }
+            else if (val === 'split') { items.forEach(function(item, i) { if (i === 0) item.style.gridRow = 'span 2'; }); }
+        }
         document.querySelectorAll('input[name="images_template"]').forEach(function (radio) {
             radio.addEventListener('change', function () {
-                var grid = document.getElementById('preview-gallery-grid'); if (!grid) return;
-                var cols = 1; if (this.value === '2col') cols = 2; if (this.value === '3col') cols = 3;
-                grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
-                document.querySelectorAll('.template-card').forEach(function (c) { c.style.border = '1px solid var(--border-color)'; });
-                var card = this.parentElement.querySelector('.template-card'); if (card) card.style.border = '2px solid var(--primary)';
+                document.querySelectorAll('.block-style-opt').forEach(function(opt) {
+                    opt.classList.toggle('selected', opt.querySelector('input[name="images_template"]') === radio);
+                });
+                applyTemplateLayout(this.value);
             });
         });
+        var initTpl = document.querySelector('input[name="images_template"]:checked');
+        if (initTpl) applyTemplateLayout(initTpl.value);
+
+        // ── Hide labels toggle ──
+        var hideLabelsToggle = document.getElementById('images_hide_labels');
+        function applyHideLabels(hide) {
+            var gl = document.getElementById('gallery-items-list');
+            if (gl) gl.classList.toggle('gallery-labels-hidden', !!hide);
+            var grid = document.getElementById('preview-gallery-grid');
+            if (grid) grid.querySelectorAll('.item-caption').forEach(function(el) { el.style.display = hide ? 'none' : ''; });
+        }
+        if (hideLabelsToggle) {
+            hideLabelsToggle.addEventListener('change', function() { applyHideLabels(this.checked); });
+            applyHideLabels(hideLabelsToggle.checked);
+        }
 
         // ── Image Upload + Crop (same as new form) ──
         var uploadArea = document.getElementById('images-upload-area'), fileInput = document.getElementById('images-file-input'), itemsList = document.getElementById('gallery-items-list');
@@ -974,7 +1027,7 @@
         {% for img in qrcard.get('images_gallery_files', []) %}
         galleryImages.push({ file: null, dataUrl: "{{ img.url }}", name: "{{ img.get('name','')|e }}", desc: "{{ img.get('desc','')|e }}", cropped: false, existingUrl: "{{ img.url }}" });
         {% endfor %}
-        renderGalleryItems();
+        renderGalleryItems(); updatePreviewGallery();
         {% endif %}
 
         if (uploadArea) {
@@ -1031,12 +1084,15 @@
         function updatePreviewGallery() {
             var grid = document.getElementById('preview-gallery-grid'); if (!grid) return; grid.innerHTML = '';
             if (galleryImages.length === 0) { grid.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;"><i class="fa-regular fa-images" style="font-size:32px;margin-bottom:8px;display:block;"></i><div style="font-size:11px;">No images</div></div>'; return; }
+            var hideLabels = document.getElementById('images_hide_labels') && document.getElementById('images_hide_labels').checked;
             galleryImages.forEach(function (img) {
                 var item = document.createElement('div'); item.className = 'preview-gallery-item'; item.style.cssText = 'background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);';
                 var html = '<img src="' + img.dataUrl + '" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;">';
-                if (img.name || img.desc) { html += '<div style="padding:6px 8px;">'; if (img.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(img.name) + '</div>'; if (img.desc) html += '<div style="font-size:9px;color:#6b7280;line-height:1.3;">' + escapeHtml(img.desc) + '</div>'; html += '</div>'; }
+                if (img.name || img.desc) { html += '<div class="item-caption" style="padding:6px 8px;' + (hideLabels ? 'display:none;' : '') + '">'; if (img.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(img.name) + '</div>'; if (img.desc) html += '<div style="font-size:9px;color:#6b7280;line-height:1.3;">' + escapeHtml(img.desc) + '</div>'; html += '</div>'; }
                 item.innerHTML = html; grid.appendChild(item);
             });
+            var curTpl = document.querySelector('input[name="images_template"]:checked');
+            if (curTpl) applyGridSpansEdit(curTpl.value);
         }
 
         window.updateGalleryName = function (i, v) { if (galleryImages[i]) galleryImages[i].name = v; updateHiddenInputs(); updatePreviewGallery(); };

@@ -1228,6 +1228,36 @@
                         </div>
                     </div>
 
+                    <!-- Gallery Images -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Gallery images</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="margin-top: 16px;">
+                                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Add photos to show below your contact card.</p>
+                                {% set _saved_gallery = qrcard.get('ecard_gallery_files', []) if qrcard else [] %}
+                                {% if _saved_gallery %}
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                                    {% for img in _saved_gallery %}
+                                    <div style="position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+                                        <img src="{{ img.url }}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border-color); border-radius: 8px; padding: 20px; cursor: pointer; background: #fafafa; gap: 6px;">
+                                    <i class="fa-regular fa-images" style="font-size: 24px; color: #9ca3af;"></i>
+                                    <span style="font-size: 12px; color: #6b7280;">Click to add photos</span>
+                                    <span style="font-size: 11px; color: #9ca3af;">JPG, PNG — up to 5 images</span>
+                                    <input type="file" name="ecard_gallery_images[]" id="ecard-gallery-input" multiple accept="image/*" style="display:none;">
+                                </label>
+                                <div id="ecard-gallery-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -2878,6 +2908,99 @@
             });
         });
     });
+</script>
+
+<script>
+    // ── Ecard gallery image upload & preview (edit page) ─────────────
+    (function () {
+        var input = document.getElementById('ecard-gallery-input');
+        var list = document.getElementById('ecard-gallery-list');
+        var MAX = 5;
+        // Pre-populate with already-saved gallery URLs
+        var _savedUrls = {{ ((qrcard.get('ecard_gallery_files', []) if qrcard else []) | map(attribute='url') | list) | tojson }};
+        // Each item: {type:'saved', url:string} | {type:'file', file:File, previewUrl:string}
+        var _items = _savedUrls.map(function (u) { return { type: 'saved', url: u }; });
+
+        function syncInputFiles() {
+            if (!input || !window.DataTransfer) return;
+            var dt = new DataTransfer();
+            _items.forEach(function (item) {
+                if (item.type === 'file') dt.items.add(item.file);
+            });
+            input.files = dt.files;
+        }
+
+        function previewUrl(item) {
+            return item.type === 'file' ? item.previewUrl : item.url;
+        }
+
+        function updateAllGalleryPreviews() {
+            var ids = ['preview-ecard-gallery-t1','preview-ecard-gallery-t2','preview-ecard-gallery-t3','preview-ecard-gallery-t4','preview-ecard-gallery-default'];
+            ids.forEach(function (id) {
+                var container = document.getElementById(id);
+                if (!container) return;
+                var grid = container.querySelector('[data-gallery-grid]');
+                if (!grid) return;
+                grid.innerHTML = '';
+                if (_items.length === 0) { container.style.display = 'none'; return; }
+                container.style.display = 'block';
+                _items.forEach(function (item) {
+                    var cell = document.createElement('div');
+                    cell.style.cssText = 'aspect-ratio:1;overflow:hidden;border-radius:6px;background:#e5e7eb;';
+                    var img = document.createElement('img');
+                    img.src = previewUrl(item);
+                    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                    cell.appendChild(img); grid.appendChild(cell);
+                });
+            });
+        }
+
+        function renderList() {
+            list.innerHTML = '';
+            _items.forEach(function (item, idx) {
+                var wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;flex-shrink:0;';
+                var img = document.createElement('img');
+                img.src = previewUrl(item);
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                var del = document.createElement('button');
+                del.type = 'button';
+                del.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.55);border:none;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
+                del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                del.addEventListener('click', (function (i) {
+                    return function () {
+                        _items.splice(i, 1);
+                        syncInputFiles();
+                        renderList();
+                        updateAllGalleryPreviews();
+                    };
+                })(idx));
+                wrap.appendChild(img); wrap.appendChild(del); list.appendChild(wrap);
+            });
+        }
+
+        if (input) {
+            input.addEventListener('change', function () {
+                var files = Array.from(this.files);
+                var remaining = MAX - _items.length;
+                files.slice(0, remaining).forEach(function (file) {
+                    if (!file.type.startsWith('image/')) return;
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        _items.push({ type: 'file', file: file, previewUrl: e.target.result });
+                        syncInputFiles();
+                        renderList();
+                        updateAllGalleryPreviews();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                input.value = '';
+            });
+        }
+
+        // Show saved gallery in preview immediately on load
+        updateAllGalleryPreviews();
+    })();
 </script>
 
 {% endblock %}

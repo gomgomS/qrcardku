@@ -339,6 +339,11 @@ class qr_images_proc:
         else:
             design_update["images_font_apply_all"] = False
 
+        if request.form.get("images_hide_labels") in ("on", "true", "1", "yes"):
+            design_update["images_hide_labels"] = True
+        else:
+            design_update["images_hide_labels"] = False
+
         # Store into main and images-specific collections
         full_update = {**about_update, **design_update}
         self.mgdDB.db_qrcard.update_one(
@@ -395,6 +400,31 @@ class qr_images_proc:
                 r2.delete_prefix(f"images/_tmp/{welcome_tmp_key}/")
             except Exception:
                 pass
+
+        # Autocomplete static images (if no real uploaded files)
+        if not saved_gallery:
+            ac_urls = session.pop("images_autocomplete_urls", []) or []
+            ac_names = session.pop("images_autocomplete_names", []) or []
+            ac_descs = session.pop("images_autocomplete_descs", []) or []
+            if ac_urls:
+                for i, ac_url in enumerate(ac_urls):
+                    if not ac_url or not ac_url.startswith("/static/"):
+                        continue
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
+                        try:
+                            ext = os.path.splitext(local_path)[1].lower() or ".png"
+                            safe_name = uuid.uuid4().hex + ext
+                            with open(local_path, "rb") as f:
+                                file_url = r2.upload_bytes(f.read(), f"images/{new_qrcard_id}/{safe_name}")
+                            entry = {"url": file_url, "name": (ac_names[i] if i < len(ac_names) else ""), "desc": (ac_descs[i] if i < len(ac_descs) else "")}
+                            saved_gallery.append(entry)
+                        except Exception:
+                            pass
+        else:
+            session.pop("images_autocomplete_urls", None)
+            session.pop("images_autocomplete_names", None)
+            session.pop("images_autocomplete_descs", None)
 
         if saved_gallery:
             self.mgdDB.db_qrcard.update_one(

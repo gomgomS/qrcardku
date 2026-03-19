@@ -397,6 +397,7 @@ class qr_ecard_proc:
         cover_tmp_name = session.pop("cover_img_tmp_name", "pdf_cover_img.jpg")
         saved_display_names = session.pop("pdf_display_names", [])
         saved_item_descs = session.pop("pdf_item_descs", [])
+        gallery_tmp_files = session.pop("ecard_gallery_tmp_files", [])
         session.modified = True
         if welcome_tmp_key:
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
@@ -482,5 +483,39 @@ class qr_ecard_proc:
                 {"$set": {"E-card_files": saved_files}},
                 upsert=True,
             )
+        # Handle gallery images
+        saved_gallery = []
+        # Real uploaded files (moved from tmp storage)
+        for g_info in gallery_tmp_files:
+            g_tmp_key = g_info.get("tmp_key")
+            g_safe_name = g_info.get("safe_name")
+            if not g_tmp_key or not g_safe_name:
+                continue
+            src_key = f"ecard/_tmp/{g_tmp_key}/{g_safe_name}"
+            dst_key = f"ecard/{new_qrcard_id}/gallery/{g_safe_name}"
+            try:
+                file_url = r2.move_file(src_key, dst_key)
+                saved_gallery.append({"url": file_url})
+            except Exception:
+                pass
+        # Autocomplete static gallery images
+        ac_gallery_urls = request.form.getlist("ecard_gallery_autocomplete_url[]")
+        for ac_url in ac_gallery_urls:
+            if not ac_url or not ac_url.startswith("/static/"):
+                continue
+            _ext = os.path.splitext(ac_url)[1] or ".jpg"
+            local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                try:
+                    safe_name = uuid.uuid4().hex + _ext
+                    with open(local_path, "rb") as f:
+                        file_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/gallery/{safe_name}")
+                    saved_gallery.append({"url": file_url})
+                except Exception:
+                    pass
+        if saved_gallery:
+            self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}})
+            self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}}, upsert=True)
+
         return {"success": True, "qrcard_id": new_qrcard_id}
 

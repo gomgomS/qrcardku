@@ -1,6 +1,6 @@
 {
   "appearance": {
-    "template": "template1",
+    "template": "grid21",
     "primary_color": "#f59e0b",
     "secondary_color": "#b45309",
     "title_font": "Montserrat",
@@ -8,6 +8,14 @@
   },
   "basic_info": {
     "title": "My Photo Gallery",
-    "desc": "A collection of my best shots"
-  }
+    "desc": "A collection of our best shots"
+  },
+  "images": [
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_1.png", "name": "Sample Photo 1", "desc": "" },
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_2.png", "name": "Sample Photo 2", "desc": "" },
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_3.png", "name": "Sample Photo 3", "desc": "" },
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_4.png", "name": "Sample Photo 4", "desc": "" },
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_5.png", "name": "Sample Photo 5", "desc": "" },
+    { "url": "/static/assets/autocomplete_field_helper/img/random_img_6.png", "name": "Sample Photo 6", "desc": "" }
+  ]
 }

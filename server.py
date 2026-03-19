@@ -575,7 +575,7 @@ def qr_update_save_ecard(qrcard_id):
     params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled") or draft.get("scan_limit_enabled"))
     raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
-    
+
     for key in request.form:
         if key not in ["csrf_token", "url_content", "qr_name", "short_code", "scan_limit_enabled", "scan_limit_value"]:
             val_list = request.form.getlist(key)
@@ -583,12 +583,36 @@ def qr_update_save_ecard(qrcard_id):
                 params[key] = val_list
             else:
                 params[key] = val_list[0] if val_list else ""
-                
+
     for key, val in draft.items():
         if key not in params and key not in ["url_content", "qr_name", "short_code"]:
             params[key] = val
-            
+
     proc.edit_qrcard(params)
+
+    # Handle gallery image uploads
+    gallery_files = request.files.getlist("ecard_gallery_images[]")
+    if gallery_files and any(f and f.filename for f in gallery_files):
+        import os, uuid as _uuid
+        from pytavia_modules.storage import r2_storage_proc as _r2m
+        r2 = _r2m.r2_storage_proc()
+        existing_doc = proc.mgdDB.db_qrcard_ecard.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"ecard_gallery_files": 1}) or {}
+        saved_gallery = list(existing_doc.get("ecard_gallery_files") or [])
+        for gfile in gallery_files:
+            if not gfile or not gfile.filename:
+                continue
+            ext = os.path.splitext(gfile.filename)[1].lower() or ".jpg"
+            safe_name = _uuid.uuid4().hex + ext
+            try:
+                data = gfile.read()
+                file_url = r2.upload_bytes(data, f"ecard/{qrcard_id}/gallery/{safe_name}")
+                saved_gallery.append({"url": file_url})
+            except Exception:
+                pass
+        if saved_gallery:
+            proc.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}})
+            proc.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}}, upsert=True)
+
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
@@ -2120,9 +2144,9 @@ def user_new_qr_design_web():
 @app.route("/qr/new/ecard", methods=["GET"])
 @app.route("/qr/new/ecard/back", methods=["POST"])
 def user_new_qr_ecard():
+    from flask import request, url_for
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
-    from flask import request, url_for
     from pytavia_modules.view import view_ecard
     v = view_ecard.view_ecard(app)
     if request.method == "POST":
@@ -2256,6 +2280,27 @@ def user_new_qr_design_ecard():
                 session["cover_img_tmp_key"] = tmp_key
                 session["cover_img_tmp_name"] = "pdf_cover_img" + ext
                 session.modified = True
+        gallery_imgs = request.files.getlist("ecard_gallery_images[]")
+        gallery_tmp_list = []
+        for gf in gallery_imgs:
+            if not gf or not gf.filename:
+                continue
+            gf.seek(0, 2)
+            if gf.tell() > 5 * 1024 * 1024:
+                continue
+            gf.seek(0)
+            ext = os.path.splitext(gf.filename)[1].lower() or ".jpg"
+            if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                ext = ".jpg"
+            safe_name = "gallery_" + _uuid.uuid4().hex + ext
+            try:
+                _r2.upload_file(gf, f"ecard/_tmp/{tmp_key}/{safe_name}")
+                gallery_tmp_list.append({"safe_name": safe_name, "tmp_key": tmp_key})
+            except Exception:
+                pass
+        if gallery_tmp_list:
+            session["ecard_gallery_tmp_files"] = gallery_tmp_list
+            session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
@@ -3584,7 +3629,11 @@ def user_new_qr_design_images():
             if i < len(images_descs): tmp_gallery[i]["desc"] = images_descs[i]
             
         session["images_tmp_gallery"] = tmp_gallery
-        
+        session["images_autocomplete_urls"] = request.form.getlist("images_autocomplete_urls[]")
+        session["images_autocomplete_names"] = request.form.getlist("images_autocomplete_names[]")
+        session["images_autocomplete_descs"] = request.form.getlist("images_autocomplete_descs[]")
+        session.modified = True
+
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
             
@@ -3937,6 +3986,7 @@ def qr_update_save_images(qrcard_id):
         if key not in params and key not in ["url_content", "qr_name", "short_code"]:
             params[key] = val
             
+    params["images_hide_labels"] = request.form.get("images_hide_labels") in ("on", "true", "1", "yes")
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))

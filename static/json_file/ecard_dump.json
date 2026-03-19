@@ -26,5 +26,11 @@
   "websites": [
     { "label": "Portfolio", "value": "https://johnsmith.com" },
     { "label": "LinkedIn", "value": "https://linkedin.com/in/johnsmith" }
+  ],
+  "gallery": [
+    "/static/assets/autocomplete_field_helper/img/random_img_1.png",
+    "/static/assets/autocomplete_field_helper/img/random_img_2.png",
+    "/static/assets/autocomplete_field_helper/img/random_img_3.png",
+    "/static/assets/autocomplete_field_helper/img/random_img_4.png"
   ]
 }
