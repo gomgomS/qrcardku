@@ -8,8 +8,10 @@ import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -262,8 +264,7 @@ class qr_special_proc:
         Returns dict with success=True or success=False + form data for error re-render.
         """
         import os
-        import shutil
-
+        r2 = r2_mod.r2_storage_proc()
         fk_user_id = session.get("fk_user_id")
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated"}
@@ -314,16 +315,13 @@ class qr_special_proc:
         new_qrcard_id = result["message_data"]["qrcard_id"]
 
         # Handle welcome screen image upload
-        dest_dir = os.path.join(root_path, "static", "uploads", "special", new_qrcard_id)
+        import re as _re
         welcome_file = request.files.get("special_welcome_img")
         if welcome_file and welcome_file.filename:
-            os.makedirs(dest_dir, exist_ok=True)
-            import re as _re
             safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_file.filename)
             welcome_fname = "welcome_" + safe_name
-            welcome_path = os.path.join(dest_dir, welcome_fname)
-            welcome_file.save(welcome_path)
-            welcome_url = "/static/uploads/special/" + new_qrcard_id + "/" + welcome_fname
+            r2_key = f"special/{new_qrcard_id}/{welcome_fname}"
+            welcome_url = r2.upload_file(welcome_file, r2_key)
             # Update both collections with the welcome image URL
             self.mgdDB.db_qrcard.update_one(
                 {"qrcard_id": new_qrcard_id},
@@ -337,18 +335,10 @@ class qr_special_proc:
         # Handle uploaded images for special sections
         tmp_key = session.pop("special_tmp_key", None)
         if tmp_key:
-            tmp_dir = os.path.join(root_path, "static", "uploads", "special", "_tmp", tmp_key)
-            if os.path.exists(tmp_dir):
-                os.makedirs(dest_dir, exist_ok=True)
-                for fname in os.listdir(tmp_dir):
-                    src = os.path.join(tmp_dir, fname)
-                    dst = os.path.join(dest_dir, fname)
-                    if os.path.isfile(src):
-                        shutil.move(src, dst)
-                try:
-                    shutil.rmtree(tmp_dir, ignore_errors=True)
-                except Exception:
-                    pass
+            try:
+                r2.delete_prefix(f"special/_tmp/{tmp_key}/")
+            except Exception:
+                pass
         session.modified = True
 
         return {"success": True, "qrcard_id": new_qrcard_id}

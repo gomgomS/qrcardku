@@ -7,8 +7,10 @@ import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -327,9 +329,7 @@ class qr_pdf_proc:
         Full PDF save flow: build params from request, add_qrcard, then move uploads
         and update DB. Returns dict with success=True or success=False + error/form data.
         """
-        import os
-        import shutil
-
+        r2 = r2_mod.r2_storage_proc()
         fk_user_id = session.get("fk_user_id")
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated", "url_content": "", "qr_name": "", "short_code": "", "qr_encode_url": None, "pdf_data": {}}
@@ -396,27 +396,24 @@ class qr_pdf_proc:
         saved_item_descs = session.pop("pdf_item_descs", [])
         session.modified = True
 
-        dest_dir = os.path.join(root_path, "static", "uploads", "pdf", new_qrcard_id)
-        tmp_dir = os.path.join(root_path, "static", "uploads", "pdf", "_tmp", tmp_key) if tmp_key else None
+        import os
 
         if welcome_tmp_key:
-            tmp_dir_w = os.path.join(root_path, "static", "uploads", "pdf", "_tmp", welcome_tmp_key)
-            src_welcome = os.path.join(tmp_dir_w, welcome_tmp_name)
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
-            if os.path.exists(src_welcome):
-                os.makedirs(dest_dir, exist_ok=True)
-                shutil.move(src_welcome, os.path.join(dest_dir, "welcome" + ext))
-                welcome_url = f"/static/uploads/pdf/{new_qrcard_id}/welcome{ext}"
+            src_key = f"pdf/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
+            dst_key = f"pdf/{new_qrcard_id}/welcome{ext}"
+            try:
+                welcome_url = r2.move_file(src_key, dst_key)
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+            except Exception:
+                pass
         if cover_tmp_key:
-            tmp_dir_c = os.path.join(root_path, "static", "uploads", "pdf", "_tmp", cover_tmp_key)
-            src_cover = os.path.join(tmp_dir_c, cover_tmp_name)
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
-            if os.path.exists(src_cover):
-                os.makedirs(dest_dir, exist_ok=True)
-                shutil.move(src_cover, os.path.join(dest_dir, "pdf_cover_img" + ext))
-                cover_url = f"/static/uploads/pdf/{new_qrcard_id}/pdf_cover_img{ext}"
+            src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"
+            dst_key = f"pdf/{new_qrcard_id}/pdf_cover_img{ext}"
+            try:
+                cover_url = r2.move_file(src_key, dst_key)
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
@@ -425,35 +422,35 @@ class qr_pdf_proc:
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
                 )
+            except Exception:
+                pass
         saved_files = []
         if tmp_key and tmp_files:
-            if not tmp_dir:
-                tmp_dir = os.path.join(root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
-            os.makedirs(dest_dir, exist_ok=True)
             for idx, f_info in enumerate(tmp_files):
-                src = os.path.join(tmp_dir, f_info["safe_name"])
-                dst = os.path.join(dest_dir, f_info["safe_name"])
-                if os.path.exists(src):
-                    shutil.move(src, dst)
-                    entry = {"name": f_info["name"], "url": f"/static/uploads/pdf/{new_qrcard_id}/{f_info['safe_name']}"}
+                src_key = f"pdf/_tmp/{tmp_key}/{f_info['safe_name']}"
+                dst_key = f"pdf/{new_qrcard_id}/{f_info['safe_name']}"
+                try:
+                    file_url = r2.move_file(src_key, dst_key)
+                    entry = {"name": f_info["name"], "url": file_url}
                     if idx < len(saved_display_names) and saved_display_names[idx].strip():
                         entry["display_name"] = saved_display_names[idx].strip()
                     if idx < len(saved_item_descs):
                         entry["item_desc"] = saved_item_descs[idx].strip()
                     saved_files.append(entry)
+                except Exception:
+                    pass
             try:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+                r2.delete_prefix(f"pdf/_tmp/{tmp_key}/")
             except Exception:
                 pass
         elif tmp_key:
-            tmp_dir = os.path.join(root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
             try:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+                r2.delete_prefix(f"pdf/_tmp/{tmp_key}/")
             except Exception:
                 pass
         if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
             try:
-                shutil.rmtree(os.path.join(root_path, "static", "uploads", "pdf", "_tmp", welcome_tmp_key), ignore_errors=True)
+                r2.delete_prefix(f"pdf/_tmp/{welcome_tmp_key}/")
             except Exception:
                 pass
         if saved_files:
@@ -469,6 +466,7 @@ class qr_pdf_proc:
         Returns {"success": True} or {"success": False, "error_msg": "..."}.
         """
         import os
+        r2 = r2_mod.r2_storage_proc()
         fk_user_id = session.get("fk_user_id")
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated"}
@@ -548,15 +546,14 @@ class qr_pdf_proc:
             existing_files = list(db_files)
         pdf_file_list = request.files.getlist("pdf_files")
         if pdf_file_list and any(f.filename for f in pdf_file_list):
-            pdf_upload_dir = os.path.join(root_path, "static", "uploads", "pdf", qrcard_id)
-            os.makedirs(pdf_upload_dir, exist_ok=True)
             new_file_offset = len(existing_urls)
             new_file_idx = 0
             for f in pdf_file_list:
                 if f and f.filename and f.filename.lower().endswith(".pdf"):
                     safe_name = f.filename.replace(" ", "_")
-                    f.save(os.path.join(pdf_upload_dir, safe_name))
-                    file_entry = {"name": f.filename, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                    r2_key = f"pdf/{qrcard_id}/{safe_name}"
+                    file_url = r2.upload_file(f, r2_key)
+                    file_entry = {"name": f.filename, "url": file_url}
                     form_idx = new_file_offset + new_file_idx
                     if form_idx < len(display_names) and display_names[form_idx].strip():
                         file_entry["display_name"] = display_names[form_idx].strip()

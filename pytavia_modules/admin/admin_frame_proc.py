@@ -1,18 +1,17 @@
 """Processor for admin-managed default QR frame presets."""
 import os
+import sys
 import time
 import uuid
 import traceback
 from datetime import datetime
 
-import sys
 sys.path.append("pytavia_core")
 sys.path.append("pytavia_modules")
-sys.path.append("pytavia_settings")
-sys.path.append("pytavia_stdlib")
-sys.path.append("pytavia_storage")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config
+from storage import r2_storage_proc as r2_mod
 
 ALLOWED_IMG_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_FILE_SIZE   = 5 * 1024 * 1024  # 5 MB
@@ -36,8 +35,8 @@ class admin_frame_proc:
                 self.webapp.logger.debug(traceback.format_exc())
             return []
 
-    def add_frame(self, name, image_file, qr_x, qr_y, qr_w, qr_h, root_path):
-        """Save uploaded image and frame metadata. Returns dict with frame_id or error."""
+    def add_frame(self, name, image_file, qr_x, qr_y, qr_w, qr_h, root_path=None):
+        """Upload image to R2 and save frame metadata. Returns dict with frame_id or error."""
         try:
             if not name:
                 return {"ok": False, "error": "Frame name is required."}
@@ -52,14 +51,9 @@ class admin_frame_proc:
             if size > MAX_FILE_SIZE:
                 return {"ok": False, "error": "Image exceeds 5 MB limit."}
 
-            frame_id   = uuid.uuid4().hex
-            upload_dir = os.path.join(root_path, "static", "uploads", "admin_frames", frame_id)
-            os.makedirs(upload_dir, exist_ok=True)
-
-            filename  = "frame_bg" + ext
-            save_path = os.path.join(upload_dir, filename)
-            image_file.save(save_path)
-            image_url = f"/static/uploads/admin_frames/{frame_id}/{filename}"
+            frame_id  = uuid.uuid4().hex
+            key       = f"admin_frames/{frame_id}/frame_bg{ext}"
+            image_url = r2_mod.r2_storage_proc().upload_file(image_file, key)
 
             current_time = int(time.time() * 1000)
             created_at   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

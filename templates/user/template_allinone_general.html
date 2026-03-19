@@ -209,6 +209,7 @@
   {% set is_local = url.startswith('/') %}
   {% set href = url if (is_local or '://' in url) else 'https://' + url %}
   {% set is_yt = 'youtube.com' in url or 'youtu.be/' in url %}
+  {% set is_direct_video = (url.endswith('.mp4') or url.endswith('.mov') or url.endswith('.webm') or url.endswith('.avi') or url.endswith('.mkv')) %}
   {% set yt_id = '' %}
   {% if is_yt %}
     {% if 'youtube.com' in url and 'v=' in url %}{% set yt_id = url.split('v=')[1].split('&')[0] %}
@@ -216,7 +217,7 @@
     {% elif '/embed/' in url %}{% set yt_id = url.split('/embed/')[1].split('?')[0] %}{% endif %}
   {% endif %}
   {% if not preview %}
-    {% if is_local %}
+    {% if is_local or is_direct_video %}
   <div class="vd-native-wrap">
     <video src="{{ url }}" controls class="vd-native-player" preload="metadata"></video>
     {% if vtitle %}<div class="vd-embed-title">{{ vtitle }}</div>{% endif %}

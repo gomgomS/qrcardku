@@ -5,13 +5,14 @@ import json
 import random
 import string
 import os
-import shutil
 import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -29,6 +30,21 @@ class qr_allinone_proc:
 
     def __init__(self, app):
         self.webapp = app
+
+    def _upload_static_to_r2(self, _r2, static_url, dest_key, root_path=None):
+        """Read a /static/... file from disk and upload it to R2. Returns R2 URL, or original URL on failure."""
+        if not static_url or not static_url.startswith("/static/"):
+            return static_url
+        base = root_path or config.G_HOME_PATH
+        local_path = os.path.join(base, static_url.lstrip("/").replace("/", os.sep))
+        if not os.path.isfile(local_path):
+            return static_url
+        try:
+            with open(local_path, "rb") as f:
+                return _r2.upload_bytes(f.read(), dest_key)
+        except Exception:
+            self.webapp.logger.debug(traceback.format_exc())
+            return static_url
 
     def generate_short_code(self):
         return "".join(random.choices(SHORT_CODE_CHARS, k=SHORT_CODE_LENGTH))
@@ -157,33 +173,6 @@ class qr_allinone_proc:
             self.webapp.logger.debug(traceback.format_exc())
             return False
 
-    def _save_section_file(self, fobj, dest_dir, prefix, stype):
-        """Save a section image/pdf file and return the public URL, or None on failure."""
-        try:
-            fobj.seek(0, 2)
-            size = fobj.tell()
-            fobj.seek(0)
-            if size > MAX_FILE_SIZE:
-                return None
-            ext = os.path.splitext(fobj.filename)[1].lower()
-            if stype == "image":
-                if ext not in ALLOWED_IMG_EXT:
-                    ext = ".jpg"
-            elif stype == "pdf":
-                if ext not in ALLOWED_PDF_EXT:
-                    ext = ".pdf"
-            else:
-                return None
-            fname = f"{prefix}{uuid.uuid4().hex[:8]}{ext}"
-            os.makedirs(dest_dir, exist_ok=True)
-            fobj.save(os.path.join(dest_dir, fname))
-            # Return a relative URL
-            # dest_dir is an absolute path; compute relative from root
-            return None, fname, ext  # caller will compute URL
-        except Exception:
-            self.webapp.logger.debug(traceback.format_exc())
-            return None
-
     def complete_allinone_save(self, request, session, root_path):
         """Full allinone save: build params, insert records, persist files, move uploads."""
         fk_user_id = session.get("fk_user_id")
@@ -215,7 +204,7 @@ class qr_allinone_proc:
 
         new_id = result["message_data"]["qrcard_id"]
         used_short_code = result["message_data"]["short_code"]
-        dest_dir = os.path.join(root_path, "static", "uploads", "allinone", new_id)
+        _r2 = r2_mod.r2_storage_proc()
 
         # Read sections from allinone_sections_json (passed from design step)
         sections_json_str = request.form.get("allinone_sections_json", "")
@@ -250,50 +239,68 @@ class qr_allinone_proc:
         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": content_update})
         self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": content_update}, upsert=True)
 
-        # Move tmp cover image
-        cover_tmp_key = session.pop("allinone_cover_tmp_key", None)
+        # Move tmp cover image from R2 _tmp → R2 final
+        cover_tmp_key  = session.pop("allinone_cover_tmp_key",  None)
         cover_tmp_name = session.pop("allinone_cover_tmp_name", None)
+        session.pop("allinone_cover_r2_url", None)
         session.modified = True
 
         if cover_tmp_key and cover_tmp_name:
-            tmp_path = os.path.join(root_path, "static", "uploads", "allinone", "_tmp", cover_tmp_key, cover_tmp_name)
-            if os.path.exists(tmp_path):
-                os.makedirs(dest_dir, exist_ok=True)
-                ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
-                shutil.move(tmp_path, os.path.join(dest_dir, "allinone_cover" + ext))
-                cover_url = f"/static/uploads/allinone/{new_id}/allinone_cover{ext}"
+            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            src_key  = f"allinone/_tmp/{cover_tmp_key}/{cover_tmp_name}"
+            dest_key = f"allinone/{new_id}/allinone_cover{ext}"
+            try:
+                cover_url = _r2.move_file(src_key, dest_key)
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}}, upsert=True)
+            except Exception:
+                self.webapp.logger.debug(traceback.format_exc())
         else:
             ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
-            if ac_url and ac_url.startswith("/static/"):
-                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
-                self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
+            if ac_url:
+                if ac_url.startswith("/static/"):
+                    ext = os.path.splitext(ac_url)[1] or ".jpg"
+                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/allinone_cover{ext}", root_path)
+                if ac_url:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
 
-        # Move tmp section files (image/pdf) from _tmp to permanent
+        # Move tmp section files from R2 _tmp → R2 final
         updated_sections = []
+        moved_tmp_keys = set()
         for i, s in enumerate(sections):
             s = dict(s)
             v1 = s.get("v1", "")
             stype = s.get("type", "")
+            # Upload autocomplete static files to R2
+            if stype in ("image", "video", "pdf") and v1 and v1.startswith("/static/"):
+                ext = os.path.splitext(v1)[1] or (".mp4" if stype == "video" else ".jpg" if stype == "image" else ".pdf")
+                dest_key = f"allinone/{new_id}/{stype}_{i}_{new_id[:8]}{ext}"
+                s["v1"] = self._upload_static_to_r2(_r2, v1, dest_key, root_path)
+                v1 = s["v1"]
             if stype in ("image", "pdf") and v1 and "/_tmp/" in v1:
-                # Extract tmp key and filename from URL
-                # URL format: /static/uploads/allinone/_tmp/{tmp_key}/{fname}
                 try:
+                    # URL contains allinone/_tmp/{tmp_key}/{fname} somewhere
                     parts = v1.split("/_tmp/", 1)
                     if len(parts) == 2:
                         rest = parts[1]
                         tmp_key_part, fname_part = rest.split("/", 1)
-                        src = os.path.join(root_path, "static", "uploads", "allinone", "_tmp", tmp_key_part, fname_part)
-                        if os.path.exists(src):
-                            os.makedirs(dest_dir, exist_ok=True)
-                            ext = os.path.splitext(fname_part)[1] or (".jpg" if stype == "image" else ".pdf")
-                            new_fname = f"{stype}_{i}_{new_id[:8]}{ext}"
-                            shutil.move(src, os.path.join(dest_dir, new_fname))
-                            s["v1"] = f"/static/uploads/allinone/{new_id}/{new_fname}"
+                        ext = os.path.splitext(fname_part)[1] or (".jpg" if stype == "image" else ".pdf")
+                        new_fname = f"{stype}_{i}_{new_id[:8]}{ext}"
+                        src_key  = f"allinone/_tmp/{tmp_key_part}/{fname_part}"
+                        dest_key = f"allinone/{new_id}/{new_fname}"
+                        s["v1"] = _r2.move_file(src_key, dest_key)
+                        moved_tmp_keys.add(tmp_key_part)
                 except Exception:
                     self.webapp.logger.debug(traceback.format_exc())
             updated_sections.append(s)
+
+        # Clean up any remaining _tmp prefixes
+        for tk in moved_tmp_keys:
+            try:
+                _r2.delete_prefix(f"allinone/_tmp/{tk}/")
+            except Exception:
+                pass
 
         if updated_sections != sections:
             self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_sections": updated_sections}})
@@ -319,7 +326,7 @@ class qr_allinone_proc:
         if not existing:
             return {"status": "error", "message_desc": "QR card not found."}
 
-        dest_dir = os.path.join(root_path, "static", "uploads", "allinone", qrcard_id)
+        _r2 = r2_mod.r2_storage_proc()
         update_data = {}
 
         # Basic fields
@@ -370,13 +377,17 @@ class qr_allinone_proc:
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in ALLOWED_IMG_EXT:
                         ext = ".jpg"
-                    os.makedirs(dest_dir, exist_ok=True)
-                    cover_img.save(os.path.join(dest_dir, "allinone_cover" + ext))
-                    update_data["Allinone_cover_img_url"] = f"/static/uploads/allinone/{qrcard_id}/allinone_cover{ext}"
+                    update_data["Allinone_cover_img_url"] = _r2.upload_file(
+                        cover_img, f"allinone/{qrcard_id}/allinone_cover{ext}"
+                    )
             else:
                 ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
-                if ac_url and ac_url.startswith("/static/"):
-                    update_data["Allinone_cover_img_url"] = ac_url
+                if ac_url:
+                    if ac_url.startswith("/static/"):
+                        ext = os.path.splitext(ac_url)[1] or ".jpg"
+                        ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{qrcard_id}/allinone_cover{ext}", root_path)
+                    if ac_url:
+                        update_data["Allinone_cover_img_url"] = ac_url
 
         # Prefer allinone_sections_json (rich format with block_style/color) over flat arrays
         sections_json_str = request.form.get("allinone_sections_json", "").strip()
@@ -396,7 +407,7 @@ class qr_allinone_proc:
             for i, s in enumerate(sections):
                 s = dict(s)
                 stype = s.get("type", "")
-                if stype in ("image", "pdf"):
+                if stype in ("image", "video", "pdf"):
                     fkey = f"allinone_file_{i}"
                     fobj = request.files.get(fkey)
                     if fobj and fobj.filename:
@@ -409,9 +420,12 @@ class qr_allinone_proc:
                             elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
                                 ext = ".pdf"
                             fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
-                            os.makedirs(dest_dir, exist_ok=True)
-                            fobj.save(os.path.join(dest_dir, fname))
-                            s["v1"] = f"/static/uploads/allinone/{qrcard_id}/{fname}"
+                            s["v1"] = _r2.upload_file(fobj, f"allinone/{qrcard_id}/{fname}")
+                    elif s.get("v1", "").startswith("/static/"):
+                        v1 = s["v1"]
+                        ext = os.path.splitext(v1)[1] or (".mp4" if stype == "video" else ".jpg" if stype == "image" else ".pdf")
+                        fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
+                        s["v1"] = self._upload_static_to_r2(_r2, v1, f"allinone/{qrcard_id}/{fname}", root_path)
                 sections[i] = s
         else:
             # Rebuild sections from parallel arrays (flat format)
@@ -425,7 +439,7 @@ class qr_allinone_proc:
             from itertools import zip_longest
             for i, (stype, a, b, c, d, fe) in enumerate(zip_longest(types, v1s, v2s, v3s, v4s, file_existings, fillvalue="")):
                 s = {"type": stype or "", "v1": a or "", "v2": b or "", "v3": c or "", "v4": d or ""}
-                if stype in ("image", "pdf"):
+                if stype in ("image", "video", "pdf"):
                     fkey = f"allinone_file_{i}"
                     fobj = request.files.get(fkey)
                     if fobj and fobj.filename:
@@ -438,11 +452,14 @@ class qr_allinone_proc:
                             elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
                                 ext = ".pdf"
                             fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
-                            os.makedirs(dest_dir, exist_ok=True)
-                            fobj.save(os.path.join(dest_dir, fname))
-                            s["v1"] = f"/static/uploads/allinone/{qrcard_id}/{fname}"
+                            s["v1"] = _r2.upload_file(fobj, f"allinone/{qrcard_id}/{fname}")
                     elif fe:
                         s["v1"] = fe
+                    elif s["v1"].startswith("/static/"):
+                        v1 = s["v1"]
+                        ext = os.path.splitext(v1)[1] or (".mp4" if stype == "video" else ".jpg" if stype == "image" else ".pdf")
+                        fname = f"{stype}_{i}_{qrcard_id[:8]}{ext}"
+                        s["v1"] = self._upload_static_to_r2(_r2, v1, f"allinone/{qrcard_id}/{fname}", root_path)
                 sections.append(s)
 
         update_data["Allinone_sections"] = sections

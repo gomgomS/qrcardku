@@ -1,0 +1,394 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Storage" %}
+{% set active_page = "storage" %}
+
+{% block extra_css %}
+<style>
+    .storage-header {
+        margin-bottom: 24px;
+    }
+
+    /* Usage card */
+    .usage-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .usage-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .usage-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 4px;
+    }
+
+    .usage-subtitle {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .usage-numbers {
+        text-align: right;
+    }
+
+    .usage-used {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .usage-limit {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .usage-bar-wrap {
+        background: #f3f4f6;
+        border-radius: 8px;
+        height: 12px;
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+
+    .usage-bar-fill {
+        height: 100%;
+        border-radius: 8px;
+        transition: width 0.4s ease;
+        background: var(--primary);
+    }
+
+    .usage-bar-fill.warn  { background: #f59e0b; }
+    .usage-bar-fill.danger { background: #ef4444; }
+
+    .usage-stats {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+
+    .usage-stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .usage-stat-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    /* File list */
+    .files-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .files-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .files-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .files-filter {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        background: white;
+        font-size: 12px;
+        color: var(--text-muted);
+        cursor: pointer;
+    }
+
+    .filter-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .file-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.15s;
+    }
+
+    .file-row:last-child { border-bottom: none; }
+    .file-row:hover { background: #f9fafb; }
+
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .file-icon.image  { background: #eff6ff; color: #3b82f6; }
+    .file-icon.video  { background: #fef3c7; color: #d97706; }
+    .file-icon.pdf    { background: #fef2f2; color: #ef4444; }
+    .file-icon.other  { background: #f3f4f6; color: #6b7280; }
+
+    .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+    }
+
+    .file-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .file-meta .qr-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #eff6ff;
+        color: var(--primary);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .file-size {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        flex-shrink: 0;
+        min-width: 60px;
+        text-align: right;
+    }
+
+    .file-action {
+        flex-shrink: 0;
+    }
+
+    .btn-edit {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        border-radius: 6px;
+        font-size: 12px;
+        text-decoration: none;
+        transition: border-color 0.15s, background 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-edit:hover {
+        border-color: var(--primary);
+        background: #eff6ff;
+        color: var(--primary);
+    }
+
+    .empty-state {
+        padding: 48px 20px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        margin-bottom: 12px;
+        opacity: 0.4;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+    }
+
+    /* mini bar per row */
+    .file-mini-bar {
+        width: 60px;
+        height: 4px;
+        background: #f3f4f6;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .file-mini-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--primary);
+    }
+
+    @media (max-width: 600px) {
+        .file-mini-bar { display: none; }
+        .usage-numbers { text-align: left; }
+        .file-action .btn-edit span { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="storage-header">
+    <div class="page-title" style="margin-bottom: 4px;">Storage</div>
+    <div style="font-size: 13px; color: var(--text-muted);">Manage your files stored in the cloud. To free up space, edit the QR card and remove files from it.</div>
+</div>
+
+<!-- Usage card -->
+<div class="usage-card">
+    <div class="usage-top">
+        <div>
+            <div class="usage-title">Storage usage</div>
+            <div class="usage-subtitle">{{ info.file_count }} file{{ 's' if info.file_count != 1 else '' }} stored across all your QR cards</div>
+        </div>
+        <div class="usage-numbers">
+            <div class="usage-used">{{ info.total_fmt }}</div>
+            <div class="usage-limit">of {{ info.limit_fmt }}</div>
+        </div>
+    </div>
+    <div class="usage-bar-wrap">
+        <div class="usage-bar-fill {% if info.percent_used >= 90 %}danger{% elif info.percent_used >= 70 %}warn{% endif %}"
+             style="width: {{ info.percent_used }}%;"></div>
+    </div>
+    <div class="usage-stats">
+        <div class="usage-stat">
+            <div class="usage-stat-dot" style="background: var(--primary);"></div>
+            <span>Used: {{ info.total_fmt }}</span>
+        </div>
+        <div class="usage-stat">
+            <div class="usage-stat-dot" style="background: #e5e7eb;"></div>
+            <span>Free: {{ info.free_fmt }}</span>
+        </div>
+        <div class="usage-stat">
+            <i class="fa-solid fa-circle-info" style="font-size: 12px;"></i>
+            <span>Limit: {{ info.limit_fmt }} per account</span>
+        </div>
+    </div>
+</div>
+
+<!-- File list -->
+<div class="files-card">
+    <div class="files-card-header">
+        <div class="files-card-title">Files ({{ info.file_count }})</div>
+        <div class="files-filter" id="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')">All</button>
+            <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> Images</button>
+            <button class="filter-btn" data-filter="video" onclick="filterFiles(this, 'video')"><i class="fa-solid fa-play"></i> Videos</button>
+            <button class="filter-btn" data-filter="pdf" onclick="filterFiles(this, 'pdf')"><i class="fa-solid fa-file-pdf"></i> PDFs</button>
+        </div>
+    </div>
+
+    {% if info.files %}
+    <div id="file-list">
+        {% for f in info.files %}
+        {% set pct = [(f.size * 100 // info.limit_bytes), 100] | min %}
+        <div class="file-row" data-category="{{ f.category }}">
+            <div class="file-icon {{ f.category }}">
+                {% if f.category == 'image' %}<i class="fa-regular fa-image"></i>
+                {% elif f.category == 'video' %}<i class="fa-solid fa-play"></i>
+                {% elif f.category == 'pdf' %}<i class="fa-solid fa-file-pdf"></i>
+                {% else %}<i class="fa-regular fa-file"></i>{% endif %}
+            </div>
+            <div class="file-info">
+                <div class="file-name" title="{{ f.fname }}">{{ f.fname }}</div>
+                <div class="file-meta">
+                    <span class="qr-badge">
+                        {% if f.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i>
+                        {% elif f.qr_type == 'pdf' %}<i class="fa-solid fa-file-pdf"></i>
+                        {% elif f.qr_type == 'images' %}<i class="fa-regular fa-images"></i>
+                        {% elif f.qr_type == 'video' %}<i class="fa-solid fa-play"></i>
+                        {% elif f.qr_type == 'frame' %}<i class="fa-solid fa-border-all"></i>
+                        {% else %}<i class="fa-solid fa-qrcode"></i>{% endif %}
+                        {{ f.qr_name }}
+                    </span>
+                    <span>{{ f.category | capitalize }}</span>
+                </div>
+            </div>
+            <div class="file-mini-bar">
+                <div class="file-mini-bar-fill" style="width: {{ pct }}%;"></div>
+            </div>
+            <div class="file-size">{{ f.size_fmt }}</div>
+            <div class="file-action">
+                <a href="{{ f.edit_url }}" class="btn-edit">
+                    <i class="fa-solid fa-pen"></i>
+                    <span>Edit QR</span>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div><i class="fa-regular fa-folder-open"></i></div>
+        <p>No files stored yet. Upload images, videos, or PDFs through your QR cards.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterFiles(btn, cat) {
+        document.querySelectorAll('#filter-bar .filter-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        btn.classList.add('active');
+        document.querySelectorAll('#file-list .file-row').forEach(function(row) {
+            if (cat === 'all' || row.dataset.category === cat) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

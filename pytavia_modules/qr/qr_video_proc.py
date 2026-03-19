@@ -7,8 +7,10 @@ import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -336,33 +338,30 @@ class qr_video_proc:
         else:
             design_update["video_font_apply_all"] = False
 
-        import os
-        import shutil
+        r2 = r2_mod.r2_storage_proc()
 
         # ---- Move uploaded videos from tmp ----
         tmp_key = session.pop("video_tmp_key", None)
         tmp_gallery = session.pop("video_tmp_gallery", [])
         session.modified = True
 
-        dest_dir = os.path.join(root_path, "static", "uploads", "videos", new_qrcard_id)
-
         video_links = []
-        
+
         if tmp_key and tmp_gallery:
-            tmp_dir = os.path.join(root_path, "static", "uploads", "videos", "_tmp", tmp_key)
-            os.makedirs(dest_dir, exist_ok=True)
             for f_info in tmp_gallery:
                 if f_info.get("type") == "upload":
-                    src = os.path.join(tmp_dir, f_info["safe_name"])
-                    dst = os.path.join(dest_dir, f_info["safe_name"])
-                    if os.path.exists(src):
-                        shutil.move(src, dst)
+                    src_key = f"videos/_tmp/{tmp_key}/{f_info['safe_name']}"
+                    dst_key = f"videos/{new_qrcard_id}/{f_info['safe_name']}"
+                    try:
+                        file_url = r2.move_file(src_key, dst_key)
                         video_links.append({
-                            "url": f"/static/uploads/videos/{new_qrcard_id}/{f_info['safe_name']}",
+                            "url": file_url,
                             "name": f_info.get("name", ""),
                             "desc": f_info.get("desc", ""),
                             "type": "upload"
                         })
+                    except Exception:
+                        pass
                 else:
                     video_links.append({
                         "url": f_info.get("url", ""),
@@ -371,7 +370,7 @@ class qr_video_proc:
                         "type": "link"
                     })
             try:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+                r2.delete_prefix(f"videos/_tmp/{tmp_key}/")
             except Exception:
                 pass
         else:

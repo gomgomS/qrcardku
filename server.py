@@ -24,6 +24,7 @@ sys.path.append("pytavia_modules/middleware")
 sys.path.append("pytavia_modules/security")
 sys.path.append("pytavia_modules/user")
 sys.path.append("pytavia_modules/view")
+sys.path.append("pytavia_modules/storage")
 
 
 ##########################################################
@@ -59,6 +60,7 @@ from view               import view_user
 from pytavia_modules.view import view_update_pdf, view_update_web, view_update_ecard
 from pytavia_modules.view import view_update_links, view_update_sosmed
 from pytavia_modules.view import view_update_allinone
+from storage import r2_storage_proc as r2_mod
 
 ##########################################################
 # LANDINGPAGE
@@ -701,8 +703,8 @@ def qr_update_design_ecard(qrcard_id):
                     extra_data[key] = val_list[0] if val_list else ""
                     
         import os
-        upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-        
+        _r2 = r2_mod.r2_storage_proc()
+
         if request.form.get("E-card_welcome_img_delete") == "1":
             qrcard["welcome_img_url"] = ""
             extra_data["welcome_img_url"] = ""
@@ -720,10 +722,7 @@ def qr_update_design_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    os.makedirs(upload_dir, exist_ok=True)
-                    welcome_name = "welcome" + ext
-                    welcome_img.save(os.path.join(upload_dir, welcome_name))
-                    welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}")
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
@@ -749,10 +748,7 @@ def qr_update_design_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    os.makedirs(upload_dir, exist_ok=True)
-                    cover_name = "pdf_cover_img" + ext
-                    cover_img.save(os.path.join(upload_dir, cover_name))
-                    cover_url = f"/static/uploads/pdf/{qrcard_id}/{cover_name}"
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/pdf_cover_img{ext}")
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url
@@ -761,7 +757,7 @@ def qr_update_design_ecard(qrcard_id):
             else:
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     if qrcard.get(f): extra_data[f] = qrcard[f]
-                    
+
         _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), extra_data)
         qrcard.update(extra_data)
         qrcard["url_content"] = url_content
@@ -828,11 +824,8 @@ def qr_update_content_pdf(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-                os.makedirs(upload_dir, exist_ok=True)
-                welcome_name = "welcome" + ext
-                welcome_img.save(os.path.join(upload_dir, welcome_name))
-                welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                _r2 = r2_mod.r2_storage_proc()
+                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome{ext}")
                 ecard_data["welcome_img_url"] = welcome_url
                 qrcard["welcome_img_url"] = welcome_url
                 from pytavia_core import database as _db_w, config as _cfg_w
@@ -864,11 +857,8 @@ def qr_update_content_pdf(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-                os.makedirs(upload_dir, exist_ok=True)
-                save_path = os.path.join(upload_dir, "pdf_cover_img" + ext)
-                cover_img.save(save_path)
-                cover_url = f"/static/uploads/pdf/{qrcard_id}/pdf_cover_img{ext}"
+                _r2 = r2_mod.r2_storage_proc()
+                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/pdf_cover_img{ext}")
                 for _f in _cover_img_fields:
                     ecard_data[_f] = cover_url
                     qrcard[_f] = cover_url
@@ -906,8 +896,7 @@ def qr_update_content_pdf(qrcard_id):
         qrcard.update(ecard_data)
         pdf_file_list = request.files.getlist("pdf_files")
         if pdf_file_list and any(f.filename for f in pdf_file_list):
-            pdf_upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-            os.makedirs(pdf_upload_dir, exist_ok=True)
+            _r2_pdf = r2_mod.r2_storage_proc()
             qrcard_db = proc.get_qrcard(fk_user_id, qrcard_id)
             db_files = list(qrcard_db.get("pdf_files", [])) if qrcard_db else []
             _step_existing_urls = request.form.getlist("existing_pdf_urls")
@@ -944,10 +933,9 @@ def qr_update_content_pdf(qrcard_id):
                         duplicate_name = original_name
                         break
                     seen_upload_names.add(original_name)
-                    filepath = os.path.join(pdf_upload_dir, safe_name)
-                    if not os.path.exists(filepath):
-                        f.save(filepath)
-                    file_entry = {"name": original_name, "url": f"/static/uploads/pdf/{qrcard_id}/{safe_name}"}
+                    r2_key = f"pdf/{qrcard_id}/{safe_name}"
+                    file_url = _r2_pdf.upload_file(f, r2_key)
+                    file_entry = {"name": original_name, "url": file_url}
                     form_idx = _new_file_offset + _new_file_idx
                     if form_idx < len(_step_display_names) and _step_display_names[form_idx].strip():
                         file_entry["display_name"] = _step_display_names[form_idx].strip()
@@ -1200,8 +1188,8 @@ def qr_update_content_ecard(qrcard_id):
         extra_data["E-card_website"] = websites[0]["value"] if websites else ""
 
         import os
-        upload_dir = os.path.join(app.root_path, "static", "uploads", "pdf", qrcard_id)
-        
+        _r2 = r2_mod.r2_storage_proc()
+
         if request.form.get("E-card_welcome_img_delete") == "1":
             qrcard["welcome_img_url"] = ""
             extra_data["welcome_img_url"] = ""
@@ -1219,10 +1207,7 @@ def qr_update_content_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    os.makedirs(upload_dir, exist_ok=True)
-                    welcome_name = "welcome" + ext
-                    welcome_img.save(os.path.join(upload_dir, welcome_name))
-                    welcome_url = f"/static/uploads/pdf/{qrcard_id}/{welcome_name}"
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}")
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
@@ -1248,10 +1233,7 @@ def qr_update_content_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    os.makedirs(upload_dir, exist_ok=True)
-                    cover_name = "ecard_cover_img" + ext
-                    cover_img.save(os.path.join(upload_dir, cover_name))
-                    cover_url = f"/static/uploads/pdf/{qrcard_id}/{cover_name}"
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/ecard_cover_img{ext}")
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url
@@ -1348,8 +1330,7 @@ def user_new_qr_design_pdf():
         pdf_data["scan_limit_value"] = request.form.get("scan_limit_value", "")
         tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
         session["pdf_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
+        _r2 = r2_mod.r2_storage_proc()
         pdf_file_list = request.files.getlist("pdf_files")
         existing_tmp = session.get("pdf_tmp_files", [])
         existing_names = {x["name"] for x in existing_tmp}
@@ -1357,7 +1338,7 @@ def user_new_qr_design_pdf():
             if f and f.filename and f.filename.lower().endswith(".pdf"):
                 safe_name = f.filename.replace(" ", "_")
                 if f.filename not in existing_names:
-                    f.save(os.path.join(tmp_dir, safe_name))
+                    _r2.upload_file(f, f"pdf/_tmp/{tmp_key}/{safe_name}")
                     existing_tmp.append({"name": f.filename, "safe_name": safe_name})
                     existing_names.add(f.filename)
         session["pdf_tmp_files"] = existing_tmp
@@ -1372,7 +1353,7 @@ def user_new_qr_design_pdf():
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                welcome_img.save(os.path.join(tmp_dir, "welcome" + ext))
+                _r2.upload_file(welcome_img, f"pdf/_tmp/{tmp_key}/welcome{ext}")
                 session["welcome_img_tmp_key"] = tmp_key
                 session["welcome_img_tmp_name"] = "welcome" + ext
                 session.modified = True
@@ -1386,7 +1367,7 @@ def user_new_qr_design_pdf():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                cover_img.save(os.path.join(tmp_dir, "pdf_cover_img" + ext))
+                _r2.upload_file(cover_img, f"pdf/_tmp/{tmp_key}/pdf_cover_img{ext}")
                 session["cover_img_tmp_key"] = tmp_key
                 session["cover_img_tmp_name"] = "pdf_cover_img" + ext
                 session.modified = True
@@ -2243,9 +2224,8 @@ def user_new_qr_design_ecard():
 
         tmp_key = session.get("pdf_tmp_key") or _uuid.uuid4().hex
         session["pdf_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "pdf", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
-        
+        _r2 = r2_mod.r2_storage_proc()
+
         session.modified = True
         welcome_img = request.files.get("E-card_welcome_img")
         if welcome_img and welcome_img.filename:
@@ -2255,13 +2235,13 @@ def user_new_qr_design_ecard():
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                welcome_img.save(os.path.join(tmp_dir, "welcome" + ext))
+                _r2.upload_file(welcome_img, f"ecard/_tmp/{tmp_key}/welcome{ext}")
                 session["welcome_img_tmp_key"] = tmp_key
                 session["welcome_img_tmp_name"] = "welcome" + ext
                 session.modified = True
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
-                
+
         cover_img = request.files.get("E-card_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -2270,7 +2250,7 @@ def user_new_qr_design_ecard():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                cover_img.save(os.path.join(tmp_dir, "pdf_cover_img" + ext))
+                _r2.upload_file(cover_img, f"ecard/_tmp/{tmp_key}/pdf_cover_img{ext}")
                 session["cover_img_tmp_key"] = tmp_key
                 session["cover_img_tmp_name"] = "pdf_cover_img" + ext
                 session.modified = True
@@ -2291,25 +2271,18 @@ def user_new_qr_design_ecard():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/ecard/" + short_code
-        # Put tmp image URLs into ecard_data so the Back form includes them and they survive when user clicks Back
-        from flask import url_for as _url_for
+        # Put tmp image public URLs into ecard_data so the Back form includes them
         if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
-            _cover_url = _url_for(
-                "static",
-                filename="uploads/pdf/_tmp/{}/{}".format(
-                    session["cover_img_tmp_key"], session["cover_img_tmp_name"]
-                ),
-            )
+            _cover_url = _r2.public_url("ecard/_tmp/{}/{}".format(
+                session["cover_img_tmp_key"], session["cover_img_tmp_name"]
+            ))
             ecard_data["E-card_t1_header_img_url"] = _cover_url
             ecard_data["E-card_t3_circle_img_url"] = _cover_url
             ecard_data["E-card_t4_circle_img_url"] = _cover_url
         if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
-            ecard_data["welcome_img_url"] = _url_for(
-                "static",
-                filename="uploads/pdf/_tmp/{}/{}".format(
-                    session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]
-                ),
-            )
+            ecard_data["welcome_img_url"] = _r2.public_url("ecard/_tmp/{}/{}".format(
+                session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]
+            ))
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, ecard_data=ecard_data)
 
 @app.route("/qr/save/pdf", methods=["POST"])
@@ -3000,9 +2973,8 @@ def user_new_qr_allinone():
             allinone_data["Allinone_sections"] = _json.loads(sections_json_str)
         except Exception:
             allinone_data["Allinone_sections"] = []
-        if session.get("allinone_cover_tmp_key") and session.get("allinone_cover_tmp_name"):
-            from flask import url_for as _uf
-            allinone_data["Allinone_cover_img_url"] = _uf("static", filename="uploads/allinone/_tmp/{}/{}".format(session["allinone_cover_tmp_key"], session["allinone_cover_tmp_name"]))
+        if session.get("allinone_cover_r2_url"):
+            allinone_data["Allinone_cover_img_url"] = session["allinone_cover_r2_url"]
         return v.new_qr_content_html(base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, allinone_data=allinone_data)
     return v.new_qr_content_html(base_url=config.G_BASE_URL)
 
@@ -3045,10 +3017,9 @@ def user_new_qr_design_allinone():
             sections = []
         tmp_key = session.get("allinone_tmp_key") or _uuid.uuid4().hex
         session["allinone_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "allinone", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
         session.modified = True
-        # Handle cover image
+        _r2 = r2_mod.r2_storage_proc()
+        # Handle cover image → upload directly to R2 tmp
         cover_img = request.files.get("Allinone_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -3057,26 +3028,28 @@ def user_new_qr_design_allinone():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                cover_img.save(os.path.join(tmp_dir, "allinone_cover" + ext))
+                fname_cover = "allinone_cover" + ext
+                r2_cover_url = _r2.upload_file(cover_img, f"allinone/_tmp/{tmp_key}/{fname_cover}")
                 session["allinone_cover_tmp_key"] = tmp_key
-                session["allinone_cover_tmp_name"] = "allinone_cover" + ext
+                session["allinone_cover_tmp_name"] = fname_cover
+                session["allinone_cover_r2_url"]   = r2_cover_url
                 session.modified = True
-        # Handle section file uploads (image/pdf), update section URLs to tmp
+        # Handle section file uploads (image/pdf/video) → upload directly to R2 tmp
+        # Note: autocomplete /static/ paths are handled at save time, not here
         for i, s in enumerate(sections):
             stype = s.get("type", "")
-            if stype in ("image", "pdf"):
+            if stype in ("image", "pdf", "video"):
                 fobj = request.files.get(f"allinone_file_{i}")
                 if fobj and fobj.filename:
                     fobj.seek(0, 2)
                     if fobj.tell() <= 5 * 1024 * 1024:
                         fobj.seek(0)
                         ext = os.path.splitext(fobj.filename)[1].lower()
-                        allowed = {".jpg", ".jpeg", ".png", ".gif", ".webp"} if stype == "image" else {".pdf"}
+                        allowed = {".jpg", ".jpeg", ".png", ".gif", ".webp"} if stype == "image" else ({".pdf"} if stype == "pdf" else {".mp4", ".mov", ".avi", ".mkv", ".webm"})
                         if ext not in allowed:
-                            ext = ".jpg" if stype == "image" else ".pdf"
+                            ext = ".jpg" if stype == "image" else (".pdf" if stype == "pdf" else ".mp4")
                         fname = f"{stype}_{i}_{_uuid.uuid4().hex[:8]}{ext}"
-                        fobj.save(os.path.join(tmp_dir, fname))
-                        sections[i]["v1"] = f"/static/uploads/allinone/_tmp/{tmp_key}/{fname}"
+                        sections[i]["v1"] = _r2.upload_file(fobj, f"allinone/_tmp/{tmp_key}/{fname}")
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
@@ -3094,13 +3067,8 @@ def user_new_qr_design_allinone():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/allinone/" + short_code
-        from flask import url_for as _url_for
-        if session.get("allinone_cover_tmp_key") and session.get("allinone_cover_tmp_name"):
-            allinone_data["Allinone_cover_img_url"] = _url_for("static", filename="uploads/allinone/_tmp/{}/{}".format(session["allinone_cover_tmp_key"], session["allinone_cover_tmp_name"]))
-        elif not allinone_data.get("Allinone_cover_img_url"):
-            ac_url = (allinone_data.get("Allinone_profile_img_autocomplete_url") or "").strip()
-            if ac_url and ac_url.startswith("/static/"):
-                allinone_data["Allinone_cover_img_url"] = ac_url
+        if session.get("allinone_cover_r2_url"):
+            allinone_data["Allinone_cover_img_url"] = session["allinone_cover_r2_url"]
         allinone_data["Allinone_sections"] = sections
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, allinone_data=allinone_data)
 
@@ -3345,17 +3313,13 @@ def qr_special_upload_image():
     # Prepend uuid to avoid collisions in same day
     unique_name = _uuid.uuid4().hex[:8] + "_" + safe_name
     
-    # We will put these in a shared "images" folder under static/uploads/special
-    upload_dir = os.path.join(app.root_path, "static", "uploads", "special", "images")
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    file_path = os.path.join(upload_dir, unique_name)
-    file.save(file_path)
-    
-    file_url = f"/static/uploads/special/images/{unique_name}"
-    
+    # Upload to R2 under special/images/
+    _r2 = r2_mod.r2_storage_proc()
+    r2_key = f"special/images/{unique_name}"
+    file_url = _r2.upload_file(file, r2_key)
+
     return jsonify({
-        "success": True, 
+        "success": True,
         "file": {
             "url": file_url,
             "original_filename": file.filename
@@ -3418,8 +3382,8 @@ def qr_update_content_special(qrcard_id):
         extra_data["welcome_bg_color"] = request.form.get("welcome_bg_color", "#2F6BFD")
         extra_data["welcome_time"] = request.form.get("welcome_time", "2.5")
 
-        import os
-        upload_dir = os.path.join(app.root_path, "static", "uploads", "special", qrcard_id)
+        import os, re as _re
+        _r2 = r2_mod.r2_storage_proc()
         if request.form.get("welcome_img_delete") == "1":
             qrcard["welcome_img_url"] = ""
             extra_data["welcome_img_url"] = ""
@@ -3435,12 +3399,10 @@ def qr_update_content_special(qrcard_id):
                 welcome_img.seek(0, 2)
                 if welcome_img.tell() <= 1024 * 1024:
                     welcome_img.seek(0)
-                    import re as _re
                     safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_img.filename)
                     welcome_name = "welcome_" + safe_name
-                    os.makedirs(upload_dir, exist_ok=True)
-                    welcome_img.save(os.path.join(upload_dir, welcome_name))
-                    welcome_url = f"/static/uploads/special/{qrcard_id}/{welcome_name}"
+                    r2_key = f"special/{qrcard_id}/{welcome_name}"
+                    welcome_url = _r2.upload_file(welcome_img, r2_key)
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     try:
@@ -3605,14 +3567,13 @@ def user_new_qr_design_images():
                 
         tmp_key = session.get("images_tmp_key") or _uuid.uuid4().hex
         session["images_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "images", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
+        _r2 = r2_mod.r2_storage_proc()
         session.modified = True
-        
+
         files = request.files.getlist("images_files")
         images_names = request.form.getlist("images_name[]")
         images_descs = request.form.getlist("images_desc[]")
-        
+
         tmp_gallery = session.get("images_tmp_gallery", [])
         new_file_offset = len(tmp_gallery)
         for i, f in enumerate(files):
@@ -3622,7 +3583,7 @@ def user_new_qr_design_images():
                     f.seek(0)
                     ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
                     safe_name = _uuid.uuid4().hex + ext
-                    f.save(os.path.join(tmp_dir, safe_name))
+                    _r2.upload_file(f, f"images/_tmp/{tmp_key}/{safe_name}")
                     form_idx = new_file_offset + i
                     name = images_names[form_idx] if form_idx < len(images_names) else ""
                     desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
@@ -3750,21 +3711,20 @@ def user_new_qr_design_video():
         
         tmp_key = session.get("video_tmp_key") or _uuid.uuid4().hex
         session["video_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "videos", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
+        _r2 = r2_mod.r2_storage_proc()
         session.modified = True
-        
+
         tmp_gallery = []
         file_idx = 0
-        
+
         if not video_types and video_urls:
             video_types = ['link'] * len(video_urls)
-            
+
         for i, vtype in enumerate(video_types):
             url = video_urls[i] if i < len(video_urls) else ""
             name = video_names[i] if i < len(video_names) else ""
             desc = video_descs[i] if i < len(video_descs) else ""
-            
+
             if vtype == 'upload':
                 if file_idx < len(video_files):
                     f = video_files[file_idx]
@@ -3775,7 +3735,7 @@ def user_new_qr_design_video():
                             f.seek(0)
                             ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
                             safe_name = _uuid.uuid4().hex + ext
-                            f.save(os.path.join(tmp_dir, safe_name))
+                            _r2.upload_file(f, f"videos/_tmp/{tmp_key}/{safe_name}")
                             tmp_gallery.append({"type": "upload", "safe_name": safe_name, "name": name.strip(), "desc": desc.strip()})
                         else:
                             error_msg = f"Video {f.filename} exceeds 50MB limit."
@@ -3858,24 +3818,23 @@ def qr_update_content_images(qrcard_id):
                 else: images_data[key] = val_list[0] if val_list else ""
                 
         import os, uuid as _uuid
-        upload_dir = os.path.join(app.root_path, "static", "uploads", "images", qrcard_id)
-        os.makedirs(upload_dir, exist_ok=True)
-        
+        _r2 = r2_mod.r2_storage_proc()
+
         new_files = request.files.getlist("images_files")
         images_names = request.form.getlist("images_name[]")
         images_descs = request.form.getlist("images_desc[]")
         existing_urls = request.form.getlist("images_existing_url[]")
-        
+
         db_files = list(qrcard.get("images_gallery_files", []))
         db_map = {f.get("url"): dict(f) for f in db_files}
-        
+
         updated_gallery = []
         for i, url in enumerate(existing_urls):
             entry = db_map.get(url, {"url": url})
             if i < len(images_names): entry["name"] = images_names[i]
             if i < len(images_descs): entry["desc"] = images_descs[i]
             updated_gallery.append(entry)
-            
+
         new_file_offset = len(existing_urls)
         for i, f in enumerate(new_files):
             if f and f.filename and f.filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
@@ -3884,12 +3843,13 @@ def qr_update_content_images(qrcard_id):
                     f.seek(0)
                     ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
                     safe_name = _uuid.uuid4().hex + ext
-                    f.save(os.path.join(upload_dir, safe_name))
+                    r2_key = f"images/{qrcard_id}/{safe_name}"
+                    file_url = _r2.upload_file(f, r2_key)
                     form_idx = new_file_offset + i
                     name = images_names[form_idx] if form_idx < len(images_names) else ""
                     desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
                     updated_gallery.append({
-                        "url": f"/static/uploads/images/{qrcard_id}/{safe_name}",
+                        "url": file_url,
                         "name": name,
                         "desc": desc
                     })
@@ -4031,28 +3991,30 @@ def qr_update_content_video(qrcard_id):
                 else: video_data[key] = val_list[0] if val_list else ""
                 
         import os, uuid as _uuid
-        upload_dir = os.path.join(app.root_path, "static", "uploads", "videos", qrcard_id)
-        os.makedirs(upload_dir, exist_ok=True)
-        
+        _r2 = r2_mod.r2_storage_proc()
+
         video_files = request.files.getlist("video_files")
         video_types = request.form.getlist("video_type[]")
         video_urls = request.form.getlist("video_url[]")
         video_names = request.form.getlist("video_name[]")
         video_descs = request.form.getlist("video_desc[]")
-        
+
         updated_links = []
         file_idx = 0
-        
+
         if not video_types and video_urls:
             video_types = ['link'] * len(video_urls)
-            
+
         for i, vtype in enumerate(video_types):
             url = video_urls[i] if i < len(video_urls) else ""
             name = video_names[i] if i < len(video_names) else ""
             desc = video_descs[i] if i < len(video_descs) else ""
-            
+
             if vtype == 'upload':
-                if url.startswith('/static/uploads/'):
+                if url.strip() and not url.startswith('/static/uploads/'):
+                    # existing R2 URL — keep as-is
+                    updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
+                elif url.startswith('/static/uploads/'):
                     updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
                 else:
                     if file_idx < len(video_files):
@@ -4064,8 +4026,9 @@ def qr_update_content_video(qrcard_id):
                                 f.seek(0)
                                 ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
                                 safe_name = _uuid.uuid4().hex + ext
-                                f.save(os.path.join(upload_dir, safe_name))
-                                updated_links.append({"url": f"/static/uploads/videos/{qrcard_id}/{safe_name}", "name": name.strip(), "desc": desc.strip()})
+                                r2_key = f"videos/{qrcard_id}/{safe_name}"
+                                file_url = _r2.upload_file(f, r2_key)
+                                updated_links.append({"url": file_url, "name": name.strip(), "desc": desc.strip()})
             else:
                 if url.strip():
                     embed_url = _get_video_embed_url(url.strip())
@@ -4211,6 +4174,14 @@ def user_stats():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     return view_user.view_user(app).stats_html()
+
+@app.route("/user/storage")
+def user_storage():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.user import user_storage_proc as _usp
+    info = _usp.user_storage_proc(app).get_storage_info(session["fk_user_id"])
+    return render_template("user/storage.html", info=info)
 
 @app.route("/user/templates")
 def user_templates():

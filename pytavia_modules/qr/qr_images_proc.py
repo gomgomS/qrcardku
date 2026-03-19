@@ -7,8 +7,10 @@ import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -285,7 +287,7 @@ class qr_images_proc:
         Returns dict with success=True or success=False + form data for error re-render.
         """
         import os
-        import shutil
+        r2 = r2_mod.r2_storage_proc()
         fk_user_id = session.get("fk_user_id")
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated", "url_content": "", "qr_name": "", "short_code": "", "qr_encode_url": None}
@@ -356,43 +358,41 @@ class qr_images_proc:
         welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
         session.modified = True
 
-        dest_dir = os.path.join(root_path, "static", "uploads", "images", new_qrcard_id)
-
         # Welcome image
         if welcome_tmp_key:
-            tmp_dir_w = os.path.join(root_path, "static", "uploads", "images", "_tmp", welcome_tmp_key)
-            src_welcome = os.path.join(tmp_dir_w, welcome_tmp_name)
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
-            if os.path.exists(src_welcome):
-                os.makedirs(dest_dir, exist_ok=True)
-                shutil.move(src_welcome, os.path.join(dest_dir, "welcome" + ext))
-                welcome_url = f"/static/uploads/images/{new_qrcard_id}/welcome{ext}"
+            src_key = f"images/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
+            dst_key = f"images/{new_qrcard_id}/welcome{ext}"
+            try:
+                welcome_url = r2.move_file(src_key, dst_key)
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+            except Exception:
+                pass
 
         # Gallery images
         saved_gallery = []
         if tmp_key and tmp_gallery:
-            tmp_dir = os.path.join(root_path, "static", "uploads", "images", "_tmp", tmp_key)
-            os.makedirs(dest_dir, exist_ok=True)
-            for idx, f_info in enumerate(tmp_gallery):
-                src = os.path.join(tmp_dir, f_info["safe_name"])
-                dst = os.path.join(dest_dir, f_info["safe_name"])
-                if os.path.exists(src):
-                    shutil.move(src, dst)
+            for f_info in tmp_gallery:
+                src_key = f"images/_tmp/{tmp_key}/{f_info['safe_name']}"
+                dst_key = f"images/{new_qrcard_id}/{f_info['safe_name']}"
+                try:
+                    file_url = r2.move_file(src_key, dst_key)
                     saved_gallery.append({
-                        "url": f"/static/uploads/images/{new_qrcard_id}/{f_info['safe_name']}",
+                        "url": file_url,
                         "name": f_info.get("name", ""),
                         "desc": f_info.get("desc", ""),
                     })
+                except Exception:
+                    pass
             try:
-                shutil.rmtree(tmp_dir, ignore_errors=True)
+                r2.delete_prefix(f"images/_tmp/{tmp_key}/")
             except Exception:
                 pass
 
         if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
             try:
-                shutil.rmtree(os.path.join(root_path, "static", "uploads", "images", "_tmp", welcome_tmp_key), ignore_errors=True)
+                r2.delete_prefix(f"images/_tmp/{welcome_tmp_key}/")
             except Exception:
                 pass
 
