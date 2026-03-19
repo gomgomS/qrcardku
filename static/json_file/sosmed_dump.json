@@ -1,0 +1,23 @@
+{
+  "appearance": {
+    "template": "template1",
+    "primary_color": "#ec4899",
+    "secondary_color": "#be185d",
+    "title_color": "#111827",
+    "text_color": "#6b7280",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans"
+  },
+  "basic_info": {
+    "title": "Jane Doe",
+    "desc": "Content Creator & Lifestyle Blogger",
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+  },
+  "items": [
+    { "icon": "fa-brands fa-instagram", "name": "@janedoe", "desc": "Daily inspiration & lifestyle" },
+    { "icon": "fa-brands fa-youtube", "name": "Jane Doe", "desc": "Subscribe for weekly vlogs" },
+    { "icon": "fa-brands fa-tiktok", "name": "@janedoe.life", "desc": "Short-form content" },
+    { "icon": "fa-brands fa-x-twitter", "name": "@janedoe_x", "desc": "Thoughts & updates" },
+    { "icon": "fa-brands fa-facebook", "name": "Jane Doe", "desc": "Connect with me" }
+  ]
+}

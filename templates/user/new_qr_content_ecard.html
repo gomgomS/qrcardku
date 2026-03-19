@@ -504,6 +504,17 @@
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
     }
+    .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
+    .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
+    .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
+    .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
+    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
+    .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 </style>
 {% endblock %}
 
@@ -549,6 +560,21 @@
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
                 value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Autocomplete / Fill Sample Data -->
+            <div class="autocomplete-row">
+                <div class="autocomplete-row-left">
+                    <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <div class="autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub">Auto-fills appearance, contact info, and phone/email/website</div>
+                    </div>
+                </div>
+                <label class="autocomplete-toggle" title="Toggle autocomplete">
+                    <input type="checkbox" id="ecard-autocomplete-toggle">
+                    <span class="autocomplete-slider"></span>
+                </label>
+            </div>
 
             <!-- Basic Information Section -->
 
@@ -1026,6 +1052,7 @@
                                         </button>
                                         <input type="hidden" name="E-card_profile_img_delete"
                                             id="E-card_profile_img_delete" value="0">
+                        <input type="hidden" name="ecard_cover_img_autocomplete_url" id="ecard_cover_img_autocomplete_url" value="">
                                     </div>
                                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i
                                             class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.
@@ -3031,6 +3058,83 @@
             switchEcardTemplate(savedTemplate);
         });
 
+    })();
+
+    // ── Ecard Autocomplete ────────────────────────────────────────────────
+    (function() {
+        var _dumpCache = null;
+        function setColor(pickerId, hexId, value) {
+            var picker = document.getElementById(pickerId);
+            var hex = document.getElementById(hexId);
+            if (picker) { picker.value = value; picker.dispatchEvent(new Event('input')); }
+            if (hex) hex.value = value.toUpperCase();
+        }
+        function addContactRow(listId, type, labelVal, valueVal) {
+            var container = document.getElementById(listId);
+            if (!container) return;
+            var row = document.createElement('div');
+            row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;';
+            var inner = '';
+            if (type === 'phone') {
+                inner = '<input type="text" name="E-card_phone_label[]" class="form-control" value="' + (labelVal||'') + '" placeholder="Label…" style="flex:1;background:transparent;border:none;">'
+                    + '<input type="text" name="E-card_phone_number[]" class="form-control" value="' + (valueVal||'') + '" placeholder="+1 555 123 4567" style="flex:2;background:transparent;border:none;">';
+            } else if (type === 'email') {
+                inner = '<input type="text" name="E-card_email_label[]" class="form-control" value="' + (labelVal||'') + '" placeholder="Label…" style="flex:1;background:transparent;border:none;">'
+                    + '<input type="email" name="E-card_email_value[]" class="form-control" value="' + (valueVal||'') + '" placeholder="email@example.com" style="flex:2;background:transparent;border:none;">';
+            } else if (type === 'website') {
+                inner = '<input type="text" name="E-card_website_label[]" class="form-control" value="' + (labelVal||'') + '" placeholder="Label…" style="flex:1;background:transparent;border:none;">'
+                    + '<input type="url" name="E-card_website_value[]" class="form-control" value="' + (valueVal||'') + '" placeholder="https://example.com" style="flex:2;background:transparent;border:none;">';
+            }
+            row.innerHTML = inner + '<button type="button" class="ecard-remove-contact-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+            container.appendChild(row);
+        }
+        function applyEcardAutocomplete(dump) {
+            var ap = dump.appearance || {};
+            if (ap.template) {
+                var radio = document.querySelector('input[name="E-card_template"][value="' + ap.template + '"]');
+                if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+            }
+            if (ap.primary_color)   setColor('E-card_primary_picker',    'E-card_primary_hex',    ap.primary_color);
+            if (ap.secondary_color) setColor('E-card_secondary_picker',  'E-card_secondary_hex',  ap.secondary_color);
+            if (ap.title_color)     setColor('E-card_title_color_picker', 'E-card_title_color_hex', ap.title_color);
+            if (ap.text_color)      setColor('E-card_text_color_picker',  'E-card_text_color_hex',  ap.text_color);
+            if (ap.title_font) { var s = document.querySelector('select[name="E-card_title_font"]'); if (s) s.value = ap.title_font; }
+            if (ap.text_font)  { var s = document.querySelector('select[name="E-card_text_font"]');  if (s) s.value = ap.text_font;  }
+
+            var bi = dump.basic_info || {};
+            if (bi.company)   { var el = document.querySelector('input[name="E-card_company"]');  if (el) { el.value = bi.company;  el.dispatchEvent(new Event('input')); } }
+            if (bi.title)     { var el = document.querySelector('input[name="E-card_title"]');    if (el) { el.value = bi.title;    el.dispatchEvent(new Event('input')); } }
+            if (bi.desc)      { var el = document.querySelector('input[name="E-card_desc"]');     if (el) { el.value = bi.desc;     el.dispatchEvent(new Event('input')); } }
+            if (bi.btn_text)  { var el = document.querySelector('input[name="E-card_btn_text"]'); if (el) { el.value = bi.btn_text; el.dispatchEvent(new Event('input')); } }
+            if (bi.cover_image) {
+                var preview = document.getElementById('cover-img-preview');
+                var acUrl = document.getElementById('ecard_cover_img_autocomplete_url');
+                var removeBtn = document.getElementById('cover-img-remove-btn');
+                if (preview) preview.innerHTML = '<img src="' + bi.cover_image + '" alt="Profile" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample profile image</span>';
+                if (acUrl) acUrl.value = bi.cover_image;
+                document.getElementById('E-card_profile_img_delete').value = '0';
+                if (removeBtn) removeBtn.style.display = '';
+            }
+
+            ['phone', 'email', 'website'].forEach(function(type) {
+                var listId = 'ecard-' + type + '-list';
+                var container = document.getElementById(listId);
+                if (container) container.innerHTML = '';
+                var items = dump[type + 's'] || [];
+                items.forEach(function(item) { addContactRow(listId, type, item.label, item.value); });
+            });
+        }
+        var toggle = document.getElementById('ecard-autocomplete-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                if (!this.checked) return;
+                if (_dumpCache) { applyEcardAutocomplete(_dumpCache); return; }
+                fetch('{{ url_for("static", filename="json_file/ecard_dump.json") }}')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { _dumpCache = data; applyEcardAutocomplete(data); })
+                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            });
+        }
     })();
 </script>
 

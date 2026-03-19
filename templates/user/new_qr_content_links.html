@@ -127,6 +127,17 @@
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
     }
+    .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
+    .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
+    .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
+    .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
+    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
+    .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 </style>
 {% endblock %}
 
@@ -168,6 +179,21 @@
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
                 value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Autocomplete / Fill Sample Data -->
+            <div class="autocomplete-row">
+                <div class="autocomplete-row-left">
+                    <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <div class="autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub">Auto-fills appearance, basic info, and link items</div>
+                    </div>
+                </div>
+                <label class="autocomplete-toggle" title="Toggle autocomplete">
+                    <input type="checkbox" id="links-autocomplete-toggle">
+                    <span class="autocomplete-slider"></span>
+                </label>
+            </div>
 
             <!-- Appearance Section -->
             <div class="collapse-section">
@@ -388,6 +414,7 @@
                                             <i class="fa-solid fa-xmark"></i> Remove
                                         </button>
                                         <input type="hidden" name="Links_profile_img_delete" id="links_profile_img_delete" value="0">
+                        <input type="hidden" name="links_cover_img_autocomplete_url" id="links_cover_img_autocomplete_url" value="">
                                     </div>
                                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
                                 </div>
@@ -980,5 +1007,74 @@
         if (secondaryPicker && secondaryHex) { secondaryPicker.value = _initLinksSecondary; secondaryHex.value = _initLinksSecondary.toUpperCase(); }
         applyLinksPrimaryColor(_initLinksPrimary);
     });
+
+    // ── Links Autocomplete ────────────────────────────────────────────────
+    (function() {
+        var _dumpCache = null;
+        function setColor(pickerId, hexId, value) {
+            var picker = document.getElementById(pickerId);
+            var hex = document.getElementById(hexId);
+            if (picker) { picker.value = value; picker.dispatchEvent(new Event('input')); }
+            if (hex) hex.value = value.toUpperCase();
+        }
+        function applyLinksAutocomplete(dump) {
+            var ap = dump.appearance || {};
+            if (ap.template) {
+                var radio = document.querySelector('input[name="Links_template"][value="' + ap.template + '"]');
+                if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+            }
+            if (ap.primary_color)   setColor('Links_primary_picker',    'Links_primary_hex',    ap.primary_color);
+            if (ap.secondary_color) setColor('Links_secondary_picker',  'Links_secondary_hex',  ap.secondary_color);
+            if (ap.title_color)     setColor('Links_title_color_picker', 'Links_title_color_hex', ap.title_color);
+            if (ap.text_color)      setColor('Links_text_color_picker',  'Links_text_color_hex',  ap.text_color);
+            if (ap.title_font) { var s = document.querySelector('select[name="Links_title_font"]'); if (s) s.value = ap.title_font; }
+            if (ap.text_font)  { var s = document.querySelector('select[name="Links_text_font"]');  if (s) s.value = ap.text_font;  }
+
+            var bi = dump.basic_info || {};
+            if (bi.title) { var el = document.querySelector('input[name="Links_title"]'); if (el) { el.value = bi.title; el.dispatchEvent(new Event('input')); } }
+            if (bi.desc)  { var el = document.querySelector('input[name="Links_desc"]');  if (el) { el.value = bi.desc;  el.dispatchEvent(new Event('input')); } }
+            if (bi.cover_image) {
+                var preview = document.getElementById('links-cover-img-preview');
+                var acUrl = document.getElementById('links_cover_img_autocomplete_url');
+                var removeBtn = document.getElementById('links-cover-img-remove-btn');
+                if (preview) preview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample cover image</span>';
+                if (acUrl) acUrl.value = bi.cover_image;
+                document.getElementById('links_profile_img_delete').value = '0';
+                if (removeBtn) removeBtn.style.display = '';
+                var pImg = document.getElementById('links-preview-profile-img');
+                if (pImg) { pImg.src = bi.cover_image; pImg.style.display = ''; }
+                var pPh = document.getElementById('links-preview-profile-placeholder-icon');
+                if (pPh) pPh.style.display = 'none';
+            }
+
+            if (dump.links && dump.links.length) {
+                var container = document.getElementById('links-list-container');
+                if (container) {
+                    container.innerHTML = '';
+                    dump.links.forEach(function(item) {
+                        var row = document.createElement('div');
+                        row.className = 'links-item-row';
+                        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
+                        row.innerHTML = '<input type="text" name="Links_link_url[]" class="form-control" value="' + (item.url||'') + '" placeholder="https://example.com" style="flex:2;background:transparent;border:none;min-width:120px;">'
+                            + '<input type="text" name="Links_link_name[]" class="form-control" value="' + (item.name||'') + '" placeholder="Link name (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
+                            + '<input type="text" name="Links_link_desc[]" class="form-control" value="' + (item.desc||'') + '" placeholder="Description (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
+                            + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+                        container.appendChild(row);
+                    });
+                }
+            }
+        }
+        var toggle = document.getElementById('links-autocomplete-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                if (!this.checked) return;
+                if (_dumpCache) { applyLinksAutocomplete(_dumpCache); return; }
+                fetch('{{ url_for("static", filename="json_file/links_dump.json") }}')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { _dumpCache = data; applyLinksAutocomplete(data); })
+                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            });
+        }
+    })();
 </script>
 {% endblock %}

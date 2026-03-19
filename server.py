@@ -1344,6 +1344,8 @@ def user_new_qr_design_pdf():
         session["pdf_tmp_files"] = existing_tmp
         session["pdf_display_names"] = request.form.getlist("pdf_display_names")
         session["pdf_item_descs"] = request.form.getlist("pdf_item_descs")
+        session["pdf_autocomplete_urls"] = request.form.getlist("pdf_autocomplete_urls")
+        session["pdf_t1_header_img_autocomplete_url"] = request.form.get("pdf_t1_header_img_autocomplete_url", "")
         session.modified = True
         welcome_img = request.files.get("pdf_welcome_img")
         if welcome_img and welcome_img.filename:
@@ -2373,12 +2375,10 @@ def user_new_qr_links():
                     links_data[key] = val_list
                 else:
                     links_data[key] = val_list[0] if val_list else ""
-        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
-            from flask import url_for as _uf
-            links_data["Links_cover_img_url"] = _uf("static", filename="uploads/links/_tmp/{}/{}".format(session["cover_img_tmp_key"], session["cover_img_tmp_name"]))
-        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
-            from flask import url_for as _uf
-            links_data["welcome_img_url"] = _uf("static", filename="uploads/links/_tmp/{}/{}".format(session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]))
+        if session.get("links_cover_tmp_key") and session.get("links_cover_tmp_name"):
+            links_data["Links_cover_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_cover_tmp_key"], session["links_cover_tmp_name"]))
+        if session.get("links_welcome_tmp_key") and session.get("links_welcome_tmp_name"):
+            links_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_welcome_tmp_key"], session["links_welcome_tmp_name"]))
         # Rebuild links list for pre-filling
         urls = links_data.get("Links_link_url[]", [])
         names = links_data.get("Links_link_name[]", [])
@@ -2426,9 +2426,8 @@ def user_new_qr_design_links():
                     links_data[key] = val_list[0] if val_list else ""
         tmp_key = session.get("links_tmp_key") or _uuid.uuid4().hex
         session["links_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "links", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
         session.modified = True
+        _r2 = r2_mod.r2_storage_proc()
         welcome_img = request.files.get("Links_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -2437,9 +2436,10 @@ def user_new_qr_design_links():
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                welcome_img.save(os.path.join(tmp_dir, "welcome" + ext))
-                session["welcome_img_tmp_key"] = tmp_key
-                session["welcome_img_tmp_name"] = "welcome" + ext
+                fname = "welcome" + ext
+                _r2.upload_file(welcome_img, f"links/_tmp/{tmp_key}/{fname}")
+                session["links_welcome_tmp_key"] = tmp_key
+                session["links_welcome_tmp_name"] = fname
                 session.modified = True
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
@@ -2451,9 +2451,10 @@ def user_new_qr_design_links():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                cover_img.save(os.path.join(tmp_dir, "links_cover_img" + ext))
-                session["cover_img_tmp_key"] = tmp_key
-                session["cover_img_tmp_name"] = "links_cover_img" + ext
+                fname = "links_cover_img" + ext
+                _r2.upload_file(cover_img, f"links/_tmp/{tmp_key}/{fname}")
+                session["links_cover_tmp_key"] = tmp_key
+                session["links_cover_tmp_name"] = fname
                 session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
@@ -2472,11 +2473,10 @@ def user_new_qr_design_links():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/links/" + short_code
-        from flask import url_for as _url_for
-        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
-            links_data["Links_cover_img_url"] = _url_for("static", filename="uploads/links/_tmp/{}/{}".format(session["cover_img_tmp_key"], session["cover_img_tmp_name"]))
-        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
-            links_data["welcome_img_url"] = _url_for("static", filename="uploads/links/_tmp/{}/{}".format(session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]))
+        if session.get("links_cover_tmp_key") and session.get("links_cover_tmp_name"):
+            links_data["Links_cover_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_cover_tmp_key"], session["links_cover_tmp_name"]))
+        if session.get("links_welcome_tmp_key") and session.get("links_welcome_tmp_name"):
+            links_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_welcome_tmp_key"], session["links_welcome_tmp_name"]))
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, links_data=links_data)
 
 
@@ -2574,6 +2574,7 @@ def qr_update_content_links(qrcard_id):
             _mgd.db_qrcard_links.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
             content_update["welcome_img_url"] = ""
         # Handle cover image upload
+        _r2 = r2_mod.r2_storage_proc()
         cover_img = request.files.get("Links_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -2582,11 +2583,7 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                dest_dir = os.path.join(app.root_path, "static", "uploads", "links", qrcard_id)
-                os.makedirs(dest_dir, exist_ok=True)
-                cover_img.save(os.path.join(dest_dir, "links_cover_img" + ext))
-                cover_url = f"/static/uploads/links/{qrcard_id}/links_cover_img{ext}"
-                content_update["Links_cover_img_url"] = cover_url
+                content_update["Links_cover_img_url"] = _r2.upload_file(cover_img, f"links/{qrcard_id}/links_cover_img{ext}")
         # Handle cover delete
         if request.form.get("Links_profile_img_delete") == "1":
             content_update["Links_cover_img_url"] = ""
@@ -2599,10 +2596,7 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                dest_dir = os.path.join(app.root_path, "static", "uploads", "links", qrcard_id)
-                os.makedirs(dest_dir, exist_ok=True)
-                welcome_img.save(os.path.join(dest_dir, "welcome" + ext))
-                content_update["welcome_img_url"] = f"/static/uploads/links/{qrcard_id}/welcome{ext}"
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome{ext}")
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
@@ -2675,12 +2669,10 @@ def user_new_qr_sosmed():
                     sosmed_data[key] = val_list
                 else:
                     sosmed_data[key] = val_list[0] if val_list else ""
-        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
-            from flask import url_for as _uf
-            sosmed_data["Sosmed_cover_img_url"] = _uf("static", filename="uploads/sosmed/_tmp/{}/{}".format(session["cover_img_tmp_key"], session["cover_img_tmp_name"]))
-        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
-            from flask import url_for as _uf
-            sosmed_data["welcome_img_url"] = _uf("static", filename="uploads/sosmed/_tmp/{}/{}".format(session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]))
+        if session.get("sosmed_cover_tmp_key") and session.get("sosmed_cover_tmp_name"):
+            sosmed_data["Sosmed_cover_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_cover_tmp_key"], session["sosmed_cover_tmp_name"]))
+        if session.get("sosmed_welcome_tmp_key") and session.get("sosmed_welcome_tmp_name"):
+            sosmed_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_welcome_tmp_key"], session["sosmed_welcome_tmp_name"]))
         icons = sosmed_data.get("Sosmed_item_icon[]", [])
         names = sosmed_data.get("Sosmed_item_name[]", [])
         descs = sosmed_data.get("Sosmed_item_desc[]", [])
@@ -2724,9 +2716,8 @@ def user_new_qr_design_sosmed():
                     sosmed_data[key] = val_list[0] if val_list else ""
         tmp_key = session.get("sosmed_tmp_key") or _uuid.uuid4().hex
         session["sosmed_tmp_key"] = tmp_key
-        tmp_dir = os.path.join(app.root_path, "static", "uploads", "sosmed", "_tmp", tmp_key)
-        os.makedirs(tmp_dir, exist_ok=True)
         session.modified = True
+        _r2 = r2_mod.r2_storage_proc()
         welcome_img = request.files.get("Sosmed_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -2735,9 +2726,10 @@ def user_new_qr_design_sosmed():
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                welcome_img.save(os.path.join(tmp_dir, "welcome" + ext))
-                session["welcome_img_tmp_key"] = tmp_key
-                session["welcome_img_tmp_name"] = "welcome" + ext
+                fname = "welcome" + ext
+                _r2.upload_file(welcome_img, f"sosmed/_tmp/{tmp_key}/{fname}")
+                session["sosmed_welcome_tmp_key"] = tmp_key
+                session["sosmed_welcome_tmp_name"] = fname
                 session.modified = True
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
@@ -2749,9 +2741,10 @@ def user_new_qr_design_sosmed():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                cover_img.save(os.path.join(tmp_dir, "sosmed_cover_img" + ext))
-                session["cover_img_tmp_key"] = tmp_key
-                session["cover_img_tmp_name"] = "sosmed_cover_img" + ext
+                fname = "sosmed_cover_img" + ext
+                _r2.upload_file(cover_img, f"sosmed/_tmp/{tmp_key}/{fname}")
+                session["sosmed_cover_tmp_key"] = tmp_key
+                session["sosmed_cover_tmp_name"] = fname
                 session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
@@ -2770,11 +2763,10 @@ def user_new_qr_design_sosmed():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/sosmed/" + short_code
-        from flask import url_for as _url_for
-        if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
-            sosmed_data["Sosmed_cover_img_url"] = _url_for("static", filename="uploads/sosmed/_tmp/{}/{}".format(session["cover_img_tmp_key"], session["cover_img_tmp_name"]))
-        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
-            sosmed_data["welcome_img_url"] = _url_for("static", filename="uploads/sosmed/_tmp/{}/{}".format(session["welcome_img_tmp_key"], session["welcome_img_tmp_name"]))
+        if session.get("sosmed_cover_tmp_key") and session.get("sosmed_cover_tmp_name"):
+            sosmed_data["Sosmed_cover_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_cover_tmp_key"], session["sosmed_cover_tmp_name"]))
+        if session.get("sosmed_welcome_tmp_key") and session.get("sosmed_welcome_tmp_name"):
+            sosmed_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_welcome_tmp_key"], session["sosmed_welcome_tmp_name"]))
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, sosmed_data=sosmed_data)
 
 
@@ -2869,6 +2861,7 @@ def qr_update_content_sosmed(qrcard_id):
         if request.form.get("welcome_img_delete") == "1":
             _mgd.db_qrcard_sosmed.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
             content_update["welcome_img_url"] = ""
+        _r2 = r2_mod.r2_storage_proc()
         cover_img = request.files.get("Sosmed_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -2877,10 +2870,7 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                dest_dir = os.path.join(app.root_path, "static", "uploads", "sosmed", qrcard_id)
-                os.makedirs(dest_dir, exist_ok=True)
-                cover_img.save(os.path.join(dest_dir, "sosmed_cover_img" + ext))
-                content_update["Sosmed_cover_img_url"] = f"/static/uploads/sosmed/{qrcard_id}/sosmed_cover_img{ext}"
+                content_update["Sosmed_cover_img_url"] = _r2.upload_file(cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}")
         if request.form.get("Sosmed_profile_img_delete") == "1":
             content_update["Sosmed_cover_img_url"] = ""
         welcome_img = request.files.get("Sosmed_welcome_img")
@@ -2891,10 +2881,7 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                dest_dir = os.path.join(app.root_path, "static", "uploads", "sosmed", qrcard_id)
-                os.makedirs(dest_dir, exist_ok=True)
-                welcome_img.save(os.path.join(dest_dir, "welcome" + ext))
-                content_update["welcome_img_url"] = f"/static/uploads/sosmed/{qrcard_id}/welcome{ext}"
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome{ext}")
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code

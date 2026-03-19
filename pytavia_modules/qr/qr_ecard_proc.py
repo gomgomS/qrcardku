@@ -425,6 +425,22 @@ class qr_ecard_proc:
                 )
             except Exception:
                 pass
+        else:
+            # Handle autocomplete static image upload
+            ac_url = request.form.get("ecard_cover_img_autocomplete_url", "")
+            if ac_url and ac_url.startswith("/static/"):
+                import os as _os
+                ext = _os.path.splitext(ac_url)[1] or ".jpg"
+                local_path = _os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", _os.sep))
+                if _os.path.isfile(local_path):
+                    try:
+                        with open(local_path, "rb") as f:
+                            cover_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/profile_img{ext}")
+                        img_update = {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update})
+                        self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update}, upsert=True)
+                    except Exception:
+                        pass
         saved_files = []
         if tmp_key and tmp_files:
             for idx, f_info in enumerate(tmp_files):

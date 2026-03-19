@@ -7,8 +7,10 @@ import traceback
 from datetime import datetime
 
 sys.path.append("pytavia_core")
+sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
+from storage import r2_storage_proc as r2_mod
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -180,7 +182,7 @@ class qr_sosmed_proc:
 
     def complete_sosmed_save(self, request, session, root_path):
         """Full sosmed save: build params, add_qrcard, persist content + move uploads."""
-        import os, shutil
+        import os
         fk_user_id = session.get("fk_user_id")
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated", "url_content": "", "qr_name": "", "short_code": "", "qr_encode_url": None}
@@ -234,33 +236,44 @@ class qr_sosmed_proc:
         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": full_update})
         self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": full_update}, upsert=True)
 
-        dest_dir = os.path.join(root_path, "static", "uploads", "sosmed", new_id)
-        welcome_tmp_key = session.pop("welcome_img_tmp_key", None)
-        welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
-        cover_tmp_key = session.pop("cover_img_tmp_key", None)
-        cover_tmp_name = session.pop("cover_img_tmp_name", "sosmed_cover_img.jpg")
+        # Move welcome/cover images from R2 _tmp → final
+        _r2 = r2_mod.r2_storage_proc()
+        welcome_tmp_key  = session.pop("sosmed_welcome_tmp_key", None)
+        welcome_tmp_name = session.pop("sosmed_welcome_tmp_name", None)
+        cover_tmp_key    = session.pop("sosmed_cover_tmp_key", None)
+        cover_tmp_name   = session.pop("sosmed_cover_tmp_name", None)
         session.modified = True
 
-        if welcome_tmp_key:
-            tmp_dir_w = os.path.join(root_path, "static", "uploads", "sosmed", "_tmp", welcome_tmp_key)
-            src = os.path.join(tmp_dir_w, welcome_tmp_name)
-            if os.path.exists(src):
-                os.makedirs(dest_dir, exist_ok=True)
-                ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
-                shutil.move(src, os.path.join(dest_dir, "welcome" + ext))
-                welcome_url = f"/static/uploads/sosmed/{new_id}/welcome{ext}"
+        if welcome_tmp_key and welcome_tmp_name:
+            ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
+            try:
+                welcome_url = _r2.move_file(f"sosmed/_tmp/{welcome_tmp_key}/{welcome_tmp_name}", f"sosmed/{new_id}/welcome{ext}")
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+            except Exception:
+                pass
 
-        if cover_tmp_key:
-            tmp_dir_c = os.path.join(root_path, "static", "uploads", "sosmed", "_tmp", cover_tmp_key)
-            src = os.path.join(tmp_dir_c, cover_tmp_name)
-            if os.path.exists(src):
-                os.makedirs(dest_dir, exist_ok=True)
-                ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
-                shutil.move(src, os.path.join(dest_dir, "sosmed_cover_img" + ext))
-                cover_url = f"/static/uploads/sosmed/{new_id}/sosmed_cover_img{ext}"
+        if cover_tmp_key and cover_tmp_name:
+            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            try:
+                cover_url = _r2.move_file(f"sosmed/_tmp/{cover_tmp_key}/{cover_tmp_name}", f"sosmed/{new_id}/sosmed_cover_img{ext}")
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
+            except Exception:
+                pass
+        else:
+            # Handle autocomplete static image upload
+            ac_url = request.form.get("sosmed_cover_img_autocomplete_url", "")
+            if ac_url and ac_url.startswith("/static/"):
+                ext = os.path.splitext(ac_url)[1] or ".jpg"
+                local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+                if os.path.isfile(local_path):
+                    try:
+                        with open(local_path, "rb") as f:
+                            cover_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/sosmed_cover_img{ext}")
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
+                        self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
+                    except Exception:
+                        pass
 
         return {"success": True, "qrcard_id": new_id}

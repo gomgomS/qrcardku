@@ -499,6 +499,17 @@
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
     }
+    .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
+    .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
+    .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
+    .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
+    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
+    .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 </style>
 {% endblock %}
 
@@ -544,6 +555,21 @@
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
                 value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Autocomplete / Fill Sample Data -->
+            <div class="autocomplete-row">
+                <div class="autocomplete-row-left">
+                    <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <div class="autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub">Auto-fills appearance and basic information</div>
+                    </div>
+                </div>
+                <label class="autocomplete-toggle" title="Toggle autocomplete">
+                    <input type="checkbox" id="pdf-autocomplete-toggle">
+                    <span class="autocomplete-slider"></span>
+                </label>
+            </div>
 
             <!-- Basic Information Section -->
 
@@ -980,6 +1006,7 @@
                                         <i class="fa-solid fa-xmark"></i> Remove
                                     </button>
                                     <input type="hidden" name="pdf_t1_header_img_delete" id="pdf_t1_header_img_delete" value="0">
+                                    <input type="hidden" name="pdf_t1_header_img_autocomplete_url" id="pdf_t1_header_img_autocomplete_url" value="">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Same image used across all templates, displayed as header or circle depending on design.</p>
                             </div>
@@ -2402,6 +2429,9 @@
         } else {
             if (topBlock) topBlock.style.display = '';
             if (botBlock) botBlock.style.display = '';
+            // Re-trigger PDF canvas render when switching back to default template
+            var pdfIn = document.querySelector('input[name="pdf_files"]');
+            if (pdfIn) pdfIn.dispatchEvent(new Event('change'));
         }
     }
 
@@ -2815,6 +2845,112 @@
     });
 
 })();
+
+    // ── PDF Autocomplete ──────────────────────────────────────────────────
+    (function() {
+        var _dumpCache = null;
+        function setColor(pickerId, hexId, value) {
+            var picker = document.getElementById(pickerId);
+            var hex = document.getElementById(hexId);
+            if (picker) { picker.value = value; picker.dispatchEvent(new Event('input')); }
+            if (hex) hex.value = value.toUpperCase();
+        }
+        function applyPdfAutocomplete(dump) {
+            var ap = dump.appearance || {};
+            if (ap.template) {
+                var radio = document.querySelector('input[name="pdf_template"][value="' + ap.template + '"]');
+                if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+            }
+            if (ap.primary_color)   setColor('pdf_primary_picker',    'pdf_primary_hex',    ap.primary_color);
+            if (ap.secondary_color) setColor('pdf_secondary_picker',  'pdf_secondary_hex',  ap.secondary_color);
+            if (ap.title_color)     setColor('pdf_title_color_picker', 'pdf_title_color_hex', ap.title_color);
+            if (ap.text_color)      setColor('pdf_text_color_picker',  'pdf_text_color_hex',  ap.text_color);
+            if (ap.title_font) { var s = document.querySelector('select[name="pdf_title_font"]'); if (s) s.value = ap.title_font; }
+            if (ap.text_font)  { var s = document.querySelector('select[name="pdf_text_font"]');  if (s) s.value = ap.text_font;  }
+            var bi = dump.basic_info || {};
+            if (bi.title)    { var el = document.querySelector('input[name="pdf_title"]');    if (el) { el.value = bi.title;    el.dispatchEvent(new Event('input')); } }
+            if (bi.desc)     { var el = document.querySelector('input[name="pdf_desc"]');     if (el) { el.value = bi.desc;     el.dispatchEvent(new Event('input')); } }
+            if (bi.company)  { var el = document.querySelector('input[name="pdf_company"]');  if (el) { el.value = bi.company;  el.dispatchEvent(new Event('input')); } }
+            if (bi.website)  { var el = document.querySelector('input[name="pdf_website"]');  if (el) { el.value = bi.website;  el.dispatchEvent(new Event('input')); } }
+            if (bi.btn_text) { var el = document.querySelector('input[name="pdf_btn_text"]'); if (el) { el.value = bi.btn_text; el.dispatchEvent(new Event('input')); } }
+
+            // Cover image
+            if (bi.cover_image) {
+                var coverPreview = document.getElementById('cover-img-preview');
+                if (coverPreview) {
+                    coverPreview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample cover image</span>';
+                }
+                var removeBtn = document.getElementById('cover-img-remove-btn');
+                if (removeBtn) removeBtn.style.display = '';
+                var acCoverField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+                if (acCoverField) acCoverField.value = bi.cover_image;
+                var t1Img = document.getElementById('t1-preview-header-img');
+                if (t1Img) { t1Img.src = bi.cover_image; t1Img.style.display = 'block'; }
+                var t1Header = document.getElementById('t1-preview-header');
+                if (t1Header) t1Header.style.display = '';
+                var t3Img = document.getElementById('t3-preview-circle-img');
+                if (t3Img) { t3Img.src = bi.cover_image; t3Img.style.display = 'block'; }
+                var t4Img = document.getElementById('t4-preview-circle-img');
+                if (t4Img) { t4Img.src = bi.cover_image; t4Img.style.display = 'block'; }
+            }
+
+            // PDF files
+            if (dump.pdfs && dump.pdfs.length) {
+                var savedPdfList = document.getElementById('saved-pdf-list');
+                if (!savedPdfList) {
+                    savedPdfList = document.createElement('div');
+                    savedPdfList.id = 'saved-pdf-list';
+                    savedPdfList.style.cssText = 'margin-top:12px;display:flex;flex-direction:column;gap:10px;';
+                    var pdfFileList = document.getElementById('pdf-file-list');
+                    if (pdfFileList && pdfFileList.parentNode) {
+                        pdfFileList.parentNode.insertBefore(savedPdfList, pdfFileList);
+                    }
+                }
+                savedPdfList.querySelectorAll('.pdf-autocomplete-item').forEach(function(el) { el.remove(); });
+                dump.pdfs.forEach(function(pdf) {
+                    var item = document.createElement('div');
+                    item.className = 'pdf-file-item pdf-autocomplete-item';
+                    item.dataset.url = pdf.url;
+                    item.style.cssText = 'background:white;border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;';
+                    var dispName = pdf.display_name || pdf.name;
+                    item.innerHTML =
+                        '<input type="hidden" name="pdf_autocomplete_urls" value="' + pdf.url + '">' +
+                        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+                            '<div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;">' +
+                                '<i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:15px;flex-shrink:0;"></i>' +
+                                '<span style="font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dispName + '</span>' +
+                            '</div>' +
+                            '<button type="button" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:2px 4px;flex-shrink:0;" onclick="this.closest(\'.pdf-file-item\').remove()" title="Remove"><i class="fa-solid fa-xmark"></i></button>' +
+                        '</div>' +
+                        '<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Name</label>' +
+                        '<input type="text" name="pdf_display_names" class="pdf-display-name-input" value="' + dispName + '" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;outline:none;color:var(--text-main);"></div>' +
+                        '<div><label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Description</label>' +
+                        '<input type="text" name="pdf_item_descs" class="pdf-item-desc-input" value="' + (pdf.desc || '') + '" placeholder="Optional note shown under the file name\u2026" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;outline:none;color:var(--text-main);"></div>';
+                    savedPdfList.appendChild(item);
+                });
+                if (typeof updateActivePdfList === 'function') updateActivePdfList();
+                // Trigger default-template canvas render by firing a change on the file input.
+                // The existing handler reads savedUrls from #saved-pdf-list and renders the first PDF.
+                var pdfInput = document.querySelector('input[name="pdf_files"]');
+                if (pdfInput) pdfInput.dispatchEvent(new Event('change'));
+                // Also attach the pdfObserver to the newly created saved-pdf-list if it wasn't before
+                if (typeof pdfObserver !== 'undefined' && savedPdfList) {
+                    pdfObserver.observe(savedPdfList, { childList: true, subtree: true });
+                }
+            }
+        }
+        var toggle = document.getElementById('pdf-autocomplete-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                if (!this.checked) return;
+                if (_dumpCache) { applyPdfAutocomplete(_dumpCache); return; }
+                fetch('{{ url_for("static", filename="json_file/pdf_dump.json") }}')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { _dumpCache = data; applyPdfAutocomplete(data); })
+                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            });
+        }
+    })();
 </script>
 
 {% endblock %}

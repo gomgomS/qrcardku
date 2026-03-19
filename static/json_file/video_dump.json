@@ -1,0 +1,13 @@
+{
+  "appearance": {
+    "template": "template1",
+    "primary_color": "#ef4444",
+    "secondary_color": "#b91c1c",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans"
+  },
+  "basic_info": {
+    "title": "My Video Gallery",
+    "desc": "Watch my latest videos"
+  }
+}

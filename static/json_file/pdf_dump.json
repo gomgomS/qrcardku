@@ -1,0 +1,33 @@
+{
+  "appearance": {
+    "template": "template1",
+    "primary_color": "#8b5cf6",
+    "secondary_color": "#5b21b6",
+    "title_color": "#111827",
+    "text_color": "#6b7280",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans"
+  },
+  "basic_info": {
+    "title": "Our Documents",
+    "desc": "Access our latest brochures and catalogs",
+    "company": "qrkartu Corporation",
+    "website": "https://qrkartu.com",
+    "btn_text": "Download PDF",
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+  },
+  "pdfs": [
+    {
+      "name": "thankyou for using qrkartu.pdf",
+      "url": "/static/assets/autocomplete_field_helper/pdf/thankyou for using qrkartu.pdf",
+      "display_name": "Thank You Document",
+      "desc": "A sample thank you document"
+    },
+    {
+      "name": "thankyou for using qrkartu - dump 2.pdf",
+      "url": "/static/assets/autocomplete_field_helper/pdf/thankyou for using qrkartu - dump 2.pdf",
+      "display_name": "Sample Brochure",
+      "desc": "Another sample document"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "appearance": {
+    "template": "template1",
+    "primary_color": "#f59e0b",
+    "secondary_color": "#b45309",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans"
+  },
+  "basic_info": {
+    "title": "My Photo Gallery",
+    "desc": "A collection of my best shots"
+  }
+}

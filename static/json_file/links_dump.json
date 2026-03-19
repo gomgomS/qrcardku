@@ -1,0 +1,21 @@
+{
+  "appearance": {
+    "template": "template1",
+    "primary_color": "#6366f1",
+    "secondary_color": "#4338ca",
+    "title_color": "#111827",
+    "text_color": "#6b7280",
+    "title_font": "Montserrat",
+    "text_font": "Open Sans"
+  },
+  "basic_info": {
+    "title": "My Link Hub",
+    "desc": "All my important links in one place",
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+  },
+  "links": [
+    { "url": "https://example.com/portfolio", "name": "My Portfolio", "desc": "Browse my latest projects" },
+    { "url": "https://example.com/blog", "name": "Blog", "desc": "Tips and stories" },
+    { "url": "https://example.com/shop", "name": "Shop", "desc": "Products and merch" }
+  ]
+}

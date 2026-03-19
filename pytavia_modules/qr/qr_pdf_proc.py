@@ -424,6 +424,25 @@ class qr_pdf_proc:
                 )
             except Exception:
                 pass
+        else:
+            ac_cover = session.pop("pdf_t1_header_img_autocomplete_url", "") or ""
+            if ac_cover and ac_cover.startswith("/static/"):
+                ext = os.path.splitext(ac_cover)[1] or ".jpg"
+                local_path = os.path.join(root_path or config.G_HOME_PATH, ac_cover.lstrip("/").replace("/", os.sep))
+                if os.path.isfile(local_path):
+                    try:
+                        with open(local_path, "rb") as f:
+                            cover_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/pdf_cover_img{ext}")
+                        self.mgdDB.db_qrcard.update_one(
+                            {"qrcard_id": new_qrcard_id},
+                            {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
+                        )
+                        self.mgdDB.db_qrcard_pdf.update_one(
+                            {"qrcard_id": new_qrcard_id},
+                            {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
+                        )
+                    except Exception:
+                        pass
         saved_files = []
         if tmp_key and tmp_files:
             for idx, f_info in enumerate(tmp_files):
@@ -455,6 +474,30 @@ class qr_pdf_proc:
                 pass
         if saved_files:
             self.update_pdf_files(fk_user_id, new_qrcard_id, saved_files)
+        elif not saved_files:
+            ac_pdf_urls = session.pop("pdf_autocomplete_urls", []) or []
+            if ac_pdf_urls:
+                ac_saved_files = []
+                for i, ac_url in enumerate(ac_pdf_urls):
+                    if not ac_url.startswith("/static/"):
+                        continue
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
+                        try:
+                            fname = os.path.basename(local_path)
+                            safe_name = fname.replace(" ", "_")
+                            with open(local_path, "rb") as f:
+                                file_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/{safe_name}")
+                            entry = {"name": fname, "url": file_url}
+                            if i < len(saved_display_names) and saved_display_names[i].strip():
+                                entry["display_name"] = saved_display_names[i].strip()
+                            if i < len(saved_item_descs) and saved_item_descs[i].strip():
+                                entry["item_desc"] = saved_item_descs[i].strip()
+                            ac_saved_files.append(entry)
+                        except Exception:
+                            pass
+                if ac_saved_files:
+                    self.update_pdf_files(fk_user_id, new_qrcard_id, ac_saved_files)
         return {"success": True, "qrcard_id": new_qrcard_id}
 
     # ##### edit section pdf #####

@@ -528,6 +528,17 @@
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
     }
+    .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
+    .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
+    .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
+    .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
+    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
+    .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 </style>
 {% endblock %}
 
@@ -573,6 +584,21 @@
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
                 value="{{ qr_name | default('', true) }}" required>
+
+            <!-- Autocomplete / Fill Sample Data -->
+            <div class="autocomplete-row">
+                <div class="autocomplete-row-left">
+                    <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div>
+                        <div class="autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub">Auto-fills the website URL</div>
+                    </div>
+                </div>
+                <label class="autocomplete-toggle" title="Toggle autocomplete">
+                    <input type="checkbox" id="web-autocomplete-toggle">
+                    <span class="autocomplete-slider"></span>
+                </label>
+            </div>
 
             <!-- Basic Information Section -->
             <div class="collapse-section">
@@ -923,6 +949,28 @@
     attachCollapseListener('.sub-collapse-header');
 
     });
+
+    // ── Web Autocomplete ──────────────────────────────────────────────────
+    (function() {
+        var _dumpCache = null;
+        function applyWebAutocomplete(dump) {
+            if (dump.url) {
+                var el = document.querySelector('input[name="url_content"]');
+                if (el) { el.value = dump.url; el.dispatchEvent(new Event('input')); }
+            }
+        }
+        var toggle = document.getElementById('web-autocomplete-toggle');
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                if (!this.checked) return;
+                if (_dumpCache) { applyWebAutocomplete(_dumpCache); return; }
+                fetch('{{ url_for("static", filename="json_file/web_dump.json") }}')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) { _dumpCache = data; applyWebAutocomplete(data); })
+                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            });
+        }
+    })();
 </script>
 
 {% endblock %}
