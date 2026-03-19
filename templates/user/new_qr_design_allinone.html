@@ -390,33 +390,6 @@
         };
         attachCollapseListener('.collapse-header');
 
-        // Load admin default frames
-        fetch('/api/frames/default')
-            .then(function(r){ return r.json(); })
-            .then(function(frames){
-                if (!frames || frames.length === 0) return;
-                var section = document.getElementById('default-frames-section');
-                var grid    = document.getElementById('default-frames-grid');
-                section.style.display = 'block';
-                frames.forEach(function(f){
-                    var d = document.createElement('div');
-                    d.className = 'grid-item frame-option-custom';
-                    d.setAttribute('data-custom-frame-id', f.frame_id);
-                    d.setAttribute('data-frame-img',       f.image_url);
-                    d.setAttribute('data-frame-qx',        f.qr_x);
-                    d.setAttribute('data-frame-qy',        f.qr_y);
-                    d.setAttribute('data-frame-qw',        f.qr_w);
-                    d.setAttribute('data-frame-qh',        f.qr_h);
-                    d.title = f.name;
-                    d.innerHTML = '<img class="custom-frame-thumb" src="' + f.image_url + '" alt="' + f.name + '"><span class="frame-label">' + f.name + '</span>';
-                    d.addEventListener('click', function () {
-                        if (typeof window.qfpSelectFrame === 'function') window.qfpSelectFrame(this);
-                    });
-                    grid.appendChild(d);
-                });
-            })
-            .catch(function(){});
-
         const frameCaption = document.getElementById('frame-caption');
 
         const frameTextEl = document.getElementById('frame-text');

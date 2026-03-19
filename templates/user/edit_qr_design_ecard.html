@@ -808,48 +808,12 @@
                 <i class="fa-solid fa-chevron-up frame-chevron" style="color: var(--text-muted);"></i>
             </div>
             <div class="collapse-body show">
-                <div class="selection-grid frame-grid" style="margin-top: 24px;">
-                    <div class="grid-item frame-option active" data-frame="none" title="No frame">
-                        <div class="frame-thumb frame-thumb-none"></div>
-                        <span class="frame-label">None</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="simple" title="Simple border">
-                        <div class="frame-thumb frame-thumb-simple"></div>
-                        <span class="frame-label">Simple</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="rounded" title="Rounded">
-                        <div class="frame-thumb frame-thumb-rounded"></div>
-                        <span class="frame-label">Rounded</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="double" title="Double border">
-                        <div class="frame-thumb frame-thumb-double"></div>
-                        <span class="frame-label">Double</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="envelope" title="Envelope">
-                        <div class="frame-thumb frame-thumb-envelope"></div>
-                        <span class="frame-label">Envelope</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="ticket" title="Ticket">
-                        <div class="frame-thumb frame-thumb-ticket"></div>
-                        <span class="frame-label">Ticket</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="circle" title="Circle">
-                        <div class="frame-thumb frame-thumb-circle"></div>
-                        <span class="frame-label">Circle</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="thick" title="Thick border">
-                        <div class="frame-thumb frame-thumb-thick"></div>
-                        <span class="frame-label">Thick</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="shadow" title="Shadow">
-                        <div class="frame-thumb frame-thumb-shadow"></div>
-                        <span class="frame-label">Shadow</span>
-                    </div>
-                    <div class="grid-item frame-option" data-frame="badge" title="Badge">
-                        <div class="frame-thumb frame-thumb-badge"></div>
-                        <span class="frame-label">Badge</span>
-                    </div>
+                <!-- Default frames (from admin) -->
+                <div class="custom-frames-section" id="default-frames-section" style="display:none;">
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
+
                 <div class="custom-frames-section">
                     <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
