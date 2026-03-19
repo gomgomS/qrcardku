@@ -103,6 +103,31 @@
             item.addEventListener('click', function () { selectFrame(this); });
         });
 
+        /* Load admin default frames */
+        fetch('/api/frames/default')
+            .then(function (r) { return r.json(); })
+            .then(function (frames) {
+                var section = document.getElementById('default-frames-section');
+                var grid    = document.getElementById('default-frames-grid');
+                if (!grid || !frames || frames.length === 0) return;
+                if (section) section.style.display = 'block';
+                frames.forEach(function (f) {
+                    var d = document.createElement('div');
+                    d.className = 'grid-item frame-option-custom';
+                    d.setAttribute('data-custom-frame-id', f.frame_id);
+                    d.setAttribute('data-frame-img',       f.image_url);
+                    d.setAttribute('data-frame-qx',        f.qr_x);
+                    d.setAttribute('data-frame-qy',        f.qr_y);
+                    d.setAttribute('data-frame-qw',        f.qr_w);
+                    d.setAttribute('data-frame-qh',        f.qr_h);
+                    d.title = f.name;
+                    d.innerHTML = '<img class="custom-frame-thumb" src="' + f.image_url + '" alt="' + f.name + '"><span class="frame-label">' + f.name + '</span>';
+                    d.addEventListener('click', function () { selectFrame(this); });
+                    grid.appendChild(d);
+                });
+            })
+            .catch(function () {});
+
         /* Load custom frames from API */
         fetch('/user/frames/api')
             .then(function (r) { return r.json(); })
