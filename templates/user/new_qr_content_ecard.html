@@ -2530,10 +2530,12 @@
                 if (t3Preview) t3Preview.style.display = 'flex';
                 updateT3TextPreview();
                 updateT3EcardList();
+                syncCircleImageForTemplate('template3');
             } else if (template === 'template4') {
                 if (t4Preview) t4Preview.style.display = 'flex';
                 updateT4TextPreview();
                 updateT4EcardList();
+                syncCircleImageForTemplate('template4');
             } else {
                 if (topBlock) topBlock.style.display = '';
                 if (botBlock) botBlock.style.display = '';
@@ -2859,6 +2861,7 @@
         var ecardCropObjectUrl = null;
 
         function applyProfileImageToPreviews(url) {
+            window._ecardCurrentProfileUrl = url;
             var previewProfileImg = document.getElementById('preview-profile-img');
             var previewPlaceholder = document.getElementById('preview-profile-placeholder-icon');
             if (previewProfileImg) { previewProfileImg.src = url; previewProfileImg.style.display = 'block'; }
@@ -2885,6 +2888,22 @@
             if (delFlag) delFlag.value = '0';
         }
         window.applyProfileImageToPreviews = applyProfileImageToPreviews;
+
+        function syncCircleImageForTemplate(tmpl) {
+            var url = window._ecardCurrentProfileUrl;
+            if (!url) return;
+            if (tmpl === 'template3') {
+                var img = document.getElementById('t3-preview-circle-img');
+                var ph = document.getElementById('t3-preview-circle-placeholder');
+                if (img) { img.src = url; img.style.display = 'block'; }
+                if (ph) ph.style.display = 'none';
+            } else if (tmpl === 'template4') {
+                var img = document.getElementById('t4-preview-circle-img');
+                var ph = document.getElementById('t4-preview-circle-placeholder');
+                if (img) { img.src = url; img.style.display = 'block'; }
+                if (ph) ph.style.display = 'none';
+            }
+        }
 
         if (t1ImgInput && cropModal && cropImageEl) {
             t1ImgInput.addEventListener('change', function () {
