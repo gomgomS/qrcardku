@@ -351,7 +351,7 @@ class qr_special_proc:
                     pass
         session.modified = True
 
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_qrcard_id}
 
 
 # end class

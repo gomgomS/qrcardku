@@ -12,49 +12,559 @@
         margin-bottom: 24px;
     }
 
+    /* ── Frame list grid ── */
+    .frames-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        margin-top: 8px;
+    }
+
+    .frame-card {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: white;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .frame-card-img {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        display: block;
+        background: #f3f4f6;
+    }
+
+    .frame-card-body {
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .frame-card-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .frame-card-delete {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #9ca3af;
+        font-size: 13px;
+        padding: 4px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .frame-card-delete:hover { color: #dc2626; }
+
+    .frame-area-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: rgba(255,255,255,0.85);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 10px;
+        padding: 2px 6px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ── Empty state ── */
     .empty-state-container {
         border: 1px solid var(--border-color);
         background-color: white;
         border-radius: 8px;
-        padding: 120px 0;
+        padding: 80px 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: 32px;
+        margin-top: 16px;
     }
 
     .empty-message {
         display: flex;
+        flex-direction: column;
         align-items: center;
         gap: 12px;
         color: var(--text-muted);
         font-size: 14px;
+        text-align: center;
     }
 
-    .empty-message i {
+    .empty-message i { font-size: 28px; color: #9ca3af; }
+
+    /* ── Builder overlay ── */
+    .builder-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 500;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .builder-overlay.open { display: flex; }
+
+    .builder-modal {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 680px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 28px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        position: relative;
+    }
+
+    .builder-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: none;
+        border: none;
         font-size: 20px;
-        color: #4b5563;
+        cursor: pointer;
+        color: var(--text-muted);
+        line-height: 1;
     }
 
-    .create-link {
-        color: var(--primary);
-        font-weight: 500;
-        text-decoration: none;
+    .builder-close:hover { color: var(--text-main); }
+
+    .builder-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 20px;
+    }
+
+    .builder-step {
+        margin-bottom: 20px;
+    }
+
+    .builder-step-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .builder-step-label .step-num {
+        width: 20px;
+        height: 20px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        flex-shrink: 0;
+    }
+
+    .upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 28px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        background: #f9fafb;
+    }
+
+    .upload-area:hover, .upload-area.drag-over { border-color: var(--primary); background: #eff6ff; }
+    .upload-area i { font-size: 28px; color: #9ca3af; margin-bottom: 8px; display: block; }
+    .upload-area p { font-size: 13px; color: var(--text-muted); margin: 0; }
+    .upload-area p strong { color: var(--primary); }
+
+    #frame-image-input { display: none; }
+
+    /* Canvas wrapper */
+    .canvas-wrap {
+        display: none;
+        position: relative;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #1f2937;
+        cursor: crosshair;
+    }
+
+    #frame-canvas {
+        display: block;
+        max-width: 100%;
+    }
+
+    .canvas-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .builder-name-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .builder-name-row input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+    .builder-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .btn-secondary {
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        padding: 8px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="templates-header">
-    <div class="page-title" style="margin: 0;">Templates</div>
-    <button class="btn-primary"><i class="fa-solid fa-plus"></i> Create template</button>
+    <div class="page-title" style="margin: 0;">QR Frames</div>
+    <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> Create frame</button>
 </div>
 
+{% if msg %}
+<div style="background:#d1fae5;color:#065f46;padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;">
+    <i class="fa-solid fa-circle-check"></i> {{ msg }}
+</div>
+{% endif %}
+{% if error_msg %}
+<div style="background:#fee2e2;color:#b91c1c;padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+</div>
+{% endif %}
+
+{% if frames %}
+<div class="frames-grid">
+    {% for frame in frames %}
+    <div class="frame-card">
+        <img class="frame-card-img" src="{{ frame.image_url }}" alt="{{ frame.name }}" loading="lazy">
+        <div class="frame-area-badge"><i class="fa-solid fa-qrcode"></i> Area marked</div>
+        <div class="frame-card-body">
+            <span class="frame-card-name">{{ frame.name }}</span>
+            <form method="POST" action="/user/frames/delete/{{ frame.frame_id }}" style="margin:0;"
+                  onsubmit="return confirm('Delete this frame?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="frame-card-delete" title="Delete frame">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
 <div class="empty-state-container">
     <div class="empty-message">
-        <i class="fa-regular fa-file"></i>
-        Here you can manage your templates
-        <a href="#" class="create-link">Create template</a>
+        <i class="fa-regular fa-image"></i>
+        <div>No custom frames yet.</div>
+        <div style="font-size:13px;">Upload an image and mark where the QR should appear.</div>
+        <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> Create your first frame</button>
     </div>
 </div>
+{% endif %}
+
+<!-- ── Frame builder modal ── -->
+<div class="builder-overlay" id="builder-overlay">
+    <div class="builder-modal">
+        <button class="builder-close" onclick="closeBuilder()" type="button">&times;</button>
+        <div class="builder-title"><i class="fa-solid fa-border-all" style="color:var(--primary);margin-right:8px;"></i>Create QR Frame</div>
+
+        <form method="POST" action="/user/frames/save" enctype="multipart/form-data" id="builder-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="qr_x" id="input-qr-x" value="0">
+            <input type="hidden" name="qr_y" id="input-qr-y" value="0">
+            <input type="hidden" name="qr_w" id="input-qr-w" value="0">
+            <input type="hidden" name="qr_h" id="input-qr-h" value="0">
+
+            <!-- Step 1: Upload -->
+            <div class="builder-step">
+                <div class="builder-step-label"><span class="step-num">1</span> Upload frame image</div>
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('frame-image-input').click()"
+                     ondragover="event.preventDefault();this.classList.add('drag-over')"
+                     ondragleave="this.classList.remove('drag-over')"
+                     ondrop="handleDrop(event)">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p><strong>Click to upload</strong> or drag &amp; drop</p>
+                    <p style="margin-top:4px;">JPG, PNG, WebP — max 5 MB</p>
+                </div>
+                <input type="file" name="frame_image" id="frame-image-input" accept="image/jpeg,image/png,image/webp">
+            </div>
+
+            <!-- Step 2: Mark QR area -->
+            <div class="builder-step" id="step2" style="display:none;">
+                <div class="builder-step-label"><span class="step-num">2</span> Mark where the QR code should appear</div>
+                <div class="canvas-wrap" id="canvas-wrap">
+                    <canvas id="frame-canvas"></canvas>
+                </div>
+                <div class="canvas-hint">
+                    <i class="fa-solid fa-hand-pointer"></i>
+                    Click and drag on the image to mark the QR area. Drag again to reposition.
+                </div>
+                <div id="area-status" style="font-size:12px;color:#6b7280;margin-top:6px;"></div>
+            </div>
+
+            <!-- Step 3: Name + Save -->
+            <div class="builder-step" id="step3" style="display:none;">
+                <div class="builder-step-label"><span class="step-num">3</span> Name this frame</div>
+                <div class="builder-name-row">
+                    <input type="text" name="frame_name" id="frame-name-input" placeholder="e.g. Church Poster, Event Banner…" maxlength="60" required>
+                </div>
+            </div>
+
+            <div class="builder-actions">
+                <button type="button" class="btn-secondary" onclick="closeBuilder()">Cancel</button>
+                <button type="submit" class="btn-primary" id="builder-save-btn" style="display:none;">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Frame
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    // ── Canvas state ──
+    var canvas = document.getElementById('frame-canvas');
+    var ctx = canvas.getContext('2d');
+    var img = new Image();
+    var naturalW = 0, naturalH = 0;
+    var sel = null;          // {sx, sy, ex, ey} in canvas px
+    var dragging = false;
+    var startX = 0, startY = 0;
+    var canvasWrap = document.getElementById('canvas-wrap');
+
+    // ── Open / Close ──
+    window.openBuilder = function () {
+        document.getElementById('builder-overlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+    window.closeBuilder = function () {
+        document.getElementById('builder-overlay').classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    // Click outside modal closes it
+    document.getElementById('builder-overlay').addEventListener('click', function (e) {
+        if (e.target === this) closeBuilder();
+    });
+
+    // ── Image upload ──
+    document.getElementById('frame-image-input').addEventListener('change', function () {
+        loadFile(this.files[0]);
+    });
+
+    window.handleDrop = function (e) {
+        e.preventDefault();
+        document.getElementById('upload-area').classList.remove('drag-over');
+        var file = e.dataTransfer.files[0];
+        if (file) {
+            document.getElementById('frame-image-input').files; // not assignable; show file name
+            loadFile(file);
+        }
+    };
+
+    function loadFile(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            img.onload = function () {
+                naturalW = img.naturalWidth;
+                naturalH = img.naturalHeight;
+                sel = null;
+                drawCanvas();
+                document.getElementById('step2').style.display = 'block';
+                document.getElementById('step3').style.display = 'block';
+                document.getElementById('upload-area').style.display = 'none';
+                canvasWrap.style.display = 'block';
+                updateAreaStatus();
+            };
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ── Canvas drawing ──
+    function drawCanvas() {
+        var maxW = canvasWrap.offsetWidth || 620;
+        var scale = Math.min(1, maxW / naturalW);
+        canvas.width  = Math.round(naturalW * scale);
+        canvas.height = Math.round(naturalH * scale);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        if (sel) {
+            var rx = Math.min(sel.sx, sel.ex);
+            var ry = Math.min(sel.sy, sel.ey);
+            var rw = Math.abs(sel.ex - sel.sx);
+            var rh = Math.abs(sel.ey - sel.sy);
+            // Dim outside
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(rx, ry, rw, rh);
+            ctx.drawImage(img,
+                rx / canvas.width * naturalW,
+                ry / canvas.height * naturalH,
+                rw / canvas.width * naturalW,
+                rh / canvas.height * naturalH,
+                rx, ry, rw, rh
+            );
+            // Dashed border
+            ctx.setLineDash([5, 4]);
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(rx, ry, rw, rh);
+            ctx.setLineDash([]);
+            // QR label
+            ctx.fillStyle = 'rgba(99,102,241,0.85)';
+            ctx.fillRect(rx, ry, rw, 20);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('QR area', rx + 4, ry + 14);
+        }
+    }
+
+    // ── Mouse selection ──
+    canvas.addEventListener('mousedown', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width  / rect.width;
+        var scaleY = canvas.height / rect.height;
+        startX = (e.clientX - rect.left) * scaleX;
+        startY = (e.clientY - rect.top)  * scaleY;
+        dragging = true;
+        sel = { sx: startX, sy: startY, ex: startX, ey: startY };
+    });
+
+    canvas.addEventListener('mousemove', function (e) {
+        if (!dragging) return;
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width  / rect.width;
+        var scaleY = canvas.height / rect.height;
+        sel.ex = (e.clientX - rect.left) * scaleX;
+        sel.ey = (e.clientY - rect.top)  * scaleY;
+        drawCanvas();
+    });
+
+    canvas.addEventListener('mouseup', function () {
+        if (!dragging) return;
+        dragging = false;
+        saveSelectionToInputs();
+        updateAreaStatus();
+        revealSaveButton();
+    });
+
+    // Touch support
+    function touchCoords(e) {
+        var t = e.touches[0] || e.changedTouches[0];
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width  / rect.width;
+        var scaleY = canvas.height / rect.height;
+        return {
+            x: (t.clientX - rect.left) * scaleX,
+            y: (t.clientY - rect.top)  * scaleY,
+        };
+    }
+    canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var c = touchCoords(e);
+        startX = c.x; startY = c.y;
+        dragging = true;
+        sel = { sx: startX, sy: startY, ex: startX, ey: startY };
+    }, { passive: false });
+    canvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        if (!dragging) return;
+        var c = touchCoords(e);
+        sel.ex = c.x; sel.ey = c.y;
+        drawCanvas();
+    }, { passive: false });
+    canvas.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        dragging = false;
+        saveSelectionToInputs();
+        updateAreaStatus();
+        revealSaveButton();
+    }, { passive: false });
+
+    function saveSelectionToInputs() {
+        if (!sel || canvas.width === 0 || canvas.height === 0) return;
+        var rx = Math.min(sel.sx, sel.ex) / canvas.width;
+        var ry = Math.min(sel.sy, sel.ey) / canvas.height;
+        var rw = Math.abs(sel.ex - sel.sx) / canvas.width;
+        var rh = Math.abs(sel.ey - sel.sy) / canvas.height;
+        document.getElementById('input-qr-x').value = rx.toFixed(5);
+        document.getElementById('input-qr-y').value = ry.toFixed(5);
+        document.getElementById('input-qr-w').value = rw.toFixed(5);
+        document.getElementById('input-qr-h').value = rh.toFixed(5);
+    }
+
+    function updateAreaStatus() {
+        var el = document.getElementById('area-status');
+        if (!sel) { el.textContent = ''; return; }
+        var rw = Math.abs(sel.ex - sel.sx);
+        var rh = Math.abs(sel.ey - sel.sy);
+        if (rw < 10 || rh < 10) { el.textContent = 'Selection too small — drag a larger area.'; el.style.color = '#dc2626'; }
+        else { el.textContent = 'QR area selected. Drag again to reposition.'; el.style.color = '#16a34a'; }
+    }
+
+    function revealSaveButton() {
+        if (!sel) return;
+        var rw = Math.abs(sel.ex - sel.sx);
+        var rh = Math.abs(sel.ey - sel.sy);
+        if (rw >= 10 && rh >= 10) {
+            document.getElementById('builder-save-btn').style.display = 'inline-flex';
+        }
+    }
+
+    // ── Form validation ──
+    document.getElementById('builder-form').addEventListener('submit', function (e) {
+        var w = parseFloat(document.getElementById('input-qr-w').value) || 0;
+        var h = parseFloat(document.getElementById('input-qr-h').value) || 0;
+        if (w < 0.01 || h < 0.01) {
+            e.preventDefault();
+            alert('Please mark the QR area on the image before saving.');
+        }
+    });
+})();
+</script>
 {% endblock %}

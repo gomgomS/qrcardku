@@ -65,6 +65,9 @@
     .qr-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; min-height: 280px; }
     #qrcode-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
     .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 0; }
+    .custom-frames-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    .custom-frames-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .frame-option-custom { border: 2px solid var(--border-color); }
 
     /* Mobile bottom bar */
     .mobile-bottom-bar {
@@ -167,6 +170,7 @@
     <input type="hidden" name="qr_type" value="text" />
     <input type="hidden" name="text_content" value="{{ text_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+    <input type="hidden" name="frame_id" id="frame_id" value="">
 </form>
 
 <div class="new-qr-container">
@@ -204,6 +208,12 @@
                     <div class="grid-item frame-option" data-frame="circle" title="Circle"><div class="frame-thumb frame-thumb-circle"></div><span class="frame-label">Circle</span></div>
                     <div class="grid-item frame-option" data-frame="thick" title="Thick border"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
                     <div class="grid-item frame-option" data-frame="shadow" title="Shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
+                </div>
+                <div class="custom-frames-section">
+                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
+                    <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
+                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
+                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
                 </div>
                 <div class="frame-text-row">
                     <label for="frame-text">Text</label>
@@ -262,8 +272,11 @@
     </button>
 </div>
 
+{% endblock %}
+
 {% block extra_js %}
 <script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
@@ -323,5 +336,4 @@
         if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
     });
 </script>
-{% endblock %}
 {% endblock %}

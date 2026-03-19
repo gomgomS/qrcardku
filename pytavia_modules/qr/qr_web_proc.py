@@ -299,5 +299,5 @@ class qr_web_proc:
                 "short_code": sc,
                 "qr_encode_url": encode,
             }
-        return {"success": True}
+        return {"success": True, "qrcard_id": result["message_data"]["qrcard_id"]}
 

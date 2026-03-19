@@ -74,6 +74,34 @@
     .qr-card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; min-height: 280px; }
     #qrcode-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
     .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
+    .custom-frames-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    .custom-frames-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .frame-option-custom { border: 2px solid var(--border-color); }
+    .mobile-bottom-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: white; border-top: 1px solid var(--border-color); z-index: 500; align-items: center; justify-content: space-between; padding: 0 16px; gap: 12px; }
+    .mobile-bar-arrow { width: 44px; height: 44px; border: 1px solid var(--border-color); background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--text-main); flex-shrink: 0; }
+    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-preview-btn { flex: 1; height: 40px; background: var(--primary); color: white; border: none; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .mobile-bar-preview-btn:hover { background: var(--primary-hover); }
+    @media (max-width: 768px) {
+        .new-qr-step-bar { justify-content: center; }
+        .new-qr-steps { justify-content: center; }
+        .new-qr-steps .step-item span:last-child { display: none; }
+        .new-qr-step-nav { display: none; }
+        .new-qr-container { flex-direction: column; height: auto; gap: 0; }
+        .form-column { padding-bottom: 76px; }
+        .preview-column { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100vw; bottom: 60px; z-index: 450; background: #f9fafb; overflow-y: auto; padding: 16px; box-sizing: border-box; transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+        .preview-column.mobile-open { transform: translateY(0); }
+        .preview-container { position: static; }
+        .mobile-bottom-bar { display: flex; }
+    }
+
+    /* ── frame grid responsive overrides ── */
+    .selection-grid.frame-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; gap: 10px !important; }
+    .grid-item { min-width: 0; overflow: hidden; padding: 6px; }
+    .frame-thumb { flex-shrink: 0; }
+    .frame-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .custom-frame-thumb { width: 100%; max-width: 40px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; display: block; flex-shrink: 0; }
+    .frame-option-custom { border: 2px solid var(--border-color); }
 </style>
 {% endblock %}
 
@@ -137,6 +165,7 @@
     {% endif %}
     {% endfor %}
     {% endif %}
+    <input type="hidden" name="frame_id" id="frame_id" value="">
 </form>
 
 <div class="new-qr-container">
@@ -174,6 +203,12 @@
                     <div class="grid-item frame-option" data-frame="shadow" title="Shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
                     <div class="grid-item frame-option" data-frame="badge" title="Badge"><div class="frame-thumb frame-thumb-badge"></div><span class="frame-label">Badge</span></div>
                 </div>
+                <div class="custom-frames-section">
+                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
+                    <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
+                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
+                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
+                </div>
                 <div class="frame-text-row">
                     <label for="frame-text">Text</label>
                     <input type="text" id="frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="32">
@@ -187,7 +222,7 @@
         </div>
     </div>
 
-    <div class="preview-column">
+    <div class="preview-column" id="preview-column">
         <div class="preview-container">
             <div class="preview-header">
                 <div class="preview-type-badge">
@@ -214,8 +249,33 @@
     </div>
 </div>
 
+<!-- Mobile bottom bar -->
+<div class="mobile-bottom-bar">
+    <button type="button" class="mobile-bar-arrow" onclick="document.getElementById('design-back-form').submit()" title="Back">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
+        <i class="fa-regular fa-eye"></i> Preview
+    </button>
+    <button type="submit" form="design-form" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete">
+        <i class="fa-solid fa-arrow-right"></i>
+    </button>
+</div>
+{% endblock %}
+
 {% block extra_js %}
+<script>
+    function toggleMobilePreview() {
+        var col = document.getElementById('preview-column');
+        var btn = document.getElementById('mobile-preview-btn');
+        var isOpen = col.classList.toggle('mobile-open');
+        btn.innerHTML = isOpen
+            ? '<i class="fa-solid fa-xmark"></i> Close'
+            : '<i class="fa-regular fa-eye"></i> Preview';
+    }
+</script>
 <script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
@@ -249,5 +309,4 @@
         if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
     });
 </script>
-{% endblock %}
 {% endblock %}

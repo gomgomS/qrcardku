@@ -171,12 +171,17 @@ class view_user:
             print(traceback.format_exc())
             return "Failed to load Stats page"
 
-    def templates_html(self, msg=None, error_msg=None):
+    def templates_html(self, fk_user_id=None, msg=None, error_msg=None):
         try:
+            frames = []
+            if fk_user_id:
+                from pytavia_modules.qr import qr_frame_proc
+                frames = qr_frame_proc.qr_frame_proc(self.webapp).get_frames(fk_user_id)
             return render_template(
                 "/user/templates.html",
-                msg=msg, 
-                error_msg=error_msg
+                frames=frames,
+                msg=msg,
+                error_msg=error_msg,
             )
         except:
             print(traceback.format_exc())

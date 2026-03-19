@@ -396,4 +396,4 @@ class qr_video_proc:
             upsert=True,
         )
 
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_qrcard_id}

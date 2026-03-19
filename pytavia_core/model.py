@@ -403,6 +403,7 @@ db = {
         "pdf_files"                 : [],
         # ---------------------------
 
+        "frame_id"                  : "",       # custom QR frame (fk → db_qr_frame.frame_id); empty = no frame
         "qr_image_url"              : "",       # internal path to rendered QR if physically saved
         "stats"                     : {
             "scan_count": 0        # total successful page hits
@@ -731,6 +732,21 @@ db = {
         "stats"                     : {"scan_count": 0},
         "scan_limit_enabled"        : False,
         "scan_limit_value"          : 0,
+        "status"                    : "ACTIVE",
+        "created_at"                : "",
+        "timestamp"                 : 0,
+    },
+
+    # Custom QR frame templates (image background + QR placement area)
+    "db_qr_frame": {
+        "frame_id"                  : "",
+        "fk_user_id"                : "",
+        "name"                      : "",
+        "image_url"                 : "",   # served from /static/uploads/frames/{frame_id}/
+        "qr_x"                      : 0.0,  # left edge as fraction of image width  (0.0–1.0)
+        "qr_y"                      : 0.0,  # top  edge as fraction of image height (0.0–1.0)
+        "qr_w"                      : 0.0,  # width  as fraction of image width
+        "qr_h"                      : 0.0,  # height as fraction of image height
         "status"                    : "ACTIVE",
         "created_at"                : "",
         "timestamp"                 : 0,

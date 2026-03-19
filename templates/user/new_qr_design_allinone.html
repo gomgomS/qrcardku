@@ -33,11 +33,11 @@
     .collapse-body { padding: 0 24px 24px 24px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 2000px; opacity: 1; border-top: 1px solid var(--border-color); }
     .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .selection-grid.frame-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-    .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: white; padding: 8px; color: var(--text-muted); }
+    .selection-grid.frame-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
+    .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: white; padding: 6px; color: var(--text-muted); min-width: 0; overflow: hidden; }
     .grid-item:hover { border-color: #9ca3af; }
     .grid-item.active { border-color: var(--primary); background-color: #f0f9ff; color: var(--primary); }
-    .frame-thumb { width: 40px; height: 40px; margin: 0 auto 4px; background: #f9fafb; border: 1px solid #e5e7eb; box-sizing: border-box; }
+    .frame-thumb { width: 36px; height: 36px; margin: 0 auto 4px; background: #f9fafb; border: 1px solid #e5e7eb; box-sizing: border-box; flex-shrink: 0; }
     .frame-thumb-none { background: #f3f4f6; border: none; position: relative; }
     .frame-thumb-none::after { content: ''; position: absolute; inset: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
     .frame-thumb-simple { border: 2px solid #374151; border-radius: 2px; }
@@ -46,7 +46,12 @@
     .frame-thumb-circle { border: 2px solid #374151; border-radius: 50%; }
     .frame-thumb-thick { border: 6px solid #374151; border-radius: 12px; }
     .frame-thumb-shadow { border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-    .frame-label { font-size: 10px; color: var(--text-muted); text-align: center; display: block; line-height: 1.2; }
+    .custom-frames-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+    .custom-frames-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .custom-frame-thumb { width: 100%; max-width: 40px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; display: block; flex-shrink: 0; }
+    #custom-frames-empty { font-size: 12px; color: var(--text-muted); padding: 8px 0; }
+    .frame-option-custom { border: 2px solid var(--border-color); }
+    .frame-label { font-size: 10px; color: var(--text-muted); text-align: center; display: block; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
     .frame-text-row { margin-top: 20px; margin-bottom: 12px; }
     .frame-text-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
     .frame-text-row input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; }
@@ -79,7 +84,7 @@
         height: 60px;
         background: white;
         border-top: 1px solid var(--border-color);
-        z-index: 400;
+        z-index: 500;
         align-items: center;
         justify-content: space-between;
         padding: 0 16px;
@@ -112,21 +117,6 @@
     }
     .mobile-bar-preview-btn:hover { background: var(--primary-hover); }
 
-    /* Mobile preview overlay close button */
-    .mobile-preview-close-btn {
-        display: none;
-        align-items: center;
-        gap: 8px;
-        background: none;
-        border: 1px solid var(--border-color);
-        border-radius: 20px;
-        padding: 6px 16px;
-        font-size: 13px;
-        cursor: pointer;
-        color: var(--text-main);
-        margin-bottom: 16px;
-    }
-
     @media (max-width: 768px) {
         /* Step bar */
         .new-qr-step-bar { justify-content: center; }
@@ -137,21 +127,24 @@
         /* Layout */
         .new-qr-container { flex-direction: column; height: auto; gap: 0; }
         .form-column { padding-bottom: 76px; }
-        .preview-column { display: none; }
-        .preview-column.mobile-open {
+        .preview-column {
             display: flex;
             flex-direction: column;
             position: fixed;
-            inset: 0;
+            top: 0; left: 0;
+            width: 100vw;
+            bottom: 60px;
             z-index: 450;
             background: #f9fafb;
             overflow-y: auto;
             padding: 16px;
-            padding-bottom: 76px;
+            box-sizing: border-box;
+            transform: translateY(110%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
         }
+        .preview-column.mobile-open { transform: translateY(0); }
         .preview-container { position: static; }
         .mobile-bottom-bar { display: flex; }
-        .mobile-preview-close-btn { display: flex; }
     }
 </style>
 {% endblock %}
@@ -236,6 +229,7 @@
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
     {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+    <input type="hidden" name="Allinone_frame_id" id="frame_id" value="">
 
     {% if allinone_data %}
     {% for key, val in allinone_data.items() %}
@@ -296,6 +290,16 @@
                     <div class="grid-item frame-option" data-frame="thick" title="Thick border"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
                     <div class="grid-item frame-option" data-frame="shadow" title="Shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
                 </div>
+                <!-- Custom frames -->
+                <div class="custom-frames-section">
+                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
+                    <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
+                    <div id="custom-frames-empty">Loading…</div>
+                    <a href="/user/templates" style="font-size:12px;color:var(--primary);" target="_blank">
+                        <i class="fa-solid fa-plus"></i> Create new frame
+                    </a>
+                </div>
+
                 <div class="frame-text-row">
                     <label for="frame-text">Text</label>
                     <input type="text" id="frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="32">
@@ -311,9 +315,6 @@
 
     <!-- Right preview section -->
     <div class="preview-column" id="preview-column">
-        <button class="mobile-preview-close-btn" onclick="toggleMobilePreview()">
-            <i class="fa-solid fa-xmark"></i> Close preview
-        </button>
         <div class="preview-container">
             <div class="preview-header">
                 <div class="preview-type-badge">
@@ -355,14 +356,16 @@
     </button>
 </div>
 
+{% endblock %}
+
 {% block extra_js %}
 <script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
-        document.body.style.overflow = isOpen ? 'hidden' : '';
         btn.innerHTML = isOpen
             ? '<i class="fa-solid fa-xmark"></i> Close'
             : '<i class="fa-regular fa-eye"></i> Preview';
@@ -375,8 +378,8 @@
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
 
         QRCode.toDataURL(finalUrl, { width: 400, margin: 2, color: { dark: '#000000', light: '#ffffff' }, errorCorrectionLevel: 'H' })
-            .then(url => { document.getElementById('qrcode-img').src = url; })
-            .catch(err => { console.error("Error generating QR:", err); });
+            .then(function(url) { document.getElementById('qrcode-img').src = url; })
+            .catch(function(err) { console.error("Error generating QR:", err); });
 
         const attachCollapseListener = (selector) => {
             document.querySelectorAll(selector).forEach(header => {
@@ -390,15 +393,7 @@
         };
         attachCollapseListener('.collapse-header');
 
-        const framePreview = document.getElementById('qr-preview-frame');
         const frameCaption = document.getElementById('frame-caption');
-        document.querySelectorAll('.frame-option').forEach(item => {
-            item.addEventListener('click', function () {
-                this.parentElement.querySelectorAll('.grid-item').forEach(s => s.classList.remove('active'));
-                this.classList.add('active');
-                framePreview.className = 'qr-preview-frame frame-' + (this.getAttribute('data-frame') || 'none');
-            });
-        });
 
         const frameTextEl = document.getElementById('frame-text');
         const frameColorEl = document.getElementById('frame-text-color');
@@ -413,5 +408,4 @@
         if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
     });
 </script>
-{% endblock %}
 {% endblock %}

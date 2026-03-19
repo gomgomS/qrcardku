@@ -28,6 +28,7 @@ class view_qr_list:
                 "web": [], "ecard": [], "pdf": [],
                 "web-static": [], "text": [],
                 "wa-static": [], "email-static": [], "vcard-static": [],
+                "allinone": [],
             }
             for e in index_entries:
                 t = e.get("qr_type") or "web"
@@ -100,12 +101,31 @@ class view_qr_list:
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
+            # allinone — dedicated collection
+            if id_by_type["allinone"]:
+                for doc in mgdDB.db_qrcard_allinone.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["allinone"]},
+                    "status": "ACTIVE",
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # Batch-fetch frame_id from db_qrcard for all entries
+            all_ids = [e["qrcard_id"] for e in index_entries if e.get("qrcard_id")]
+            frame_id_by_qrcard = {}
+            if all_ids:
+                for doc in mgdDB.db_qrcard.find(
+                    {"fk_user_id": fk_user_id, "qrcard_id": {"$in": all_ids}},
+                    {"qrcard_id": 1, "frame_id": 1, "_id": 0},
+                ):
+                    frame_id_by_qrcard[doc["qrcard_id"]] = doc.get("frame_id", "")
+
             qr_list = []
             for e in index_entries:
                 qid = e.get("qrcard_id")
                 full = full_by_id.get(qid)
                 if full is not None:
-                    qr_list.append(full)
+                    row = dict(full)
                 else:
                     # Fallback: use index row with minimal defaults so template does not break
                     row = dict(e)
@@ -117,7 +137,9 @@ class view_qr_list:
                         row["scan_limit_enabled"] = False
                     if "scan_limit_value" not in row:
                         row["scan_limit_value"] = 0
-                    qr_list.append(row)
+                # Merge frame_id from db_qrcard (authoritative)
+                row["frame_id"] = frame_id_by_qrcard.get(qid, row.get("frame_id", ""))
+                qr_list.append(row)
 
             return render_template(
                 "/user/my_qr_codes.html",

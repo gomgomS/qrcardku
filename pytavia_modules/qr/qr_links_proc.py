@@ -264,4 +264,4 @@ class qr_links_proc:
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_links.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}}, upsert=True)
 
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_id}

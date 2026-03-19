@@ -151,6 +151,21 @@ oauth.register(
 #     html   = view_landing_page.view_landing_page().html( params )
 #     return html
 
+def _update_frame_id(fk_user_id, qrcard_id, form_frame_id):
+    """Persist the chosen custom frame against the QR base record."""
+    if not qrcard_id:
+        return
+    try:
+        from pytavia_core import database, config as _cfg
+        _db = database.get_db_conn(_cfg.mainDB)
+        _db.db_qrcard.update_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+            {"$set": {"frame_id": form_frame_id or ""}},
+        )
+    except Exception:
+        pass
+
+
 @app.route("/")
 def index():
     return view_landing.view_landing().html()
@@ -581,6 +596,7 @@ def qr_update_save_pdf(qrcard_id):
                 qrcard=qrcard, error_msg=result.get("error_msg", "Save failed.")
             )
         return redirect(url_for("user_qr_list"))
+    _update_frame_id(session.get("fk_user_id"), qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -607,6 +623,7 @@ def qr_update_save_web(qrcard_id):
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -646,6 +663,7 @@ def qr_update_save_ecard(qrcard_id):
             
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -1532,6 +1550,7 @@ def qr_save_text():
         "text_content": text_content,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_text.html",
@@ -1613,6 +1632,7 @@ def qr_save_web_static():
         "url_content": url_content,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_web_static.html",
@@ -1669,6 +1689,7 @@ def qr_update_save_web_static(qrcard_id):
         "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
         "name": qr_name, "url_content": url_content,
     })
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/update/text/<qrcard_id>", methods=["GET", "POST"])
@@ -1709,6 +1730,7 @@ def qr_update_save_text(qrcard_id):
         "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
         "name": qr_name, "text_content": text_content,
     })
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/wa-static")
@@ -1785,6 +1807,7 @@ def qr_save_wa_static():
         "wa_message": wa_message,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        _update_frame_id(fk_user_id, result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_wa_static.html",
@@ -1840,6 +1863,7 @@ def qr_update_save_wa_static(qrcard_id):
         "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
         "name": qr_name, "wa_phone": wa_phone, "wa_message": wa_message,
     })
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/vcard-static")
@@ -1908,6 +1932,7 @@ def qr_save_vcard_static():
         "vcard_website": _vd("vcard_website"),
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     phones_json = request.form.get("vcard_phones_json", "[]")
     return render_template("/user/new_qr_design_vcard_static.html", qr_type="vcard-static",
@@ -1988,6 +2013,7 @@ def qr_update_save_vcard_static(qrcard_id):
         "vcard_email": _vd("vcard_email"),
         "vcard_website": _vd("vcard_website"),
     })
+    _update_frame_id(session.get("fk_user_id"), qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/email-static")
@@ -2072,6 +2098,7 @@ def qr_save_email_static():
         "email_body": email_body,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
+        _update_frame_id(fk_user_id, result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_email_static.html",
@@ -2135,6 +2162,7 @@ def qr_update_save_email_static(qrcard_id):
         "email_subject": email_subject,
         "email_body": email_body,
     })
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/web")
@@ -2370,6 +2398,7 @@ def qr_save_pdf():
     from pytavia_modules.view import view_pdf
     response = qr_pdf_proc.qr_pdf_proc(app).complete_pdf_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_pdf.view_pdf(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2391,6 +2420,7 @@ def qr_save_web():
     from pytavia_modules.view import view_web
     response = qr_web_proc.qr_web_proc(app).complete_web_save(request, session)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_web.view_web(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2411,6 +2441,7 @@ def qr_save_ecard():
     from pytavia_modules.view import view_ecard
     response = qr_ecard_proc.qr_ecard_proc(app).complete_ecard_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_ecard.view_ecard(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2560,6 +2591,7 @@ def qr_save_links():
     from pytavia_modules.view import view_links
     response = qr_links_proc.qr_links_proc(app).complete_links_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_links.view_links(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2719,6 +2751,7 @@ def qr_update_save_links(qrcard_id):
         design_update["Links_font_apply_all"] = True
     params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **design_update}
     proc.edit_qrcard(params)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -2856,6 +2889,7 @@ def qr_save_sosmed():
     from pytavia_modules.view import view_sosmed
     response = qr_sosmed_proc.qr_sosmed_proc(app).complete_sosmed_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_sosmed.view_sosmed(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -3009,6 +3043,7 @@ def qr_update_save_sosmed(qrcard_id):
         design_update["Sosmed_font_apply_all"] = True
     params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **design_update}
     proc.edit_qrcard(params)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -3160,6 +3195,7 @@ def qr_save_allinone():
             short_code=request.form.get("short_code", ""),
             error_msg=response.get("message_desc", "Save failed."),
         )
+    _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -3245,6 +3281,7 @@ def qr_update_save_allinone(qrcard_id):
         database.get_db_conn(config.mainDB).db_qrcard_allinone.update_one(
             {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": design_update}, upsert=True
         )
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -3343,6 +3380,7 @@ def qr_save_special():
     response = qr_special_proc.qr_special_proc(app).complete_special_save(request, session, app.root_path)
     print(f"[DEBUG-STEP3] save response success: {response.get('success')}")
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_special.view_special(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -3574,6 +3612,7 @@ def qr_update_save_special(qrcard_id):
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -3704,6 +3743,7 @@ def qr_save_images():
     from pytavia_modules.view import view_images
     response = qr_images_proc.qr_images_proc(app).complete_images_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_images.view_images(app).new_qr_design_html(
         url_content=response.get("url_content", ""), qr_name=response.get("qr_name", ""),
@@ -3852,6 +3892,7 @@ def qr_save_video():
     from pytavia_modules.view import view_video
     response = qr_video_proc.qr_video_proc(app).complete_video_save(request, session, app.root_path)
     if response.get("success"):
+        _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_video.view_video(app).new_qr_design_html(
         url_content=response.get("url_content", ""), qr_name=response.get("qr_name", ""),
@@ -4028,6 +4069,7 @@ def qr_update_save_images(qrcard_id):
             
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -4205,6 +4247,7 @@ def qr_update_save_video(qrcard_id):
             
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
+    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -4251,7 +4294,75 @@ def user_stats():
 def user_templates():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
-    return view_user.view_user(app).templates_html()
+    return view_user.view_user(app).templates_html(fk_user_id=session["fk_user_id"])
+
+
+@app.route("/user/frames/api")
+def user_frames_api():
+    if "fk_user_id" not in session:
+        return jsonify([])
+    from pytavia_modules.qr import qr_frame_proc
+    frames = qr_frame_proc.qr_frame_proc(app).get_frames(session["fk_user_id"])
+    result = []
+    for f in frames:
+        result.append({
+            "frame_id": f.get("frame_id"),
+            "name": f.get("name"),
+            "image_url": f.get("image_url"),
+            "qr_x": f.get("qr_x"),
+            "qr_y": f.get("qr_y"),
+            "qr_w": f.get("qr_w"),
+            "qr_h": f.get("qr_h"),
+        })
+    return jsonify(result)
+
+
+@app.route("/user/frames/save", methods=["POST"])
+def user_frames_save():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_frame_proc
+    fk_user_id = session["fk_user_id"]
+    image_file = request.files.get("frame_image")
+    name = (request.form.get("frame_name") or "").strip()
+    try:
+        qr_x = float(request.form.get("qr_x", 0))
+        qr_y = float(request.form.get("qr_y", 0))
+        qr_w = float(request.form.get("qr_w", 0))
+        qr_h = float(request.form.get("qr_h", 0))
+    except (ValueError, TypeError):
+        return view_user.view_user(app).templates_html(
+            fk_user_id=fk_user_id,
+            error_msg="Invalid QR area coordinates."
+        )
+    if not image_file or not image_file.filename:
+        return view_user.view_user(app).templates_html(
+            fk_user_id=fk_user_id,
+            error_msg="Please upload an image."
+        )
+    result = qr_frame_proc.qr_frame_proc(app).add_frame(
+        fk_user_id, name, image_file, qr_x, qr_y, qr_w, qr_h, app.root_path
+    )
+    if not result.get("ok"):
+        return view_user.view_user(app).templates_html(
+            fk_user_id=fk_user_id,
+            error_msg=result.get("error", "Save failed.")
+        )
+    return view_user.view_user(app).templates_html(
+        fk_user_id=fk_user_id,
+        msg="Frame saved successfully."
+    )
+
+
+@app.route("/user/frames/delete/<frame_id>", methods=["POST"])
+def user_frames_delete(frame_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_frame_proc
+    fk_user_id = session["fk_user_id"]
+    qr_frame_proc.qr_frame_proc(app).delete_frame(fk_user_id, frame_id)
+    return redirect(url_for("user_templates"))
+
 
 @app.route("/user/settings")
 def user_settings():

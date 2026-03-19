@@ -458,7 +458,7 @@ class qr_pdf_proc:
                 pass
         if saved_files:
             self.update_pdf_files(fk_user_id, new_qrcard_id, saved_files)
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_qrcard_id}
 
     # ##### edit section pdf #####
     # Handles update (save from design step): updates db_qrcard, db_qrcard_pdf, db_qr_index; manages pdf_files.

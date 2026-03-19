@@ -468,5 +468,5 @@ class qr_ecard_proc:
                 {"$set": {"E-card_files": saved_files}},
                 upsert=True,
             )
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_qrcard_id}
 

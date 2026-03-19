@@ -406,4 +406,4 @@ class qr_images_proc:
                 {"$set": {"images_gallery_files": saved_gallery}},
                 upsert=True,
             )
-        return {"success": True}
+        return {"success": True, "qrcard_id": new_qrcard_id}
