@@ -95,6 +95,9 @@
             }
         }
 
+        /* Expose selectFrame globally so dynamically-added frames (e.g. admin defaults) can use it */
+        window.qfpSelectFrame = selectFrame;
+
         /* Attach click handlers to preset frame options (fires before inline handler) */
         document.querySelectorAll('.frame-option').forEach(function (item) {
             item.addEventListener('click', function () { selectFrame(this); });

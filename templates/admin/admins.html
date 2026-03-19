@@ -1,0 +1,136 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Admin Users{% endblock %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 20px;">
+    <h2>Admin User Management</h2>
+    <p style="color: #666; margin-top: 5px;">Manage admin accounts. Only <strong>superadmin</strong> can access this page.</p>
+</div>
+
+{% if msg %}
+<div style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+    &#10003; {{ msg }}
+</div>
+{% endif %}
+{% if error_msg %}
+<div style="background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+    &#9888; {{ error_msg }}
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+
+    <!-- Admins Table -->
+    <div class="table-container" style="flex: 2; min-width: 400px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in admins %}
+                <tr>
+                    <td><strong>{{ a.email }}</strong></td>
+                    <td>{{ a.name or '—' }}</td>
+                    <td>
+                        {% if a.role == 'superadmin' %}
+                        <span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                            superadmin
+                        </span>
+                        {% elif a.role == 'admin' %}
+                        <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                            admin
+                        </span>
+                        {% else %}
+                        <span class="badge" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                            sales
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if a.inactive_status == 'TRUE' %}
+                        <span style="color:#b91c1c;font-size:12px;font-weight:600;">Inactive</span>
+                        {% else %}
+                        <span style="color:#065f46;font-size:12px;font-weight:600;">Active</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if a.email != admin_email %}
+                        <form action="/admin/admin/toggle" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="admin_id" value="{{ a.admin_id }}" />
+                            <button type="submit"
+                                style="font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;border:1px solid;
+                                {% if a.inactive_status == 'TRUE' %}background:#d1fae5;color:#065f46;border-color:#6ee7b7;{% else %}background:#fef2f2;color:#b91c1c;border-color:#fca5a5;{% endif %}"
+                                onclick="return confirm('Toggle status for {{ a.email }}?')">
+                                {% if a.inactive_status == 'TRUE' %}Activate{% else %}Deactivate{% endif %}
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="font-size:11px;color:#9ca3af;">You</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#6b7280;padding:32px;">No admin users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add Admin Form -->
+    <div class="card" style="flex: 1; min-width: 300px;">
+        <h3 style="margin-top:0; margin-bottom:20px; font-size:16px;">Add Admin User</h3>
+        <form action="/admin/admin/add" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div style="margin-bottom:14px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Email *</label>
+                <input type="email" name="email" required placeholder="admin@example.com"
+                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Full Name</label>
+                <input type="text" name="name" placeholder="e.g. John Doe"
+                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Password *</label>
+                <input type="password" name="password" required placeholder="Min 6 characters"
+                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Role *</label>
+                <select name="role"
+                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;background:white;">
+                    {% for r in valid_roles %}
+                    <option value="{{ r }}">{{ r | capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                    <strong>superadmin</strong> — full access including admin management<br>
+                    <strong>admin</strong> — standard admin access<br>
+                    <strong>sales</strong> — limited sales dashboard access
+                </div>
+            </div>
+
+            <button type="submit"
+                style="width:100%;padding:10px;background:#00a896;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+                Add Admin User
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

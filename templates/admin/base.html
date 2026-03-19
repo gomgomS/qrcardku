@@ -374,29 +374,35 @@
 
     <div class="sidebar">
         <div class="sidebar-header">
-            Security<span>House</span>
+            QR<span>Kartu</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="/admin/users" class="{% if request.path == '/admin/users' %}active{% endif %}">Users Module</a>
+            <li>
+                <a href="/admin/admins" class="{% if request.path == '/admin/admins' %}active{% endif %}">
+                    &#9733; Admin Users
+                </a>
             </li>
-            <li><a href="/admin/karyawan" class="{% if request.path == '/admin/karyawan' %}active{% endif %}">Karyawan
-                    Module</a>
+            <li>
+                <a href="/admin/frames" class="{% if request.path == '/admin/frames' %}active{% endif %}">
+                    &#9638; Default Frames
+                </a>
             </li>
-            <li><a href="/admin/requests" class="{% if request.path == '/admin/requests' %}active{% endif %}">Requests
-                    Module</a></li>
-            <li><a href="/admin/ecard" class="{% if request.path.startswith('/admin/ecard') %}active{% endif %}">E-card
-                    Module</a></li>
         </ul>
         <div class="sidebar-footer">
+            {% if admin_name or admin_email %}
+            <div style="text-align:center;padding:8px 12px;margin-bottom:8px;background:rgba(255,255,255,0.05);border-radius:8px;">
+                <div style="font-size:12px;font-weight:600;color:#e2e8f0;">{{ admin_name or admin_email }}</div>
+                <div style="font-size:10px;color:#9ab4c7;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;">{{ admin_role }}</div>
+            </div>
+            {% endif %}
             <a href="/" target="_blank">Landing Page ↗</a>
         </div>
     </div>
 
     <div class="main-wrapper">
         <div class="topnav">
-            <!-- Ensure username is passed into context globally ideally, but typically session works in flask if passed or we pull from context if given -->
-            <span class="user-info">Welcome, Admin</span>
-            <a href="/auth/logout" class="logout-btn">Logout</a>
+            <span class="user-info">Welcome, {{ admin_name or admin_email or 'Admin' }}</span>
+            <a href="/auth/admin_logout" class="logout-btn">Logout</a>
         </div>
 
         <div class="content">
@@ -412,6 +418,7 @@
         </div>
     </div>
 
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>

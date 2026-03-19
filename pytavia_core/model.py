@@ -302,6 +302,38 @@ db = {
         "role"                  : "ADMIN",
     },
 
+    # ── Admin panel users (completely separate from regular db_user) ──────────
+    "db_admin" : {
+        "admin_id"              : "",       # generated UUID (pkey alias)
+        "email"                 : "",       # login email (unique)
+        "name"                  : "",       # display name
+        "role"                  : "admin",  # superadmin | admin | sales
+        "inactive_status"       : "FALSE",  # TRUE | FALSE
+        "created_at"            : "",
+        "timestamp"             : 0,
+    },
+
+    "db_admin_auth" : {
+        "fk_admin_id"           : "",       # → db_admin.admin_id
+        "email"                 : "",       # login email (mirrors db_admin.email)
+        "password"              : "",       # MD5 hash (same algo as db_user_auth)
+        "inactive_status"       : "FALSE",
+    },
+
+    # Admin-managed default QR frames (visible to all users as preset options)
+    "db_admin_frame" : {
+        "frame_id"              : "",       # generated UUID hex (pkey alias)
+        "name"                  : "",       # display name
+        "image_url"             : "",       # served from /static/uploads/admin_frames/{frame_id}/
+        "qr_x"                  : 0.0,     # left edge as fraction of image width  (0.0–1.0)
+        "qr_y"                  : 0.0,     # top  edge as fraction of image height (0.0–1.0)
+        "qr_w"                  : 0.0,     # width  as fraction of image width
+        "qr_h"                  : 0.0,     # height as fraction of image height
+        "status"                : "ACTIVE",# ACTIVE | DELETED
+        "created_at"            : "",
+        "timestamp"             : 0,
+    },
+
     # USERS
 
     "db_user"                         : {

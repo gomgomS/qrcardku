@@ -137,47 +137,45 @@ class auth_proc:
             "message_data"   : {}
         }
         try:
-            username = params.get("username")
+            email    = params.get("email") or params.get("username")
             password = params.get("password")
 
-            if not username or not password:
+            if not email or not password:
                 response["message_action"] = "LOGIN_FAILED"
-                response["message_desc"]   = "Username and password are required"
+                response["message_desc"]   = "Email and password are required"
                 return response
 
             hashed_password = utils._get_passwd_hash({
-                "id" : username, "password" : password
+                "id" : email, "password" : password
             })
 
-            user_auth = self.mgdDB.db_user_auth.find_one({
-                "username": username,
-                "password": hashed_password
+            admin_auth = self.mgdDB.db_admin_auth.find_one({
+                "email"    : email,
+                "password" : hashed_password,
             })
 
-            if not user_auth:
+            if not admin_auth:
                 response["message_action"] = "LOGIN_FAILED"
-                response["message_desc"]   = "Invalid admin username or password"
+                response["message_desc"]   = "Invalid email or password"
                 return response
-            
-            if user_auth.get("inactive_status") == "TRUE":
+
+            if admin_auth.get("inactive_status") == "TRUE":
                 response["message_action"] = "LOGIN_FAILED"
                 response["message_desc"]   = "Account is inactive"
                 return response
 
-            user_rec = self.mgdDB.db_user.find_one({ "pkey": user_auth["fk_user_id"] })
-            
-            if user_rec:
-                # Optionally enforce role="ADMIN" here if you implement RBAC structure
-                # if user_rec.get("role") != "ADMIN":
-                #    response["message_action"] = "LOGIN_FAILED"
-                #    response["message_desc"]   = "Unauthorized administrative access"
-                #    return response
+            admin_rec = self.mgdDB.db_admin.find_one({"admin_id": admin_auth["fk_admin_id"]})
+            if not admin_rec:
+                response["message_action"] = "LOGIN_FAILED"
+                response["message_desc"]   = "Admin account not found"
+                return response
 
-                response["message_data"] = {
-                    "fk_user_id" : user_rec["pkey"],
-                    "username"   : user_rec["username"],
-                    "role"       : user_rec.get("role", "ADMIN")
-                }
+            response["message_data"] = {
+                "fk_admin_id" : admin_rec["admin_id"],
+                "email"       : admin_rec["email"],
+                "name"        : admin_rec.get("name", ""),
+                "role"        : admin_rec.get("role", "admin"),
+            }
 
         except Exception as e:
             self.webapp.logger.debug(traceback.format_exc())

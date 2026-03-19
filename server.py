@@ -18,14 +18,12 @@ sys.path.append("pytavia_storage")
 sys.path.append("pytavia_modules")
 sys.path.append("pytavia_modules/auth")
 sys.path.append("pytavia_modules/admin")
-sys.path.append("pytavia_modules/landing")
 sys.path.append("pytavia_modules/configuration")
 sys.path.append("pytavia_modules/cookie")
 sys.path.append("pytavia_modules/middleware")
 sys.path.append("pytavia_modules/security")
 sys.path.append("pytavia_modules/user")
 sys.path.append("pytavia_modules/view")
-
 
 
 ##########################################################
@@ -50,10 +48,8 @@ from security           import security_login
 from user               import user_proc
 from auth               import auth_proc
 from admin              import admin_proc
-from karyawan           import karyawan_proc
-from landing            import landing_proc
+from admin              import admin_frame_proc
 
-from ecard              import ecard_proc
 
 from view               import view_welcome
 from view               import view_admin
@@ -151,6 +147,22 @@ oauth.register(
 #     html   = view_landing_page.view_landing_page().html( params )
 #     return html
 
+# Seed first superadmin on startup (no-op if db_admin already has records)
+try:
+    admin_proc.admin_proc(app).seed_first_admin()
+except Exception:
+    pass
+
+# Inject admin session info into all admin templates
+@app.context_processor
+def inject_admin_session():
+    return dict(
+        admin_name = session.get("admin_name", ""),
+        admin_email= session.get("admin_email", ""),
+        admin_role = session.get("admin_role", ""),
+    )
+
+
 def _update_frame_id(fk_user_id, qrcard_id, form_frame_id):
     """Persist the chosen custom frame against the QR base record."""
     if not qrcard_id:
@@ -172,188 +184,9 @@ def index():
 
 @app.route("/admin")
 def admin_redirect():
-    if "fk_user_id" not in session:
+    if "fk_admin_id" not in session:
         return redirect(url_for("admin_login_view"))
-    return redirect(url_for("admin_users"))
-
-@app.route("/admin/requests")
-def admin_dashboard():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).requests_html()
-
-@app.route("/admin/users")
-def admin_users():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).users_html()
-
-@app.route("/admin/karyawan")
-def admin_karyawan():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).karyawan_html()
-
-@app.route("/landing/submit", methods=["POST"])
-def landing_submit():
-    params = request.form.to_dict()
-    response = landing_proc.landing_proc(app).submit_request(params)
-    if response["message_action"] == "SUBMIT_SUCCESS":
-        return view_landing.view_landing().html(msg="Your request has been submitted successfully.")
-    else:
-        return view_landing.view_landing().html(error_msg=response["message_desc"])
-
-@app.route("/admin/request/update", methods=["POST"])
-def admin_request_update():
-    params = request.form.to_dict()
-    response = admin_proc.admin_proc(app).update_request_status(params)
-    if response["message_action"] == "UPDATE_SUCCESS":
-        return redirect(url_for("admin_dashboard"))
-    else:
-        return view_admin.view_admin(app).html(error_msg=response["message_desc"])
-
-@app.route("/admin/request/delete", methods=["POST"])
-def admin_request_delete():
-    params = request.form.to_dict()
-    response = admin_proc.admin_proc(app).delete_request(params)
-    if response["message_action"] == "DELETE_SUCCESS":
-        return redirect(url_for("admin_dashboard"))
-    else:
-        return view_admin.view_admin(app).html(error_msg=response["message_desc"])
-
-@app.route("/admin/user/add", methods=["POST"])
-def admin_user_add():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    params = request.form.to_dict()
-    response = admin_proc.admin_proc(app).add_user(params)
-    if response["message_action"] == "ADD_USER_SUCCESS":
-        return redirect(url_for("admin_users"))
-    else:
-        return view_admin.view_admin(app).users_html(error_msg=response["message_desc"])
-
-@app.route("/admin/karyawan/add", methods=["GET"])
-def admin_karyawan_add_view():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).karyawan_add_html()
-
-@app.route("/admin/karyawan/add", methods=["POST"])
-def admin_karyawan_add():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    params = request.form.to_dict()
-    # Handle array inputs directly from request.form.getlist() and files from request.files
-    phones_labels = request.form.getlist("phone_label[]")
-    phones_numbers = request.form.getlist("phone_number[]")
-    emails_labels = request.form.getlist("email_label[]")
-    emails_values = request.form.getlist("email_value[]")
-    websites_labels = request.form.getlist("website_label[]")
-    websites_values = request.form.getlist("website_value[]")
-    
-    # Process into param dict
-    params["phones"] = [{"label": label, "number": num} for label, num in zip(phones_labels, phones_numbers) if num.strip()]
-    params["emails"] = [{"label": label, "value": val} for label, val in zip(emails_labels, emails_values) if val.strip()]
-    params["websites"] = [{"label": label, "value": val} for label, val in zip(websites_labels, websites_values) if val.strip()]
-    
-    # Pass files explicitly
-    response = karyawan_proc.karyawan_proc(app).add_karyawan(params, request.files)
-    if response["message_action"] == "ADD_KARYAWAN_SUCCESS":
-        return redirect(url_for("admin_karyawan"))
-    else:
-        return view_admin.view_admin(app).karyawan_add_html(error_msg=response["message_desc"])
-
-@app.route("/admin/karyawan/edit/<karyawan_id>", methods=["GET"])
-def admin_karyawan_edit_view(karyawan_id):
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).karyawan_edit_html(karyawan_id)
-
-@app.route("/admin/karyawan/edit/<karyawan_id>", methods=["POST"])
-def admin_karyawan_edit(karyawan_id):
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    params = request.form.to_dict()
-    # Handle array inputs directly from request.form.getlist() and files from request.files
-    phones_labels = request.form.getlist("phone_label[]")
-    phones_numbers = request.form.getlist("phone_number[]")
-    emails_labels = request.form.getlist("email_label[]")
-    emails_values = request.form.getlist("email_value[]")
-    websites_labels = request.form.getlist("website_label[]")
-    websites_values = request.form.getlist("website_value[]")
-    
-    # Process into param dict
-    params["phones"] = [{"label": label, "number": num} for label, num in zip(phones_labels, phones_numbers) if num.strip()]
-    params["emails"] = [{"label": label, "value": val} for label, val in zip(emails_labels, emails_values) if val.strip()]
-    params["websites"] = [{"label": label, "value": val} for label, val in zip(websites_labels, websites_values) if val.strip()]
-    
-    # Pass files explicitly
-    response = karyawan_proc.karyawan_proc(app).edit_karyawan(karyawan_id, params, request.files)
-    if response["message_action"] == "EDIT_KARYAWAN_SUCCESS":
-        return redirect(url_for("admin_karyawan"))
-    else:
-        return view_admin.view_admin(app).karyawan_edit_html(karyawan_id, error_msg=response["message_desc"])
-
-@app.route("/api/admin/karyawan/<karyawan_id>", methods=["GET"])
-def api_karyawan_get(karyawan_id):
-    if "fk_user_id" not in session:
-        return jsonify({"status": "error", "message": "Unauthorized"}), 401
-    
-    karyawan = karyawan_proc.karyawan_proc(app).get_karyawan_by_id(karyawan_id)
-    if karyawan:
-        # Convert ObjectId and other non-serializable fields to string if necessary, 
-        # but since we use string uuid for karyawan_id, we just clean _id
-        if "_id" in karyawan:
-            del karyawan["_id"]
-        return jsonify({"status": "success", "data": karyawan})
-    return jsonify({"status": "error", "message": "Not found"}), 404
-
-@app.route("/admin/ecard", methods=["GET"])
-def admin_ecard():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).ecard_html()
-
-@app.route("/admin/ecard/add", methods=["GET"])
-def admin_ecard_add_view():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).ecard_add_html()
-
-@app.route("/admin/ecard/add", methods=["POST"])
-def admin_ecard_add():
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    params = request.form.to_dict()
-    response = ecard_proc.ecard_proc(app).add_ecard(params, request.files)
-    if response["message_action"] == "ADD_ECARD_SUCCESS":
-        return redirect(url_for("admin_ecard"))
-    else:
-        return view_admin.view_admin(app).ecard_add_html(error_msg=response["message_desc"])
-
-@app.route("/admin/ecard/edit/<ecard_id>", methods=["GET"])
-def admin_ecard_edit_view(ecard_id):
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    return view_admin.view_admin(app).ecard_edit_html(ecard_id)
-
-@app.route("/admin/ecard/edit/<ecard_id>", methods=["POST"])
-def admin_ecard_edit(ecard_id):
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    params = request.form.to_dict()
-    response = ecard_proc.ecard_proc(app).edit_ecard(ecard_id, params, request.files)
-    if response["message_action"] == "EDIT_ECARD_SUCCESS":
-        return redirect(url_for("admin_ecard"))
-    else:
-        return view_admin.view_admin(app).ecard_edit_html(ecard_id, error_msg=response["message_desc"])
-
-@app.route("/admin/ecard/delete/<ecard_id>", methods=["POST"])
-def admin_ecard_delete(ecard_id):
-    if "fk_user_id" not in session:
-        return redirect(url_for("admin_login_view"))
-    response = ecard_proc.ecard_proc(app).delete_ecard(ecard_id)
-    return redirect(url_for("admin_ecard"))
+    return redirect(url_for("admin_admins"))
 
 @app.route("/login", methods=["GET"])
 def login_view():
@@ -379,11 +212,104 @@ def auth_admin_login():
     params = request.form.to_dict()
     response = auth_proc.auth_proc(app).admin_login(params)
     if response["message_action"] == "LOGIN_SUCCESS":
-        session["fk_user_id"] = response["message_data"]["fk_user_id"]
-        session["username"]   = response["message_data"]["username"]
+        session["fk_admin_id"]  = response["message_data"]["fk_admin_id"]
+        session["admin_email"]  = response["message_data"]["email"]
+        session["admin_name"]   = response["message_data"]["name"]
+        session["admin_role"]   = response["message_data"]["role"]
         return redirect(url_for("admin_redirect"))
     else:
         return view_login.view_login().admin_html(error_msg=response["message_desc"])
+
+@app.route("/auth/admin_logout")
+def auth_admin_logout():
+    session.pop("fk_admin_id", None)
+    session.pop("admin_email", None)
+    session.pop("admin_name", None)
+    session.pop("admin_role", None)
+    return redirect(url_for("admin_login_view"))
+
+@app.route("/admin/admins")
+def admin_admins():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    if session.get("admin_role") != "superadmin":
+        return redirect(url_for("admin_admins"))
+    return view_admin.view_admin(app).admins_html()
+
+@app.route("/admin/admin/add", methods=["POST"])
+def admin_admin_add():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    if session.get("admin_role") != "superadmin":
+        return redirect(url_for("admin_admins"))
+    params = request.form.to_dict()
+    response = admin_proc.admin_proc(app).add_admin(params)
+    if response["message_action"] == "ADD_ADMIN_SUCCESS":
+        return redirect(url_for("admin_admins"))
+    else:
+        return view_admin.view_admin(app).admins_html(error_msg=response["message_desc"])
+
+@app.route("/admin/admin/toggle", methods=["POST"])
+def admin_admin_toggle():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    if session.get("admin_role") != "superadmin":
+        return redirect(url_for("admin_admins"))
+    params = request.form.to_dict()
+    admin_proc.admin_proc(app).toggle_admin_status(params)
+    return redirect(url_for("admin_admins"))
+
+@app.route("/admin/frames")
+def admin_frames():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    return view_admin.view_admin(app).frames_html()
+
+@app.route("/admin/frames/save", methods=["POST"])
+def admin_frames_save():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    image_file = request.files.get("frame_image")
+    name = (request.form.get("frame_name") or "").strip()
+    try:
+        qr_x = float(request.form.get("qr_x", 0))
+        qr_y = float(request.form.get("qr_y", 0))
+        qr_w = float(request.form.get("qr_w", 0))
+        qr_h = float(request.form.get("qr_h", 0))
+    except (ValueError, TypeError):
+        return view_admin.view_admin(app).frames_html(error_msg="Invalid QR area coordinates.")
+    if not image_file or not image_file.filename:
+        return view_admin.view_admin(app).frames_html(error_msg="Please upload an image.")
+    result = admin_frame_proc.admin_frame_proc(app).add_frame(
+        name, image_file, qr_x, qr_y, qr_w, qr_h, app.root_path
+    )
+    if not result.get("ok"):
+        return view_admin.view_admin(app).frames_html(error_msg=result.get("error", "Save failed."))
+    return view_admin.view_admin(app).frames_html(msg="Frame saved successfully.")
+
+@app.route("/admin/frames/delete/<frame_id>", methods=["POST"])
+def admin_frames_delete(frame_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    admin_frame_proc.admin_frame_proc(app).delete_frame(frame_id)
+    return redirect(url_for("admin_frames"))
+
+@app.route("/api/frames/default")
+def api_frames_default():
+    """Public API: returns all active admin default frames as JSON."""
+    frames = admin_frame_proc.admin_frame_proc(app).get_all_frames()
+    result = []
+    for f in frames:
+        result.append({
+            "frame_id" : f.get("frame_id"),
+            "name"     : f.get("name"),
+            "image_url": f.get("image_url"),
+            "qr_x"     : f.get("qr_x"),
+            "qr_y"     : f.get("qr_y"),
+            "qr_w"     : f.get("qr_w"),
+            "qr_h"     : f.get("qr_h"),
+        })
+    return jsonify(result)
 
 @app.route("/auth/logout")
 def auth_logout():
@@ -489,7 +415,6 @@ def qr_special_redirect(short_code):
     except Exception:
         sections = []
     return render_template("user/public_special.html", qrcard=qrcard, sections=sections)
-
 
 
 @app.route("/qr/new")
@@ -1184,7 +1109,6 @@ def _merge_video_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
         if key != "_id":
             out[key] = value
     return out
-
 
 
 @app.route("/qr/update/ecard/<qrcard_id>", methods=["GET", "POST"])
@@ -3439,7 +3363,6 @@ def qr_special_upload_image():
     })
 
 
-
 @app.route("/qr/update/special/<qrcard_id>", methods=["GET", "POST"])
 def qr_update_content_special(qrcard_id):
     """Edit content step for special QR."""
@@ -4249,7 +4172,6 @@ def qr_update_save_video(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
-
 
 
 @app.route("/api/qr/remove_pdf_file", methods=["POST"])
