@@ -9,5 +9,17 @@
   "basic_info": {
     "title": "My Video Gallery",
     "desc": "Watch my latest videos"
-  }
+  },
+  "videos": [
+    {
+      "url": "/static/assets/autocomplete_field_helper/vids/vid1_nocopyright.mp4",
+      "name": "Sample Video 1",
+      "desc": "A short sample video clip"
+    },
+    {
+      "url": "/static/assets/autocomplete_field_helper/vids/vid2_nocopyright.mp4",
+      "name": "Sample Video 2",
+      "desc": "Another sample video clip"
+    }
+  ]
 }

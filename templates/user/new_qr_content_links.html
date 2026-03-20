@@ -807,7 +807,7 @@
                 + '<i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>';
             return item;
         }
-        function updateLinksPreview() {
+        window.updateLinksPreview = function updateLinksPreview() {
             const rows = document.querySelectorAll('#links-list-container .links-item-row');
             const items = [];
             rows.forEach(row => {
@@ -1045,6 +1045,25 @@
                 if (pImg) { pImg.src = bi.cover_image; pImg.style.display = ''; }
                 var pPh = document.getElementById('links-preview-profile-placeholder-icon');
                 if (pPh) pPh.style.display = 'none';
+                // t3 / t4 circle images
+                ['links-t3-preview-circle-img','links-t4-preview-circle-img'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) { el.src = bi.cover_image; el.style.display = 'block'; }
+                });
+                ['links-t3-preview-circle-placeholder','links-t4-preview-circle-placeholder'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) el.style.display = 'none';
+                });
+                // t1 / t2 header images
+                ['links-t1-preview-header-img','links-t2-preview-header-img'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) { el.src = bi.cover_image; el.style.display = 'block'; }
+                });
+                var t1Hdr = document.getElementById('links-t1-preview-header');
+                var t1Body = document.getElementById('links-t1-preview-card-body');
+                if (t1Hdr) t1Hdr.style.display = 'block';
+                if (t1Body) { t1Body.style.borderRadius = '22px 22px 0 0'; t1Body.style.marginTop = '-18px'; }
+                var t2Hdr = document.getElementById('links-t2-preview-header');
+                var t2Body = document.getElementById('links-t2-preview-card-body');
+                if (t2Hdr) t2Hdr.style.display = 'block';
+                if (t2Body) { t2Body.style.borderRadius = '22px 22px 0 0'; t2Body.style.marginTop = '-18px'; }
             }
 
             if (dump.links && dump.links.length) {
@@ -1061,6 +1080,7 @@
                             + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
                         container.appendChild(row);
                     });
+                    updateLinksPreview();
                 }
             }
         }

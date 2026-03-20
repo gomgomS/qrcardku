@@ -283,7 +283,8 @@
 
     .phone-mockup {
         width: 100%;
-        height: 600px;
+        height: calc(100vh - 72px);
+        max-height: 600px;
         background-color: white;
         border: 12px solid #1a1a1a;
         border-radius: 40px;
@@ -298,6 +299,7 @@
         background-color: #f9fafb;
         display: flex;
         flex-direction: column;
+        overscroll-behavior-y: contain;
     }
 
     .preview-disclaimer {
@@ -424,6 +426,7 @@
         }
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
+        .phone-mockup { height: calc(100vh - 60px - 120px); max-height: 560px; }
     }
 </style>
 {% endblock %}
@@ -805,7 +808,7 @@
                     </div>
                 </div>
                 <div class="phone-mockup">
-                    <div class="mockup-inner" style="position:relative;">
+                    <div class="mockup-inner" style="padding:0;background-color:#f9fafb;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
                         {% set video_mode = 'preview' %}
                         {% include 'user/template_video_general.html' %}
                     </div>
@@ -950,173 +953,184 @@
 
         // ── Video Link Logic ──
         var itemsList = document.getElementById('video-items-list');
-        var galleryVideos = []; // [{type: 'link'|'upload', url: '', name: '', desc: '', fileIndex: null}]
-        var uploadedFiles = []; // Array of actual File objects
+        var galleryVideos = [];
+        var uploadedFiles = [];
+        var videoBlobUrls = {}; // fileIndex → blob URL (only for newly uploaded files)
 
         {% if qrcard and qrcard.get('video_links') %}
-        var dbVideos = {{ qrcard.get('video_links') | tojson | safe
-    }};
-    galleryVideos = dbVideos.map(function (vid) {
-        // Assume if it starts with /static/uploads/videos, it's an uploaded file
-        var isUpload = vid.url && vid.url.startsWith('/static/uploads/');
-        return {
-            type: isUpload ? 'upload' : 'link',
-            url: vid.url || '',
-            name: vid.name || '',
-            desc: vid.desc || '',
-            fileIndex: null // Existing uploads don't have a new fileIndex
-        };
-    });
-    {% endif %}
-
-    function renderVideoItems() {
-        if (!itemsList) return;
-        itemsList.innerHTML = '';
-        galleryVideos.forEach(function (vid, idx) {
-            var div = document.createElement('div');
-            div.className = 'gallery-form-item';
-
-            var sourceField = '';
-            if (vid.type === 'link') {
-                sourceField = '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" onchange="updateVideoUrl(' + idx + ',this.value)">';
-            } else {
-                var displayUrl = vid.url;
-                if (displayUrl.startsWith('/static/uploads/')) {
-                    displayUrl = displayUrl.split('/').pop(); // Show just filename
-                }
-                sourceField = '<div style="padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; margin-bottom: 8px; background: #e5e7eb; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><i class="fa-solid fa-file-video text-muted"></i> ' + escapeHtml(displayUrl) + '</div>';
-            }
-
-            div.innerHTML =
-                '<div class="gallery-form-item-fields">' +
-                sourceField +
-                '<input type="text" placeholder="Video name" value="' + escapeHtml(vid.name) + '" onchange="updateVideoName(' + idx + ',this.value)">' +
-                '<textarea placeholder="Description" onchange="updateVideoDesc(' + idx + ',this.value)">' + escapeHtml(vid.desc) + '</textarea>' +
-                '</div>' +
-                '<div class="gallery-form-item-remove" onclick="removeVideoItem(' + idx + ')">' +
-                '<i class="fa-solid fa-trash-can"></i></div>';
-            itemsList.appendChild(div);
+        galleryVideos = {{ qrcard.get('video_links') | tojson | safe }}.map(function (vid) {
+            return {
+                type: vid.url && (vid.url.startsWith('http') || vid.url.startsWith('/static/')) ? 'saved' : 'link',
+                url: vid.url || '',
+                name: vid.name || '',
+                desc: vid.desc || '',
+                fileIndex: null
+            };
         });
-        updateHiddenInputs();
-    }
+        {% endif %}
 
-    function updateHiddenInputs() {
-        document.querySelectorAll('.video-hidden-input').forEach(function (el) { el.remove(); });
-        var form = document.getElementById('content-form');
-        galleryVideos.forEach(function (vid, idx) {
-            var typeInput = document.createElement('input');
-            typeInput.type = 'hidden'; typeInput.name = 'video_type[]'; typeInput.value = vid.type;
-            typeInput.className = 'video-hidden-input';
-            form.appendChild(typeInput);
-
-            var urlInput = document.createElement('input');
-            urlInput.type = 'hidden'; urlInput.name = 'video_url[]'; urlInput.value = vid.url;
-            urlInput.className = 'video-hidden-input';
-            form.appendChild(urlInput);
-
-            var nameInput = document.createElement('input');
-            nameInput.type = 'hidden'; nameInput.name = 'video_name[]'; nameInput.value = vid.name;
-            nameInput.className = 'video-hidden-input';
-            form.appendChild(nameInput);
-
-            var descInput = document.createElement('input');
-            descInput.type = 'hidden'; descInput.name = 'video_desc[]'; descInput.value = vid.desc;
-            descInput.className = 'video-hidden-input';
-            form.appendChild(descInput);
-        });
-
-        // Sync files to a DataTransfer object to append to the actual input
-        var dt = new DataTransfer();
-        uploadedFiles.forEach(f => {
-            if (f) dt.items.add(f);
-        });
-        document.getElementById('video-file-input').files = dt.files;
-    }
-
-    function updatePreviewGallery() {
-        var grid = document.getElementById('preview-gallery-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
-        if (galleryVideos.length === 0) {
-            grid.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">' +
-                '<i class="fa-solid fa-play" style="font-size:32px;margin-bottom:8px;display:block;"></i>' +
-                '<div style="font-size:11px;">No videos</div></div>';
-            return;
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-        galleryVideos.forEach(function (vid) {
-            var item = document.createElement('div');
-            item.className = 'preview-gallery-item';
-            item.style.cssText = 'background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;';
-            var html = '<div style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;"><i class="fa-solid fa-play" style="font-size:24px;opacity:0.8;"></i></div>';
-            if (vid.name || vid.desc) {
-                html += '<div style="padding:6px 8px;">';
-                if (vid.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(vid.name) + '</div>';
-                if (vid.desc) html += '<div style="font-size:9px;color:#6b7280;line-height:1.3;">' + escapeHtml(vid.desc) + '</div>';
-                html += '</div>';
+
+        function getVideoSrc(vid) {
+            if (vid.type === 'upload' && vid.fileIndex !== null && videoBlobUrls[vid.fileIndex]) {
+                return videoBlobUrls[vid.fileIndex];
             }
-            item.innerHTML = html;
-            grid.appendChild(item);
-        });
-    }
+            // saved or link: use url directly
+            return vid.url || '';
+        }
 
-    window.addVideoLinkItem = function () {
-        galleryVideos.push({ type: 'link', url: '', name: '', desc: '', fileIndex: null });
-        renderVideoItems();
-        updatePreviewGallery();
-    };
+        function buildVideoPlayerHtml(src, forPreview) {
+            if (!src) {
+                return '<div style="width:100%;aspect-ratio:16/9;background:#1a1a1a;display:flex;align-items:center;justify-content:center;color:#6b7280;">'
+                     + '<i class="fa-solid fa-play" style="font-size:' + (forPreview ? '18px' : '28px') + ';opacity:0.5;"></i></div>';
+            }
+            if (src.indexOf('youtube.com') !== -1 || src.indexOf('youtu.be') !== -1 || src.indexOf('vimeo.com') !== -1) {
+                return '<iframe src="' + escapeHtml(src) + '" style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;" allowfullscreen loading="lazy"></iframe>';
+            }
+            return '<video src="' + escapeHtml(src) + '" controls style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;'
+                 + (forPreview ? 'max-height:80px;' : 'max-height:160px;') + '"></video>';
+        }
 
-    window.handleVideoUploads = function (event) {
-        var files = event.target.files;
-        if (!files || files.length === 0) return;
+        function renderVideoItems() {
+            if (!itemsList) return;
+            itemsList.innerHTML = '';
+            galleryVideos.forEach(function (vid, idx) {
+                var div = document.createElement('div');
+                div.className = 'gallery-form-item';
 
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            var newIndex = uploadedFiles.length;
-            uploadedFiles.push(file);
+                var src = getVideoSrc(vid);
+                var sourceField = buildVideoPlayerHtml(src, false);
 
-            galleryVideos.push({
-                type: 'upload',
-                url: file.name,
-                name: file.name.replace(/\.[^/.]+$/, ""), // Name without extension
-                desc: '',
-                fileIndex: newIndex
+                if (vid.type === 'link') {
+                    // Link type: show editable URL input below player
+                    sourceField += '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" oninput="updateVideoUrl(' + idx + ',this.value)" style="margin-top:6px;">';
+                } else {
+                    // Saved/uploaded: show read-only name badge (no URL exposed)
+                    sourceField += '<div style="padding:6px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;margin-top:6px;background:#f3f4f6;display:flex;align-items:center;gap:6px;">'
+                        + '<i class="fa-solid fa-file-video" style="color:#6b7280;"></i>'
+                        + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(vid.name || 'Video') + '</span></div>';
+                }
+
+                div.innerHTML =
+                    '<div class="gallery-form-item-fields">' +
+                    sourceField +
+                    '<input type="text" placeholder="Video name" value="' + escapeHtml(vid.name) + '" style="margin-top:8px;" onchange="updateVideoName(' + idx + ',this.value)">' +
+                    '<textarea placeholder="Description" onchange="updateVideoDesc(' + idx + ',this.value)">' + escapeHtml(vid.desc) + '</textarea>' +
+                    '</div>' +
+                    '<div class="gallery-form-item-remove" onclick="removeVideoItem(' + idx + ')">' +
+                    '<i class="fa-solid fa-trash-can"></i></div>';
+                itemsList.appendChild(div);
+            });
+            updateHiddenInputs();
+        }
+
+        function updateHiddenInputs() {
+            document.querySelectorAll('.video-hidden-input').forEach(function (el) { el.remove(); });
+            var form = document.getElementById('content-form');
+            galleryVideos.forEach(function (vid) {
+                var typeInput = document.createElement('input');
+                typeInput.type = 'hidden'; typeInput.name = 'video_type[]'; typeInput.value = vid.type;
+                typeInput.className = 'video-hidden-input'; form.appendChild(typeInput);
+
+                var urlInput = document.createElement('input');
+                urlInput.type = 'hidden'; urlInput.name = 'video_url[]'; urlInput.value = vid.url;
+                urlInput.className = 'video-hidden-input'; form.appendChild(urlInput);
+
+                var nameInput = document.createElement('input');
+                nameInput.type = 'hidden'; nameInput.name = 'video_name[]'; nameInput.value = vid.name;
+                nameInput.className = 'video-hidden-input'; form.appendChild(nameInput);
+
+                var descInput = document.createElement('input');
+                descInput.type = 'hidden'; descInput.name = 'video_desc[]'; descInput.value = vid.desc;
+                descInput.className = 'video-hidden-input'; form.appendChild(descInput);
+            });
+            var dt = new DataTransfer();
+            uploadedFiles.forEach(function (f) { if (f) dt.items.add(f); });
+            document.getElementById('video-file-input').files = dt.files;
+        }
+
+        function updatePreviewGallery() {
+            var grid = document.getElementById('preview-gallery-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            if (galleryVideos.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">'
+                    + '<i class="fa-solid fa-play" style="font-size:32px;margin-bottom:8px;display:block;"></i>'
+                    + '<div style="font-size:11px;">No videos</div></div>';
+                return;
+            }
+            galleryVideos.forEach(function (vid) {
+                var src = getVideoSrc(vid);
+                var item = document.createElement('div');
+                item.className = 'preview-gallery-item';
+                item.style.cssText = 'background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;';
+                var html = buildVideoPlayerHtml(src, true);
+                if (vid.name || vid.desc) {
+                    html += '<div style="padding:6px 8px;">';
+                    if (vid.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(vid.name) + '</div>';
+                    if (vid.desc) html += '<div style="font-size:9px;color:#6b7280;line-height:1.3;">' + escapeHtml(vid.desc) + '</div>';
+                    html += '</div>';
+                }
+                item.innerHTML = html;
+                grid.appendChild(item);
             });
         }
+
+        window.addVideoLinkItem = function () {
+            galleryVideos.push({ type: 'link', url: '', name: '', desc: '', fileIndex: null });
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        window.handleVideoUploads = function (event) {
+            var files = event.target.files;
+            if (!files || files.length === 0) return;
+            for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var newIndex = uploadedFiles.length;
+                uploadedFiles.push(file);
+                videoBlobUrls[newIndex] = URL.createObjectURL(file);
+                galleryVideos.push({ type: 'upload', url: file.name, name: file.name.replace(/\.[^/.]+$/, ''), desc: '', fileIndex: newIndex });
+            }
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        window.updateVideoUrl = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].url = val;
+            updateHiddenInputs();
+            updatePreviewGallery();
+        };
+        window.updateVideoName = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].name = val;
+            updateHiddenInputs();
+            updatePreviewGallery();
+        };
+        window.updateVideoDesc = function (idx, val) {
+            if (galleryVideos[idx]) galleryVideos[idx].desc = val;
+            updateHiddenInputs();
+            updatePreviewGallery();
+        };
+        window.removeVideoItem = function (idx) {
+            var vid = galleryVideos[idx];
+            if (vid.type === 'upload' && vid.fileIndex !== null) {
+                uploadedFiles[vid.fileIndex] = null;
+                if (videoBlobUrls[vid.fileIndex]) {
+                    URL.revokeObjectURL(videoBlobUrls[vid.fileIndex]);
+                    delete videoBlobUrls[vid.fileIndex];
+                }
+            }
+            galleryVideos.splice(idx, 1);
+            renderVideoItems();
+            updatePreviewGallery();
+        };
+
+        // Initial render
         renderVideoItems();
         updatePreviewGallery();
-    };
-
-    window.updateVideoUrl = function (idx, val) {
-        if (galleryVideos[idx]) galleryVideos[idx].url = val;
-        updateHiddenInputs();
-    };
-    window.updateVideoName = function (idx, val) {
-        if (galleryVideos[idx]) galleryVideos[idx].name = val;
-        updateHiddenInputs();
-        updatePreviewGallery();
-    };
-    window.updateVideoDesc = function (idx, val) {
-        if (galleryVideos[idx]) galleryVideos[idx].desc = val;
-        updateHiddenInputs();
-        updatePreviewGallery();
-    };
-    window.removeVideoItem = function (idx) {
-        var vid = galleryVideos[idx];
-        if (vid.type === 'upload' && vid.fileIndex !== null) {
-            uploadedFiles[vid.fileIndex] = null; // Mark as removed to keep index sync
-        }
-        galleryVideos.splice(idx, 1);
-        renderVideoItems();
-        updatePreviewGallery();
-    };
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // Initial render
-    renderVideoItems();
-    }) ();
+    })();
 </script>
 {% endblock %}

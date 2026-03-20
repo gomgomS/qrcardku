@@ -34,61 +34,14 @@ PUBLIC MODE
 
 <style>
     :root {
-        --primary: {
-                {
-                _primary
-            }
-        }
-
-        ;
-
-        --secondary: {
-                {
-                _secondary
-            }
-        }
-
-        ;
-
-        --title-font: {
-                {
-                _title_font | tojson | safe
-            }
-        }
-
-        ;
-
-        --text-font: {
-                {
-                _text_font | tojson | safe
-            }
-        }
-
-        ;
-
-        --title-color: {
-                {
-                _title_color
-            }
-        }
-
-        ;
-
-        --text-color: {
-                {
-                _text_color
-            }
-        }
-
-        ;
+        --primary: {{ _primary }};
+        --secondary: {{ _secondary }};
+        --title-font: {{ _title_font | tojson | safe }};
+        --text-font: {{ _text_font | tojson | safe }};
+        --title-color: {{ _title_color }};
+        --text-color: {{ _text_color }};
     }
-
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background: #0f172a;
@@ -97,7 +50,6 @@ PUBLIC MODE
         align-items: stretch;
         justify-content: center;
     }
-
     .phone-wrapper {
         position: relative;
         width: 100%;
@@ -105,20 +57,11 @@ PUBLIC MODE
         margin: 0 auto;
         min-height: 100vh;
     }
-
-    /* Welcome overlay */
     .welcome-overlay {
         position: absolute;
         inset: 0;
         z-index: 100;
-
-        background: {
-                {
-                _welcome_bg
-            }
-        }
-
-        ;
+        background: {{ _welcome_bg }};
         display: flex;
         align-items: center;
         justify-content: center;
@@ -126,160 +69,57 @@ PUBLIC MODE
         transition: opacity 0.8s ease;
         pointer-events: auto;
     }
-
-    .welcome-overlay.hide {
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .welcome-overlay img {
-        max-width: 200px;
-        max-height: 280px;
-        object-fit: contain;
-        display: block;
-    }
-
-    /* Gallery wrapper */
-    .gallery-wrapper {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        background: #f9fafb;
-    }
-
-    .gallery-header {
-        background: var(--primary);
-        padding: 40px 24px 28px;
-        text-align: center;
-    }
-
+    .welcome-overlay.hide { opacity: 0; pointer-events: none; }
+    .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
+    .gallery-wrapper { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+    .gallery-header { background: var(--primary); padding: 40px 24px 28px; text-align: center; }
     .gallery-header-title {
         font-size: 22px;
         font-weight: 800;
         color: white;
         margin-bottom: 6px;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--title-font),
-        system-ui,
-        sans-serif;
-
-            {
-            % endif %
-        }
+        {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif;{% endif %}
     }
-
     .gallery-header-desc {
         font-size: 14px;
-        color: rgba(255, 255, 255, 0.85);
+        color: rgba(255,255,255,0.85);
         line-height: 1.4;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--text-font),
-        system-ui,
-        sans-serif;
-
-            {
-            % endif %
-        }
+        {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif;{% endif %}
     }
-
     .gallery-grid {
         display: grid;
-
-        grid-template-columns: repeat({
-                {
-                _cols
-            }
-        }
-
-        , 1fr);
-    gap: 16px;
-    padding: 20px;
-    flex: 1;
-    align-content: start;
+        grid-template-columns: repeat({{ _cols }}, 1fr);
+        gap: 16px;
+        padding: 20px;
+        flex: 1;
+        align-content: start;
     }
-
     .gallery-item {
         background: white;
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         transition: transform 0.2s;
         display: flex;
         flex-direction: column;
     }
-
-    .gallery-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .gallery-item iframe,
-    .gallery-item video {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-        border: none;
-        display: block;
-        background: #000;
-    }
-
-    .gallery-item-info {
-        padding: 12px;
-        flex: 1;
-    }
-
+    .gallery-item:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .gallery-item iframe, .gallery-item video { width: 100%; aspect-ratio: 16/9; border: none; display: block; background: #000; }
+    .gallery-item-info { padding: 12px; flex: 1; }
     .gallery-item-name {
         font-size: 14px;
         font-weight: 600;
         color: #111827;
         margin-bottom: 4px;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--title-font),
-        system-ui,
-        sans-serif;
-        color: var(--title-color);
-
-            {
-            % endif %
-        }
+        {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% endif %}
     }
-
     .gallery-item-desc {
         font-size: 12px;
         color: #6b7280;
         line-height: 1.4;
-
-            {
-            % if _apply_fonts %
-        }
-
-        font-family: var(--text-font),
-        system-ui,
-        sans-serif;
-        color: var(--text-color);
-
-            {
-            % endif %
-        }
+        {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% endif %}
     }
-
-    .gallery-footer {
-        text-align: center;
-        padding: 16px 20px 32px;
-        font-size: 11px;
-        color: #9ca3af;
-    }
+    .gallery-footer { text-align: center; padding: 16px 20px 32px; font-size: 11px; color: #9ca3af; }
 </style>
 
 <div class="phone-wrapper">

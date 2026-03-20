@@ -286,7 +286,8 @@
 
     .phone-mockup {
         width: 100%;
-        height: 600px;
+        height: calc(100vh - 72px);
+        max-height: 600px;
         background-color: white;
         border: 12px solid #1a1a1a;
         border-radius: 40px;
@@ -301,6 +302,7 @@
         background-color: #f9fafb;
         display: flex;
         flex-direction: column;
+        overscroll-behavior-y: contain;
     }
 
     .preview-disclaimer {
@@ -428,6 +430,7 @@
         }
         .preview-column.mobile-open { transform: translateY(0); }
         .mobile-bottom-bar { display: flex; }
+        .phone-mockup { height: calc(100vh - 60px - 120px); max-height: 560px; }
     }
     .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
     .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
@@ -834,7 +837,7 @@
                     </div>
                 </div>
                 <div class="phone-mockup">
-                    <div class="mockup-inner" style="position:relative;">
+                    <div class="mockup-inner" style="padding:0;background-color:#f9fafb;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
                         {% set video_mode = 'preview' %}
                         {% include 'user/template_video_general.html' %}
                     </div>
@@ -982,6 +985,23 @@
         var itemsList = document.getElementById('video-items-list');
         var galleryVideos = []; // [{type: 'link'|'upload', url: '', name: '', desc: '', fileIndex: null}]
         var uploadedFiles = []; // Array of actual File objects
+        var videoBlobUrls = {}; // fileIndex → blob URL
+
+        function getBlobSrc(vid) {
+            return (vid.fileIndex !== null && videoBlobUrls[vid.fileIndex]) ? videoBlobUrls[vid.fileIndex] : '';
+        }
+
+        function buildVideoPlayerHtml(src, forPreview) {
+            if (!src) {
+                return '<div style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;">'
+                     + '<i class="fa-solid fa-play" style="font-size:' + (forPreview ? '18px' : '28px') + ';opacity:0.5;"></i></div>';
+            }
+            if (src.indexOf('youtube.com') !== -1 || src.indexOf('youtu.be') !== -1 || src.indexOf('vimeo.com') !== -1) {
+                return '<iframe src="' + escapeHtml(src) + '" style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;" allowfullscreen loading="lazy"></iframe>';
+            }
+            return '<video src="' + escapeHtml(src) + '" controls style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;'
+                 + (forPreview ? 'max-height:80px;' : 'max-height:140px;') + '"></video>';
+        }
 
         function renderVideoItems() {
             if (!itemsList) return;
@@ -992,15 +1012,20 @@
 
                 var sourceField = '';
                 if (vid.type === 'link') {
-                    sourceField = '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" onchange="updateVideoUrl(' + idx + ',this.value)">';
+                    var linkSrc = vid.url;
+                    sourceField = buildVideoPlayerHtml(linkSrc, false)
+                        + '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" oninput="updateVideoUrl(' + idx + ',this.value);rerenderVideoItem(' + idx + ')" style="margin-top:6px;">';
                 } else {
-                    sourceField = '<div style="padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; margin-bottom: 8px; background: #e5e7eb; display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><i class="fa-solid fa-file-video text-muted"></i> ' + escapeHtml(vid.url) + '</div>';
+                    var blobSrc = getBlobSrc(vid);
+                    sourceField = buildVideoPlayerHtml(blobSrc, false)
+                        + '<div style="padding:6px 10px;border:1px solid var(--border-color);border-radius:6px;font-size:12px;margin-top:6px;background:#f3f4f6;display:flex;align-items:center;gap:6px;">'
+                        + '<i class="fa-solid fa-file-video" style="color:#6b7280;"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(vid.url) + '</span></div>';
                 }
 
                 div.innerHTML =
                     '<div class="gallery-form-item-fields">' +
                     sourceField +
-                    '<input type="text" placeholder="Video name" value="' + escapeHtml(vid.name) + '" onchange="updateVideoName(' + idx + ',this.value)">' +
+                    '<input type="text" placeholder="Video name" value="' + escapeHtml(vid.name) + '" style="margin-top:8px;" onchange="updateVideoName(' + idx + ',this.value)">' +
                     '<textarea placeholder="Description" onchange="updateVideoDesc(' + idx + ',this.value)">' + escapeHtml(vid.desc) + '</textarea>' +
                     '</div>' +
                     '<div class="gallery-form-item-remove" onclick="removeVideoItem(' + idx + ')">' +
@@ -1009,6 +1034,11 @@
             });
             updateHiddenInputs();
         }
+
+        window.rerenderVideoItem = function (idx) {
+            // Re-render just the video player thumbnail after URL edit without full re-render
+            updatePreviewGallery();
+        };
 
         function updateHiddenInputs() {
             document.querySelectorAll('.video-hidden-input').forEach(function (el) { el.remove(); });
@@ -1054,10 +1084,11 @@
                 return;
             }
             galleryVideos.forEach(function (vid) {
+                var src = vid.type === 'upload' ? getBlobSrc(vid) : vid.url;
                 var item = document.createElement('div');
                 item.className = 'preview-gallery-item';
                 item.style.cssText = 'background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;';
-                var html = '<div style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;"><i class="fa-solid fa-play" style="font-size:24px;opacity:0.8;"></i></div>';
+                var html = buildVideoPlayerHtml(src, true);
                 if (vid.name || vid.desc) {
                     html += '<div style="padding:6px 8px;">';
                     if (vid.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(vid.name) + '</div>';
@@ -1075,6 +1106,43 @@
             updatePreviewGallery();
         };
 
+        window.applyVideoSampleData = function (videos) {
+            if (!videos || !videos.length) return;
+            // Revoke old blob URLs
+            Object.keys(videoBlobUrls).forEach(function (k) { URL.revokeObjectURL(videoBlobUrls[k]); });
+            for (var k in videoBlobUrls) delete videoBlobUrls[k];
+            galleryVideos.length = 0;
+            uploadedFiles.length = 0;
+            var pending = videos.length;
+            function done() {
+                pending--;
+                if (pending === 0) { renderVideoItems(); updatePreviewGallery(); }
+            }
+            videos.forEach(function (v) {
+                var url = v.url || '';
+                if (url.startsWith('/static/')) {
+                    fetch(url)
+                        .then(function (r) { return r.blob(); })
+                        .then(function (blob) {
+                            var filename = url.split('/').pop();
+                            var file = new File([blob], filename, { type: blob.type || 'video/mp4' });
+                            var fileIndex = uploadedFiles.length;
+                            uploadedFiles.push(file);
+                            videoBlobUrls[fileIndex] = URL.createObjectURL(file);
+                            galleryVideos.push({ type: 'upload', url: filename, name: v.name || filename, desc: v.desc || '', fileIndex: fileIndex });
+                            done();
+                        })
+                        .catch(function () {
+                            galleryVideos.push({ type: 'link', url: url, name: v.name || '', desc: v.desc || '', fileIndex: null });
+                            done();
+                        });
+                } else {
+                    galleryVideos.push({ type: 'link', url: url, name: v.name || '', desc: v.desc || '', fileIndex: null });
+                    done();
+                }
+            });
+        };
+
         window.handleVideoUploads = function (event) {
             var files = event.target.files;
             if (!files || files.length === 0) return;
@@ -1083,11 +1151,12 @@
                 var file = files[i];
                 var newIndex = uploadedFiles.length;
                 uploadedFiles.push(file);
+                videoBlobUrls[newIndex] = URL.createObjectURL(file);
 
                 galleryVideos.push({
                     type: 'upload',
                     url: file.name,
-                    name: file.name.replace(/\.[^/.]+$/, ""), // Name without extension
+                    name: file.name.replace(/\.[^/.]+$/, ""),
                     desc: '',
                     fileIndex: newIndex
                 });
@@ -1113,7 +1182,11 @@
         window.removeVideoItem = function (idx) {
             var vid = galleryVideos[idx];
             if (vid.type === 'upload' && vid.fileIndex !== null) {
-                uploadedFiles[vid.fileIndex] = null; // Mark as removed to keep index sync
+                uploadedFiles[vid.fileIndex] = null;
+                if (videoBlobUrls[vid.fileIndex]) {
+                    URL.revokeObjectURL(videoBlobUrls[vid.fileIndex]);
+                    delete videoBlobUrls[vid.fileIndex];
+                }
             }
             galleryVideos.splice(idx, 1);
             renderVideoItems();
@@ -1148,6 +1221,9 @@
             var bi = dump.basic_info || {};
             if (bi.title) { var el = document.getElementById('video_title'); if (el) { el.value = bi.title; el.dispatchEvent(new Event('input')); } }
             if (bi.desc)  { var el = document.getElementById('video_desc');  if (el) { el.value = bi.desc;  el.dispatchEvent(new Event('input')); } }
+            if (dump.videos && dump.videos.length && typeof window.applyVideoSampleData === 'function') {
+                window.applyVideoSampleData(dump.videos);
+            }
         }
         var toggle = document.getElementById('video-autocomplete-toggle');
         if (toggle) {
