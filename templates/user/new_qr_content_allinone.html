@@ -987,11 +987,9 @@ document.addEventListener('DOMContentLoaded', function () {
         // TEXT block
         if (stype === 'text') {
             if (!v1) return `<div style="font-size:7px;color:#9ca3af;font-style:italic;padding:3px 5px;">No text yet...</div>`;
-            const stripped = v1.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-            const excerpt = stripped.length > 80 ? stripped.substring(0, 80) + '...' : stripped;
-            if (blockStyle === '2') return `<div style="background:white;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
-            if (blockStyle === '3') return `<div style="border-radius:4px;padding:4px 6px;background:${blockColor};font-size:7px;color:white;line-height:1.4;">${excerpt}</div>`;
-            return `<div style="padding:3px 5px;font-size:7px;color:#374151;line-height:1.4;">${excerpt}</div>`;
+            if (blockStyle === '2') return `<div class="pv-text-block" style="background:white;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;">${v1}</div>`;
+            if (blockStyle === '3') return `<div class="pv-text-block" style="border-radius:4px;padding:4px 6px;background:${blockColor};color:white;">${v1}</div>`;
+            return `<div class="pv-text-block" style="padding:3px 5px;">${v1}</div>`;
         }
         if (blockStyle === '2') return `<div class="pv-item pv-item-b" data-stype="${stype}"><div class="pv-icon">${iconHtml}</div><span class="pv-name">${name}</span></div>`;
         if (blockStyle === '3') return `<div class="pv-item pv-item-c"><span class="pv-name">${name}</span></div>`;
@@ -1021,8 +1019,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (html) itemsHTML += html;
             });
             if (!itemsHTML) return;
+            const saveBtn = stype === 'contact'
+                ? `<div style="padding:3px 4px 4px;"><div style="background:var(--primary,#2f6bfd);color:white;border-radius:5px;padding:5px 8px;font-size:7px;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:4px;"><i class="fa-solid fa-address-card"></i> Save to Contacts</div></div>`
+                : '';
             const groupHTML = `<div class="pv-section-group" data-type="${stype}" data-block-style="${blockStyle}" style="--block-color:${blockColor};">`
-                + `<div class="pv-section-group-items">${itemsHTML}</div></div>`;
+                + `<div class="pv-section-group-items">${itemsHTML}</div>${saveBtn}</div>`;
             ALL_LIST_IDS.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) { const tmp = document.createElement('div'); tmp.innerHTML = groupHTML; el.appendChild(tmp.firstChild); }

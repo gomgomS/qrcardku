@@ -33,14 +33,14 @@
       ]
     },
     "sosmed": {
-      "block_style": "3",
+      "block_style": "2",
       "block_color": "#a855f7",
       "items": [
-        { "v1": "fa-brands fa-instagram", "v2": "@johndoe", "v3": "Follow for daily inspiration" },
-        { "v1": "fa-brands fa-youtube", "v2": "John Doe", "v3": "Subscribe to my channel" },
-        { "v1": "fa-brands fa-tiktok", "v2": "@johndoe.create", "v3": "Short-form content" },
-        { "v1": "fa-brands fa-x-twitter", "v2": "@johndoe_x", "v3": "Thoughts & updates" },
-        { "v1": "fa-brands fa-linkedin", "v2": "John Doe", "v3": "Professional network" }
+        { "v1": "fa-brands fa-instagram", "v2": "@johndoe", "v3": "" },
+        { "v1": "fa-brands fa-youtube", "v2": "John Doe", "v3": "" },
+        { "v1": "fa-brands fa-tiktok", "v2": "@johndoe.create", "v3": "" },
+        { "v1": "fa-brands fa-x-twitter", "v2": "@johndoe_x", "v3": "" },
+        { "v1": "fa-brands fa-linkedin", "v2": "John Doe", "v3": "" }
       ]
     },
     "image": {

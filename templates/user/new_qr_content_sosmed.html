@@ -881,12 +881,12 @@
         function buildSosmedItemHTML(iconClass, displayName, desc) {
             const item = document.createElement('div');
             item.style.cssText = 'display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:10px;';
-            item.innerHTML = '<div style="width:32px;height:32px;background:#eff6ff;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="' + iconClass + '" style="color:#2563eb;font-size:14px;"></i></div>'
+            item.innerHTML = '<div style="width:32px;height:32px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="' + iconClass + '" style="color:#374151;font-size:14px;"></i></div>'
                 + '<div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + displayName + '</span>'
                 + '<span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + desc + '</span></div>';
             return item;
         }
-        function updateSosmedPreview() {
+        window.updateSosmedPreview = function updateSosmedPreview() {
             const rows = document.querySelectorAll('#sosmed-items-container .sosmed-item-row');
             const items = [];
             rows.forEach(row => {
@@ -1169,6 +1169,25 @@
                 if (pImg) { pImg.src = bi.cover_image; pImg.style.display = ''; }
                 var pPh = document.getElementById('sosmed-preview-profile-placeholder-icon');
                 if (pPh) pPh.style.display = 'none';
+                // t3 / t4 circle images
+                ['sosmed-t3-preview-circle-img','sosmed-t4-preview-circle-img'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) { el.src = bi.cover_image; el.style.display = 'block'; }
+                });
+                ['sosmed-t3-preview-circle-placeholder','sosmed-t4-preview-circle-placeholder'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) el.style.display = 'none';
+                });
+                // t1 / t2 header images
+                ['sosmed-t1-preview-header-img','sosmed-t2-preview-header-img'].forEach(function(id) {
+                    var el = document.getElementById(id); if (el) { el.src = bi.cover_image; el.style.display = 'block'; }
+                });
+                var t1Hdr = document.getElementById('sosmed-t1-preview-header');
+                var t1Body = document.getElementById('sosmed-t1-preview-card-body');
+                if (t1Hdr) t1Hdr.style.display = 'block';
+                if (t1Body) { t1Body.style.borderRadius = '22px 22px 0 0'; t1Body.style.marginTop = '-18px'; }
+                var t2Hdr = document.getElementById('sosmed-t2-preview-header');
+                var t2Body = document.getElementById('sosmed-t2-preview-card-body');
+                if (t2Hdr) t2Hdr.style.display = 'block';
+                if (t2Body) { t2Body.style.borderRadius = '22px 22px 0 0'; t2Body.style.marginTop = '-18px'; }
             }
 
             if (dump.items && dump.items.length) {
@@ -1188,6 +1207,7 @@
                             + '<button type="button" class="sosmed-remove-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;margin-top:20px;"><i class="fa-solid fa-trash-can"></i></button>';
                         container.appendChild(row);
                     });
+                    if (window.updateSosmedPreview) window.updateSosmedPreview();
                 }
             }
         }

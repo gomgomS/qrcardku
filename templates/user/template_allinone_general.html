@@ -245,24 +245,24 @@
   {% set name = s.get('v2','') %}
   {% if url %}
   {% if not preview and bstyle == '2' %}
-  <a class="si-b si-b-pdf" href="{{ url }}" target="_blank" rel="noopener">
+  <a class="si-b si-b-pdf" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
     <div class="si-b-icon" style="background:#fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:16px;"></i></div>
     <div class="si-b-text"><span class="si-b-name">{{ name or 'Download PDF' }}</span></div>
     <i class="fa-solid fa-arrow-down si-b-chev"></i>
   </a>
   {% elif not preview and bstyle == '3' %}
-  <a class="si-c" href="{{ url }}" target="_blank" rel="noopener">
+  <a class="si-c" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
     <i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:12px;flex-shrink:0;"></i>
     <span class="si-c-text">{{ name or 'Download PDF' }}</span>
     <i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
   </a>
   {% elif not preview and bstyle == '4' %}
-  <a class="pdf-4-btn" href="{{ url }}" target="_blank" rel="noopener">
+  <a class="pdf-4-btn" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
     <i class="fa-solid fa-arrow-down"></i>
     <span>{{ name or 'Download PDF' }}</span>
   </a>
   {% else %}
-  <a class="section-item section-pdf" href="{{ url }}" target="_blank" rel="noopener">
+  <a class="section-item section-pdf" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
     <div class="section-item-icon"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:{{ '13px' if preview else '16px' }};"></i></div>
     <div class="section-item-text">
       <span class="section-item-name">{{ name or 'Download PDF' }}</span>
@@ -283,7 +283,7 @@
     <div class="txt-1-block">{{ html_content | safe }}</div>
     {% endif %}
   {% else %}
-  <div class="pv-text-block">{{ html_content | striptags | truncate(80, true, '...') }}</div>
+  <div class="pv-text-block">{{ html_content | safe }}</div>
   {% endif %}
   {% endif %}
 {% endif %}
@@ -296,7 +296,9 @@
 {% for s in sections %}
 {% set cur = s.get('type','') %}
 {% if cur != ns.last_type %}
-{% if ns.in_group %}</div></div>{% endif %}
+{% if ns.in_group %}
+{% if not preview and ns.last_type == 'contact' %}<button type="button" class="save-contact-btn" onclick="saveAllinoneContact(this)"><i class="fa-solid fa-address-card"></i> Save to Contacts</button>{% endif %}
+</div></div>{% endif %}
 {% set ns.last_type = cur %}
 {% set ns.in_group = true %}
 {% set ns.cur_bstyle = s.get('block_style', '1') %}
@@ -312,7 +314,9 @@
 {% endif %}
 {{ render_section(s, preview) }}
 {% endfor %}
-{% if ns.in_group %}</div></div>{% endif %}
+{% if ns.in_group %}
+{% if not preview and ns.last_type == 'contact' %}<button type="button" class="save-contact-btn" onclick="saveAllinoneContact(this)"><i class="fa-solid fa-address-card"></i> Save to Contacts</button>{% endif %}
+</div></div>{% endif %}
 {% endmacro %}
 
 {# =====================================================================
@@ -752,11 +756,11 @@
     .img-gsp-item:nth-child(6n+6) { grid-column: 2; grid-row: span 2; }
     /* ── Video Style 1 — Play Card ── */
     .section-group[data-type="video"] .section-group-header { display: none; }
-    .section-group[data-type="video"] .section-group-items { padding: 0; gap: 14px; }
-    .vd-embed-wrap { width: 100%; }
+    .section-group[data-type="video"] .section-group-items { padding: 0 0 8px; gap: 14px; }
+    .vd-embed-wrap { width: 100%; padding: 0 8px; }
     .vd-embed-frame { width: 100%; aspect-ratio: 16/9; display: block; border-radius: 10px; }
-    .vd-embed-title { font-size: 14px; font-weight: 600; color: #111; margin-top: 8px; padding: 0 2px; }
-    .vd-native-wrap { width: 100%; }
+    .vd-embed-title { font-size: 14px; font-weight: 600; color: #111827; margin-top: 8px; padding: 0 2px; }
+    .vd-native-wrap { width: 100%; padding: 0 8px; }
     .vd-native-player { width: 100%; border-radius: 10px; display: block; background: #000; max-height: 320px; }
     .vd-play-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 20px; border-radius: 14px; text-decoration: none; color: white; transition: opacity 0.15s; }
     .vd-play-card:hover { opacity: 0.9; }
@@ -790,6 +794,17 @@
     .txt-3-block p  { margin: 0 0 8px; }
     .txt-3-block ul, .txt-3-block ol { padding-left: 20px; margin: 0 0 8px; }
     .txt-3-block a  { color: rgba(255,255,255,0.85); text-decoration: underline; }
+    /* Save Contact button */
+    .save-contact-btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; margin-top: 10px; padding: 13px 20px;
+        background: var(--primary); color: white;
+        border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: opacity 0.15s;
+    }
+    .save-contact-btn:hover { opacity: 0.88; }
+    .save-contact-btn:active { opacity: 0.75; }
+    .save-contact-btn.saved { background: #16a34a; }
 </style>
 
 <div class="phone-wrapper">
@@ -886,6 +901,75 @@
     });
 })();
 </script>
+<script>
+function allinoneDownloadPdf(e, url, name) {
+    if (!url) return;
+    e.preventDefault();
+    var filename = name ? name.replace(/[^a-z0-9_\-. ]/gi, '_') + '.pdf' : 'document.pdf';
+    fetch(url)
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+        })
+        .catch(function() {
+            // Fallback: open in new tab if fetch fails (e.g. CORS)
+            window.open(url, '_blank');
+        });
+}
+function saveAllinoneContact(btn) {
+    var group = btn.closest('.section-group[data-type="contact"]');
+    if (!group) return;
+    var lines = ['BEGIN:VCARD', 'VERSION:3.0'];
+    // Name
+    var nameEl = document.querySelector('.allinone-ptitle, .t1-title, .t2-title');
+    var name = nameEl ? nameEl.textContent.trim() : '{{ _title | e }}';
+    lines.push('FN:' + name);
+    lines.push('N:' + name + ';;;;');
+    // Cover image
+    {% if _cover_img %}
+    lines.push('PHOTO;TYPE=JPEG;VALUE=URI:{{ _cover_img }}');
+    {% endif %}
+    // Collect contact items
+    group.querySelectorAll('a[href]').forEach(function(a) {
+        var href = a.getAttribute('href') || '';
+        var valEl = a.querySelector('.ct-1-val, .ct-2-val, .ct-3-val, .ct-4-val, .section-item-sub');
+        var val = valEl ? valEl.textContent.trim() : '';
+        if (!val) val = href.replace(/^(tel:|mailto:|https?:\/\/)/,'');
+        var labelEl = a.querySelector('.ct-1-label, .ct-2-label, .ct-3-label, .ct-4-label, .section-item-name');
+        var label = labelEl ? labelEl.textContent.trim() : '';
+        if (href.indexOf('tel:') === 0) {
+            lines.push('TEL' + (label ? ';TYPE=' + label.replace(/\s+/g,'_') : '') + ':' + val);
+        } else if (href.indexOf('mailto:') === 0) {
+            lines.push('EMAIL' + (label ? ';TYPE=' + label.replace(/\s+/g,'_') : '') + ':' + val);
+        } else if (href.indexOf('http') === 0) {
+            lines.push('URL:' + val);
+        }
+    });
+    lines.push('END:VCARD');
+    var vcf = lines.join('\r\n');
+    var blob = new Blob([vcf], { type: 'text/vcard;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (name || 'contact') + '.vcf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    btn.classList.add('saved');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+    setTimeout(function() {
+        btn.classList.remove('saved');
+        btn.innerHTML = '<i class="fa-solid fa-address-card"></i> Save to Contacts';
+    }, 2500);
+}
+</script>
 
 {# =====================================================================
    PREVIEW MODE
@@ -928,11 +1012,11 @@
     .allinone-tpl-default .allinone-circle img { width: 100%; height: 100%; object-fit: cover; }
     .allinone-tpl-default .allinone-ptitle {
         font-size: 11px; font-weight: 700; text-align: center; color: #111827;
-        margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+        margin-bottom: 2px; max-width: 100%; word-break: break-word;
     }
     .allinone-tpl-default .allinone-pdesc {
         font-size: 9px; text-align: center; color: #6b7280;
-        margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+        margin-bottom: 10px; max-width: 100%; word-break: break-word;
     }
 
     /* TEMPLATE 1 preview */
@@ -1026,7 +1110,7 @@
     /* Text block preview */
     .pv-section-group[data-type="text"] { border: none; background: transparent; }
     .pv-section-group[data-type="text"] .pv-section-group-items { padding: 2px 3px; }
-    .pv-text-block { font-size: 7px; line-height: 1.4; color: #374151; overflow: hidden; max-height: 55px; word-break: break-word; }
+    .pv-text-block { font-size: 7px; line-height: 1.4; color: #374151; word-break: break-word; }
     .pv-section-group[data-type="text"][data-block-style="2"] { background: white; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     .pv-section-group[data-type="text"][data-block-style="3"] { background: var(--block-color, #10b981); border-radius: 4px; border: none; }
     .pv-section-group[data-type="text"][data-block-style="3"] .pv-text-block { color: white; }
