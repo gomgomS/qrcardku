@@ -64,8 +64,8 @@
       "block_style": "2",
       "block_color": "#3b82f6",
       "items": [
-        { "v1": "", "v2": "Company Brochure" },
-        { "v1": "", "v2": "Product Catalog" }
+        { "v1": "/static/assets/autocomplete_field_helper/pdf/thankyou for using qrkartu.pdf", "v2": "Company Brochure" },
+        { "v1": "/static/assets/autocomplete_field_helper/pdf/thankyou for using qrkartu - dump 2.pdf", "v2": "Product Catalog" }
       ]
     },
     "text": {

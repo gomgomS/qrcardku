@@ -4174,6 +4174,55 @@ def qr_update_save_video(qrcard_id):
     return redirect(url_for("user_qr_list"))
 
 
+@app.route("/api/proxy_download", methods=["GET"])
+def api_proxy_download():
+    """Proxy-download a file from R2 or a local static path so the browser saves it."""
+    from flask import request, Response, stream_with_context, send_from_directory
+    import urllib.request as _ureq
+    import os, re
+    url  = request.args.get("url", "").strip()
+    name = request.args.get("name", "").strip()
+    if not url:
+        return "Missing url", 400
+    allowed_base = config.R2_PUBLIC_BASE_URL.rstrip("/")
+    is_r2 = url.startswith(allowed_base + "/")
+    is_static = url.startswith("/static/")
+    if not is_r2 and not is_static:
+        return "Forbidden", 403
+    safe_name = re.sub(r"[^\w\-. ]", "_", name) if name else ""
+    if not safe_name:
+        safe_name = os.path.basename(url.split("?")[0]) or "file"
+    if not safe_name.lower().endswith(".pdf"):
+        safe_name += ".pdf"
+    # Serve local static files directly
+    if is_static:
+        static_rel = url[len("/static/"):]  # e.g. "assets/autocomplete_field_helper/pdf/..."
+        static_dir = os.path.join(app.root_path, "static", os.path.dirname(static_rel))
+        filename   = os.path.basename(static_rel)
+        try:
+            return send_from_directory(static_dir, filename, as_attachment=True,
+                                       download_name=safe_name)
+        except Exception:
+            return "File not found", 404
+    try:
+        req = _ureq.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        remote = _ureq.urlopen(req, timeout=30)
+        content_type = remote.headers.get("Content-Type", "application/pdf")
+        def generate():
+            while True:
+                chunk = remote.read(65536)
+                if not chunk:
+                    break
+                yield chunk
+        headers = {
+            "Content-Disposition": f'attachment; filename="{safe_name}"',
+            "Content-Type": content_type,
+        }
+        return Response(stream_with_context(generate()), headers=headers)
+    except Exception:
+        return "Could not fetch file", 502
+
+
 @app.route("/api/qr/remove_pdf_file", methods=["POST"])
 def api_remove_pdf_file():
     """Remove a single saved PDF file from a QR card's pdf_files list."""

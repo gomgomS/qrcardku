@@ -87,6 +87,11 @@
     .section-card-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
     .section-card-count { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.8); padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); }
     .section-card-actions { display: flex; align-items: center; gap: 4px; }
+    .drag-handle { background: transparent; border: none; color: #c4c4c4; cursor: grab; padding: 5px 6px; font-size: 13px; border-radius: 5px; line-height: 1; touch-action: none; flex-shrink: 0; }
+    .drag-handle:hover { color: #9ca3af; background: rgba(0,0,0,0.04); }
+    .drag-handle:active { cursor: grabbing; }
+    .section-card.sortable-ghost { opacity: 0.4; background: #f0f4ff; border: 2px dashed var(--primary); }
+    .section-card.sortable-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.15); opacity: 1 !important; }
     .section-card-toggle-btn, .section-card-delete { background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 5px 7px; font-size: 12px; border-radius: 5px; transition: all 0.15s; }
     .section-card-toggle-btn:hover { background: rgba(0,0,0,0.06); color: var(--text-main); }
     .section-card-delete:hover { color: #ef4444; background: #fee2e2; }
@@ -679,6 +684,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
@@ -1229,6 +1235,7 @@ document.addEventListener('DOMContentLoaded', function () {
         card.innerHTML = `
             <div class="section-card-header">
                 <div class="section-card-header-left">
+                    <button type="button" class="drag-handle" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></button>
                     <span class="section-card-icon"><i class="${cfg.icon}"></i></span>
                     <span class="section-card-title">${cfg.label}</span>
                     <span class="section-card-count">0 entries</span>
@@ -1385,6 +1392,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     updateEmptyMsg();
+
+    // Drag-to-reorder sections
+    if (typeof Sortable !== 'undefined') {
+        var _dragCollapseState = [];
+        Sortable.create(sectionsContainer, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onStart: function() {
+                _dragCollapseState = [];
+                sectionsContainer.querySelectorAll('.section-card').forEach(function(card) {
+                    _dragCollapseState.push(card.classList.contains('collapsed'));
+                    card.classList.add('collapsed');
+                });
+            },
+            onEnd: function() {
+                sectionsContainer.querySelectorAll('.section-card').forEach(function(card, i) {
+                    if (_dragCollapseState[i] === false) card.classList.remove('collapsed');
+                });
+                _dragCollapseState = [];
+                updateAllinonePreview();
+            }
+        });
+    }
 
     // Type buttons → new section card
     document.querySelectorAll('.add-block-btn').forEach(btn => {

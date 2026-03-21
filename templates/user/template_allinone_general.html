@@ -245,24 +245,24 @@
   {% set name = s.get('v2','') %}
   {% if url %}
   {% if not preview and bstyle == '2' %}
-  <a class="si-b si-b-pdf" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
+  <a class="si-b si-b-pdf" href="{{ url }}" data-pdf-url="{{ url | e }}" data-pdf-name="{{ (name or 'document') | e }}" onclick="allinoneDownloadPdf(event,this)" target="_blank" rel="noopener">
     <div class="si-b-icon" style="background:#fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:16px;"></i></div>
     <div class="si-b-text"><span class="si-b-name">{{ name or 'Download PDF' }}</span></div>
     <i class="fa-solid fa-arrow-down si-b-chev"></i>
   </a>
   {% elif not preview and bstyle == '3' %}
-  <a class="si-c" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
+  <a class="si-c" href="{{ url }}" data-pdf-url="{{ url | e }}" data-pdf-name="{{ (name or 'document') | e }}" onclick="allinoneDownloadPdf(event,this)" target="_blank" rel="noopener">
     <i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:12px;flex-shrink:0;"></i>
     <span class="si-c-text">{{ name or 'Download PDF' }}</span>
     <i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>
   </a>
   {% elif not preview and bstyle == '4' %}
-  <a class="pdf-4-btn" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
+  <a class="pdf-4-btn" href="{{ url }}" data-pdf-url="{{ url | e }}" data-pdf-name="{{ (name or 'document') | e }}" onclick="allinoneDownloadPdf(event,this)" target="_blank" rel="noopener">
     <i class="fa-solid fa-arrow-down"></i>
     <span>{{ name or 'Download PDF' }}</span>
   </a>
   {% else %}
-  <a class="section-item section-pdf" href="{{ url }}" onclick="allinoneDownloadPdf(event,'{{ url | e }}','{{ (name or 'document') | e }}')" target="_blank" rel="noopener">
+  <a class="section-item section-pdf" href="{{ url }}" data-pdf-url="{{ url | e }}" data-pdf-name="{{ (name or 'document') | e }}" onclick="allinoneDownloadPdf(event,this)" target="_blank" rel="noopener">
     <div class="section-item-icon"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:{{ '13px' if preview else '16px' }};"></i></div>
     <div class="section-item-text">
       <span class="section-item-name">{{ name or 'Download PDF' }}</span>
@@ -367,7 +367,7 @@
     .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
 
     /* ── DEFAULT TEMPLATE ── */
-    .tpl-default { min-height: 100vh; display: flex; flex-direction: column; }
+    .tpl-default { min-height: 100vh; display: flex; flex-direction: column; position: relative; }
     .tpl-default .top-block { background: var(--primary); padding: 40px 24px 72px; }
     .tpl-default .bottom-block {
         background: #ffffff;
@@ -382,7 +382,7 @@
     }
     .tpl-default .profile-circle {
         position: absolute;
-        top: -50px;
+        top: 30px; /* (top-block height 112px) - (margin-top 32px) - (half circle 50px) */
         left: 50%;
         transform: translateX(-50%);
         width: 100px;
@@ -396,8 +396,9 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        z-index: 2;
     }
-    .tpl-default .profile-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-default .profile-circle img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .tpl-default .dtitle {
         font-size: 20px;
         font-weight: 800;
@@ -467,8 +468,9 @@
         justify-content: center;
         margin-bottom: 16px;
         flex-shrink: 0;
+        position: relative;
     }
-    .tpl-2 .t2-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .tpl-2 .t2-circle img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .tpl-2 .t2-title {
         font-size: 20px;
         font-weight: 800;
@@ -829,18 +831,19 @@
     <div class="tpl-default">
         <div class="top-block"></div>
         <div class="bottom-block">
-            <div class="profile-circle">
-                {% if _cover_img %}
-                <img src="{{ _cover_img }}" alt="{{ _title }}">
-                {% else %}
-                <i class="fa-regular fa-image" style="font-size:36px;color:#d1d5db;"></i>
-                {% endif %}
-            </div>
             {% if _title %}<div class="dtitle">{{ _title }}</div>{% endif %}
             {% if _desc %}<div class="ddesc">{{ _desc }}</div>{% endif %}
             <div class="sections-list">
                 {{ render_sections_grouped(_sections, preview=false) }}
             </div>
+        </div>
+        {# Circle placed LAST so it always paints on top of both top-block and bottom-block #}
+        <div class="profile-circle">
+            {% if _cover_img %}
+            <img src="{{ _cover_img }}" alt="{{ _title }}">
+            {% else %}
+            <i class="fa-regular fa-image" style="font-size:36px;color:#d1d5db;"></i>
+            {% endif %}
         </div>
     </div>
 
@@ -902,25 +905,18 @@
 })();
 </script>
 <script>
-function allinoneDownloadPdf(e, url, name) {
-    if (!url) return;
+function allinoneDownloadPdf(e, el) {
     e.preventDefault();
-    var filename = name ? name.replace(/[^a-z0-9_\-. ]/gi, '_') + '.pdf' : 'document.pdf';
-    fetch(url)
-        .then(function(r) { return r.blob(); })
-        .then(function(blob) {
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href);
-        })
-        .catch(function() {
-            // Fallback: open in new tab if fetch fails (e.g. CORS)
-            window.open(url, '_blank');
-        });
+    var url  = el.getAttribute('data-pdf-url')  || '';
+    var name = el.getAttribute('data-pdf-name') || 'document';
+    if (!url) return;
+    var proxyUrl = '/api/proxy_download?url=' + encodeURIComponent(url) + '&name=' + encodeURIComponent(name);
+    var a = document.createElement('a');
+    a.href = proxyUrl;
+    a.download = name + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 function saveAllinoneContact(btn) {
     var group = btn.closest('.section-group[data-type="contact"]');
@@ -979,7 +975,7 @@ function saveAllinoneContact(btn) {
     .allinone-preview-wrap { width: 100%; min-height: 100%; position: relative; }
 
     /* DEFAULT preview */
-    .allinone-tpl-default { display: flex; flex-direction: column; min-height: 100%; }
+    .allinone-tpl-default { display: flex; flex-direction: column; min-height: 100%; position: relative; }
     .allinone-tpl-default .allinone-top { background: {{ _primary }}; padding: 20px 12px 36px; }
     .allinone-tpl-default .allinone-bottom {
         background: white;
@@ -994,7 +990,7 @@ function saveAllinoneContact(btn) {
     }
     .allinone-tpl-default .allinone-circle {
         position: absolute;
-        top: -28px;
+        top: 12px; /* (allinone-top height 56px) - (margin-top 16px) - (half circle 28px) */
         left: 50%;
         transform: translateX(-50%);
         width: 56px;
@@ -1008,8 +1004,9 @@ function saveAllinoneContact(btn) {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        z-index: 2;
     }
-    .allinone-tpl-default .allinone-circle img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-default .allinone-circle img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .allinone-tpl-default .allinone-ptitle {
         font-size: 11px; font-weight: 700; text-align: center; color: #111827;
         margin-bottom: 2px; max-width: 100%; word-break: break-word;
@@ -1041,9 +1038,9 @@ function saveAllinoneContact(btn) {
         width: 40px; height: 40px; border-radius: 50%;
         background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.6);
         overflow: hidden; display: flex; align-items: center; justify-content: center;
-        margin-bottom: 8px; flex-shrink: 0;
+        margin-bottom: 8px; flex-shrink: 0; position: relative;
     }
-    .allinone-tpl-2 .t2-circle-p img { width: 100%; height: 100%; object-fit: cover; }
+    .allinone-tpl-2 .t2-circle-p img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .allinone-tpl-2 .t2-title { font-size: 10px; font-weight: 700; text-align: center; color: white; margin-bottom: 2px; }
     .allinone-tpl-2 .t2-desc { font-size: 8px; text-align: center; color: rgba(255,255,255,0.85); margin-bottom: 10px; }
     .allinone-tpl-2 .t2-sections { width: 100%; }
@@ -1122,13 +1119,6 @@ function saveAllinoneContact(btn) {
          style="{{ 'display:none;' if _tmpl not in ['default',''] and _tmpl != '' and _tmpl in ['template1','template2'] else '' }}">
         <div class="allinone-top" id="allinone-preview-top-block"></div>
         <div class="allinone-bottom">
-            <div class="allinone-circle" id="allinone-preview-profile-circle">
-                {% if _cover_img %}
-                <img src="{{ _cover_img }}" alt="" id="allinone-preview-profile-img">
-                {% else %}
-                <i class="fa-regular fa-image" style="font-size:18px;color:#d1d5db;" id="allinone-preview-profile-placeholder-icon"></i>
-                {% endif %}
-            </div>
             {% if _title %}
             <div class="allinone-ptitle" id="allinone-preview-title-text">{{ _title }}</div>
             {% else %}
@@ -1142,6 +1132,14 @@ function saveAllinoneContact(btn) {
             <div class="pv-sections" id="allinone-preview-sections-list">
                 {{ render_sections_grouped(_sections, preview=true) }}
             </div>
+        </div>
+        {# Circle placed LAST so it always paints on top of both allinone-top and allinone-bottom #}
+        <div class="allinone-circle" id="allinone-preview-profile-circle">
+            {% if _cover_img %}
+            <img src="{{ _cover_img }}" alt="" id="allinone-preview-profile-img">
+            {% else %}
+            <i class="fa-regular fa-image" style="font-size:18px;color:#d1d5db;" id="allinone-preview-profile-placeholder-icon"></i>
+            {% endif %}
         </div>
     </div>
 
