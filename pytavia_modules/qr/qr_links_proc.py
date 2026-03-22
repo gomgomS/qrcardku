@@ -247,7 +247,7 @@ class qr_links_proc:
         if welcome_tmp_key and welcome_tmp_name:
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
             try:
-                welcome_url = _r2.move_file(f"links/_tmp/{welcome_tmp_key}/{welcome_tmp_name}", f"links/{new_id}/welcome{ext}")
+                welcome_url = _r2.move_file(f"links/_tmp/{welcome_tmp_key}/{welcome_tmp_name}", f"links/{new_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "links", "file_name": f"welcome{ext}"})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_links.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
@@ -256,7 +256,7 @@ class qr_links_proc:
         if cover_tmp_key and cover_tmp_name:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             try:
-                cover_url = _r2.move_file(f"links/_tmp/{cover_tmp_key}/{cover_tmp_name}", f"links/{new_id}/links_cover_img{ext}")
+                cover_url = _r2.move_file(f"links/_tmp/{cover_tmp_key}/{cover_tmp_name}", f"links/{new_id}/links_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "links", "file_name": f"links_cover_img{ext}"})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_links.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}}, upsert=True)
             except Exception:
@@ -270,7 +270,7 @@ class qr_links_proc:
                 if os.path.isfile(local_path):
                     try:
                         with open(local_path, "rb") as f:
-                            cover_url = _r2.upload_bytes(f.read(), f"links/{new_id}/links_cover_img{ext}")
+                            cover_url = _r2.upload_bytes(f.read(), f"links/{new_id}/links_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "links", "file_name": f"links_cover_img{ext}"})
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}})
                         self.mgdDB.db_qrcard_links.update_one({"qrcard_id": new_id}, {"$set": {"Links_cover_img_url": cover_url}}, upsert=True)
                     except Exception:

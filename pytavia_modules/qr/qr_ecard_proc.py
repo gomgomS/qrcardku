@@ -404,7 +404,7 @@ class qr_ecard_proc:
             src_key = f"ecard/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"ecard/{new_qrcard_id}/welcome{ext}"
             try:
-                welcome_url = r2.move_file(src_key, dst_key)
+                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"welcome{ext}"})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
@@ -414,7 +414,7 @@ class qr_ecard_proc:
             src_key = f"ecard/_tmp/{cover_tmp_key}/{cover_tmp_name}"
             dst_key = f"ecard/{new_qrcard_id}/pdf_cover_img{ext}"
             try:
-                cover_url = r2.move_file(src_key, dst_key)
+                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"pdf_cover_img{ext}"})
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
@@ -436,7 +436,7 @@ class qr_ecard_proc:
                 if _os.path.isfile(local_path):
                     try:
                         with open(local_path, "rb") as f:
-                            cover_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/profile_img{ext}")
+                            cover_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/profile_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"profile_img{ext}"})
                         img_update = {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update})
                         self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update}, upsert=True)
@@ -494,7 +494,7 @@ class qr_ecard_proc:
             src_key = f"ecard/_tmp/{g_tmp_key}/{g_safe_name}"
             dst_key = f"ecard/{new_qrcard_id}/gallery/{g_safe_name}"
             try:
-                file_url = r2.move_file(src_key, dst_key)
+                file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": g_safe_name})
                 saved_gallery.append({"url": file_url})
             except Exception:
                 pass
@@ -509,7 +509,7 @@ class qr_ecard_proc:
                 try:
                     safe_name = uuid.uuid4().hex + _ext
                     with open(local_path, "rb") as f:
-                        file_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/gallery/{safe_name}")
+                        file_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/gallery/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": safe_name})
                     saved_gallery.append({"url": file_url})
                 except Exception:
                     pass

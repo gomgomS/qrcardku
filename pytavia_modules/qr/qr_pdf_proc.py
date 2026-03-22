@@ -403,7 +403,7 @@ class qr_pdf_proc:
             src_key = f"pdf/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"pdf/{new_qrcard_id}/welcome{ext}"
             try:
-                welcome_url = r2.move_file(src_key, dst_key)
+                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"welcome{ext}"})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
             except Exception:
@@ -413,7 +413,7 @@ class qr_pdf_proc:
             src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"
             dst_key = f"pdf/{new_qrcard_id}/pdf_cover_img{ext}"
             try:
-                cover_url = r2.move_file(src_key, dst_key)
+                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"pdf_cover_img{ext}"})
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
@@ -432,7 +432,7 @@ class qr_pdf_proc:
                 if os.path.isfile(local_path):
                     try:
                         with open(local_path, "rb") as f:
-                            cover_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/pdf_cover_img{ext}")
+                            cover_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"pdf_cover_img{ext}"})
                         self.mgdDB.db_qrcard.update_one(
                             {"qrcard_id": new_qrcard_id},
                             {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
@@ -449,7 +449,7 @@ class qr_pdf_proc:
                 src_key = f"pdf/_tmp/{tmp_key}/{f_info['safe_name']}"
                 dst_key = f"pdf/{new_qrcard_id}/{f_info['safe_name']}"
                 try:
-                    file_url = r2.move_file(src_key, dst_key)
+                    file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f_info["safe_name"]})
                     entry = {"name": f_info["name"], "url": file_url}
                     if idx < len(saved_display_names) and saved_display_names[idx].strip():
                         entry["display_name"] = saved_display_names[idx].strip()
@@ -487,7 +487,7 @@ class qr_pdf_proc:
                             fname = os.path.basename(local_path)
                             safe_name = fname.replace(" ", "_")
                             with open(local_path, "rb") as f:
-                                file_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/{safe_name}")
+                                file_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": safe_name})
                             entry = {"name": fname, "url": file_url}
                             if i < len(saved_display_names) and saved_display_names[i].strip():
                                 entry["display_name"] = saved_display_names[i].strip()
@@ -595,7 +595,7 @@ class qr_pdf_proc:
                 if f and f.filename and f.filename.lower().endswith(".pdf"):
                     safe_name = f.filename.replace(" ", "_")
                     r2_key = f"pdf/{qrcard_id}/{safe_name}"
-                    file_url = r2.upload_file(f, r2_key)
+                    file_url = r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": safe_name})
                     file_entry = {"name": f.filename, "url": file_url}
                     form_idx = new_file_offset + new_file_idx
                     if form_idx < len(display_names) and display_names[form_idx].strip():

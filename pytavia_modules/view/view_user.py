@@ -198,24 +198,30 @@ class view_user:
             print(traceback.format_exc())
             return "Failed to load Settings page"
 
-    def users_html(self, msg=None, error_msg=None):
-        try:
-            return render_template(
-                "/user/users.html",
-                msg=msg, 
-                error_msg=error_msg
-            )
-        except:
-            print(traceback.format_exc())
-            return "Failed to load Users page"
-
     def security_history_html(self, msg=None, error_msg=None):
         try:
             return render_template(
                 "/user/security_history.html",
-                msg=msg, 
+                msg=msg,
                 error_msg=error_msg
             )
         except:
             print(traceback.format_exc())
             return "Failed to load Security History page"
+
+    def activity_history_html(self, fk_user_id, page=1, msg=None, error_msg=None):
+        try:
+            from pytavia_modules.user import user_activity_proc as _uap
+            result = _uap.user_activity_proc(self.webapp).get_logs(fk_user_id, page=page, per_page=20)
+            return render_template(
+                "/user/activity_history.html",
+                logs=result["logs"],
+                total=result["total"],
+                page=result["page"],
+                per_page=result["per_page"],
+                msg=msg,
+                error_msg=error_msg,
+            )
+        except:
+            print(traceback.format_exc())
+            return "Failed to load Activity History page"

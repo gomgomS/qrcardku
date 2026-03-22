@@ -1,0 +1,296 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Activity History" %}
+{% set active_page = "activity_history" %}
+
+{% block extra_css %}
+<style>
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .activity-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 24px;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px;
+    }
+
+    .activity-table th {
+        background-color: #f9fafb;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .activity-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .action-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .action-create  { background: #dcfce7; color: #166534; }
+    .action-delete  { background: #fee2e2; color: #991b1b; }
+    .action-storage { background: #fef3c7; color: #92400e; }
+
+    .source-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        background: #f3f4f6;
+        color: var(--text-muted);
+    }
+
+    .qr-type-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--primary);
+    }
+
+    /* Pagination */
+    .pager {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+    }
+
+    .pager-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        padding: 0 8px;
+        border: 1px solid var(--border-color);
+        background: white;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--text-main);
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+    }
+
+    .pager-btn:hover { background: #f3f4f6; }
+
+    .pager-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        font-weight: 600;
+        pointer-events: none;
+    }
+
+    .pager-btn.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+
+    .pager-info {
+        font-size: 13px;
+        color: var(--text-muted);
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 40px;
+        margin-bottom: 16px;
+        display: block;
+        color: #d1d5db;
+    }
+
+    @media (max-width: 768px) {
+        .activity-table thead { display: none; }
+        .activity-table tbody { display: flex; flex-direction: column; gap: 10px; }
+        .activity-table tr {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border: 1px solid var(--border-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 8px;
+            padding: 12px;
+            gap: 6px;
+        }
+        .activity-table td { border: none !important; padding: 2px 4px; }
+        .activity-table { border: none; background: transparent; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="activity-header">
+    <div class="page-title" style="margin: 0;">Activity History</div>
+    <span style="font-size: 13px; color: var(--text-muted);">{{ total }} total events</span>
+</div>
+
+{% if logs %}
+
+<p class="pager-info">
+    Showing {{ ((page - 1) * per_page) + 1 }}–{{ [page * per_page, total] | min }} of {{ total }}
+</p>
+
+<table class="activity-table">
+    <thead>
+        <tr>
+            <th width="160">Action</th>
+            <th>QR Name</th>
+            <th>Type</th>
+            <th>Source</th>
+            <th>Detail</th>
+            <th>Date / Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>
+                {% if log.action == 'CREATE_QR' %}
+                <span class="action-badge action-create">
+                    <i class="fa-solid fa-plus"></i> Create QR
+                </span>
+                {% elif log.action == 'DELETE_QR_ASSETS' %}
+                <span class="action-badge action-storage">
+                    <i class="fa-solid fa-box-archive"></i> Delete Assets
+                </span>
+                {% else %}
+                <span class="action-badge action-delete">
+                    <i class="fa-solid fa-trash"></i> Delete QR
+                </span>
+                {% endif %}
+            </td>
+            <td>
+                <span style="font-weight: 500; color: var(--text-main);">{{ log.qr_name or '—' }}</span>
+                {% if log.qrcard_id %}
+                <br><span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">{{ log.qrcard_id[:16] }}…</span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="qr-type-chip">
+                    {% if log.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
+                    {% elif log.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
+                    {% elif log.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
+                    {% elif log.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp
+                    {% elif log.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email
+                    {% elif log.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard
+                    {% elif log.qr_type == 'pdf' %}<i class="fa-regular fa-file-pdf" style="color:#dc2626;"></i> PDF
+                    {% elif log.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> All in One
+                    {% elif log.qr_type == 'ecard' %}<i class="fa-regular fa-id-card"></i> E-Card
+                    {% elif log.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
+                    {% elif log.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
+                    {% else %}<i class="fa-solid fa-qrcode"></i> {{ log.qr_type | capitalize }}
+                    {% endif %}
+                </span>
+            </td>
+            <td>
+                {% if log.source == 'storage' %}
+                <span class="source-badge"><i class="fa-solid fa-hard-drive"></i> Storage</span>
+                {% elif log.source == 'bulk' %}
+                <span class="source-badge"><i class="fa-solid fa-layer-group"></i> Bulk</span>
+                {% elif log.source == 'my_qr_codes' %}
+                <span class="source-badge"><i class="fa-solid fa-qrcode"></i> My QRs</span>
+                {% elif log.source == 'create' %}
+                <span class="source-badge"><i class="fa-solid fa-plus"></i> New QR</span>
+                {% else %}
+                <span class="source-badge">{{ log.source or '—' }}</span>
+                {% endif %}
+            </td>
+            <td style="color: var(--text-muted); font-size: 12px; line-height: 1.6;">
+                {% if log.detail and log.detail.freed_bytes is defined %}
+                    {% if log.detail.freed_bytes %}
+                    Freed {{ (log.detail.freed_bytes / 1048576) | round(2) }} MB
+                    {% if log.detail.deleted_count %}· {{ log.detail.deleted_count }} file(s){% endif %}
+                    {% else %}
+                    No assets
+                    {% endif %}
+                    {% if log.source == 'bulk' and log.detail.bulk_total_qrs is defined %}
+                    <br><span style="font-size: 11px; color: #9ca3af;">
+                        Batch: {{ log.detail.bulk_total_qrs }} QR(s) ·
+                        {{ (log.detail.bulk_total_freed / 1048576) | round(2) }} MB total
+                    </span>
+                    {% endif %}
+                {% else %}
+                —
+                {% endif %}
+            </td>
+            <td style="color: var(--text-muted); white-space: nowrap;">{{ log.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination -->
+{% set total_pages = ((total - 1) // per_page) + 1 %}
+{% if total_pages > 1 %}
+<div class="pager">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}" class="pager-btn"><i class="fa-solid fa-chevron-left"></i></a>
+    {% else %}
+    <span class="pager-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+            {% if loop.previtem is defined and p - loop.previtem > 1 %}
+            <span class="pager-btn disabled">…</span>
+            {% endif %}
+            <a href="?page={{ p }}" class="pager-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}" class="pager-btn"><i class="fa-solid fa-chevron-right"></i></a>
+    {% else %}
+    <span class="pager-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <p style="font-size: 15px; font-weight: 500; margin-bottom: 6px;">No activity yet</p>
+        <p style="font-size: 13px;">Actions like creating or deleting QR codes will be recorded here.</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

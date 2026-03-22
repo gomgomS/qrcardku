@@ -369,7 +369,7 @@ class qr_images_proc:
             src_key = f"images/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"images/{new_qrcard_id}/welcome{ext}"
             try:
-                welcome_url = r2.move_file(src_key, dst_key)
+                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f"welcome{ext}"})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
                 self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
@@ -382,7 +382,7 @@ class qr_images_proc:
                 src_key = f"images/_tmp/{tmp_key}/{f_info['safe_name']}"
                 dst_key = f"images/{new_qrcard_id}/{f_info['safe_name']}"
                 try:
-                    file_url = r2.move_file(src_key, dst_key)
+                    file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f_info["safe_name"]})
                     saved_gallery.append({
                         "url": file_url,
                         "name": f_info.get("name", ""),
@@ -416,7 +416,7 @@ class qr_images_proc:
                             ext = os.path.splitext(local_path)[1].lower() or ".png"
                             safe_name = uuid.uuid4().hex + ext
                             with open(local_path, "rb") as f:
-                                file_url = r2.upload_bytes(f.read(), f"images/{new_qrcard_id}/{safe_name}")
+                                file_url = r2.upload_bytes(f.read(), f"images/{new_qrcard_id}/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": safe_name})
                             entry = {"url": file_url, "name": (ac_names[i] if i < len(ac_names) else ""), "desc": (ac_descs[i] if i < len(ac_descs) else "")}
                             saved_gallery.append(entry)
                         except Exception:

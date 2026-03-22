@@ -794,5 +794,36 @@ db = {
         "status"                    : "ACTIVE", # ACTIVE | DELETED
         "created_at"                : "",       # timestamp string
         "timestamp"                 : 0,        # unix timestamp
+    },
+
+    # Asset metadata — one doc per file uploaded to R2
+    # Written at upload time so storage reads hit MongoDB, not R2
+    "db_qr_assets": {
+        "asset_id"      : "",       # UUID hex
+        "fk_user_id"    : "",       # owner
+        "qrcard_id"     : "",       # linked QR card (empty for frames)
+        "frame_id"      : "",       # for frame assets
+        "qr_type"       : "",       # allinone | pdf | ecard | images | video | links | sosmed | special | frame
+        "r2_key"        : "",       # full R2 object key  e.g. "allinone/abc123/cover.jpg"
+        "file_name"     : "",       # human-readable filename
+        "file_size"     : 0,        # bytes
+        "file_category" : "",       # image | video | pdf | other
+        "status"        : "ACTIVE", # ACTIVE | DELETED
+        "created_at"    : "",
+        "timestamp"     : 0,
+    },
+
+    # User activity log (QR create / delete events)
+    "db_user_activity_log": {
+        "log_id"                    : "",       # generated UUID
+        "fk_user_id"                : "",       # owner
+        "action"                    : "",       # CREATE_QR | DELETE_QR | DELETE_QR_ASSETS
+        "qrcard_id"                 : "",       # affected QR card id
+        "qr_name"                   : "",       # display name of QR at time of action
+        "qr_type"                   : "",       # qr type string
+        "source"                    : "",       # my_qr_codes | storage | bulk
+        "detail"                    : {},       # extra data (freed_bytes, deleted_count, etc.)
+        "created_at"                : "",       # human-readable timestamp string
+        "timestamp"                 : 0,        # unix timestamp (for sorting)
     }
 }

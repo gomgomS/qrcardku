@@ -269,10 +269,139 @@
         background: var(--primary);
     }
 
+    .files-card-header { flex-direction: column; align-items: flex-start; }
+    .filter-row { display: flex; align-items: center; gap: 10px; width: 100%; flex-wrap: wrap; }
+    .filter-row-label { font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+    .qr-filter-select {
+        padding: 4px 28px 4px 10px;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
+        font-size: 12px;
+        color: var(--text-main);
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        max-width: 200px;
+    }
+    .qr-filter-select:focus { outline: none; border-color: var(--primary); }
+
+    /* QR info panel */
+    .qr-info-panel {
+        margin: 0 20px 12px;
+        padding: 14px 16px;
+        background: #f8faff;
+        border: 1px solid #dbeafe;
+        border-radius: 10px;
+        display: none;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .qr-info-panel.visible { display: flex; }
+    .qr-info-stats { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+    .qr-info-stat { display: flex; flex-direction: column; gap: 1px; }
+    .qr-info-stat-label { font-size: 11px; color: var(--text-muted); }
+    .qr-info-stat-value { font-size: 14px; font-weight: 600; color: var(--text-main); }
+    .qr-info-stat-value.green { color: #16a34a; }
+    .btn-delete-qr {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px; border-radius: 7px; border: 1px solid #fecaca;
+        background: white; color: #dc2626; font-size: 12px; font-weight: 500;
+        cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+    }
+    .btn-delete-qr:hover { background: #fef2f2; border-color: #dc2626; }
+
+    /* Confirm modal */
+    .del-modal-overlay {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.45); z-index: 9000;
+        align-items: center; justify-content: center; padding: 20px;
+    }
+    .del-modal-overlay.open { display: flex; }
+    .del-modal {
+        background: white; border-radius: 14px; padding: 28px 28px 24px;
+        max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .del-modal-icon { font-size: 32px; color: #ef4444; margin-bottom: 12px; }
+    .del-modal-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+    .del-modal-body { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; line-height: 1.6; }
+    .del-modal-warning {
+        font-size: 12px; color: #dc2626; background: #fef2f2;
+        border: 1px solid #fecaca; border-radius: 6px;
+        padding: 8px 12px; margin: 12px 0 20px; display: flex; align-items: center; gap: 6px;
+    }
+    .del-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel-del {
+        padding: 8px 18px; border-radius: 7px; border: 1px solid var(--border-color);
+        background: white; color: var(--text-main); font-size: 13px; cursor: pointer;
+    }
+    .btn-confirm-del {
+        padding: 8px 18px; border-radius: 7px; border: none;
+        background: #dc2626; color: white; font-size: 13px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .btn-confirm-del:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Toast notification */
+    .toast-notif {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-80px);
+        background: #16a34a;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        z-index: 9999;
+        transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s;
+        opacity: 0;
+        white-space: nowrap;
+        max-width: 90vw;
+        pointer-events: none;
+    }
+    .toast-notif.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* Pagination */
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pagination-info { font-size: 12px; color: var(--text-muted); }
+    .pagination-btns { display: flex; gap: 4px; }
+    .page-btn {
+        min-width: 32px; height: 32px;
+        padding: 0 8px;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-main);
+        font-size: 13px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+    .page-btn:disabled { opacity: 0.35; cursor: default; }
+
     @media (max-width: 600px) {
         .file-mini-bar { display: none; }
         .usage-numbers { text-align: left; }
         .file-action .btn-edit span { display: none; }
+        .qr-filter-select { max-width: 140px; }
     }
 </style>
 {% endblock %}
@@ -282,6 +411,8 @@
     <div class="page-title" style="margin-bottom: 4px;">Storage</div>
     <div style="font-size: 13px; color: var(--text-muted);">Manage your files stored in the cloud. To free up space, edit the QR card and remove files from it.</div>
 </div>
+
+<input type="hidden" id="csrf-token-val" value="{{ csrf_token() }}">
 
 <!-- Usage card -->
 <div class="usage-card">
@@ -318,20 +449,65 @@
 <!-- File list -->
 <div class="files-card">
     <div class="files-card-header">
-        <div class="files-card-title">Files ({{ info.file_count }})</div>
-        <div class="files-filter" id="filter-bar">
-            <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')">All</button>
-            <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> Images</button>
-            <button class="filter-btn" data-filter="video" onclick="filterFiles(this, 'video')"><i class="fa-solid fa-play"></i> Videos</button>
-            <button class="filter-btn" data-filter="pdf" onclick="filterFiles(this, 'pdf')"><i class="fa-solid fa-file-pdf"></i> PDFs</button>
+        <div class="filter-row" style="justify-content: space-between;">
+            <div class="files-card-title">Files ({{ info.file_count }})</div>
         </div>
+        <div class="filter-row">
+            <span class="filter-row-label">Type:</span>
+            <div class="files-filter" id="filter-bar">
+                <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')">All</button>
+                <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> Images</button>
+                <button class="filter-btn" data-filter="video" onclick="filterFiles(this, 'video')"><i class="fa-solid fa-play"></i> Videos</button>
+                <button class="filter-btn" data-filter="pdf" onclick="filterFiles(this, 'pdf')"><i class="fa-solid fa-file-pdf"></i> PDFs</button>
+            </div>
+        </div>
+        <div class="filter-row">
+            <span class="filter-row-label">QR card:</span>
+            <select class="qr-filter-select" id="qr-filter-select" onchange="filterByQr(this.value)">
+                <option value="all">All QR cards</option>
+                {% if info.files %}
+                {% set seen = namespace(names=[]) %}
+                {% for f in info.files %}
+                {% if f.qr_name not in seen.names %}
+                {% set seen.names = seen.names + [f.qr_name] %}
+                <option value="{{ f.qr_name | e }}" data-qrcard-id="{{ f.qrcard_id }}" data-qr-type="{{ f.qr_type }}">{{ f.qr_name }}</option>
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+    </div>
+
+    <!-- QR info panel (shown when a specific QR is selected) -->
+    <div class="qr-info-panel" id="qr-info-panel">
+        <div class="qr-info-stats">
+            <div class="qr-info-stat">
+                <span class="qr-info-stat-label">Usage</span>
+                <span class="qr-info-stat-value" id="qrinfo-usage">—</span>
+            </div>
+            <div class="qr-info-stat">
+                <span class="qr-info-stat-label">of total storage</span>
+                <span class="qr-info-stat-value" id="qrinfo-of-total">—</span>
+            </div>
+            <div class="qr-info-stat">
+                <span class="qr-info-stat-label">Files</span>
+                <span class="qr-info-stat-value" id="qrinfo-files">—</span>
+            </div>
+            <div class="qr-info-stat">
+                <span class="qr-info-stat-label">Would free up</span>
+                <span class="qr-info-stat-value green" id="qrinfo-savings">—</span>
+            </div>
+        </div>
+        <button type="button" class="btn-delete-qr" id="btn-delete-qr">
+            <i class="fa-solid fa-trash"></i> Delete QR &amp; assets
+        </button>
     </div>
 
     {% if info.files %}
     <div id="file-list">
         {% for f in info.files %}
         {% set pct = [(f.size * 100 // info.limit_bytes), 100] | min %}
-        <div class="file-row" data-category="{{ f.category }}">
+        <div class="file-row" data-category="{{ f.category }}" data-qr="{{ f.qr_name | e }}" data-size="{{ f.size }}">
             <div class="file-icon {{ f.category }}">
                 {% if f.category == 'image' %}<i class="fa-regular fa-image"></i>
                 {% elif f.category == 'video' %}<i class="fa-solid fa-play"></i>
@@ -366,6 +542,10 @@
         </div>
         {% endfor %}
     </div>
+    <div id="pagination-bar" class="pagination-bar" style="display:none;">
+        <div class="pagination-info" id="pagination-info"></div>
+        <div class="pagination-btns" id="pagination-btns"></div>
+    </div>
     {% else %}
     <div class="empty-state">
         <div><i class="fa-regular fa-folder-open"></i></div>
@@ -373,22 +553,246 @@
     </div>
     {% endif %}
 </div>
+
+<div class="toast-notif" id="toast-notif">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toast-notif-msg"></span>
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="del-modal-overlay" id="del-modal-overlay">
+    <div class="del-modal">
+        <div class="del-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="del-modal-title">Delete QR &amp; all assets?</div>
+        <div class="del-modal-body">
+            You are about to delete <strong id="del-modal-qr-name"></strong> and all its files
+            (<span id="del-modal-summary"></span>).
+        </div>
+        <div class="del-modal-warning">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            This action is permanent and cannot be undone.
+        </div>
+        <div class="del-modal-actions">
+            <button type="button" class="btn-cancel-del" id="btn-cancel-del">Cancel</button>
+            <button type="button" class="btn-confirm-del" id="btn-confirm-del">
+                <i class="fa-solid fa-trash"></i> Yes, delete permanently
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    function filterFiles(btn, cat) {
-        document.querySelectorAll('#filter-bar .filter-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        btn.classList.add('active');
-        document.querySelectorAll('#file-list .file-row').forEach(function(row) {
-            if (cat === 'all' || row.dataset.category === cat) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+    var _toastTimer = null;
+    function showToast(msg) {
+        var el = document.getElementById('toast-notif');
+        document.getElementById('toast-notif-msg').textContent = msg;
+        el.classList.add('show');
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3500);
+    }
+
+    var TOTAL_BYTES = {{ info.total_bytes }};
+    var LIMIT_BYTES = {{ info.limit_bytes }};
+
+    var _activeCat  = 'all';
+    var _activeQr   = 'all';
+    var _currentPage = 1;
+    var _perPage     = 10;
+
+    var _allRows = Array.from(document.querySelectorAll('#file-list .file-row'));
+
+    function getFilteredRows() {
+        return _allRows.filter(function(row) {
+            var catOk = _activeCat === 'all' || row.dataset.category === _activeCat;
+            var qrOk  = _activeQr  === 'all' || row.dataset.qr === _activeQr;
+            return catOk && qrOk;
         });
     }
+
+    function renderPage() {
+        var filtered   = getFilteredRows();
+        var totalRows  = filtered.length;
+        var totalPages = Math.max(1, Math.ceil(totalRows / _perPage));
+
+        // Clamp current page
+        if (_currentPage > totalPages) _currentPage = totalPages;
+
+        var start = (_currentPage - 1) * _perPage;
+        var end   = start + _perPage;
+
+        // Show/hide rows
+        _allRows.forEach(function(row) { row.style.display = 'none'; });
+        filtered.slice(start, end).forEach(function(row) { row.style.display = ''; });
+
+        // Pagination bar
+        var bar  = document.getElementById('pagination-bar');
+        var info = document.getElementById('pagination-info');
+        var btns = document.getElementById('pagination-btns');
+
+        if (totalRows === 0) {
+            bar.style.display = 'none';
+            return;
+        }
+        bar.style.display = totalPages > 1 ? 'flex' : 'none';
+
+        var showFrom = totalRows ? start + 1 : 0;
+        var showTo   = Math.min(end, totalRows);
+        info.textContent = 'Showing ' + showFrom + '–' + showTo + ' of ' + totalRows + ' file' + (totalRows !== 1 ? 's' : '');
+
+        // Build page buttons (prev, pages, next)
+        btns.innerHTML = '';
+
+        function makeBtn(label, page, isActive, isDisabled) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'page-btn' + (isActive ? ' active' : '');
+            b.disabled = isDisabled;
+            b.innerHTML = label;
+            if (!isDisabled) b.addEventListener('click', function() { _currentPage = page; renderPage(); });
+            return b;
+        }
+
+        btns.appendChild(makeBtn('<i class="fa-solid fa-chevron-left"></i>', _currentPage - 1, false, _currentPage === 1));
+
+        // Window of pages: always show first, last, and up to 3 around current
+        var pages = [];
+        for (var p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || (p >= _currentPage - 1 && p <= _currentPage + 1)) {
+                pages.push(p);
+            }
+        }
+        var prev = 0;
+        pages.forEach(function(p) {
+            if (prev && p - prev > 1) {
+                var ellipsis = document.createElement('button');
+                ellipsis.type = 'button';
+                ellipsis.className = 'page-btn';
+                ellipsis.disabled = true;
+                ellipsis.textContent = '…';
+                btns.appendChild(ellipsis);
+            }
+            btns.appendChild(makeBtn(p, p, p === _currentPage, false));
+            prev = p;
+        });
+
+        btns.appendChild(makeBtn('<i class="fa-solid fa-chevron-right"></i>', _currentPage + 1, false, _currentPage === totalPages));
+    }
+
+    function filterFiles(btn, cat) {
+        document.querySelectorAll('#filter-bar .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _activeCat = cat;
+        _currentPage = 1;
+        renderPage();
+    }
+
+    function filterByQr(qr) {
+        _activeQr = qr;
+        _currentPage = 1;
+        renderPage();
+        updateQrInfoPanel(qr);
+    }
+
+    // ── QR info panel ────────────────────────────────────────────────────
+    function fmtBytes(b) {
+        if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+        if (b >= 1048576)    return (b / 1048576).toFixed(1) + ' MB';
+        if (b >= 1024)       return (b / 1024).toFixed(1) + ' KB';
+        return b + ' B';
+    }
+
+    var _pendingQrCardId = '';
+    var _pendingQrType   = '';
+    var _pendingQrName   = '';
+
+    function updateQrInfoPanel(qr) {
+        var panel = document.getElementById('qr-info-panel');
+        if (qr === 'all') { panel.classList.remove('visible'); return; }
+
+        var rows = _allRows.filter(function(r) { return r.dataset.qr === qr; });
+        var qrBytes = rows.reduce(function(s, r) { return s + parseInt(r.dataset.size || '0', 10); }, 0);
+        var fileCount = rows.length;
+        var pctOfTotal = TOTAL_BYTES > 0 ? Math.round(qrBytes / TOTAL_BYTES * 100) : 0;
+        var pctOfLimit = LIMIT_BYTES > 0 ? Math.round(qrBytes / LIMIT_BYTES * 100) : 0;
+
+        document.getElementById('qrinfo-usage').textContent    = fmtBytes(qrBytes);
+        document.getElementById('qrinfo-of-total').textContent = pctOfTotal + '% of used (' + fmtBytes(LIMIT_BYTES) + ' limit)';
+        document.getElementById('qrinfo-files').textContent    = fileCount + ' file' + (fileCount !== 1 ? 's' : '');
+        document.getElementById('qrinfo-savings').textContent  = pctOfLimit + '% of your storage limit';
+
+        var sel = document.getElementById('qr-filter-select');
+        var opt = sel.options[sel.selectedIndex];
+        _pendingQrCardId = opt.dataset.qrcardId || '';
+        _pendingQrType   = opt.dataset.qrType   || '';
+        _pendingQrName   = qr;
+
+        panel.classList.add('visible');
+    }
+
+    // ── Delete flow ──────────────────────────────────────────────────────
+    document.getElementById('btn-delete-qr').addEventListener('click', function() {
+        if (!_pendingQrCardId) return;
+        document.getElementById('del-modal-qr-name').textContent = _pendingQrName;
+        var rows = _allRows.filter(function(r) { return r.dataset.qr === _pendingQrName; });
+        var qrBytes = rows.reduce(function(s, r) { return s + parseInt(r.dataset.size || '0', 10); }, 0);
+        document.getElementById('del-modal-summary').textContent =
+            rows.length + ' file' + (rows.length !== 1 ? 's' : '') + ', ' + fmtBytes(qrBytes);
+        document.getElementById('del-modal-overlay').classList.add('open');
+    });
+
+    document.getElementById('btn-cancel-del').addEventListener('click', function() {
+        document.getElementById('del-modal-overlay').classList.remove('open');
+    });
+    document.getElementById('del-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('open');
+    });
+
+    document.getElementById('btn-confirm-del').addEventListener('click', function() {
+        var btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+
+        var csrfToken = document.getElementById('csrf-token-val').value;
+        fetch('/api/storage/delete_qr_assets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ qrcard_id: _pendingQrCardId, qr_type: _pendingQrType })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.ok) {
+                // Remove deleted rows from DOM + internal list
+                var toRemove = _allRows.filter(function(r) { return r.dataset.qr === _pendingQrName; });
+                toRemove.forEach(function(r) { r.parentNode && r.parentNode.removeChild(r); });
+                _allRows = _allRows.filter(function(r) { return r.dataset.qr !== _pendingQrName; });
+
+                // Reset filters
+                _activeQr = 'all';
+                var sel = document.getElementById('qr-filter-select');
+                for (var i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value === _pendingQrName) { sel.remove(i); break; }
+                }
+                sel.value = 'all';
+                document.getElementById('qr-info-panel').classList.remove('visible');
+                document.getElementById('del-modal-overlay').classList.remove('open');
+                _currentPage = 1;
+                renderPage();
+                showToast('Deleted "' + _pendingQrName + '" successfully');
+            } else {
+                alert('Error: ' + (res.error || 'Could not delete. Please try again.'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Yes, delete permanently';
+            }
+        })
+        .catch(function() {
+            alert('Network error. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-trash"></i> Yes, delete permanently';
+        });
+    });
+
+    renderPage();
 </script>
 {% endblock %}

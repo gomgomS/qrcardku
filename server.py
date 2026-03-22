@@ -426,14 +426,70 @@ def user_new_qr():
     return view_user.view_user(app).new_qr_html()
 
 def _set_qrcard_deleted(mgdDB, fk_user_id, qrcard_id):
-    """Mark one qrcard as DELETED in db_qrcard, db_qr_index, and db_qrcard_pdf (if present)."""
+    """Mark one qrcard as DELETED in db_qrcard, db_qr_index, and type-specific collections.
+    Returns dict with qr_name and qr_type for activity logging."""
     q = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+    # Look up name/type before deleting
+    idx = mgdDB.db_qr_index.find_one(q) or {}
+    qr_name = idx.get("name", "")
+    qr_type = idx.get("qr_type", "")
     mgdDB.db_qrcard.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qr_index.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_pdf.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_images.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_video.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_special.update_one(q, {"$set": {"status": "DELETED"}})
+    # Mark tracked assets as deleted in db_qr_assets
+    from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_del
+    _atp_del().untrack_qr(qrcard_id)
+    return {"qr_name": qr_name, "qr_type": qr_type}
+
+
+def _delete_r2_assets_for_qr(qrcard_id, qr_type):
+    """Delete all R2 objects under the QR's folder prefix.
+    Returns dict {freed_bytes, deleted_count}. Silent on error."""
+    try:
+        from pytavia_modules.user.user_storage_proc import _QR_TYPE_PREFIX
+        from storage import r2_storage_proc as _r2_mod
+        folder = _QR_TYPE_PREFIX.get(qr_type, qr_type)
+        if folder and qrcard_id:
+            _r2 = _r2_mod.r2_storage_proc()
+            objs = _r2.list_prefix(f"{folder}/{qrcard_id}/")
+            freed_bytes   = sum(o["size"] for o in objs)
+            deleted_count = len(objs)
+            _r2.delete_prefix(f"{folder}/{qrcard_id}/")
+            return {"freed_bytes": freed_bytes, "deleted_count": deleted_count}
+    except Exception:
+        pass
+    return {"freed_bytes": 0, "deleted_count": 0}
+
+
+@app.route("/api/qr/size/<qrcard_id>")
+def api_qr_size(qrcard_id):
+    """Return storage size for one QR card — reads from db_qr_assets (no R2 call).
+    Falls back to R2 listing for legacy QRs with no tracked assets yet."""
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False}), 401
+    try:
+        from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp
+        result = _atp().get_qr_size(qrcard_id)
+        if result["bytes"] > 0:
+            return jsonify({"ok": True, **result})
+        # Fallback: legacy QR not yet tracked — list R2 once
+        from pytavia_core import database as _db_sz, config as _cfg_sz
+        from pytavia_modules.user.user_storage_proc import _QR_TYPE_PREFIX, _fmt_size
+        from storage import r2_storage_proc as _r2_mod
+        _mgd = _db_sz.get_db_conn(_cfg_sz.mainDB)
+        idx = _mgd.db_qr_index.find_one({"qrcard_id": qrcard_id, "fk_user_id": session["fk_user_id"]}) or {}
+        folder = _QR_TYPE_PREFIX.get(idx.get("qr_type", ""), idx.get("qr_type", ""))
+        total, count = 0, 0
+        if folder:
+            objs  = _r2_mod.r2_storage_proc().list_prefix(f"{folder}/{qrcard_id}/")
+            total = sum(o["size"] for o in objs)
+            count = len(objs)
+        return jsonify({"ok": True, "bytes": total, "files": count, "size_fmt": _fmt_size(total)})
+    except Exception:
+        return jsonify({"ok": True, "bytes": 0, "files": 0, "size_fmt": "0 B"})
 
 
 @app.route("/qr/delete/<qrcard_id>", methods=["POST"])
@@ -441,8 +497,17 @@ def qr_delete(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from pytavia_core import database as _db_del, config as _cfg_del
+    from pytavia_modules.user import user_activity_proc as _uap_del
     _mgd_del = _db_del.get_db_conn(_cfg_del.mainDB)
-    _set_qrcard_deleted(_mgd_del, session.get("fk_user_id"), qrcard_id)
+    fk_user_id = session.get("fk_user_id")
+    info    = _set_qrcard_deleted(_mgd_del, fk_user_id, qrcard_id)
+    r2_info = _delete_r2_assets_for_qr(qrcard_id, info["qr_type"])
+    _uap_del.user_activity_proc(app).log(
+        fk_user_id=fk_user_id, action="DELETE_QR",
+        qrcard_id=qrcard_id, qr_name=info["qr_name"],
+        qr_type=info["qr_type"], source="my_qr_codes",
+        detail={"freed_bytes": r2_info["freed_bytes"], "deleted_count": r2_info["deleted_count"]},
+    )
     return redirect(url_for("user_qr_list"))
 
 
@@ -455,10 +520,28 @@ def qr_delete_bulk():
         return redirect(url_for("user_qr_list"))
     from pytavia_core import database as _db_bulk
     from pytavia_core import config as _cfg_bulk
+    from pytavia_modules.user import user_activity_proc as _uap_bulk
     _mgd_bulk = _db_bulk.get_db_conn(_cfg_bulk.mainDB)
     fk_user_id = session.get("fk_user_id")
+    total_freed = 0
+    total_files = 0
     for qrcard_id in qrcard_ids:
-        _set_qrcard_deleted(_mgd_bulk, fk_user_id, qrcard_id)
+        info    = _set_qrcard_deleted(_mgd_bulk, fk_user_id, qrcard_id)
+        r2_info = _delete_r2_assets_for_qr(qrcard_id, info["qr_type"])
+        total_freed += r2_info["freed_bytes"]
+        total_files += r2_info["deleted_count"]
+        _uap_bulk.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="DELETE_QR",
+            qrcard_id=qrcard_id, qr_name=info["qr_name"],
+            qr_type=info["qr_type"], source="bulk",
+            detail={
+                "freed_bytes": r2_info["freed_bytes"],
+                "deleted_count": r2_info["deleted_count"],
+                "bulk_total_qrs": len(qrcard_ids),
+                "bulk_total_freed": total_freed,
+                "bulk_total_files": total_files,
+            },
+        )
     return redirect(url_for("user_qr_list"))
 def _get_qr_draft(session, qrcard_id):
     return (session.get("qr_draft") or {}).get(qrcard_id)
@@ -605,7 +688,7 @@ def qr_update_save_ecard(qrcard_id):
             safe_name = _uuid.uuid4().hex + ext
             try:
                 data = gfile.read()
-                file_url = r2.upload_bytes(data, f"ecard/{qrcard_id}/gallery/{safe_name}")
+                file_url = r2.upload_bytes(data, f"ecard/{qrcard_id}/gallery/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": safe_name})
                 saved_gallery.append({"url": file_url})
             except Exception:
                 pass
@@ -746,7 +829,7 @@ def qr_update_design_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}")
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
@@ -772,7 +855,7 @@ def qr_update_design_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/pdf_cover_img{ext}")
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url
@@ -849,7 +932,7 @@ def qr_update_content_pdf(qrcard_id):
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 _r2 = r2_mod.r2_storage_proc()
-                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome{ext}")
+                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
                 ecard_data["welcome_img_url"] = welcome_url
                 qrcard["welcome_img_url"] = welcome_url
                 from pytavia_core import database as _db_w, config as _cfg_w
@@ -882,7 +965,7 @@ def qr_update_content_pdf(qrcard_id):
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 _r2 = r2_mod.r2_storage_proc()
-                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/pdf_cover_img{ext}")
+                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
                 for _f in _cover_img_fields:
                     ecard_data[_f] = cover_url
                     qrcard[_f] = cover_url
@@ -958,7 +1041,7 @@ def qr_update_content_pdf(qrcard_id):
                         break
                     seen_upload_names.add(original_name)
                     r2_key = f"pdf/{qrcard_id}/{safe_name}"
-                    file_url = _r2_pdf.upload_file(f, r2_key)
+                    file_url = _r2_pdf.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": original_name})
                     file_entry = {"name": original_name, "url": file_url}
                     form_idx = _new_file_offset + _new_file_idx
                     if form_idx < len(_step_display_names) and _step_display_names[form_idx].strip():
@@ -1231,7 +1314,7 @@ def qr_update_content_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}")
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
@@ -1257,7 +1340,7 @@ def qr_update_content_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/ecard_cover_img{ext}")
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/ecard_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url
@@ -1481,7 +1564,13 @@ def qr_save_text():
         "text_content": text_content,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
-        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
+        _qid = result.get("message_data", {}).get("qrcard_id")
+        _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_t
+        _uap_t.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=_qid or "", qr_name=qr_name, qr_type="text", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_text.html",
@@ -1563,7 +1652,13 @@ def qr_save_web_static():
         "url_content": url_content,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
-        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
+        _qid = result.get("message_data", {}).get("qrcard_id")
+        _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_ws
+        _uap_ws.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=_qid or "", qr_name=qr_name, qr_type="web-static", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_web_static.html",
@@ -1738,7 +1833,13 @@ def qr_save_wa_static():
         "wa_message": wa_message,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
-        _update_frame_id(fk_user_id, result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
+        _qid = result.get("message_data", {}).get("qrcard_id")
+        _update_frame_id(fk_user_id, _qid, request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_wa
+        _uap_wa.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=_qid or "", qr_name=qr_name, qr_type="wa-static", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_wa_static.html",
@@ -1863,7 +1964,14 @@ def qr_save_vcard_static():
         "vcard_website": _vd("vcard_website"),
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
-        _update_frame_id(session.get("fk_user_id"), result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
+        _qid = result.get("message_data", {}).get("qrcard_id")
+        _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_vc
+        _uap_vc.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=_qid or "", qr_name=_vd("qr_name") or "Untitled QR",
+            qr_type="vcard-static", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     phones_json = request.form.get("vcard_phones_json", "[]")
     return render_template("/user/new_qr_design_vcard_static.html", qr_type="vcard-static",
@@ -2029,7 +2137,13 @@ def qr_save_email_static():
         "email_body": email_body,
     })
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
-        _update_frame_id(fk_user_id, result.get("message_data", {}).get("qrcard_id"), request.form.get("frame_id", ""))
+        _qid = result.get("message_data", {}).get("qrcard_id")
+        _update_frame_id(fk_user_id, _qid, request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_em
+        _uap_em.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=_qid or "", qr_name=qr_name, qr_type="email-static", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return render_template(
         "/user/new_qr_design_email_static.html",
@@ -2343,6 +2457,12 @@ def qr_save_pdf():
     response = qr_pdf_proc.qr_pdf_proc(app).complete_pdf_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_pdf
+        _uap_pdf.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=request.form.get("qr_name", ""), qr_type="pdf", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_pdf.view_pdf(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2365,6 +2485,13 @@ def qr_save_web():
     response = qr_web_proc.qr_web_proc(app).complete_web_save(request, session)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_web
+        _uap_web.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=response.get("qr_name", "") or request.form.get("qr_name", ""),
+            qr_type="web", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_web.view_web(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2386,6 +2513,13 @@ def qr_save_ecard():
     response = qr_ecard_proc.qr_ecard_proc(app).complete_ecard_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_ec
+        _uap_ec.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=response.get("qr_name", "") or request.form.get("qr_name", ""),
+            qr_type="ecard", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_ecard.view_ecard(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2534,6 +2668,13 @@ def qr_save_links():
     response = qr_links_proc.qr_links_proc(app).complete_links_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_lk
+        _uap_lk.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=response.get("qr_name", "") or request.form.get("qr_name", ""),
+            qr_type="links", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_links.view_links(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -2628,7 +2769,7 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["Links_cover_img_url"] = _r2.upload_file(cover_img, f"links/{qrcard_id}/links_cover_img{ext}")
+                content_update["Links_cover_img_url"] = _r2.upload_file(cover_img, f"links/{qrcard_id}/links_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
         # Handle cover delete
         if request.form.get("Links_profile_img_delete") == "1":
             content_update["Links_cover_img_url"] = ""
@@ -2641,7 +2782,7 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome{ext}")
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
@@ -2915,7 +3056,7 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["Sosmed_cover_img_url"] = _r2.upload_file(cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}")
+                content_update["Sosmed_cover_img_url"] = _r2.upload_file(cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
         if request.form.get("Sosmed_profile_img_delete") == "1":
             content_update["Sosmed_cover_img_url"] = ""
         welcome_img = request.files.get("Sosmed_welcome_img")
@@ -2926,7 +3067,7 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome{ext}")
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
@@ -3120,6 +3261,12 @@ def qr_save_allinone():
             error_msg=response.get("message_desc", "Save failed."),
         )
     _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+    from pytavia_modules.user import user_activity_proc as _uap_aio
+    _uap_aio.user_activity_proc(app).log(
+        fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+        qrcard_id=response.get("qrcard_id", ""),
+        qr_name=request.form.get("qr_name", ""), qr_type="allinone", source="create",
+    )
     return redirect(url_for("user_qr_list"))
 
 
@@ -3348,7 +3495,7 @@ def qr_special_upload_image():
     # Upload to R2 under special/images/
     _r2 = r2_mod.r2_storage_proc()
     r2_key = f"special/images/{unique_name}"
-    file_url = _r2.upload_file(file, r2_key)
+    file_url = _r2.upload_file(file, r2_key, track_meta={"fk_user_id": session.get("fk_user_id"), "qrcard_id": None, "qr_type": "special", "file_name": file.filename})
 
     return jsonify({
         "success": True,
@@ -3434,7 +3581,7 @@ def qr_update_content_special(qrcard_id):
                     safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_img.filename)
                     welcome_name = "welcome_" + safe_name
                     r2_key = f"special/{qrcard_id}/{welcome_name}"
-                    welcome_url = _r2.upload_file(welcome_img, r2_key)
+                    welcome_url = _r2.upload_file(welcome_img, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "special"})
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
                     try:
@@ -3880,7 +4027,7 @@ def qr_update_content_images(qrcard_id):
                     ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
                     safe_name = _uuid.uuid4().hex + ext
                     r2_key = f"images/{qrcard_id}/{safe_name}"
-                    file_url = _r2.upload_file(f, r2_key)
+                    file_url = _r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "images", "file_name": safe_name})
                     form_idx = new_file_offset + i
                     name = images_names[form_idx] if form_idx < len(images_names) else ""
                     desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
@@ -4064,7 +4211,7 @@ def qr_update_content_video(qrcard_id):
                                 ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
                                 safe_name = _uuid.uuid4().hex + ext
                                 r2_key = f"videos/{qrcard_id}/{safe_name}"
-                                file_url = _r2.upload_file(f, r2_key)
+                                file_url = _r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "video", "file_name": safe_name})
                                 updated_links.append({"url": file_url, "name": name.strip(), "desc": desc.strip()})
             else:
                 if url.strip():
@@ -4269,6 +4416,83 @@ def user_storage():
     info = _usp.user_storage_proc(app).get_storage_info(session["fk_user_id"])
     return render_template("user/storage.html", info=info)
 
+@app.route("/api/storage/delete_qr_assets", methods=["POST"])
+def api_storage_delete_qr_assets():
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False, "error": "Not logged in"}), 401
+    try:
+        data       = request.get_json(force=True) or {}
+        qrcard_id  = str(data.get("qrcard_id", "")).strip()
+        qr_type    = str(data.get("qr_type", "")).strip()
+        if not qrcard_id or not qr_type:
+            return jsonify({"ok": False, "error": "Missing qrcard_id or qr_type"}), 400
+
+        from pytavia_core import database, config as _cfg
+        _db = database.get_db_conn(_cfg.mainDB)
+
+        # Verify the QR belongs to this user
+        collection = "db_qrcard" if qr_type != "frame" else "db_qr_frame"
+        id_field   = "qrcard_id" if qr_type != "frame" else "frame_id"
+        record = getattr(_db, collection).find_one(
+            {id_field: qrcard_id, "fk_user_id": session["fk_user_id"]}
+        )
+        if not record:
+            return jsonify({"ok": False, "error": "QR not found"}), 404
+
+        # Count & size before deletion
+        from pytavia_modules.user.user_storage_proc import _QR_TYPE_PREFIX
+        _r2     = r2_mod.r2_storage_proc()
+        folder  = _QR_TYPE_PREFIX.get(qr_type, qr_type) if qr_type != "frame" else "frames"
+        prefix  = f"{folder}/{qrcard_id}/"
+        objects = _r2.list_prefix(prefix)
+        freed_bytes    = sum(o["size"] for o in objects)
+        deleted_count  = len(objects)
+
+        # Delete R2 assets
+        _r2.delete_prefix(prefix)
+
+        # Mark QR as deleted in DB (main collection + index + type-specific)
+        getattr(_db, collection).update_one(
+            {id_field: qrcard_id},
+            {"$set": {"status": "DELETED"}}
+        )
+        _db.db_qr_index.update_one(
+            {"qrcard_id": qrcard_id, "fk_user_id": session["fk_user_id"]},
+            {"$set": {"status": "DELETED"}}
+        )
+        # Also mark the type-specific collection if different from db_qrcard
+        _type_col_map = {
+            "pdf": "db_qrcard_pdf",
+            "web-static": "db_qrcard_web_static",
+            "text": "db_qrcard_text",
+            "wa-static": "db_qrcard_wa_static",
+            "email-static": "db_qrcard_email_static",
+            "vcard-static": "db_qrcard_vcard_static",
+            "allinone": "db_qrcard_allinone",
+        }
+        if qr_type in _type_col_map:
+            getattr(_db, _type_col_map[qr_type]).update_one(
+                {"qrcard_id": qrcard_id, "fk_user_id": session["fk_user_id"]},
+                {"$set": {"status": "DELETED"}}
+            )
+
+        # Log the activity
+        from pytavia_modules.user import user_activity_proc as _uap_st
+        _uap_st.user_activity_proc(app).log(
+            fk_user_id=session["fk_user_id"],
+            action="DELETE_QR_ASSETS",
+            qrcard_id=qrcard_id,
+            qr_name=record.get("name", ""),
+            qr_type=qr_type,
+            source="storage",
+            detail={"freed_bytes": freed_bytes, "deleted_count": deleted_count},
+        )
+
+        return jsonify({"ok": True, "deleted_count": deleted_count, "freed_bytes": freed_bytes})
+    except Exception as e:
+        app.logger.debug(e)
+        return jsonify({"ok": False, "error": "Server error"}), 500
+
 @app.route("/user/templates")
 def user_templates():
     if "fk_user_id" not in session:
@@ -4349,17 +4573,20 @@ def user_settings():
         return redirect(url_for("login_view"))
     return view_user.view_user(app).settings_html()
 
-@app.route("/user/users")
-def user_users():
-    if "fk_user_id" not in session:
-        return redirect(url_for("login_view"))
-    return view_user.view_user(app).users_html()
-
 @app.route("/user/security-history")
 def user_security_history():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     return view_user.view_user(app).security_history_html()
+
+@app.route("/user/activity-history")
+def user_activity_history():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    page = int(request.args.get("page", 1))
+    return view_user.view_user(app).activity_history_html(
+        fk_user_id=session["fk_user_id"], page=page
+    )
 
 @app.route("/register", methods=["GET"])
 def register_view():

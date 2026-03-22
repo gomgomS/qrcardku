@@ -58,17 +58,17 @@ class user_storage_proc:
 
     def get_storage_info(self, fk_user_id: str) -> dict:
         """
-        Scan R2 for all files belonging to this user.
-        Returns:
-            total_bytes, limit_bytes, percent_used, files (list), total_fmt, limit_fmt
+        Return storage info for a user.
+        Reads from db_qr_assets (MongoDB) — no R2 API calls.
+        Falls back to R2 listing for QRs that have no tracked assets yet
+        (backward compatibility for uploads made before tracking was added).
         """
         try:
             _r2 = r2_mod.r2_storage_proc()
 
-            # ── 1. Collect (prefix, meta) pairs ──────────────────────────
-            pairs = []  # (r2_prefix, {qr_name, qr_type, qrcard_id, edit_url})
+            # ── Build qrcard_id → QR meta map from DB ───────────────────
+            qr_meta = {}  # qrcard_id -> {qr_name, qr_type, edit_url}
 
-            # QR cards (all types)
             cards = list(self.mgdDB.db_qrcard.find(
                 {"fk_user_id": fk_user_id, "status": "ACTIVE"},
                 {"qrcard_id": 1, "qr_type": 1, "name": 1}
@@ -76,57 +76,84 @@ class user_storage_proc:
             for c in cards:
                 qid   = c.get("qrcard_id", "")
                 qtype = c.get("qr_type", "")
-                name  = c.get("name", "Untitled")
-                folder = _QR_TYPE_PREFIX.get(qtype, qtype)
-                if qid and folder:
-                    edit_url = f"/qr/update/{qtype}/{qid}"
-                    pairs.append((
-                        f"{folder}/{qid}/",
-                        {"qr_name": name, "qr_type": qtype, "qrcard_id": qid, "edit_url": edit_url}
-                    ))
+                if qid:
+                    qr_meta[qid] = {
+                        "qr_name":  c.get("name", "Untitled"),
+                        "qr_type":  qtype,
+                        "edit_url": f"/qr/update/{qtype}/{qid}",
+                    }
 
-            # User custom frames
             frames = list(self.mgdDB.db_qr_frame.find(
                 {"fk_user_id": fk_user_id, "status": "ACTIVE"},
                 {"frame_id": 1, "name": 1}
             ))
+            frame_meta = {}
             for f in frames:
-                fid  = f.get("frame_id", "")
-                name = f.get("name", "Frame")
+                fid = f.get("frame_id", "")
                 if fid:
-                    pairs.append((
-                        f"frames/{fid}/",
-                        {"qr_name": name, "qr_type": "frame", "qrcard_id": fid, "edit_url": "/user/templates"}
-                    ))
+                    frame_meta[fid] = {"qr_name": f.get("name", "Frame"), "qr_type": "frame", "edit_url": "/user/templates"}
 
-            # ── 2. List objects in R2 for each prefix ────────────────────
-            files = []
+            # ── 1. Read tracked assets from db_qr_assets ────────────────
+            tracked_docs = list(self.mgdDB.db_qr_assets.find(
+                {"fk_user_id": fk_user_id, "status": "ACTIVE"}
+            ))
+
+            files       = []
             total_bytes = 0
+            tracked_qrs = set()  # which qrcard_ids have tracked assets
 
-            for prefix, meta in pairs:
-                objects = _r2.list_prefix(prefix)
-                for obj in objects:
-                    key  = obj["key"]
-                    size = obj["size"]
-                    total_bytes += size
-                    fname = key.split("/")[-1]
-                    files.append({
-                        "key":      key,
-                        "url":      _r2.public_url(key),
-                        "fname":    fname,
-                        "size":     size,
-                        "size_fmt": _fmt_size(size),
-                        "category": _file_category(key),
-                        "qr_name":  meta["qr_name"],
-                        "qr_type":  meta["qr_type"],
-                        "qrcard_id": meta["qrcard_id"],
-                        "edit_url": meta["edit_url"],
-                    })
+            for doc in tracked_docs:
+                qid   = doc.get("qrcard_id", "") or doc.get("frame_id", "")
+                meta  = qr_meta.get(qid) or frame_meta.get(qid) or {}
+                size  = doc.get("file_size", 0)
+                key   = doc.get("r2_key", "")
+                total_bytes += size
+                tracked_qrs.add(qid)
+                files.append({
+                    "key":       key,
+                    "url":       _r2.public_url(key),
+                    "fname":     doc.get("file_name", key.split("/")[-1]),
+                    "size":      size,
+                    "size_fmt":  _fmt_size(size),
+                    "category":  doc.get("file_category", _file_category(key)),
+                    "qr_name":   meta.get("qr_name", ""),
+                    "qr_type":   doc.get("qr_type", meta.get("qr_type", "")),
+                    "qrcard_id": qid,
+                    "edit_url":  meta.get("edit_url", "#"),
+                })
 
-            # Sort largest first
+            # ── 2. R2 fallback for QRs with no tracked assets yet ────────
+            untracked_pairs = []
+            for qid, meta in qr_meta.items():
+                if qid not in tracked_qrs:
+                    folder = _QR_TYPE_PREFIX.get(meta["qr_type"], meta["qr_type"])
+                    if folder:
+                        untracked_pairs.append((f"{folder}/{qid}/", qid, meta))
+            for fid, meta in frame_meta.items():
+                if fid not in tracked_qrs:
+                    untracked_pairs.append((f"frames/{fid}/", fid, meta))
+
+            if untracked_pairs:
+                for prefix, qid, meta in untracked_pairs:
+                    for obj in _r2.list_prefix(prefix):
+                        key  = obj["key"]
+                        size = obj["size"]
+                        total_bytes += size
+                        files.append({
+                            "key":       key,
+                            "url":       _r2.public_url(key),
+                            "fname":     key.split("/")[-1],
+                            "size":      size,
+                            "size_fmt":  _fmt_size(size),
+                            "category":  _file_category(key),
+                            "qr_name":   meta["qr_name"],
+                            "qr_type":   meta["qr_type"],
+                            "qrcard_id": qid,
+                            "edit_url":  meta["edit_url"],
+                        })
+
             files.sort(key=lambda x: x["size"], reverse=True)
-
-            pct = min(int(total_bytes / STORAGE_LIMIT_BYTES * 100), 100)
+            pct        = min(int(total_bytes / STORAGE_LIMIT_BYTES * 100), 100)
             free_bytes = max(STORAGE_LIMIT_BYTES - total_bytes, 0)
 
             return {

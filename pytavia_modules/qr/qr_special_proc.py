@@ -321,7 +321,7 @@ class qr_special_proc:
             safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_file.filename)
             welcome_fname = "welcome_" + safe_name
             r2_key = f"special/{new_qrcard_id}/{welcome_fname}"
-            welcome_url = r2.upload_file(welcome_file, r2_key)
+            welcome_url = r2.upload_file(welcome_file, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "special", "file_name": welcome_fname})
             # Update both collections with the welcome image URL
             self.mgdDB.db_qrcard.update_one(
                 {"qrcard_id": new_qrcard_id},
