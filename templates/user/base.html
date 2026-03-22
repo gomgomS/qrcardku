@@ -5,22 +5,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRCardKu - {{ page_title | default('User Dashboard') }}</title>
+    <!-- Apply theme before paint to avoid flash -->
+    <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('qrku-theme')||'dark');})();</script>
     <!-- Use Google Fonts (Inter is close to the reference) -->
     <link href="/static/assets/vendor/css/inter.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/assets/vendor/fontawesome/css/all.min.css">
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
+            --primary: #EBA81B;
+            --primary-hover: #d4941a;
+            --text-main: #E8E5DC;
+            --text-muted: #8A8878;
+            --bg-body: #181914;
+            --bg-sidebar: #111209;
+            --bg-content: #1E1F18;
+            --border-color: #2C2D25;
+            --sidebar-width: 260px;
+            --header-height: 64px;
+        }
+
+        /* ── Light theme override ─────────────────────────────────────── */
+        [data-theme="light"] {
             --text-main: #111827;
             --text-muted: #6b7280;
             --bg-body: #f9fafb;
             --bg-sidebar: #ffffff;
             --bg-content: #ffffff;
             --border-color: #e5e7eb;
-            --sidebar-width: 260px;
-            --header-height: 64px;
+        }
+        [data-theme="light"] .nav-item:hover { background-color: #f3f4f6 !important; }
+        [data-theme="light"] .nav-item.active { background-color: #fef9ec !important; }
+        [data-theme="light"] .upgrade-btn { background-color: #fef9ec !important; }
+        [data-theme="light"] .header-left .url-input { background-color: #f3f4f6 !important; border-color: #e5e7eb !important; }
+        [data-theme="light"] .mobile-nav-logo,
+        [data-theme="light"] .mobile-nav-title { color: #111827 !important; }
+        [data-theme="light"] .mobile-nav-toggle:hover { background: #f3f4f6 !important; }
+        [data-theme="light"] .step-item:not(.step-completed):not(.step-active) .step-num { background-color: #e5e7eb !important; }
+        [data-theme="light"] .new-qr-steps .step-item.step-active { background-color: #fef9ec !important; }
+        [data-theme="light"] .new-qr-step-nav .btn-outline { background: #ffffff !important; }
+        [data-theme="light"] .new-qr-step-nav .btn-outline:hover { background: #f9fafb !important; }
+        [data-theme="light"] .new-qr-step-nav .btn-next.btn-next-disabled,
+        [data-theme="light"] .new-qr-step-nav .btn-next:disabled { background-color: #e5e7eb !important; color: #6b7280 !important; }
+        [data-theme="light"] .new-qr-step-nav .btn-next:not(.btn-next-disabled):not(:disabled) { background-color: var(--primary) !important; color: white !important; }
+        [data-theme="light"] .avatar { background-color: #e5e7eb !important; }
+
+        /* ── Global form inputs — always white/readable ───────────────── */
+        input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
+        select,
+        textarea {
+            background-color: #ffffff;
+            color: #111827;
+            border: 1px solid #d1d9e6;
+        }
+        input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(235, 168, 27, 0.15);
         }
 
         * {
@@ -57,7 +100,7 @@
             border-bottom: 1px solid var(--border-color);
             font-size: 20px;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-main);
             letter-spacing: -0.5px;
         }
 
@@ -93,12 +136,12 @@
         }
 
         .nav-item:hover {
-            background-color: #f3f4f6;
+            background-color: var(--bg-sidebar);
             color: var(--text-main);
         }
 
         .nav-item.active {
-            background-color: #eff6ff;
+            background-color: var(--bg-sidebar);
             color: var(--primary);
         }
 
@@ -115,8 +158,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background-color: #fef3c7;
-            color: #d97706;
+            background-color: var(--bg-sidebar);
+            color: #EBA81B;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
@@ -169,12 +212,12 @@
         .header-left .url-input {
             display: flex;
             align-items: center;
-            background-color: #f3f4f6;
+            background-color: var(--bg-sidebar);
             border-radius: 20px;
             padding: 6px 16px;
             font-size: 13px;
             color: var(--text-muted);
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--border-color);
         }
 
         .header-left .url-input i {
@@ -226,7 +269,7 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background-color: #e5e7eb;
+            background-color: var(--border-color);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -250,7 +293,7 @@
         }
 
         .card {
-            background-color: white;
+            background-color: var(--bg-content);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 24px;
@@ -315,13 +358,13 @@
             justify-content: center;
             font-weight: 600;
             font-size: 12px;
-            background-color: #e5e7eb;
+            background-color: var(--border-color);
             color: var(--text-muted);
         }
         .new-qr-steps .step-item.step-active {
             color: var(--primary);
             font-weight: 500;
-            background-color: #e0e7ff;
+            background-color: var(--bg-sidebar);
         }
         .new-qr-steps .step-item.step-active .step-num {
             background-color: var(--primary);
@@ -346,7 +389,7 @@
         }
         .new-qr-step-nav .btn-outline {
             border: 1px solid var(--border-color);
-            background: white;
+            background: var(--bg-content);
             color: var(--text-main);
             padding: 6px 16px;
             border-radius: 20px;
@@ -358,7 +401,7 @@
             cursor: pointer;
         }
         .new-qr-step-nav .btn-outline:hover {
-            background: #f9fafb;
+            background: var(--bg-body);
         }
         .new-qr-step-nav .btn-next {
             padding: 6px 16px;
@@ -381,8 +424,8 @@
         }
         .new-qr-step-nav .btn-next.btn-next-disabled,
         .new-qr-step-nav .btn-next:disabled {
-            background-color: #e5e7eb;
-            color: #9ca3af;
+            background-color: var(--border-color);
+            color: var(--text-muted);
             cursor: not-allowed;
         }
 
@@ -401,7 +444,7 @@
         .mobile-nav-logo {
             font-size: 22px;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -410,7 +453,7 @@
         .mobile-nav-title {
             font-size: 16px;
             font-weight: 700;
-            color: #1a1a1a;
+            color: var(--text-main);
             letter-spacing: -0.3px;
         }
         .mobile-nav-toggle {
@@ -426,7 +469,7 @@
             justify-content: center;
             border-radius: 6px;
         }
-        .mobile-nav-toggle:hover { background: #f3f4f6; }
+        .mobile-nav-toggle:hover { background: var(--bg-sidebar); }
 
         /* Sidebar overlay */
         .sidebar-overlay {

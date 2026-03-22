@@ -30,14 +30,14 @@
         color: var(--primary);
         border-bottom: 2px solid var(--primary);
         font-weight: 500;
-        background-color: #eff6ff;
+        background-color: #2A2810;
         border-radius: 4px 4px 0 0;
     }
 
     .qr-table {
         width: 100%;
         border-collapse: collapse;
-        background: white;
+        background: var(--bg-content);
         border-radius: 8px;
         border: 1px solid var(--border-color);
         margin-bottom: 80px;
@@ -53,7 +53,7 @@
     }
 
     .qr-table th {
-        background-color: #f9fafb;
+        background-color: var(--bg-body);
         color: var(--text-muted);
         font-weight: 500;
     }
@@ -73,7 +73,7 @@
 
     .dropdown-content button:hover,
     .dropdown-content a:hover {
-        background-color: #f3f4f6 !important;
+        background-color: #252619 !important;
     }
 
     /* QR scan icon: hover ring + tooltip */
@@ -138,7 +138,7 @@
     }
 
     .scan-qr-modal {
-        background: white;
+        background: var(--bg-content);
         border-radius: 12px;
         max-width: 440px;
         width: 90%;
@@ -194,7 +194,7 @@
     }
 
     .scan-qr-modal .tag-type {
-        background: #eff6ff;
+        background: #2A2810;
         color: var(--primary);
     }
 
@@ -237,7 +237,7 @@
     }
 
     .scan-qr-modal .qr-image-wrap {
-        background: #f9fafb;
+        background: var(--bg-body);
         border-radius: 8px;
         padding: 16px;
         display: inline-block;
@@ -276,7 +276,7 @@
         gap: 8px;
         padding: 10px 16px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         border-radius: 6px;
         font-size: 14px;
@@ -304,6 +304,149 @@
         background: var(--primary-hover);
     }
 
+    /* Delete confirmation modal */
+    .del-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+    .del-modal-overlay.show { display: flex; }
+    .del-modal-box {
+        background: var(--bg-content);
+        border-radius: 12px;
+        max-width: 420px;
+        width: 90%;
+        padding: 28px 28px 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+    }
+    .del-modal-icon {
+        width: 48px;
+        height: 48px;
+        background: #fee2e2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #dc2626;
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+    .del-modal-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 8px;
+    }
+    .del-modal-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 14px;
+    }
+    .del-modal-storage {
+        background: #2A2810;
+        border: 1px solid #fde047;
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #92400e;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: opacity 0.25s ease;
+    }
+    .del-modal-storage.hidden { display: none; }
+
+    /* Skeleton shimmer while calculating */
+    .del-modal-storage.loading {
+        background: #252619;
+        border-color: var(--border-color);
+        color: transparent;
+        pointer-events: none;
+        overflow: hidden;
+        position: relative;
+    }
+    .del-modal-storage.loading i { visibility: hidden; }
+    .del-modal-storage.loading span { visibility: hidden; }
+    .del-modal-storage.loading::before {
+        content: 'Calculating storage…';
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.01em;
+        animation: calcDots 1.4s infinite;
+    }
+    @keyframes calcDots {
+        0%   { content: 'Calculating storage…'; }
+        33%  { content: 'Calculating storage……'; }
+        66%  { content: 'Calculating storage………'; }
+        100% { content: 'Calculating storage…'; }
+    }
+    .del-modal-storage.loading::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255,255,255,0.7) 40%,
+            rgba(255,255,255,0.9) 50%,
+            rgba(255,255,255,0.7) 60%,
+            transparent 100%);
+        background-size: 200% 100%;
+        animation: shimmer 1.2s infinite ease-in-out;
+    }
+    @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position:  200% 0; }
+    }
+
+    /* Fade-in when result arrives */
+    .del-modal-storage.loaded {
+        animation: fadeSlideIn 0.3s ease forwards;
+    }
+    @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .del-modal-warn {
+        font-size: 12px;
+        color: #dc2626;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+    .del-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .del-modal-cancel {
+        padding: 9px 18px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        color: var(--text-main);
+    }
+    .del-modal-cancel:hover { background: #252619; }
+    .del-modal-confirm {
+        padding: 9px 18px;
+        border: none;
+        background: #dc2626;
+        color: white;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .del-modal-confirm:hover { background: #b91c1c; }
+    .del-modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
     @media (max-width: 768px) {
         /* Top actions */
         .top-actions { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
@@ -323,7 +466,7 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            background: white;
+            background: var(--bg-content);
             border: 1px solid var(--border-color) !important;
             border-bottom: 1px solid var(--border-color) !important;
             border-radius: 8px;
@@ -506,7 +649,7 @@
             if (qrType === 'text') return '<i class="fa-solid fa-font"></i> Text';
             if (qrType === 'wa-static') return '<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp';
             if (qrType === 'email-static') return '<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email';
-            if (qrType === 'vcard-static') return '<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard';
+            if (qrType === 'vcard-static') return '<i class="fa-regular fa-id-badge" style="color:#d4941a;"></i> vCard';
             if (qrType === 'vcard') return '<i class="fa-regular fa-id-badge"></i> vCard Plus';
             if (qrType === 'images') return '<i class="fa-regular fa-images"></i> Images';
             if (qrType === 'video') return '<i class="fa-solid fa-play"></i> Video';
@@ -640,8 +783,9 @@
 <div class="top-actions">
     <div class="page-title" style="margin: 0;">My QR codes</div>
     <div style="display: flex; align-items: center; gap: 12px;">
-        <button type="submit" form="bulk-delete-form" id="bulk-delete-btn" class="btn-outline"
-            style="display: none; padding: 8px 16px; border: 1px solid var(--border-color); background: white; color: #dc2626; border-color: #dc2626;">
+        <button type="button" id="bulk-delete-btn" class="btn-outline"
+            style="display: none; padding: 8px 16px; border: 1px solid var(--border-color); background: var(--bg-content); color: #dc2626; border-color: #dc2626;"
+            onclick="openBulkDeleteModal()">
             <i class="fa-solid fa-trash"></i> Delete selected
         </button>
         <a href="/qr/new" class="btn-primary" style="text-decoration: none;"><i class="fa-solid fa-plus"></i> Create
@@ -661,7 +805,7 @@
     <div>
         <span style="font-size: 13px; color: var(--text-muted);">Filters applied</span>
         <div
-            style="display: inline-block; background: #eff6ff; padding: 4px 12px; border-radius: 16px; margin-left: 8px; font-size: 13px; color: var(--primary);">
+            style="display: inline-block; background: #2A2810; padding: 4px 12px; border-radius: 16px; margin-left: 8px; font-size: 13px; color: var(--primary);">
             1 QR card status <i class="fa-solid fa-xmark" style="margin-left: 8px; cursor: pointer;"></i>
         </div>
     </div>
@@ -671,15 +815,14 @@
     </div>
 </div>
 
-<div class="card" style="margin-bottom: 24px; background-color: #fef9c3; border-color: #fde047; padding: 12px 16px;">
+<div class="card" style="margin-bottom: 24px; background-color: #2A2810; border-color: #fde047; padding: 12px 16px;">
     <span style="color: #ca8a04; font-size: 13px;">
         <i class="fa-solid fa-circle-info"></i> You are using QRCardKu's free trial. 2 days remaining
     </span>
     <button class="btn-primary" style="float: right; padding: 4px 12px; font-size: 12px;">Update</button>
 </div>
 
-<form id="bulk-delete-form" method="POST" action="/qr/delete/bulk" style="margin: 0;"
-    onsubmit="return bulkDeleteConfirm(this);">
+<form id="bulk-delete-form" method="POST" action="/qr/delete/bulk" style="margin: 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <table class="qr-table">
         <thead>
@@ -717,7 +860,7 @@
                         {% elif qr.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
                         {% elif qr.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp
                         {% elif qr.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email
-                        {% elif qr.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard
+                        {% elif qr.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#d4941a;"></i> vCard
                         {% elif qr.qr_type == 'vcard' %}<i class="fa-regular fa-id-badge"></i> vCard Plus
                         {% elif qr.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
                         {% elif qr.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
@@ -741,20 +884,21 @@
                 <td>
                     <div style="position: relative; display: inline-block;" class="dropdown-wrapper">
                         <button type="button"
-                            style="border:1px solid #ddd; background:white; padding: 4px 8px; border-radius:4px;"
+                            style="border:1px solid #ddd; background:var(--bg-content); padding: 4px 8px; border-radius:4px;"
                             onclick="toggleDropdown(event, this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                         <div class="dropdown-content"
-                            style="display: none; position: absolute; right: 0; background-color: #fff; min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; margin-top: 4px;">
+                            style="display: none; position: absolute; right: 0; background-color: var(--bg-content); min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; margin-top: 4px;">
                             <a href="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}"
                                 style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--text-main); font-size: 13px; display: block; text-decoration: none;"><i
                                     class="fa-solid fa-pen"></i> Edit</a>
-                            <form method="POST" action="/qr/delete/{{ qr.qrcard_id }}" style="margin: 0;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                                <button type="submit"
-                                    style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: #dc2626; font-size: 13px;"
-                                    onclick="return confirm('Are you sure you want to delete this QR card?');"><i
-                                        class="fa-solid fa-trash"></i> Delete</button>
-                            </form>
+                            <button type="button"
+                                style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: #dc2626; font-size: 13px;"
+                                data-qrcard-id="{{ qr.qrcard_id }}"
+                                data-qr-name="{{ qr.name | e }}"
+                                data-qr-type="{{ qr.qr_type or 'web' }}"
+                                onclick="openDeleteModal(this.dataset.qrcardId, this.dataset.qrName, this.dataset.qrType)">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
                         </div>
                     </div>
                 </td>
@@ -772,6 +916,130 @@
         </tbody>
     </table>
 </form>
+
+<!-- Delete confirmation modal -->
+<div class="del-modal-overlay" id="del-modal-overlay">
+    <div class="del-modal-box">
+        <div class="del-modal-icon"><i class="fa-solid fa-trash"></i></div>
+        <div class="del-modal-title">Delete "<span id="del-modal-qr-name"></span>"?</div>
+        <div class="del-modal-desc">
+            This will permanently delete the QR card and all its uploaded assets from storage.
+        </div>
+        <div class="del-modal-storage" id="del-modal-storage">
+            <i class="fa-solid fa-hard-drive"></i>
+            <span id="del-modal-storage-text">Calculating storage…</span>
+        </div>
+        <div class="del-modal-warn"><i class="fa-solid fa-triangle-exclamation"></i> Once deleted, it cannot be restored.</div>
+        <div class="del-modal-actions">
+            <button class="del-modal-cancel" id="del-modal-cancel">Cancel</button>
+            <button class="del-modal-confirm" id="del-modal-confirm" disabled>
+                <i class="fa-solid fa-trash"></i> Delete permanent
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden delete form (submitted by the modal confirm button) -->
+<form id="del-qr-form" method="POST" action="" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+</form>
+
+<script>
+(function () {
+    var overlay     = document.getElementById('del-modal-overlay');
+    var nameEl      = document.getElementById('del-modal-qr-name');
+    var storageEl   = document.getElementById('del-modal-storage');
+    var storageText = document.getElementById('del-modal-storage-text');
+    var confirmBtn  = document.getElementById('del-modal-confirm');
+    var cancelBtn   = document.getElementById('del-modal-cancel');
+    var singleForm  = document.getElementById('del-qr-form');
+    var bulkForm    = document.getElementById('bulk-delete-form');
+    var _activeForm = singleForm;
+
+    function setStorageLoading() {
+        storageEl.classList.remove('hidden', 'loaded');
+        storageEl.classList.add('loading');
+    }
+
+    function setStorageResult(text) {
+        storageEl.classList.remove('loading');
+        storageEl.classList.add('loaded');
+        storageText.textContent = text;
+    }
+
+    function fmtSize(bytes) {
+        if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + ' MB';
+        if (bytes >= 1024)    return (bytes / 1024).toFixed(1) + ' KB';
+        return bytes + ' B';
+    }
+
+    /* ── Single QR delete ── */
+    window.openDeleteModal = function (qrcard_id, qr_name, qr_type) {
+        document.querySelectorAll('.dropdown-content').forEach(function(d){ d.classList.remove('show'); });
+        _activeForm = singleForm;
+        nameEl.textContent = qr_name;
+        singleForm.action = '/qr/delete/' + qrcard_id;
+        confirmBtn.disabled = true;
+        setStorageLoading();
+        overlay.classList.add('show');
+
+        fetch('/api/qr/size/' + qrcard_id)
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                if (data.ok && data.bytes > 0) {
+                    setStorageResult('Will free ' + data.size_fmt + ' (' + data.files + ' file' + (data.files !== 1 ? 's' : '') + ')');
+                } else {
+                    setStorageResult('No storage assets attached to this QR.');
+                }
+                confirmBtn.disabled = false;
+            })
+            .catch(function() {
+                setStorageResult('Could not retrieve storage info.');
+                confirmBtn.disabled = false;
+            });
+    };
+
+    /* ── Bulk delete ── */
+    window.openBulkDeleteModal = function () {
+        var checked = document.querySelectorAll('.qr-row-checkbox:checked');
+        if (!checked.length) return;
+
+        _activeForm = bulkForm;
+        var ids = Array.prototype.map.call(checked, function(c){ return c.value; });
+        var n   = ids.length;
+
+        nameEl.textContent = n + ' selected QR code' + (n !== 1 ? 's' : '');
+        confirmBtn.disabled = true;
+        setStorageLoading();
+        overlay.classList.add('show');
+
+        // Fetch sizes for all selected IDs in parallel
+        Promise.all(ids.map(function(id) {
+            return fetch('/api/qr/size/' + id).then(function(r){ return r.json(); }).catch(function(){ return {ok:false, bytes:0, files:0}; });
+        })).then(function(results) {
+            var totalBytes = 0, totalFiles = 0;
+            results.forEach(function(d){ if (d.ok) { totalBytes += d.bytes; totalFiles += d.files; } });
+            if (totalBytes > 0) {
+                setStorageResult('Will free ' + fmtSize(totalBytes) + ' (' + totalFiles + ' file' + (totalFiles !== 1 ? 's' : '') + ') across ' + n + ' QR' + (n !== 1 ? 's' : ''));
+            } else {
+                setStorageResult('No storage assets attached to selected QRs.');
+            }
+            confirmBtn.disabled = false;
+        });
+    };
+
+    confirmBtn.addEventListener('click', function() {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+        _activeForm.submit();
+    });
+
+    cancelBtn.addEventListener('click', function() { overlay.classList.remove('show'); });
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.classList.remove('show');
+    });
+})();
+</script>
 
 <!-- Scan QR modal (one shared modal, filled by JS) -->
 <div id="scan-qr-overlay" class="scan-qr-overlay" aria-hidden="true">

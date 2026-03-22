@@ -40,15 +40,15 @@
                     <td>{{ a.name or '—' }}</td>
                     <td>
                         {% if a.role == 'superadmin' %}
-                        <span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                        <span class="badge" style="background:#2A2810;color:#92400e;border:1px solid #fcd34d;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
                             superadmin
                         </span>
                         {% elif a.role == 'admin' %}
-                        <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                        <span class="badge" style="background:#2A2810;color:#EBA81B;border:1px solid #3A3B30;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
                             admin
                         </span>
                         {% else %}
-                        <span class="badge" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
+                        <span class="badge" style="background:#252619;color:#E8E5DC;border:1px solid #3A3B30;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">
                             sales
                         </span>
                         {% endif %}
@@ -73,13 +73,13 @@
                             </button>
                         </form>
                         {% else %}
-                        <span style="font-size:11px;color:#9ca3af;">You</span>
+                        <span style="font-size:11px;color:#8A8878;">You</span>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align:center;color:#6b7280;padding:32px;">No admin users found.</td>
+                    <td colspan="5" style="text-align:center;color:#8A8878;padding:32px;">No admin users found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -93,32 +93,32 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
             <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Email *</label>
+                <label style="display:block;font-size:12px;font-weight:600;color:#E8E5DC;margin-bottom:6px;">Email *</label>
                 <input type="email" name="email" required placeholder="admin@example.com"
-                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+                    style="width:100%;padding:9px 12px;border:1px solid #2C2D25;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
             </div>
 
             <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Full Name</label>
+                <label style="display:block;font-size:12px;font-weight:600;color:#E8E5DC;margin-bottom:6px;">Full Name</label>
                 <input type="text" name="name" placeholder="e.g. John Doe"
-                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+                    style="width:100%;padding:9px 12px;border:1px solid #2C2D25;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
             </div>
 
             <div style="margin-bottom:14px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Password *</label>
+                <label style="display:block;font-size:12px;font-weight:600;color:#E8E5DC;margin-bottom:6px;">Password *</label>
                 <input type="password" name="password" required placeholder="Min 6 characters"
-                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
+                    style="width:100%;padding:9px 12px;border:1px solid #2C2D25;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;">
             </div>
 
             <div style="margin-bottom:20px;">
-                <label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Role *</label>
+                <label style="display:block;font-size:12px;font-weight:600;color:#E8E5DC;margin-bottom:6px;">Role *</label>
                 <select name="role"
-                    style="width:100%;padding:9px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;background:white;">
+                    style="width:100%;padding:9px 12px;border:1px solid #2C2D25;border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box;background:#1E1F18;">
                     {% for r in valid_roles %}
                     <option value="{{ r }}">{{ r | capitalize }}</option>
                     {% endfor %}
                 </select>
-                <div style="font-size:11px;color:#6b7280;margin-top:6px;">
+                <div style="font-size:11px;color:#8A8878;margin-top:6px;">
                     <strong>superadmin</strong> — full access including admin management<br>
                     <strong>admin</strong> — standard admin access<br>
                     <strong>sales</strong> — limited sales dashboard access
@@ -126,7 +126,7 @@
             </div>
 
             <button type="submit"
-                style="width:100%;padding:10px;background:#00a896;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
+                style="width:100%;padding:10px;background:#EBA81B;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">
                 Add Admin User
             </button>
         </form>

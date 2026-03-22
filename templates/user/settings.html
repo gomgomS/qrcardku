@@ -31,7 +31,7 @@
     }
 
     .modified-date {
-        background-color: #f9fafb;
+        background-color: var(--bg-body);
         padding: 12px 16px;
         border-radius: 6px;
         font-size: 13px;
@@ -40,7 +40,7 @@
     }
 
     .settings-section {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 32px;
@@ -93,8 +93,74 @@
 
     .form-group input:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        box-shadow: 0 0 0 3px rgba(235, 168, 27, 0.15);
     }
+
+    /* ── Appearance section ───────────────────────────────────── */
+    .theme-options {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .theme-card {
+        width: 140px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .theme-card:hover { border-color: var(--primary); }
+
+    .theme-card.selected {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(235, 168, 27, 0.2);
+    }
+
+    .theme-preview {
+        height: 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .theme-preview-dark { background: var(--bg-body); }
+    .theme-preview-light { background: #f9fafb; }
+
+    .tp-bar {
+        border-radius: 3px;
+        height: 8px;
+    }
+
+    .theme-preview-dark .tp-bar-1 { background: var(--border-color); width: 60%; }
+    .theme-preview-dark .tp-bar-2 { background: #EBA81B; width: 40%; }
+    .theme-preview-dark .tp-bar-3 { background: var(--border-color); width: 75%; }
+
+    .theme-preview-light .tp-bar-1 { background: #e5e7eb; width: 60%; }
+    .theme-preview-light .tp-bar-2 { background: #EBA81B; width: 40%; }
+    .theme-preview-light .tp-bar-3 { background: #e5e7eb; width: 75%; }
+
+    .theme-label {
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-main);
+        background: var(--bg-content);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .theme-label .check-icon {
+        color: var(--primary);
+        display: none;
+    }
+
+    .theme-card.selected .check-icon { display: inline; }
 </style>
 {% endblock %}
 
@@ -104,17 +170,20 @@
 </div>
 
 <div class="settings-tabs">
-    <div class="st-tab active">General information</div>
-    <div class="st-tab">Tax information</div>
-    <div class="st-tab">Tracking Analytics</div>
-    <div class="st-tab">API key</div>
-    <div class="st-tab">Notifications</div>
+    <div class="st-tab active" onclick="showTab('general')">General information</div>
+    <div class="st-tab" onclick="showTab('tax')">Tax information</div>
+    <div class="st-tab" onclick="showTab('analytics')">Tracking Analytics</div>
+    <div class="st-tab" onclick="showTab('api')">API key</div>
+    <div class="st-tab" onclick="showTab('notifications')">Notifications</div>
+    <div class="st-tab" onclick="showTab('appearance')">Appearance</div>
 </div>
 
 <div class="modified-date">
     Modified on March 1, 2026
 </div>
 
+<!-- General tab -->
+<div id="tab-general" class="tab-pane">
 <div class="settings-section">
     <div class="section-info">
         <h3>Contact information</h3>
@@ -140,4 +209,69 @@
         </form>
     </div>
 </div>
+</div>
+
+<!-- Appearance tab -->
+<div id="tab-appearance" class="tab-pane" style="display:none;">
+<div class="settings-section">
+    <div class="section-info">
+        <h3>Appearance</h3>
+        <p>Choose how the dashboard looks. Your preference is saved in your browser.</p>
+    </div>
+
+    <div class="form-content">
+        <div class="form-group">
+            <label>Theme</label>
+            <div class="theme-options">
+                <div class="theme-card" id="theme-card-dark" onclick="setTheme('dark')">
+                    <div class="theme-preview theme-preview-dark">
+                        <div class="tp-bar tp-bar-1"></div>
+                        <div class="tp-bar tp-bar-2"></div>
+                        <div class="tp-bar tp-bar-3"></div>
+                    </div>
+                    <div class="theme-label">
+                        Dark
+                        <i class="fa-solid fa-circle-check check-icon"></i>
+                    </div>
+                </div>
+
+                <div class="theme-card" id="theme-card-light" onclick="setTheme('light')">
+                    <div class="theme-preview theme-preview-light">
+                        <div class="tp-bar tp-bar-1"></div>
+                        <div class="tp-bar tp-bar-2"></div>
+                        <div class="tp-bar tp-bar-3"></div>
+                    </div>
+                    <div class="theme-label">
+                        Light
+                        <i class="fa-solid fa-circle-check check-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    function showTab(name) {
+        document.querySelectorAll('.tab-pane').forEach(function(p){ p.style.display = 'none'; });
+        var pane = document.getElementById('tab-' + name);
+        if (pane) pane.style.display = '';
+        document.querySelectorAll('.st-tab').forEach(function(t){ t.classList.remove('active'); });
+        event.currentTarget.classList.add('active');
+    }
+
+    function setTheme(theme) {
+        localStorage.setItem('qrku-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('theme-card-dark').classList.toggle('selected', theme === 'dark');
+        document.getElementById('theme-card-light').classList.toggle('selected', theme === 'light');
+    }
+
+    // Init selected state on load
+    (function(){
+        var t = localStorage.getItem('qrku-theme') || 'dark';
+        document.getElementById('theme-card-' + t).classList.add('selected');
+    })();
+</script>
 {% endblock %}

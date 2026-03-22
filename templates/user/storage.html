@@ -11,7 +11,7 @@
 
     /* Usage card */
     .usage-card {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 24px;
@@ -55,7 +55,7 @@
     }
 
     .usage-bar-wrap {
-        background: #f3f4f6;
+        background: #252619;
         border-radius: 8px;
         height: 12px;
         overflow: hidden;
@@ -95,7 +95,7 @@
 
     /* File list */
     .files-card {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         overflow: hidden;
@@ -127,7 +127,7 @@
         padding: 4px 12px;
         border-radius: 20px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         font-size: 12px;
         color: var(--text-muted);
         cursor: pointer;
@@ -149,7 +149,7 @@
     }
 
     .file-row:last-child { border-bottom: none; }
-    .file-row:hover { background: #f9fafb; }
+    .file-row:hover { background: var(--bg-body); }
 
     .file-icon {
         width: 40px;
@@ -162,10 +162,10 @@
         flex-shrink: 0;
     }
 
-    .file-icon.image  { background: #eff6ff; color: #3b82f6; }
-    .file-icon.video  { background: #fef3c7; color: #d97706; }
+    .file-icon.image  { background: #2A2810; color: #EBA81B; }
+    .file-icon.video  { background: #2A2810; color: #EBA81B; }
     .file-icon.pdf    { background: #fef2f2; color: #ef4444; }
-    .file-icon.other  { background: #f3f4f6; color: #6b7280; }
+    .file-icon.other  { background: #252619; color: var(--text-muted); }
 
     .file-info {
         flex: 1;
@@ -195,7 +195,7 @@
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        background: #eff6ff;
+        background: #2A2810;
         color: var(--primary);
         padding: 2px 8px;
         border-radius: 10px;
@@ -222,7 +222,7 @@
         gap: 6px;
         padding: 6px 14px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         border-radius: 6px;
         font-size: 12px;
@@ -233,7 +233,7 @@
 
     .btn-edit:hover {
         border-color: var(--primary);
-        background: #eff6ff;
+        background: #2A2810;
         color: var(--primary);
     }
 
@@ -257,7 +257,7 @@
     .file-mini-bar {
         width: 60px;
         height: 4px;
-        background: #f3f4f6;
+        background: #252619;
         border-radius: 4px;
         overflow: hidden;
         flex-shrink: 0;
@@ -276,7 +276,7 @@
         padding: 4px 28px 4px 10px;
         border-radius: 20px;
         border: 1px solid var(--border-color);
-        background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
+        background: var(--bg-content) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E") no-repeat right 10px center;
         font-size: 12px;
         color: var(--text-main);
         cursor: pointer;
@@ -290,8 +290,8 @@
     .qr-info-panel {
         margin: 0 20px 12px;
         padding: 14px 16px;
-        background: #f8faff;
-        border: 1px solid #dbeafe;
+        background: var(--bg-body);
+        border: 1px solid #2A2810;
         border-radius: 10px;
         display: none;
         gap: 16px;
@@ -308,7 +308,7 @@
     .btn-delete-qr {
         display: inline-flex; align-items: center; gap: 6px;
         padding: 7px 14px; border-radius: 7px; border: 1px solid #fecaca;
-        background: white; color: #dc2626; font-size: 12px; font-weight: 500;
+        background: var(--bg-content); color: #dc2626; font-size: 12px; font-weight: 500;
         cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
     }
     .btn-delete-qr:hover { background: #fef2f2; border-color: #dc2626; }
@@ -321,7 +321,7 @@
     }
     .del-modal-overlay.open { display: flex; }
     .del-modal {
-        background: white; border-radius: 14px; padding: 28px 28px 24px;
+        background: var(--bg-content); border-radius: 14px; padding: 28px 28px 24px;
         max-width: 400px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
     .del-modal-icon { font-size: 32px; color: #ef4444; margin-bottom: 12px; }
@@ -335,7 +335,7 @@
     .del-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
     .btn-cancel-del {
         padding: 8px 18px; border-radius: 7px; border: 1px solid var(--border-color);
-        background: white; color: var(--text-main); font-size: 13px; cursor: pointer;
+        background: var(--bg-content); color: var(--text-main); font-size: 13px; cursor: pointer;
     }
     .btn-confirm-del {
         padding: 8px 18px; border-radius: 7px; border: none;
@@ -385,7 +385,7 @@
         min-width: 32px; height: 32px;
         padding: 0 8px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         font-size: 13px;
         border-radius: 6px;
@@ -393,7 +393,7 @@
         display: flex; align-items: center; justify-content: center;
         transition: all 0.15s;
     }
-    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: #2A2810; }
     .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
     .page-btn:disabled { opacity: 0.35; cursor: default; }
 
@@ -436,7 +436,7 @@
             <span>Used: {{ info.total_fmt }}</span>
         </div>
         <div class="usage-stat">
-            <div class="usage-stat-dot" style="background: #e5e7eb;"></div>
+            <div class="usage-stat-dot" style="background: var(--border-color);"></div>
             <span>Free: {{ info.free_fmt }}</span>
         </div>
         <div class="usage-stat">

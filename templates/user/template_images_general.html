@@ -43,23 +43,23 @@ PUBLIC MODE
         --text-color: {{ _text_color }};
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; min-height: 100vh; display: flex; align-items: stretch; justify-content: center; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111827; min-height: 100vh; display: flex; align-items: stretch; justify-content: center; }
     .phone-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
     .welcome-overlay { position: absolute; inset: 0; z-index: 100; background: {{ _welcome_bg }}; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: auto; }
     .welcome-overlay.hide { opacity: 0; pointer-events: none; }
     .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
-    .gallery-wrapper { min-height: 100vh; display: flex; flex-direction: column; background: #f9fafb; }
+    .gallery-wrapper { min-height: 100vh; display: flex; flex-direction: column; background: #ffffff; }
     .gallery-header { background: var(--primary); padding: 40px 24px 28px; text-align: center; }
     .gallery-header-title { font-size: 22px; font-weight: 800; color: white; margin-bottom: 6px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif;{% endif %} }
     .gallery-header-desc { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.4; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif;{% endif %} }
     .gallery-grid { display: grid; grid-template-columns: repeat({{ _cols }}, 1fr); gap: 16px; padding: 20px; flex: 1; }
-    .gallery-item { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
+    .gallery-item { background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; }
     .gallery-item:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
     .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
     .gallery-item-info { padding: 12px; }
     .gallery-item-name { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% endif %} }
     .gallery-item-desc { font-size: 12px; color: #6b7280; line-height: 1.4; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% endif %} }
-    .gallery-footer { text-align: center; padding: 16px 20px 32px; font-size: 11px; color: #9ca3af; }
+    .gallery-footer { text-align: center; padding: 16px 20px 32px; font-size: 11px; color: #6b7280; }
     .lightbox-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
     .lightbox-overlay.show { display: flex; }
     .lightbox-overlay img { max-width: 90%; max-height: 85vh; object-fit: contain; border-radius: 8px; }
@@ -98,7 +98,7 @@ PUBLIC MODE
             </div>
             {% endfor %}
             {% if not _gallery %}
-            <div style="text-align:center;padding:60px 20px;color:#9ca3af;grid-column:1/-1;">
+            <div style="text-align:center;padding:60px 20px;color:#6b7280;grid-column:1/-1;">
                 <i class="fa-regular fa-images" style="font-size:48px;margin-bottom:12px;display:block;"></i>
                 <div style="font-size:14px;">No images yet</div>
             </div>
@@ -160,7 +160,7 @@ PREVIEW MODE — shown inside phone mockup
 
 {# ── Gallery preview ─────────────────────────────────────────────── #}
 <div id="preview-images-gallery"
-    style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#f9fafb;overflow-y:auto;overflow-x:hidden;">
+    style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;background:#ffffff;overflow-y:auto;overflow-x:hidden;">
 
     {# Header #}
     <div id="preview-gallery-header"
@@ -183,7 +183,7 @@ PREVIEW MODE — shown inside phone mockup
         {% if _tmpl == 'grid12' and _i == 0 %}{% set _span_style = 'grid-column:span 2;' %}{% endif %}
         {% if _tmpl == 'split' and _i == 0 %}{% set _span_style = 'grid-row:span 2;' %}{% endif %}
         <div class="preview-gallery-item"
-            style="background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);{{ _span_style }}">
+            style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);{{ _span_style }}">
             <img src="{{ img.url }}" alt="{{ img.name or '' }}"
                 style="width:100%;aspect-ratio:1;object-fit:cover;display:block;" loading="lazy">
             {% if not _hide_labels and (img.name or img.desc) %}
@@ -197,14 +197,14 @@ PREVIEW MODE — shown inside phone mockup
         </div>
         {% endfor %}
         {% if not _gallery %}
-        <div style="text-align:center;padding:40px 10px;color:#d1d5db;grid-column:1/-1;">
+        <div style="text-align:center;padding:40px 10px;color:#d1d9e6;grid-column:1/-1;">
             <i class="fa-regular fa-images" style="font-size:32px;margin-bottom:8px;display:block;"></i>
             <div style="font-size:11px;">No images</div>
         </div>
         {% endif %}
     </div>
 
-    <div style="text-align:center;padding:8px;font-size:9px;color:#9ca3af;">Powered by QRCardKu</div>
+    <div style="text-align:center;padding:8px;font-size:9px;color:#6b7280;">Powered by QRCardKu</div>
 </div>
 
 {% endif %}

@@ -41,7 +41,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #0f172a; min-height: 100vh;
+        background: #111827; min-height: 100vh;
         display: flex; align-items: stretch; justify-content: center;
     }
     .phone-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
@@ -58,7 +58,7 @@
 
     /* DEFAULT */
     .tpl-default .phone-shell { background: #020617; width: 100%; min-height: 100vh; display: flex; }
-    .tpl-default .phone-inner { background: #f9fafb; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .tpl-default .phone-inner { background: #ffffff; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
     .tpl-default .top-block { background: var(--primary); padding: 40px 24px 72px; }
     .tpl-default .content-block {
         background: #ffffff; border-radius: 24px 24px 0 0; margin-top: -32px;
@@ -67,11 +67,11 @@
     .tpl-default .dtitle { font-size: 18px; font-weight: 800; text-align: center; line-height: 1.2; margin-top: 24px; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
     .tpl-default .ddesc { font-size: 13px; text-align: center; margin-top: 4px; margin-bottom: 24px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
     .tpl-default .Sosmed-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-    .tpl-default .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
+    .tpl-default .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
     .tpl-default .Sosmed-item-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .tpl-default .Sosmed-item-text { flex: 1; min-width: 0; overflow: hidden; text-align: left; }
     .tpl-default .Sosmed-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tpl-default .Sosmed-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tpl-default .Sosmed-item-subdesc { font-size: 11px; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 
     /* TEMPLATE 1 */
     .tpl-1 { min-height: 100vh; display: flex; flex-direction: column; background: #f3f4f6; overflow-y: auto; }
@@ -82,11 +82,11 @@
     .tpl-1 .t1-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: white;{% endif %} }
     .tpl-1 .t1-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: rgba(255,255,255,0.8);{% endif %} }
     .tpl-1 .Sosmed-list { display: flex; flex-direction: column; gap: 10px; }
-    .tpl-1 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: white; border-radius: 10px; gap: 10px; }
+    .tpl-1 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #ffffff; border-radius: 10px; gap: 10px; }
     .tpl-1 .Sosmed-item-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .tpl-1 .Sosmed-item-text { flex: 1; min-width: 0; overflow: hidden; }
     .tpl-1 .Sosmed-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tpl-1 .Sosmed-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tpl-1 .Sosmed-item-subdesc { font-size: 11px; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 
     /* TEMPLATE 2 */
     .tpl-2 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; overflow-y: auto; }
@@ -95,17 +95,17 @@
     .tpl-2 .t2-card-wrap { flex: 1; display: flex; flex-direction: column; padding: 0 20px 32px; min-height: 0; }
     .tpl-2 .t2-card-wrap.no-header { justify-content: center; }
     .tpl-2 .t2-card-wrap.with-header { justify-content: flex-start; }
-    .tpl-2 .t2-card { background: white; width: 100%; max-width: 440px; margin: 0 auto; padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); flex: 1; display: flex; flex-direction: column; }
+    .tpl-2 .t2-card { background: #ffffff; width: 100%; max-width: 440px; margin: 0 auto; padding: 28px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); flex: 1; display: flex; flex-direction: column; }
     .tpl-2 .t2-card.no-header { border-radius: 20px; }
     .tpl-2 .t2-card.with-header { border-radius: 22px 22px 0 0; margin-top: -18px; }
     .tpl-2 .t2-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
     .tpl-2 .t2-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
     .tpl-2 .Sosmed-list { display: flex; flex-direction: column; gap: 10px; }
-    .tpl-2 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
+    .tpl-2 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
     .tpl-2 .Sosmed-item-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .tpl-2 .Sosmed-item-text { flex: 1; min-width: 0; overflow: hidden; }
     .tpl-2 .Sosmed-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tpl-2 .Sosmed-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tpl-2 .Sosmed-item-subdesc { font-size: 11px; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 
     /* TEMPLATE 3 */
     .tpl-3 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; padding: 40px 20px 32px; overflow-y: auto; }
@@ -115,26 +115,26 @@
     .tpl-3 .t3-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; width: 100%; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: white;{% endif %} }
     .tpl-3 .t3-desc { font-size: 13px; text-align: center; margin-bottom: 20px; width: 100%; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: rgba(255,255,255,0.8);{% endif %} }
     .tpl-3 .Sosmed-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-    .tpl-3 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: white; border-radius: 10px; gap: 10px; }
+    .tpl-3 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #ffffff; border-radius: 10px; gap: 10px; }
     .tpl-3 .Sosmed-item-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .tpl-3 .Sosmed-item-text { flex: 1; min-width: 0; overflow: hidden; }
     .tpl-3 .Sosmed-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tpl-3 .Sosmed-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tpl-3 .Sosmed-item-subdesc { font-size: 11px; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 
     /* TEMPLATE 4 */
     .tpl-4 { min-height: 100vh; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px 32px; overflow-y: auto; }
-    .tpl-4 .t4-card { background: white; border-radius: 20px; width: 100%; max-width: 440px; position: relative; padding: 56px 20px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .tpl-4 .t4-card { background: #ffffff; border-radius: 20px; width: 100%; max-width: 440px; position: relative; padding: 56px 20px 28px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
     .tpl-4 .t4-circle { position: absolute; top: -44px; left: 50%; transform: translateX(-50%); width: 88px; height: 88px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 16px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center; }
     .tpl-4 .t4-circle img { width: 100%; height: 100%; object-fit: cover; }
-    .tpl-4 .t4-circle-placeholder { font-size: 28px; color: #9ca3af; }
+    .tpl-4 .t4-circle-placeholder { font-size: 28px; color: #6b7280; }
     .tpl-4 .t4-title { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if _apply_fonts %}font-family: var(--title-font), system-ui, sans-serif; color: var(--title-color);{% else %}color: #111827;{% endif %} }
     .tpl-4 .t4-desc { font-size: 13px; text-align: center; margin-bottom: 20px; {% if _apply_fonts %}font-family: var(--text-font), system-ui, sans-serif; color: var(--text-color);{% else %}color: #6b7280;{% endif %} }
     .tpl-4 .Sosmed-list { display: flex; flex-direction: column; gap: 10px; }
-    .tpl-4 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
+    .tpl-4 .Sosmed-item { display: flex; align-items: center; padding: 12px 14px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; gap: 10px; }
     .tpl-4 .Sosmed-item-icon { width: 36px; height: 36px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .tpl-4 .Sosmed-item-text { flex: 1; min-width: 0; overflow: hidden; }
     .tpl-4 .Sosmed-item-name { font-size: 13px; font-weight: 500; color: #111827; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tpl-4 .Sosmed-item-subdesc { font-size: 11px; color: #9ca3af; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .tpl-4 .Sosmed-item-subdesc { font-size: 11px; color: #6b7280; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 </style>
 
 {# ── Shared sosmed macro (public mode) ─────────────────────────────── #}
@@ -144,7 +144,7 @@
 {% set _name = (item.name if item is mapping else '') or 'Social' %}
 {% set _idesc = item.desc if item is mapping else '' %}
 <div class="Sosmed-item">
-    <div class="Sosmed-item-icon"><i class="{{ _icon }}" style="font-size:18px;color:#374151;"></i></div>
+    <div class="Sosmed-item-icon"><i class="{{ _icon }}" style="font-size:18px;color:#111827;"></i></div>
     <div class="Sosmed-item-text"><span class="Sosmed-item-name">{{ _name }}</span><span class="Sosmed-item-subdesc">{{ _idesc }}</span></div>
 </div>
 {% endfor %}
@@ -166,7 +166,7 @@
             <div class="phone-inner">
                 <div class="top-block"></div>
                 <div class="content-block">
-                    <div style="overflow:hidden;border-radius:50%;width:120px;height:120px;margin-top:-60px;background:white;border:4px solid white;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <div style="overflow:hidden;border-radius:50%;width:120px;height:120px;margin-top:-60px;background:#ffffff;border:4px solid white;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                         {% if _cover_img %}<img src="{{ _cover_img }}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="">
                         {% else %}<i class="fa-regular fa-thumbs-up" style="font-size:44px;color:#cbd5e1;"></i>{% endif %}
                     </div>
@@ -274,7 +274,7 @@
         <div id="sosmed-t1-preview-desc"
             style="font-size:11px;color:rgba(255,255,255,0.8);text-align:center;margin-bottom:8px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
         <div id="sosmed-t1-preview-items-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
-            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#374151;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
+            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#ffffff;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#111827;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
         </div>
     </div>
 </div>
@@ -289,13 +289,13 @@
     <div id="sosmed-t2-preview-card-wrap"
         style="flex:1;display:flex;flex-direction:column;padding:0 12px 16px;min-height:0;{% if _cover_img %}justify-content:flex-start;{% else %}justify-content:center;{% endif %}">
         <div id="sosmed-t2-preview-card-body"
-            style="background:white;width:100%;margin:0 auto;padding:20px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.2);flex:1;display:flex;flex-direction:column;{% if _cover_img %}border-radius:22px 22px 0 0;margin-top:-18px;{% else %}border-radius:14px;{% endif %}overflow-y:auto;">
+            style="background:#ffffff;width:100%;margin:0 auto;padding:20px 14px;box-shadow:0 4px 16px rgba(0,0,0,0.2);flex:1;display:flex;flex-direction:column;{% if _cover_img %}border-radius:22px 22px 0 0;margin-top:-18px;{% else %}border-radius:14px;{% endif %}overflow-y:auto;">
             <div id="sosmed-t2-preview-title"
                 style="font-size:17px;font-weight:800;color:#111827;text-align:center;margin-bottom:4px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
             <div id="sosmed-t2-preview-desc"
                 style="font-size:11px;color:#6b7280;text-align:center;margin-bottom:10px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
             <div id="sosmed-t2-preview-items-list" style="display:flex;flex-direction:column;gap:6px;">
-                {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#374151;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
+                {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#111827;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
             </div>
         </div>
     </div>
@@ -318,7 +318,7 @@
         <div id="sosmed-t3-preview-desc"
             style="font-size:11px;color:rgba(255,255,255,0.8);text-align:center;margin-bottom:8px;width:100%;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
         <div id="sosmed-t3-preview-items-list" style="display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:8px;">
-            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:white;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#374151;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
+            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#ffffff;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#111827;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
         </div>
     </div>
 </div>
@@ -326,13 +326,13 @@
 {# ── Template 4 ───────────────────────────────────────────────────── #}
 <div id="sosmed-preview-template4"
     style="display:{% if _tmpl == 'template4' %}flex{% else %}none{% endif %};position:absolute;inset:0;z-index:10;flex-direction:column;background:{{ _primary }};overflow-y:auto;overflow-x:hidden;align-items:center;justify-content:center;padding:20px 14px;">
-    <div style="background:white;border-radius:20px;width:100%;position:relative;padding:50px 16px 20px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
+    <div style="background:#ffffff;border-radius:20px;width:100%;position:relative;padding:50px 16px 20px;box-shadow:0 8px 24px rgba(0,0,0,0.15);">
         <div style="position:absolute;top:-38px;left:50%;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;overflow:hidden;border:4px solid white;box-shadow:0 2px 12px rgba(0,0,0,0.15);background:#e5e7eb;display:flex;align-items:center;justify-content:center;">
             <img id="sosmed-t4-preview-circle-img" src="{{ _cover_img }}" alt=""
                 style="width:100%;height:100%;object-fit:cover;{% if not _cover_img %}display:none;{% endif %}">
             <div id="sosmed-t4-preview-circle-placeholder"
                 style="display:{% if _cover_img %}none{% else %}flex{% endif %};align-items:center;justify-content:center;width:100%;height:100%;background:#e5e7eb;">
-                <i class="fa-regular fa-image" style="font-size:22px;color:#9ca3af;"></i>
+                <i class="fa-regular fa-image" style="font-size:22px;color:#6b7280;"></i>
             </div>
         </div>
         <div id="sosmed-t4-preview-title"
@@ -340,7 +340,7 @@
         <div id="sosmed-t4-preview-desc"
             style="font-size:11px;color:#6b7280;text-align:center;margin-bottom:10px;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
         <div id="sosmed-t4-preview-items-list" style="display:flex;flex-direction:column;gap:6px;">
-            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#374151;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
+            {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#111827;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
         </div>
     </div>
 </div>
@@ -355,9 +355,9 @@
 
     <div style="display:flex;align-items:center;justify-content:center;width:100%;margin-top:-50px;margin-bottom:16px;">
         <div id="sosmed-preview-profile-img-container"
-            style="width:120px;height:120px;border-radius:50%;background:white;border:4px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+            style="width:120px;height:120px;border-radius:50%;background:#ffffff;border:4px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
             <i id="sosmed-preview-profile-placeholder-icon" class="fa-regular fa-image"
-                style="font-size:44px;color:#d1d5db;{% if _cover_img %}display:none;{% endif %}"></i>
+                style="font-size:44px;color:#d1d9e6;{% if _cover_img %}display:none;{% endif %}"></i>
             <img id="sosmed-preview-profile-img" src="{{ _cover_img }}" alt=""
                 style="{% if not _cover_img %}display:none;{% endif %}width:100%;height:100%;object-fit:cover;">
         </div>
@@ -367,10 +367,10 @@
         style="color:#111827;font-size:17px;font-weight:800;font-family:'Lato',sans-serif;margin-bottom:4px;text-align:center;padding:0 16px;line-height:1.2;{% if not _title %}display:none;{% endif %}">{{ _title }}</div>
 
     <div id="sosmed-preview-desc-text"
-        style="color:#9ca3af;font-size:11px;font-weight:400;font-family:'Lato',sans-serif;text-align:center;padding:0 20px;margin-bottom:12px;line-height:1.4;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
+        style="color:#6b7280;font-size:11px;font-weight:400;font-family:'Lato',sans-serif;text-align:center;padding:0 20px;margin-bottom:12px;line-height:1.4;{% if not _desc %}display:none;{% endif %}">{{ _desc }}</div>
 
     <div id="sosmed-preview-items-list" style="width:100%;padding:0 10px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-        {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#374151;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
+        {% for item in _items %}{% set _ic = (item.icon if item is mapping else '') or 'fa-brands fa-globe' %}{% set _in = (item.name if item is mapping else '') or 'Social' %}{% set _id = item.desc if item is mapping else '' %}<div style="display:flex;align-items:center;padding:8px 10px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;gap:8px;"><div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="{{ _ic }}" style="font-size:14px;color:#111827;"></i></div><div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _in }}</span><span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ _id }}</span></div></div>{% endfor %}
     </div>
 </div>
 

@@ -12,21 +12,21 @@
     .form-column { flex: 1; min-width: 0; }
     .preview-column { width: 340px; flex-shrink: 0; }
     .step-item { display: flex; align-items: center; gap: 8px; }
-    .step-num { width: 24px; height: 24px; background-color: #e5e7eb; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+    .step-num { width: 24px; height: 24px; background-color: var(--border-color); color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
     .step-completed { color: #16a34a; font-weight: 500; }
     .step-completed .step-num { background-color: #16a34a; color: white; }
     .step-active { color: var(--primary); font-weight: 500; }
     .step-active .step-num { background-color: var(--primary); color: white; }
-    .btn-outline { border: 1px solid var(--border-color); background: white; color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+    .btn-outline { border: 1px solid var(--border-color); background: var(--bg-content); color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
     .btn-primary-pill { background-color: var(--primary); color: white; border: none; padding: 6px 20px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
     .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; text-align: center; }
-    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .collapse-section { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: var(--bg-content); border-bottom: 1px solid var(--border-color); }
     .header-left-col { display: flex; align-items: center; gap: 12px; }
     .header-icon { color: var(--primary); font-size: 18px; width: 24px; text-align: center; }
     .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
     .header-text p { font-size: 12px; color: var(--text-muted); }
-    .collapse-body { padding: 0 24px 24px 24px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
+    .collapse-body { padding: 0 24px 24px 24px; background-color: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 4000px; opacity: 1; }
     .sub-collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; cursor: pointer; border-top: 1px solid var(--border-color); }
     .sub-collapse-header:first-child { border-top: none; }
@@ -41,20 +41,31 @@
     .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; }
     .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e7eb; transition: .3s; border-radius: 20px; }
-    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: var(--bg-content); transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
     input:checked+.slider { background-color: var(--primary); }
     input:checked+.slider:before { transform: translateX(16px); }
-    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #f9fafb; }
+    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--bg-body); }
     .url-prefix { padding: 10px 14px; color: var(--text-muted); font-size: 14px; border-right: 1px solid var(--border-color); }
-    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: white; }
+    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: #ffffff; }
     .url-prefix-group input:focus { outline: none; }
     .toggle-label-with-icon { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); font-weight: 500; }
+    /* Template selector and right preview: always light mode regardless of theme */
+    .template-select-area,
+    .preview-column {
+        --bg-body: #f9fafb;
+        --bg-content: #ffffff;
+        --bg-sidebar: #f3f4f6;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+    }
+
     .phone-container { position: sticky; top: 24px; }
     .phone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
-    .phone-mockup { width: 100%; height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-    .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; }
+    .phone-mockup { width: 100%; height: 600px; background-color: var(--bg-content); border: 12px solid var(--text-main); border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .mockup-inner { width: 100%; height: 100%; background-color: #ffffff; display: flex; flex-direction: column; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
@@ -65,7 +76,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -76,7 +87,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -85,7 +96,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -117,7 +128,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: white;
+            background: var(--bg-content);
             overflow-y: auto;
             padding: 12px 16px 8px;
             box-sizing: border-box;
@@ -131,13 +142,30 @@
     .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
     .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
     .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
-    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-row-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 1px; }
     .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
     .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
-    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
-    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #ffffff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
     .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
+
+
+/* header-icon tints */
+.hi-amber { background: #26230f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-green  { background: #0f2218; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-orange { background: #251a0f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-red    { background: #251010; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-purple { background: #1a1626; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-blue   { background: #0f1825; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-grey   { background: var(--border-color); border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+[data-theme="light"] .hi-amber  { background: #fef9ec; }
+[data-theme="light"] .hi-green  { background: #f0fdf4; }
+[data-theme="light"] .hi-orange { background: #fff7ed; }
+[data-theme="light"] .hi-red    { background: #fef2f2; }
+[data-theme="light"] .hi-purple { background: #f5f3ff; }
+[data-theme="light"] .hi-blue   { background: #f0f9ff; }
+[data-theme="light"] .hi-grey   { background: #f3f4f6; }
 </style>
 {% endblock %}
 
@@ -199,7 +227,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-palette"></i></div>
                         <div class="header-text">
                             <h3>Appearance</h3>
                             <p>Customize the style and template.</p>
@@ -215,24 +243,24 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                            <div class="template-select-area" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Links_template" value="default" {% if not qrcard or qrcard.get('Links_template','default')=='default' %}checked{% endif %} class="hidden-radio" style="display:none;">
-                                    <div class="template-card" style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
-                                        <div style="background: #e5e7eb; width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;"></div>
-                                        <div style="background: #d1d5db; width: 80%; height: 8px; margin: 0 auto 4px;"></div>
-                                        <div style="background: #d1d5db; width: 60%; height: 8px; margin: 0 auto;"></div>
+                                    <div class="template-card" style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px;">
+                                        <div style="background: var(--border-color); width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;"></div>
+                                        <div style="background: var(--border-color); width: 80%; height: 8px; margin: 0 auto 4px;"></div>
+                                        <div style="background: var(--border-color); width: 60%; height: 8px; margin: 0 auto;"></div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
                                 </label>
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Links_template" value="template1" {% if qrcard and qrcard.get('Links_template')=='template1' %}checked{% endif %} class="hidden-radio" style="display:none;">
-                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px; overflow: hidden;">
                                         <div style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;"><div style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;"></div></div>
-                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
-                                            <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
+                                        <div style="background: var(--bg-content); border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div style="background: var(--text-muted); width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;"></div></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;"></div></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 1</span>
@@ -240,10 +268,10 @@
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Links_template" value="template2" {% if qrcard and qrcard.get('Links_template')=='template2' %}checked{% endif %} class="hidden-radio" style="display:none;">
                                     <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
-                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 4px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                            <div style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 4px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 2</span>
@@ -251,21 +279,21 @@
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Links_template" value="template3" {% if qrcard and qrcard.get('Links_template')=='template3' %}checked{% endif %} class="hidden-radio" style="display:none;">
                                     <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
-                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i></div>
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-content); border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fa-regular fa-image" style="color: var(--text-muted); font-size: 10px;"></i></div>
                                         <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 7px;"></div>
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;"><div style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 10px; height: 10px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;"><div style="width: 10px; height: 10px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 3</span>
                                 </label>
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Links_template" value="template4" {% if qrcard and qrcard.get('Links_template')=='template4' %}checked{% endif %} class="hidden-radio" style="display:none;">
                                     <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
-                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;"><i class="fa-regular fa-image" style="color: #9ca3af; font-size: 7px;"></i></div>
-                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 5px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: var(--border-color); border: 2px solid white; display: flex; align-items: center; justify-content: center;"><i class="fa-regular fa-image" style="color: var(--text-muted); font-size: 7px;"></i></div>
+                                            <div style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 5px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div><div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 4</span>
@@ -286,20 +314,20 @@
                                 <div class="color-preset" data-primary="#10b981" data-secondary="#047857" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                                 <div class="color-preset" data-primary="#f59e0b" data-secondary="#b45309" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #f59e0b; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #b45309; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                                 <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
-                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                                <div class="color-preset" data-primary="#EBA81B" data-secondary="#5b21b6" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #EBA81B; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                             </div>
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 24px;">
                                     <div>
                                         <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="Links_primary_hex" name="Links_primary_color" value="{{ qrcard.get('Links_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
                                             <input type="color" id="Links_primary_picker" value="{{ qrcard.get('Links_primary_color', '#2f6bfd') if qrcard else '#2f6bfd' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
                                         </div>
                                     </div>
                                     <div>
                                         <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="Links_secondary_hex" name="Links_secondary_color" value="{{ qrcard.get('Links_secondary_color', '#0E379A') if qrcard else '#0E379A' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
                                             <input type="color" id="Links_secondary_picker" value="{{ qrcard.get('Links_secondary_color', '#0e379a') if qrcard else '#0e379a' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
                                         </div>
@@ -319,34 +347,34 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px;">
                                 <div style="margin-bottom: 16px;">
                                     <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
-                                        <select name="Links_title_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                        <select name="Links_title_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
-                                            <input type="text" id="Links_title_color_hex" value="{{ qrcard.get('Links_title_color','#111827') if qrcard else '#111827' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
-                                            <input type="color" name="Links_title_color" id="Links_title_color_picker" value="{{ qrcard.get('Links_title_color','#111827') if qrcard else '#111827' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Links_title_color_hex" value="{{ qrcard.get('Links_title_color','var(--text-main)') if qrcard else 'var(--text-main)' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Links_title_color" id="Links_title_color_picker" value="{{ qrcard.get('Links_title_color','var(--text-main)') if qrcard else 'var(--text-main)' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
                                 <div>
                                     <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
-                                        <select name="Links_text_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                        <select name="Links_text_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
-                                            <input type="text" id="Links_text_color_hex" value="{{ qrcard.get('Links_text_color','#6b7280') if qrcard else '#6b7280' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
-                                            <input type="color" name="Links_text_color" id="Links_text_color_picker" value="{{ qrcard.get('Links_text_color','#6b7280') if qrcard else '#6b7280' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Links_text_color_hex" value="{{ qrcard.get('Links_text_color','var(--text-muted)') if qrcard else 'var(--text-muted)' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Links_text_color" id="Links_text_color_picker" value="{{ qrcard.get('Links_text_color','var(--text-muted)') if qrcard else 'var(--text-muted)' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
@@ -370,7 +398,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="header-icon hi-green"><i class="fa-solid fa-circle-info"></i></div>
                         <div class="header-text">
                             <h3>Basic Information</h3>
                             <p>Add essential information.</p>
@@ -387,21 +415,21 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body sub-collapse-body-lg">
-                            <div style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
                                 <!-- Cover Image -->
                                 <div id="links-cover-img-section" style="margin-bottom: 16px;">
                                     <label class="form-label" style="font-size: 12px;">Cover image
                                         <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional cover image)</span>
                                     </label>
-                                    <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                    <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: var(--bg-body); gap: 10px;">
                                         <div id="links-cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                             {% set links_cover_url = qrcard.get('Links_cover_img_url','') if qrcard else '' %}
                                             {% if links_cover_url %}
                                             <img src="{{ links_cover_url }}" alt="Cover image" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
                                             <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                             {% else %}
-                                            <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                                <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                            <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                             </div>
                                             <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
                                             {% endif %}
@@ -421,11 +449,11 @@
 
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Title</label>
-                                    <input type="text" name="Links_title" class="form-control" placeholder="Title" style="background: white;" value="{{ qrcard.get('Links_title','') if qrcard else '' }}">
+                                    <input type="text" name="Links_title" class="form-control" placeholder="Title" value="{{ qrcard.get('Links_title','') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Description</label>
-                                    <input type="text" name="Links_desc" class="form-control" placeholder="Short description" style="background: white;" value="{{ qrcard.get('Links_desc','') if qrcard else '' }}">
+                                    <input type="text" name="Links_desc" class="form-control" placeholder="Short description" value="{{ qrcard.get('Links_desc','') if qrcard else '' }}">
                                 </div>
                             </div>
                         </div>
@@ -438,29 +466,29 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body sub-collapse-body-lg">
-                            <div style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <label class="form-label" style="font-size: 12px; margin-bottom: 0;">Link items</label>
-                                    <button type="button" id="links-add-link-btn" style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                    <button type="button" id="links-add-link-btn" style="background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
                                         <i class="fa-solid fa-plus"></i> Add link
                                     </button>
                                 </div>
                                 <div id="links-list-container" style="display: flex; flex-direction: column; gap: 8px;">
                                     {% if links_list is defined and links_list %}
                                     {% for lnk in links_list %}
-                                    <div class="links-item-row" style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; flex-wrap: wrap;">
+                                    <div class="links-item-row" style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; flex-wrap: wrap;">
                                         <input type="text" name="Links_link_url[]" class="form-control" placeholder="https://example.com" style="flex: 2; background: transparent; border: none; min-width: 120px;" value="{{ lnk.url or '' }}">
                                         <input type="text" name="Links_link_name[]" class="form-control" placeholder="Link name (optional)" style="flex: 2; background: transparent; border: none; min-width: 120px;" value="{{ lnk.name or '' }}">
                                         <input type="text" name="Links_link_desc[]" class="form-control" placeholder="Description (optional)" style="flex: 2; background: transparent; border: none; min-width: 120px;" value="{{ lnk.desc or '' }}">
-                                        <button type="button" class="links-remove-btn" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;"><i class="fa-solid fa-trash-can"></i></button>
+                                        <button type="button" class="links-remove-btn" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;"><i class="fa-solid fa-trash-can"></i></button>
                                     </div>
                                     {% endfor %}
                                     {% else %}
-                                    <div class="links-item-row" style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; flex-wrap: wrap;">
+                                    <div class="links-item-row" style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; flex-wrap: wrap;">
                                         <input type="text" name="Links_link_url[]" class="form-control" placeholder="https://example.com" style="flex: 2; background: transparent; border: none; min-width: 120px;">
                                         <input type="text" name="Links_link_name[]" class="form-control" placeholder="Link name (optional)" style="flex: 2; background: transparent; border: none; min-width: 120px;">
                                         <input type="text" name="Links_link_desc[]" class="form-control" placeholder="Description (optional)" style="flex: 2; background: transparent; border: none; min-width: 120px;">
-                                        <button type="button" class="links-remove-btn" style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;"><i class="fa-solid fa-trash-can"></i></button>
+                                        <button type="button" class="links-remove-btn" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;"><i class="fa-solid fa-trash-can"></i></button>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -474,7 +502,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i></div>
                         <div class="header-text">
                             <h3>Content</h3>
                             <p>All the details about your QR.</p>
@@ -491,14 +519,14 @@
                         <div class="sub-collapse-body">
                             <div style="margin-top: 8px;">
                                 <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
-                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                     <div id="welcome-img-preview" style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                         {% if qrcard and qrcard.get('welcome_img_url') %}
                                         <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
                                         <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                         {% else %}
-                                        <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
                                         {% endif %}
@@ -517,7 +545,7 @@
                                     <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
                                         value="{{ qrcard.get('welcome_bg_color', qrcard.get('Links_primary_color','#2F6BFD')) if qrcard else '#2F6BFD' }}"
                                         style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
-                                    <input type="text" id="welcome_bg_color_hex" readonly style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #ffffff;">
                                 </div>
                             </div>
                             <div style="margin-top: 24px;">
@@ -525,7 +553,7 @@
                                     Time (seconds) <i class="fa-regular fa-circle-question" style="color: var(--text-muted); font-size: 14px;"></i>
                                 </label>
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5" style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider" value="{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }}">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5" style="flex: 1; accent-color: var(--border-color);" id="welcome-time-slider" value="{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }}">
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
                                     <span id="welcome-time-display">2.5 seconds</span>
@@ -558,8 +586,8 @@
                         <div class="sub-collapse-body">
                             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">Set the dates on which your content will be shown through the QR.</p>
                             <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
-                                <div style="flex: 1;"><label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label><div style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;"><span></span><i class="fa-regular fa-calendar" style="color: #9ca3af;"></i></div></div>
-                                <div style="flex: 1;"><label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label><div style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;"><span></span><i class="fa-regular fa-calendar" style="color: #9ca3af;"></i></div></div>
+                                <div style="flex: 1;"><label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label><div style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;"><span></span><i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i></div></div>
+                                <div style="flex: 1;"><label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label><div style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;"><span></span><i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i></div></div>
                             </div>
                         </div>
                     </div>
@@ -644,7 +672,7 @@
 
 <!-- Cover image crop modal -->
 <div id="links-profile-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+    <div style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize &amp; crop image</div>
         <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
             <img id="links-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
@@ -765,7 +793,7 @@
         }
         document.querySelectorAll('.color-preset').forEach(preset => {
             preset.addEventListener('click', function () {
-                document.querySelectorAll('.color-preset').forEach(p => { p.classList.remove('active'); p.style.border = '1px solid var(--border-color)'; });
+                document.querySelectorAll('.color-preset').forEach(p => { p.classList.remove('active'); p.style.border = '1px solid #e5e7eb'; });
                 this.classList.add('active'); this.style.border = '2px solid var(--primary)';
                 if (primaryPicker) { primaryPicker.value = this.dataset.primary; primaryHex.value = this.dataset.primary.toUpperCase(); applyLinksPrimaryColor(this.dataset.primary); }
                 if (secondaryPicker) { secondaryPicker.value = this.dataset.secondary; secondaryHex.value = this.dataset.secondary.toUpperCase(); }
@@ -801,10 +829,10 @@
         function buildLinksItemHTML(displayName, desc) {
             const item = document.createElement('div');
             item.style.cssText = 'display:flex;align-items:center;padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;gap:8px;';
-            item.innerHTML = '<div style="width:28px;height:28px;background:#eff6ff;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#2563eb;font-size:12px;"></i></div>'
+            item.innerHTML = '<div style="width:28px;height:28px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-link" style="color:#EBA81B;font-size:12px;"></i></div>'
                 + '<div style="flex:1;min-width:0;"><span style="font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (displayName || 'Link') + '</span>'
-                + '<span style="font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + desc + '</span></div>'
-                + '<i class="fa-solid fa-chevron-right" style="color:#9ca3af;font-size:10px;flex-shrink:0;"></i>';
+                + '<span style="font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + desc + '</span></div>'
+                + '<i class="fa-solid fa-chevron-right" style="color:#6b7280;font-size:10px;flex-shrink:0;"></i>';
             return item;
         }
         window.updateLinksPreview = function updateLinksPreview() {
@@ -836,11 +864,11 @@
             addLinkBtn.addEventListener('click', function () {
                 const row = document.createElement('div');
                 row.className = 'links-item-row';
-                row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
+                row.style.cssText = 'display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
                 row.innerHTML = '<input type="text" name="Links_link_url[]" class="form-control" placeholder="https://example.com" style="flex:2;background:transparent;border:none;min-width:120px;">'
                     + '<input type="text" name="Links_link_name[]" class="form-control" placeholder="Link name (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
                     + '<input type="text" name="Links_link_desc[]" class="form-control" placeholder="Description (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
-                    + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+                    + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#6b7280;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
                 linksListContainer.appendChild(row);
             });
         }
@@ -1037,7 +1065,7 @@
                 var preview = document.getElementById('links-cover-img-preview');
                 var acUrl = document.getElementById('links_cover_img_autocomplete_url');
                 var removeBtn = document.getElementById('links-cover-img-remove-btn');
-                if (preview) preview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample cover image</span>';
+                if (preview) preview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Sample cover image</span>';
                 if (acUrl) acUrl.value = bi.cover_image;
                 document.getElementById('links_profile_img_delete').value = '0';
                 if (removeBtn) removeBtn.style.display = '';
@@ -1073,11 +1101,11 @@
                     dump.links.forEach(function(item) {
                         var row = document.createElement('div');
                         row.className = 'links-item-row';
-                        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
+                        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
                         row.innerHTML = '<input type="text" name="Links_link_url[]" class="form-control" value="' + (item.url||'') + '" placeholder="https://example.com" style="flex:2;background:transparent;border:none;min-width:120px;">'
                             + '<input type="text" name="Links_link_name[]" class="form-control" value="' + (item.name||'') + '" placeholder="Link name (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
                             + '<input type="text" name="Links_link_desc[]" class="form-control" value="' + (item.desc||'') + '" placeholder="Description (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">'
-                            + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+                            + '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#6b7280;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
                         container.appendChild(row);
                     });
                     updateLinksPreview();

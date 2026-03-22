@@ -43,7 +43,7 @@
     .step-num {
         width: 24px;
         height: 24px;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         color: var(--text-muted);
         border-radius: 4px;
         display: flex;
@@ -81,7 +81,7 @@
 
     .btn-outline {
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         padding: 6px 16px;
         border-radius: 20px;
@@ -116,7 +116,7 @@
     }
 
     .collapse-section {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         margin-bottom: 16px;
@@ -129,7 +129,7 @@
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        background-color: white;
+        background-color: var(--bg-content);
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -164,7 +164,7 @@
 
     .collapse-body {
         padding: 0 24px 24px 24px;
-        background-color: white;
+        background-color: var(--bg-content);
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -291,7 +291,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         transition: .3s;
         border-radius: 20px;
     }
@@ -303,7 +303,7 @@
         width: 16px;
         left: 2px;
         bottom: 2px;
-        background-color: white;
+        background-color: var(--bg-content);
         transition: .3s;
         border-radius: 50%;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -324,7 +324,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         overflow: hidden;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
     .url-prefix {
@@ -338,7 +338,7 @@
         flex: 1;
         border: none;
         padding: 10px 14px;
-        background: white;
+        background: #ffffff;
     }
 
     .url-prefix-group input:focus {
@@ -346,13 +346,24 @@
     }
 
     .btn-secondary-sm {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         padding: 6px 12px;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
+    }
+
+    /* Template selector and right preview: always light mode regardless of theme */
+    .template-select-area,
+    .preview-column {
+        --bg-body: #f9fafb;
+        --bg-content: #ffffff;
+        --bg-sidebar: #f3f4f6;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
     }
 
     /* Phone Mockup Styling */
@@ -380,8 +391,8 @@
     .phone-mockup {
         width: 100%;
         height: 600px;
-        background-color: white;
-        border: 12px solid #1a1a1a;
+        background-color: var(--bg-content);
+        border: 12px solid var(--text-main);
         border-radius: 40px;
         position: relative;
         overflow: hidden;
@@ -392,7 +403,7 @@
     .mockup-inner {
         width: 100%;
         height: 100%;
-        background-color: #f9fafb;
+        background-color: var(--bg-body);
         display: flex;
         flex-direction: column;
     }
@@ -437,7 +448,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -448,7 +459,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -457,7 +468,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -489,7 +500,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: white;
+            background: var(--bg-content);
             overflow-y: auto;
             padding: 12px 16px 8px;
             box-sizing: border-box;
@@ -503,13 +514,30 @@
     .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
     .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
     .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
-    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-row-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 1px; }
     .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
     .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
-    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
-    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #ffffff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
     .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
+
+
+/* header-icon tints */
+.hi-amber { background: #26230f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-green  { background: #0f2218; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-orange { background: #251a0f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-red    { background: #251010; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-purple { background: #1a1626; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-blue   { background: #0f1825; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-grey   { background: var(--border-color); border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+[data-theme="light"] .hi-amber  { background: #fef9ec; }
+[data-theme="light"] .hi-green  { background: #f0fdf4; }
+[data-theme="light"] .hi-orange { background: #fff7ed; }
+[data-theme="light"] .hi-red    { background: #fef2f2; }
+[data-theme="light"] .hi-purple { background: #f5f3ff; }
+[data-theme="light"] .hi-blue   { background: #f0f9ff; }
+[data-theme="light"] .hi-grey   { background: #f3f4f6; }
 </style>
 {% endblock %}
 
@@ -578,7 +606,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-palette"></i></div>
                         <div class="header-text">
                             <h3>Appearance</h3>
                             <p>Customize the style and template.</p>
@@ -595,20 +623,20 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                            <div class="template-select-area" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                                 <!-- Template Options (matching edit page) -->
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="pdf_template" value="default"
                                         {% if not qrcard or qrcard.get('pdf_template', 'default') == 'default' %}checked{% endif %}
                                         class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px;">
                                         <div
-                                            style="background: #e5e7eb; width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
+                                            style="background: var(--border-color); width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
                                         </div>
-                                        <div style="background: #d1d5db; width: 80%; height: 8px; margin: 0 auto 4px;">
+                                        <div style="background: var(--border-color); width: 80%; height: 8px; margin: 0 auto 4px;">
                                         </div>
-                                        <div style="background: #d1d5db; width: 60%; height: 8px; margin: 0 auto;">
+                                        <div style="background: var(--border-color); width: 60%; height: 8px; margin: 0 auto;">
                                         </div>
                                     </div>
                                     <span
@@ -619,24 +647,24 @@
                                         {% if qrcard and qrcard.get('pdf_template') == 'template1' %}checked{% endif %}
                                         class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px; overflow: hidden;">
                                         <!-- Header image zone -->
                                         <div style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;">
                                             <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.25); border-radius: 4px;"></div>
                                         </div>
                                         <!-- White card area -->
-                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
-                                            <div style="background: #9ca3af; width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;"></div>
-                                            <div style="background: #d1d5db; width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                        <div style="background: var(--bg-content); border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div style="background: var(--text-muted); width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;"></div>
+                                            <div style="background: var(--border-color); width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
                                                 <div style="width: 12px; height: 12px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
-                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
-                                                <div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div>
-                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
+                                                <div style="width: 12px; height: 12px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;"></div>
+                                                <div style="width: 5px; height: 5px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -649,20 +677,20 @@
                                     <div class="template-card"
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                         <!-- White floating card (no circle image) -->
-                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                        <div style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
                                             <!-- Company + title bars -->
                                             <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
-                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
-                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;"></div>
+                                            <div style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: var(--border-color); width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;"></div>
                                             <!-- List items -->
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
                                                 <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
                                             </div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
-                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
+                                                <div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
                                                 <div style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;"></div>
                                             </div>
                                         </div>
@@ -678,22 +706,22 @@
                                     <div class="template-card"
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
                                         <!-- Circle image -->
-                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i>
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-content); border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted); font-size: 10px;"></i>
                                         </div>
                                         <!-- Title bars -->
                                         <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 3px;"></div>
                                         <div style="background: rgba(255,255,255,0.5); width: 38%; height: 3px; border-radius: 2px; margin-bottom: 7px;"></div>
                                         <!-- List items -->
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
+                                        <div style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
                                             <div style="width: 10px; height: 10px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
-                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
-                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;"></div>
                                         </div>
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
-                                            <div style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
-                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
-                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                        <div style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
+                                            <div style="width: 10px; height: 10px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div>
+                                            <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
+                                            <div style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;"></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 3</span>
@@ -705,25 +733,25 @@
                                     <div class="template-card"
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
                                         <!-- White floating card with circle image overlapping top -->
-                                        <div style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                        <div style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
                                             <!-- Circle image overlapping card top -->
-                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
-                                                <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 7px;"></i>
+                                            <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: var(--border-color); border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fa-regular fa-image" style="color: var(--text-muted); font-size: 7px;"></i>
                                             </div>
                                             <!-- Company + title bars -->
                                             <div style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;"></div>
-                                            <div style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
-                                            <div style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;"></div>
+                                            <div style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;"></div>
+                                            <div style="background: var(--border-color); width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;"></div>
                                             <!-- List items -->
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
-                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;"></div>
                                             </div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
-                                                <div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div>
-                                                <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div>
-                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;"></div>
+                                            <div style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
+                                                <div style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;"></div>
+                                                <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;"></div>
+                                                <div style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;"></div>
                                             </div>
                                         </div>
                                         <!-- Website line below card -->
@@ -765,21 +793,21 @@
                                     <div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div>
                                     <div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div>
                                 </div>
-                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6"
+                                <div class="color-preset" data-primary="#EBA81B" data-secondary="#5b21b6"
                                     style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
-                                    <div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #EBA81B; flex: 1; border-radius: 4px 0 0 4px;"></div>
                                     <div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div>
                                 </div>
                             </div>
 
                             <div
-                                style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                style="background: var(--bg-body); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 24px;">
                                     <div>
                                         <label
                                             style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="pdf_primary_hex" name="pdf_primary_color"
                                                 value="{{ qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
@@ -792,7 +820,7 @@
                                         <label
                                             style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="pdf_secondary_hex" name="pdf_secondary_color"
                                                 value="{{ qrcard.get('pdf_secondary_color', '#0E379A') if qrcard else '#0E379A' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
@@ -817,21 +845,21 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px;">
                                 <!-- Title Font -->
                                 <div style="margin-bottom: 16px;">
                                     <label
                                         style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
                                         <select name="pdf_title_font"
-                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
                                             <input type="text" id="pdf_title_color_hex" value="#000000"
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
@@ -848,14 +876,14 @@
                                         style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
                                         <select name="pdf_text_font"
-                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
                                             <input type="text" id="pdf_text_color_hex" value="#000000"
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
@@ -889,7 +917,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i>
+                        <div class="header-icon hi-green"><i class="fa-solid fa-circle-info"></i>
                         </div>
                         <div class="header-text">
                             <h3>Basic Information</h3>
@@ -909,7 +937,7 @@
                         <div class="sub-collapse-body sub-collapse-body-lg">
                             <div style="margin-top: 16px; margin-bottom: 24px;">
                                 <label
-                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: #f9fafb;">
+                                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 24px; cursor: pointer; background: var(--bg-body);">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <i class="fa-solid fa-cloud-arrow-up"
                                             style="font-size: 18px; color: var(--text-main);"></i>
@@ -927,7 +955,7 @@
                                     id="saved-pdf-list">
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <div class="pdf-file-item" data-url="{{ pdf.url }}"
-                                        style="background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
+                                        style="background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;">
                                         <input type="hidden" name="existing_pdf_urls" value="{{ pdf.url }}">
                                         <!-- File header row -->
                                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
@@ -948,7 +976,7 @@
                                             <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">Name</label>
                                             <input type="text" name="pdf_display_names" class="pdf-display-name-input"
                                                 value="{{ pdf.get('display_name', pdf.name) }}"
-                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); background: #ffffff;">
                                         </div>
                                         <!-- Description input -->
                                         <div>
@@ -956,7 +984,7 @@
                                             <input type="text" name="pdf_item_descs" class="pdf-item-desc-input"
                                                 value="{{ pdf.get('item_desc', '') }}"
                                                 placeholder="Optional note shown under the file name…"
-                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main);">
+                                                style="width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); background: #ffffff;">
                                         </div>
                                     </div>
                                     {% endfor %}
@@ -983,7 +1011,7 @@
                                 <label class="form-label" style="font-size: 12px;">Cover Image
                                     <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional – header for Template 1, circle for Template 3 &amp; 4)</span>
                                 </label>
-                                <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: var(--bg-body); gap: 10px;">
                                     <div id="cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                         {% set cover_url = qrcard.get('pdf_t1_header_img_url') or qrcard.get('pdf_t3_circle_img_url') or qrcard.get('pdf_t4_circle_img_url') if qrcard else '' %}
                                         {% if cover_url %}
@@ -991,8 +1019,8 @@
                                             style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
                                         <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                         {% else %}
-                                        <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
                                         {% endif %}
@@ -1021,33 +1049,33 @@
                         </div>
                         <div class="sub-collapse-body">
                             <div
-                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                                style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Company</label>
                                     <input type="text" name="pdf_company" class="form-control" placeholder="Company Name"
-                                        style="background: white;"
+                                        style="background: #ffffff;"
                                         value="{{ qrcard.get('pdf_company', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">PDF title</label>
                                     <input type="text" name="pdf_title" class="form-control" placeholder="Title"
-                                        style="background: white;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
+                                        style="background: #ffffff;" value="{{ qrcard.get('pdf_title', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Description</label>
                                     <input type="text" name="pdf_desc" class="form-control" placeholder="Description"
-                                        style="background: white;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
+                                        style="background: #ffffff;" value="{{ qrcard.get('pdf_desc', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Website</label>
                                     <input type="text" name="pdf_website" class="form-control" placeholder="https://"
-                                        style="background: white;"
+                                        style="background: #ffffff;"
                                         value="{{ qrcard.get('pdf_website', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Button</label>
                                     <input type="text" name="pdf_btn_text" class="form-control" placeholder="E.g.: View pdf"
-                                        style="background: white; border-color: var(--primary);"
+                                        style="background: #ffffff; border-color: var(--primary);"
                                         value="{{ qrcard.get('pdf_btn_text', '') if qrcard else '' }}">
                                 </div>
                             </div>
@@ -1061,7 +1089,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i>
                         </div>
                         <div class="header-text">
                             <h3>Content</h3>
@@ -1081,7 +1109,7 @@
                                 <label
                                     style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
                                 <label
-                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                     <div id="welcome-img-preview"
                                         style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                         {% if qrcard and qrcard.get('welcome_img_url') %}
@@ -1091,8 +1119,8 @@
                                         {% else %}
                                         <!-- Placeholder state -->
                                         <div
-                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                            style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
                                         {% endif %}
@@ -1118,7 +1146,7 @@
                                     <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color" value="{{ qrcard.get('welcome_bg_color', qrcard.get('pdf_primary_color', '#2F6BFD')) if qrcard is defined and qrcard else '#2F6BFD' }}"
                                         style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
                                     <input type="text" id="welcome_bg_color_hex" readonly
-                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: var(--bg-body);">
                                 </div>
                             </div>
 
@@ -1130,7 +1158,7 @@
                                 </label>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
-                                        style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider"
+                                        style="flex: 1; accent-color: var(--border-color);" id="welcome-time-slider"
                                         value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
                                 </div>
                                 <div
@@ -1193,7 +1221,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                                 <div style="flex: 1;">
@@ -1201,7 +1229,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                             </div>
@@ -1295,7 +1323,7 @@
 
                 <div class="phone-mockup">
                     <div class="mockup-inner"
-                        style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        style="padding:0;background-color:var(--bg-content);display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
                         {% set preview_primary = qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' %}
                         <!-- Welcome screen overlay: shown first, then smooth fade to PDF preview -->
                         <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
@@ -1303,9 +1331,9 @@
                         </div>
 
                         <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
-                        <div id="preview-template1" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: #f3f4f6; overflow-y: auto; overflow-x: hidden;">
+                        <div id="preview-template1" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: var(--bg-sidebar); overflow-y: auto; overflow-x: hidden;">
                             <!-- Header image area (light bg so image looks natural) -->
-                            <div id="t1-preview-header" style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: #e5e7eb; {% if not (qrcard and qrcard.get('pdf_t1_header_img_url')) %}display: none;{% endif %}">
+                            <div id="t1-preview-header" style="width: 100%; height: 45%; flex-shrink: 0; position: relative; overflow: hidden; background: var(--border-color); {% if not (qrcard and qrcard.get('pdf_t1_header_img_url')) %}display: none;{% endif %}">
                                 <img id="t1-preview-header-img"
                                     src="{% if qrcard and qrcard.get('pdf_t1_header_img_url') %}{{ qrcard.get('pdf_t1_header_img_url') }}{% endif %}"
                                     alt="" style="width: 100%; height: 100%; object-fit: cover;">
@@ -1323,12 +1351,12 @@
                                     {% if qrcard and qrcard.get('pdf_files') %}
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <a href="{{ pdf.url }}" target="_blank" download
-                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: var(--bg-content); border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: var(--bg-sidebar); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
-                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 500; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
                                     {% endif %}
@@ -1342,23 +1370,23 @@
                         <!-- Template 2 Preview: primary bg + floating white card (no circle image) -->
                         <div id="preview-template2" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
                             <!-- White floating card -->
-                            <div style="background: white; border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                            <div style="background: var(--bg-content); border-radius: 20px; width: 100%; padding: 20px 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
                                 <div id="t2-preview-company"
                                     style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
                                 <div id="t2-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                    style="font-size: 17px; font-weight: 800; color: var(--text-main); text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
                                 <div id="t2-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                    style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
                                 <!-- PDF list inside white card -->
                                 <div id="t2-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
                                     {% if qrcard and qrcard.get('pdf_files') %}
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <a href="{{ pdf.url }}" target="_blank" download
-                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: var(--bg-sidebar); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -1395,12 +1423,12 @@
                                     {% if qrcard and qrcard.get('pdf_files') %}
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <a href="{{ pdf.url }}" target="_blank" download
-                                        style="display: flex; align-items: center; padding: 9px 10px; background: white; border-radius: 8px; text-decoration: none; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: var(--bg-content); border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: var(--bg-sidebar); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
-                                        <i class="fa-solid fa-chevron-right" style="color: #9ca3af; font-size: 10px; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 500; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
                                     {% endif %}
@@ -1414,34 +1442,34 @@
                         <!-- Template 4 Preview: primary bg + floating white card + circle image overlapping top -->
                         <div id="preview-template4" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: {{ preview_primary }}; overflow-y: auto; overflow-x: hidden; align-items: center; justify-content: center; padding: 20px 14px;">
                             <!-- White floating card -->
-                            <div style="background: white; border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                            <div style="background: var(--bg-content); border-radius: 20px; width: 100%; position: relative; padding: 50px 16px 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
                                 <!-- Circle image overlapping top of card -->
-                                <div style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: #e5e7eb; display: flex; align-items: center; justify-content: center;">
+                                <div style="position: absolute; top: -38px; left: 50%; transform: translateX(-50%); width: 76px; height: 76px; border-radius: 50%; overflow: hidden; border: 4px solid white; box-shadow: 0 2px 12px rgba(0,0,0,0.15); background: var(--border-color); display: flex; align-items: center; justify-content: center;">
                                     <img id="t4-preview-circle-img"
                                         src="{% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}{{ qrcard.get('pdf_t4_circle_img_url') }}{% endif %}"
                                         alt="" style="width: 100%; height: 100%; object-fit: cover; {% if not (qrcard and qrcard.get('pdf_t4_circle_img_url')) %}display: none;{% endif %}">
                                     <div id="t4-preview-circle-placeholder"
-                                        style="display: {% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: #e5e7eb;">
-                                        <i class="fa-regular fa-image" style="font-size: 22px; color: #9ca3af;"></i>
+                                        style="display: {% if qrcard and qrcard.get('pdf_t4_circle_img_url') %}none{% else %}flex{% endif %}; align-items: center; justify-content: center; width: 100%; height: 100%; background: var(--border-color);">
+                                        <i class="fa-regular fa-image" style="font-size: 22px; color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                                 <!-- Text inside card -->
                                 <div id="t4-preview-company"
                                     style="font-size: 10px; font-weight: 700; color: {{ preview_primary }}; text-transform: uppercase; text-align: center; letter-spacing: 1px; margin-bottom: 4px; {% if not (qrcard and qrcard.get('pdf_company')) %}display: none;{% endif %}">{{ qrcard.get('pdf_company', '') if qrcard else '' }}</div>
                                 <div id="t4-preview-title"
-                                    style="font-size: 17px; font-weight: 800; color: #111827; text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
+                                    style="font-size: 17px; font-weight: 800; color: var(--text-main); text-align: center; margin-bottom: 4px; line-height: 1.2; {% if not (qrcard and qrcard.get('pdf_title')) %}display: none;{% endif %}">{{ qrcard.get('pdf_title', '') if qrcard else '' }}</div>
                                 <div id="t4-preview-desc"
-                                    style="font-size: 11px; color: #6b7280; text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
+                                    style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 14px; {% if not (qrcard and qrcard.get('pdf_desc')) %}display: none;{% endif %}">{{ qrcard.get('pdf_desc', '') if qrcard else '' }}</div>
                                 <!-- PDF list inside white card -->
                                 <div id="t4-preview-pdf-list" style="display: flex; flex-direction: column; gap: 7px;">
                                     {% if qrcard and qrcard.get('pdf_files') %}
                                     {% for pdf in qrcard.get('pdf_files', []) %}
                                     <a href="{{ pdf.url }}" target="_blank" download
-                                        style="display: flex; align-items: center; padding: 9px 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; gap: 8px;">
-                                        <div style="width: 32px; height: 32px; background: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        style="display: flex; align-items: center; padding: 9px 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 8px; text-decoration: none; gap: 8px;">
+                                        <div style="width: 32px; height: 32px; background: var(--bg-sidebar); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                             <i class="fa-regular fa-file-pdf" style="color: #ef4444; font-size: 14px;"></i>
                                         </div>
-                                        <span style="font-size: 11px; font-weight: 500; color: #111827; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
+                                        <span style="font-size: 11px; font-weight: 500; color: var(--text-main); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ pdf.name }}</span>
                                         <i class="fa-solid fa-chevron-right" style="color: {{ preview_primary }}; font-size: 10px; flex-shrink: 0;"></i>
                                     </a>
                                     {% endfor %}
@@ -1459,7 +1487,7 @@
                         </div>
 
                         <div id="preview-bottom-block"
-                            style="background-color: #ffffff; width: 100%; margin-top: -30px; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; align-items: center; z-index: 2; position: relative; padding-bottom: 40px; flex-grow: 1;">
+                            style="background-color: var(--bg-content); width: 100%; margin-top: -30px; border-radius: 24px 24px 0 0; display: flex; flex-direction: column; align-items: center; z-index: 2; position: relative; padding-bottom: 40px; flex-grow: 1;">
 
                             <!-- PDF Thumbnail and Navigation -->
                             <div
@@ -1470,9 +1498,9 @@
                                 </div>
 
                                 <div id="preview-pdf-thumbnail-container"
-                                    style="width: 65%; aspect-ratio: 1 / 1.4; transition: aspect-ratio 0.3s ease; background: white; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e5e7eb; flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
+                                    style="width: 65%; aspect-ratio: 1 / 1.4; transition: aspect-ratio 0.3s ease; background: var(--bg-content); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; margin-top: 0; margin-bottom: 0;">
                                     <i id="preview-pdf-placeholder-icon" class="fa-regular fa-file-pdf"
-                                        style="font-size: 48px; color: #d1d5db;"></i>
+                                        style="font-size: 48px; color: var(--border-color);"></i>
                                     <canvas id="preview-pdf-canvas"
                                         style="display: none; width: 100%; height: 100%; object-fit: contain;"></canvas>
                                 </div>
@@ -1700,7 +1728,7 @@
                     this.classList.add('active');
                     this.style.border = '2px solid var(--primary)';
                     // reset others
-                    document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
+                    document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid #e5e7eb');
 
                     if (primaryPicker) {
                         primaryPicker.value = this.dataset.primary;
@@ -2067,7 +2095,7 @@
                         const fileItem = document.createElement('div');
                         fileItem.className = 'pdf-file-item';
                         fileItem.dataset.name = file.name;
-                        fileItem.style.cssText = 'background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;';
+                        fileItem.style.cssText = 'background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;';
 
                         // ── Header row (icon + filename + size + delete) ──
                         const headerRow = document.createElement('div');
@@ -2081,13 +2109,13 @@
                         icon.style.cssText = 'color: #ef4444; font-size: 15px; flex-shrink: 0;';
 
                         const nameSpan = document.createElement('span');
-                        nameSpan.style.cssText = 'font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+                        nameSpan.style.cssText = 'font-size: 12px; color: #6b7280; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
                         nameSpan.textContent = file.name;
 
                         const sizeKB = file.size / 1024;
                         const sizeStr = sizeKB > 1024 ? (sizeKB / 1024).toFixed(2) + ' MB' : sizeKB.toFixed(1) + ' KB';
                         const sizeSpan = document.createElement('span');
-                        sizeSpan.style.cssText = 'font-size: 11px; color: var(--text-muted); flex-shrink: 0;';
+                        sizeSpan.style.cssText = 'font-size: 11px; color: #6b7280; flex-shrink: 0;';
                         sizeSpan.textContent = sizeStr;
 
                         leftSide.appendChild(icon);
@@ -2096,7 +2124,7 @@
 
                         const deleteBtn = document.createElement('i');
                         deleteBtn.className = 'fa-solid fa-xmark';
-                        deleteBtn.style.cssText = 'color: var(--text-muted); cursor: pointer; padding: 4px; flex-shrink: 0;';
+                        deleteBtn.style.cssText = 'color: #6b7280; cursor: pointer; padding: 4px; flex-shrink: 0;';
                         deleteBtn.title = 'Remove file';
                         deleteBtn.addEventListener('click', () => {
                             let newAccumulated = new DataTransfer();
@@ -2114,7 +2142,7 @@
 
                         // ── Name input ──
                         const nameLabel = document.createElement('label');
-                        nameLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;';
+                        nameLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: #6b7280; display: block; margin-bottom: 4px;';
                         nameLabel.textContent = 'Name';
 
                         const nameInput = document.createElement('input');
@@ -2122,14 +2150,14 @@
                         nameInput.name = 'pdf_display_names';
                         nameInput.className = 'pdf-display-name-input';
                         nameInput.value = file.name;
-                        nameInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); margin-bottom: 8px; box-sizing: border-box;';
+                        nameInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; color: #111827; background: #ffffff; margin-bottom: 8px; box-sizing: border-box;';
                         nameInput.addEventListener('input', function () {
                             if (typeof updateActivePdfList === 'function') updateActivePdfList();
                         });
 
                         // ── Desc input ──
                         const descLabel = document.createElement('label');
-                        descLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;';
+                        descLabel.style.cssText = 'font-size: 11px; font-weight: 600; color: #6b7280; display: block; margin-bottom: 4px;';
                         descLabel.textContent = 'Description';
 
                         const descInput = document.createElement('input');
@@ -2137,7 +2165,7 @@
                         descInput.name = 'pdf_item_descs';
                         descInput.className = 'pdf-item-desc-input';
                         descInput.placeholder = 'Optional note shown under the file name…';
-                        descInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; color: var(--text-main); box-sizing: border-box;';
+                        descInput.style.cssText = 'width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; color: #111827; background: #ffffff; box-sizing: border-box;';
                         descInput.addEventListener('input', function () {
                             if (typeof updateActivePdfList === 'function') updateActivePdfList();
                         });
@@ -2313,7 +2341,7 @@
                         alert('Image must be 1 MB or smaller.');
                         this.value = '';
                         if (thumb && !initialUrl) {
-                            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                         }
                         if (deleteBtn && !initialUrl) deleteBtn.style.display = 'none';
                         return;
@@ -2321,7 +2349,7 @@
                     if (file.type.indexOf('image') !== -1) {
                         var url = getPreviewSrc();
                         if (url && thumb) {
-                            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
                         }
                         if (deleteBtn) deleteBtn.style.display = 'inline-flex';
                         if (deleteFlag) deleteFlag.value = '0';
@@ -2334,7 +2362,7 @@
                     welcomeInput.value = '';
                     initialUrl = '';
                     if (thumb) {
-                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                     }
                     if (deleteFlag) deleteFlag.value = '1';
                     this.style.display = 'none';
@@ -2371,10 +2399,10 @@
             if (card) {
                 if (radio.checked) {
                     card.style.border = '2px solid var(--primary)';
-                    if (span) span.style.color = 'var(--text-main)';
+                    if (span) span.style.color = '#111827';
                 } else {
-                    card.style.border = '1px solid var(--border-color)';
-                    if (span) span.style.color = 'var(--text-muted)';
+                    card.style.border = '1px solid #e5e7eb';
+                    if (span) span.style.color = '#6b7280';
                 }
             }
         });
@@ -2469,7 +2497,7 @@
         a.href   = url || '#';
         a.target = url ? '_blank' : '';
         if (url) a.setAttribute('download', '');
-        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+        a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#ffffff;border-radius:8px;text-decoration:none;gap:8px;';
 
         var iconBox = document.createElement('div');
         iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
@@ -2487,14 +2515,14 @@
         textWrap.appendChild(nameSpan);
         if (desc) {
             var descSpan = document.createElement('span');
-            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+            descSpan.style.cssText = 'font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
             descSpan.textContent = desc;
             textWrap.appendChild(descSpan);
         }
 
         var chevron = document.createElement('i');
         chevron.className = 'fa-solid fa-chevron-right';
-        chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+        chevron.style.cssText = 'color:#6b7280;font-size:10px;flex-shrink:0;';
 
         a.appendChild(iconBox);
         a.appendChild(textWrap);
@@ -2644,7 +2672,7 @@
         textWrap.appendChild(nameSpan);
         if (desc) {
             var descSpan = document.createElement('span');
-            descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+            descSpan.style.cssText = 'font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
             descSpan.textContent = desc;
             textWrap.appendChild(descSpan);
         }
@@ -2732,7 +2760,7 @@
             var removeBtn = document.getElementById('cover-img-remove-btn');
             var delFlag   = document.getElementById('pdf_t1_header_img_delete');
             if (thumb) {
-                thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
             }
             if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
             if (delFlag)   { delFlag.value = '0'; }
@@ -2766,7 +2794,7 @@
             // Reset thumb
             var thumb = document.getElementById('cover-img-preview');
             if (thumb) {
-                thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+                thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Cover Image</span>';
             }
             if (delFlag) { delFlag.value = '1'; }
             this.style.display = 'none';
@@ -2878,7 +2906,7 @@
             if (bi.cover_image) {
                 var coverPreview = document.getElementById('cover-img-preview');
                 if (coverPreview) {
-                    coverPreview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Sample cover image</span>';
+                    coverPreview.innerHTML = '<img src="' + bi.cover_image + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Sample cover image</span>';
                 }
                 var removeBtn = document.getElementById('cover-img-remove-btn');
                 if (removeBtn) removeBtn.style.display = '';
@@ -2911,21 +2939,21 @@
                     var item = document.createElement('div');
                     item.className = 'pdf-file-item pdf-autocomplete-item';
                     item.dataset.url = pdf.url;
-                    item.style.cssText = 'background:white;border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;';
+                    item.style.cssText = 'background:var(--bg-content);border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;';
                     var dispName = pdf.display_name || pdf.name;
                     item.innerHTML =
                         '<input type="hidden" name="pdf_autocomplete_urls" value="' + pdf.url + '">' +
                         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
                             '<div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;">' +
                                 '<i class="fa-regular fa-file-pdf" style="color:#ef4444;font-size:15px;flex-shrink:0;"></i>' +
-                                '<span style="font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dispName + '</span>' +
+                                '<span style="font-size:12px;font-weight:500;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + dispName + '</span>' +
                             '</div>' +
-                            '<button type="button" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:2px 4px;flex-shrink:0;" onclick="this.closest(\'.pdf-file-item\').remove()" title="Remove"><i class="fa-solid fa-xmark"></i></button>' +
+                            '<button type="button" style="background:none;border:none;cursor:pointer;color:#6b7280;padding:2px 4px;flex-shrink:0;" onclick="this.closest(\'.pdf-file-item\').remove()" title="Remove"><i class="fa-solid fa-xmark"></i></button>' +
                         '</div>' +
-                        '<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Name</label>' +
-                        '<input type="text" name="pdf_display_names" class="pdf-display-name-input" value="' + dispName + '" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;outline:none;color:var(--text-main);"></div>' +
-                        '<div><label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Description</label>' +
-                        '<input type="text" name="pdf_item_descs" class="pdf-item-desc-input" value="' + (pdf.desc || '') + '" placeholder="Optional note shown under the file name\u2026" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border-color);border-radius:6px;outline:none;color:var(--text-main);"></div>';
+                        '<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">Name</label>' +
+                        '<input type="text" name="pdf_display_names" class="pdf-display-name-input" value="' + dispName + '" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid #e5e7eb;border-radius:6px;outline:none;color:#111827;background:#ffffff;"></div>' +
+                        '<div><label style="font-size:11px;font-weight:600;color:#6b7280;display:block;margin-bottom:4px;">Description</label>' +
+                        '<input type="text" name="pdf_item_descs" class="pdf-item-desc-input" value="' + (pdf.desc || '') + '" placeholder="Optional note shown under the file name\u2026" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid #e5e7eb;border-radius:6px;outline:none;color:#111827;background:#ffffff;"></div>';
                     savedPdfList.appendChild(item);
                 });
                 if (typeof updateActivePdfList === 'function') updateActivePdfList();

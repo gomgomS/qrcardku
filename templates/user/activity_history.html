@@ -15,7 +15,7 @@
     .activity-table {
         width: 100%;
         border-collapse: collapse;
-        background: white;
+        background: var(--bg-content);
         border-radius: 8px;
         border: 1px solid var(--border-color);
         margin-bottom: 24px;
@@ -30,7 +30,7 @@
     }
 
     .activity-table th {
-        background-color: #f9fafb;
+        background-color: var(--bg-body);
         color: var(--text-muted);
         font-weight: 500;
     }
@@ -52,7 +52,7 @@
 
     .action-create  { background: #dcfce7; color: #166534; }
     .action-delete  { background: #fee2e2; color: #991b1b; }
-    .action-storage { background: #fef3c7; color: #92400e; }
+    .action-storage { background: #2A2810; color: #92400e; }
 
     .source-badge {
         display: inline-flex;
@@ -62,7 +62,7 @@
         border-radius: 4px;
         font-size: 11px;
         font-weight: 500;
-        background: #f3f4f6;
+        background: #252619;
         color: var(--text-muted);
     }
 
@@ -92,7 +92,7 @@
         height: 34px;
         padding: 0 8px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 6px;
         font-size: 13px;
         color: var(--text-main);
@@ -101,7 +101,7 @@
         transition: background 0.15s, color 0.15s;
     }
 
-    .pager-btn:hover { background: #f3f4f6; }
+    .pager-btn:hover { background: #252619; }
 
     .pager-btn.active {
         background: var(--primary);
@@ -133,7 +133,7 @@
         font-size: 40px;
         margin-bottom: 16px;
         display: block;
-        color: #d1d5db;
+        color: #3A3B30;
     }
 
     @media (max-width: 768px) {
@@ -142,7 +142,7 @@
         .activity-table tr {
             display: flex;
             flex-direction: column;
-            background: white;
+            background: var(--bg-content);
             border: 1px solid var(--border-color) !important;
             border-bottom: 1px solid var(--border-color) !important;
             border-radius: 8px;
@@ -209,7 +209,7 @@
                     {% elif log.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
                     {% elif log.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp
                     {% elif log.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email
-                    {% elif log.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#7c3aed;"></i> vCard
+                    {% elif log.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#d4941a;"></i> vCard
                     {% elif log.qr_type == 'pdf' %}<i class="fa-regular fa-file-pdf" style="color:#dc2626;"></i> PDF
                     {% elif log.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> All in One
                     {% elif log.qr_type == 'ecard' %}<i class="fa-regular fa-id-card"></i> E-Card
@@ -241,7 +241,7 @@
                     No assets
                     {% endif %}
                     {% if log.source == 'bulk' and log.detail.bulk_total_qrs is defined %}
-                    <br><span style="font-size: 11px; color: #9ca3af;">
+                    <br><span style="font-size: 11px; color: var(--text-muted);">
                         Batch: {{ log.detail.bulk_total_qrs }} QR(s) ·
                         {{ (log.detail.bulk_total_freed / 1048576) | round(2) }} MB total
                     </span>

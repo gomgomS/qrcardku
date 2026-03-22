@@ -46,7 +46,7 @@
     .step-num {
         width: 24px;
         height: 24px;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         color: var(--text-muted);
         border-radius: 4px;
         display: flex;
@@ -84,7 +84,7 @@
 
     .btn-outline {
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         padding: 6px 16px;
         border-radius: 20px;
@@ -119,7 +119,7 @@
     }
 
     .collapse-section {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         margin-bottom: 16px;
@@ -132,7 +132,7 @@
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        background-color: white;
+        background-color: var(--bg-content);
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -167,7 +167,7 @@
 
     .collapse-body {
         padding: 0 24px 24px 24px;
-        background-color: white;
+        background-color: var(--bg-content);
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -294,7 +294,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         transition: .3s;
         border-radius: 20px;
     }
@@ -306,7 +306,7 @@
         width: 16px;
         left: 2px;
         bottom: 2px;
-        background-color: white;
+        background-color: var(--bg-content);
         transition: .3s;
         border-radius: 50%;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -327,7 +327,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         overflow: hidden;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
     .url-prefix {
@@ -341,7 +341,7 @@
         flex: 1;
         border: none;
         padding: 10px 14px;
-        background: white;
+        background: #ffffff;
     }
 
     .url-prefix-group input:focus {
@@ -349,13 +349,24 @@
     }
 
     .btn-secondary-sm {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         padding: 6px 12px;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
+    }
+
+    /* Template selector and right preview: always light mode regardless of theme */
+    .template-select-area,
+    .preview-column {
+        --bg-body: #f9fafb;
+        --bg-content: #ffffff;
+        --bg-sidebar: #f3f4f6;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
     }
 
     /* Phone Mockup Styling */
@@ -383,19 +394,19 @@
     .phone-mockup {
         width: 100%;
         height: 600px;
-        background-color: white;
-        border: 12px solid #1a1a1a;
+        background-color: var(--bg-content);
+        border: 12px solid var(--text-main);
         border-radius: 40px;
         position: relative;
         overflow: hidden;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     }
 
-    /* Mockup internal content matching reference */
+    /* Mockup internal content — always white, it's a public page preview */
     .mockup-inner {
         width: 100%;
         height: 100%;
-        background-color: #f9fafb;
+        background-color: #ffffff;
         display: flex;
         flex-direction: column;
     }
@@ -442,7 +453,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -453,7 +464,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -462,7 +473,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -494,7 +505,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: white;
+            background: var(--bg-content);
             overflow-y: auto;
             padding: 12px 16px 8px;
             box-sizing: border-box;
@@ -508,13 +519,30 @@
     .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
     .autocomplete-row-icon { width: 30px; height: 30px; background: #dcfce7; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #16a34a; font-size: 14px; flex-shrink: 0; }
     .autocomplete-row-text { font-size: 13px; font-weight: 600; color: #15803d; }
-    .autocomplete-row-sub { font-size: 11px; color: #6b7280; font-weight: 400; margin-top: 1px; }
+    .autocomplete-row-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 1px; }
     .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
     .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
-    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
-    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: 0.25s; }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #ffffff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
     .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
+
+
+/* header-icon tints */
+.hi-amber { background: #26230f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-green  { background: #0f2218; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-orange { background: #251a0f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-red    { background: #251010; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-purple { background: #1a1626; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-blue   { background: #0f1825; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-grey   { background: var(--border-color); border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+[data-theme="light"] .hi-amber  { background: #fef9ec; }
+[data-theme="light"] .hi-green  { background: #f0fdf4; }
+[data-theme="light"] .hi-orange { background: #fff7ed; }
+[data-theme="light"] .hi-red    { background: #fef2f2; }
+[data-theme="light"] .hi-purple { background: #f5f3ff; }
+[data-theme="light"] .hi-blue   { background: #f0f9ff; }
+[data-theme="light"] .hi-grey   { background: #f3f4f6; }
 </style>
 {% endblock %}
 
@@ -583,7 +611,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-palette"></i></div>
                         <div class="header-text">
                             <h3>Appearance</h3>
                             <p>Customize the style and template.</p>
@@ -600,20 +628,20 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                            <div class="template-select-area" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                                 <!-- Template Options (matching edit page) -->
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="E-card_template" value="default" {% if not qrcard or
                                         qrcard.get('E-card_template', 'default' )=='default' %}checked{% endif %}
                                         class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                        style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px;">
                                         <div
-                                            style="background: #e5e7eb; width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
+                                            style="background: var(--border-color); width: 100%; height: 60%; border-radius: 4px; margin-bottom: 8px;">
                                         </div>
-                                        <div style="background: #d1d5db; width: 80%; height: 8px; margin: 0 auto 4px;">
+                                        <div style="background: var(--border-color); width: 80%; height: 8px; margin: 0 auto 4px;">
                                         </div>
-                                        <div style="background: #d1d5db; width: 60%; height: 8px; margin: 0 auto;">
+                                        <div style="background: var(--border-color); width: 60%; height: 8px; margin: 0 auto;">
                                         </div>
                                     </div>
                                     <span
@@ -624,7 +652,7 @@
                                         qrcard.get('E-card_template')=='template1' %}checked{% endif %}
                                         class="hidden-radio" style="display:none;">
                                     <div class="template-card"
-                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                        style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: var(--bg-content); margin-bottom: 8px; overflow: hidden;">
                                         <!-- Header image zone -->
                                         <div
                                             style="background: #2f6bfd; width: 100%; height: 44%; position: relative; display: flex; align-items: center; justify-content: center;">
@@ -634,35 +662,35 @@
                                         </div>
                                         <!-- White card area -->
                                         <div
-                                            style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            style="background: var(--bg-content); border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
                                             <div
-                                                style="background: #9ca3af; width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;">
+                                                style="background: var(--text-muted); width: 45%; height: 4px; margin: 0 auto 3px; border-radius: 2px;">
                                             </div>
                                             <div
-                                                style="background: #d1d5db; width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;">
+                                                style="background: var(--border-color); width: 65%; height: 4px; margin: 0 auto 7px; border-radius: 2px;">
                                             </div>
                                             <div
-                                                style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                                style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
                                                 <div
                                                     style="width: 12px; height: 12px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;">
                                                 </div>
                                                 <div
-                                                    style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
+                                                    style="width: 5px; height: 5px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
                                                 </div>
                                             </div>
                                             <div
-                                                style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
+                                                style="background: var(--bg-sidebar); border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;">
                                                 <div
-                                                    style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                    style="width: 12px; height: 12px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 4px; border-radius: 1px;">
                                                 </div>
                                                 <div
-                                                    style="width: 5px; height: 5px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
+                                                    style="width: 5px; height: 5px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0; margin-right: 1px;">
                                                 </div>
                                             </div>
                                         </div>
@@ -678,37 +706,37 @@
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                                         <!-- White floating card (no circle image) -->
                                         <div
-                                            style="background: white; border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
+                                            style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 8px 7px 7px;">
                                             <!-- Company + title bars -->
                                             <div
                                                 style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;">
                                             </div>
                                             <div
-                                                style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
+                                                style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
                                             </div>
                                             <div
-                                                style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;">
+                                                style="background: var(--border-color); width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 7px;">
                                             </div>
                                             <!-- List items -->
                                             <div
-                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div
                                                     style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                                 </div>
                                                 <div
                                                     style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;">
                                                 </div>
                                             </div>
                                             <div
-                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div
-                                                    style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                    style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                                 </div>
                                                 <div
                                                     style="width: 4px; height: 4px; border-right: 1.5px solid #2f6bfd; border-top: 1.5px solid #2f6bfd; transform: rotate(45deg); flex-shrink: 0;">
@@ -731,8 +759,8 @@
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 8px 6px;">
                                         <!-- Circle image -->
                                         <div
-                                            style="width: 28px; height: 28px; border-radius: 50%; background: white; border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af; font-size: 10px;"></i>
+                                            style="width: 28px; height: 28px; border-radius: 50%; background: var(--bg-content); border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted); font-size: 10px;"></i>
                                         </div>
                                         <!-- Title bars -->
                                         <div
@@ -743,25 +771,25 @@
                                         </div>
                                         <!-- List items -->
                                         <div
-                                            style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
+                                            style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;">
                                             <div
                                                 style="width: 10px; height: 10px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
                                             </div>
-                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                            <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                             </div>
                                             <div
-                                                style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;">
                                             </div>
                                         </div>
                                         <div
-                                            style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
+                                            style="background: var(--bg-content); border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;">
                                             <div
-                                                style="width: 10px; height: 10px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                style="width: 10px; height: 10px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;">
                                             </div>
-                                            <div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                            <div style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                             </div>
                                             <div
-                                                style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;">
                                             </div>
                                         </div>
                                     </div>
@@ -776,46 +804,46 @@
                                         style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
                                         <!-- White floating card with circle image overlapping top -->
                                         <div
-                                            style="background: white; border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
+                                            style="background: var(--bg-content); border-radius: 8px; width: 82px; padding: 0 7px 7px; position: relative; padding-top: 16px; margin-top: 10px;">
                                             <!-- Circle image overlapping card top -->
                                             <div
-                                                style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; display: flex; align-items: center; justify-content: center;">
+                                                style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; border-radius: 50%; background: var(--border-color); border: 2px solid white; display: flex; align-items: center; justify-content: center;">
                                                 <i class="fa-regular fa-image"
-                                                    style="color: #9ca3af; font-size: 7px;"></i>
+                                                    style="color: var(--text-muted); font-size: 7px;"></i>
                                             </div>
                                             <!-- Company + title bars -->
                                             <div
                                                 style="background: #2f6bfd; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 3px;">
                                             </div>
                                             <div
-                                                style="background: #111827; width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
+                                                style="background: var(--text-main); width: 75%; height: 5px; border-radius: 2px; margin: 0 auto 2px;">
                                             </div>
                                             <div
-                                                style="background: #d1d5db; width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;">
+                                                style="background: var(--border-color); width: 55%; height: 3px; border-radius: 2px; margin: 0 auto 6px;">
                                             </div>
                                             <!-- List items -->
                                             <div
-                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div
                                                     style="width: 9px; height: 9px; background: #fecaca; border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                                 </div>
                                                 <div
-                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;">
                                                 </div>
                                             </div>
                                             <div
-                                                style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid #e5e7eb;">
+                                                style="background: var(--bg-sidebar); border-radius: 3px; padding: 3px 4px; display: flex; align-items: center; gap: 3px; border: 0.5px solid var(--border-color);">
                                                 <div
-                                                    style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;">
+                                                    style="width: 9px; height: 9px; background: var(--bg-sidebar); border-radius: 2px; flex-shrink: 0;">
                                                 </div>
                                                 <div
-                                                    style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;">
+                                                    style="background: var(--border-color); flex: 1; height: 3px; border-radius: 1px;">
                                                 </div>
                                                 <div
-                                                    style="width: 4px; height: 4px; border-right: 1.5px solid #9ca3af; border-top: 1.5px solid #9ca3af; transform: rotate(45deg); flex-shrink: 0;">
+                                                    style="width: 4px; height: 4px; border-right: 1.5px solid var(--text-muted); border-top: 1.5px solid var(--text-muted); transform: rotate(45deg); flex-shrink: 0;">
                                                 </div>
                                             </div>
                                         </div>
@@ -864,21 +892,21 @@
                                     <div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div>
                                     <div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div>
                                 </div>
-                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6"
+                                <div class="color-preset" data-primary="#EBA81B" data-secondary="#5b21b6"
                                     style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;">
-                                    <div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div>
+                                    <div style="background: #EBA81B; flex: 1; border-radius: 4px 0 0 4px;"></div>
                                     <div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div>
                                 </div>
                             </div>
 
                             <div
-                                style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                                style="background: var(--bg-body); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 24px;">
                                     <div>
                                         <label
                                             style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="E-card_primary_hex" name="E-card_primary_color"
                                                 value="{{ qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
@@ -891,7 +919,7 @@
                                         <label
                                             style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="E-card_secondary_hex" name="E-card_secondary_color"
                                                 value="{{ qrcard.get('E-card_secondary_color', '#0E379A') if qrcard else '#0E379A' }}"
                                                 style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);"
@@ -916,21 +944,21 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px;">
                                 <!-- Title Font -->
                                 <div style="margin-bottom: 16px;">
                                     <label
                                         style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
                                         <select name="E-card_title_font"
-                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
                                             <input type="text" id="E-card_title_color_hex" value="#000000"
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
@@ -947,14 +975,14 @@
                                         style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
                                         <select name="E-card_text_font"
-                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                            style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: #ffffff;">
                                             <option value="Lato">Lato</option>
                                             <option value="Roboto">Roboto</option>
                                             <option value="Open Sans">Open Sans</option>
                                             <option value="Montserrat">Montserrat</option>
                                         </select>
                                         <div
-                                            style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
                                             <input type="text" id="E-card_text_color_hex" value="#000000"
                                                 style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);"
                                                 readonly>
@@ -991,7 +1019,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i>
+                        <div class="header-icon hi-green"><i class="fa-solid fa-circle-info"></i>
                         </div>
                         <div class="header-text">
                             <h3>Basic Information</h3>
@@ -1010,7 +1038,7 @@
                         </div>
                         <div class="sub-collapse-body">
                             <div
-                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
+                                style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px;">
 
                                 <!-- Profile Image -->
                                 <div id="E-card-cover-img-section" style="margin-bottom: 16px;">
@@ -1020,7 +1048,7 @@
                                             main profile avatar)</span>
                                     </label>
                                     <label
-                                        style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                                        style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: var(--bg-body); gap: 10px;">
                                         <div id="cover-img-preview"
                                             style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                             {% set cover_url = (qrcard.get('E-card_t1_header_img_url') or
@@ -1033,8 +1061,8 @@
                                                 image</span>
                                             {% else %}
                                             <div
-                                                style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                                <i class="fa-regular fa-user" style="color: #9ca3af;"></i>
+                                                style="width: 32px; height: 32px; background: var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                <i class="fa-regular fa-user" style="color: var(--text-muted);"></i>
                                             </div>
                                             <span style="font-size: 13px; color: var(--text-muted);">Upload Profile
                                                 Image</span>
@@ -1063,26 +1091,26 @@
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Full name</label>
                                     <input type="text" name="E-card_company" class="form-control"
-                                        placeholder="Full name" style="background: white;"
+                                        placeholder="Full name"
                                         value="{{ qrcard.get('E-card_company', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Title</label>
                                     <input type="text" name="E-card_title" class="form-control"
-                                        placeholder="Title (e.g. Accountant)" style="background: white;"
+                                        placeholder="Title (e.g. Accountant)"
                                         value="{{ qrcard.get('E-card_title', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Summary</label>
                                     <input type="text" name="E-card_desc" class="form-control"
-                                        placeholder="Short summary about yourself" style="background: white;"
+                                        placeholder="Short summary about yourself"
                                         value="{{ qrcard.get('E-card_desc', '') if qrcard else '' }}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" style="font-size: 12px;">Button text</label>
                                     <input type="text" name="E-card_btn_text" class="form-control"
                                         placeholder="E.g.: View E-card"
-                                        style="background: white; border-color: var(--primary);"
+                                        style="border-color: var(--primary);"
                                         value="{{ qrcard.get('E-card_btn_text', '') if qrcard else '' }}">
                                 </div>
                             </div>
@@ -1097,7 +1125,7 @@
                         </div>
                         <div class="sub-collapse-body">
                             <div
-                                style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 20px;">
+                                style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-top: 16px; display: flex; flex-direction: column; gap: 20px;">
 
                                 <!-- Telephone -->
                                 <div>
@@ -1107,7 +1135,7 @@
                                             style="font-size: 12px; margin-bottom: 0;">Telephone</label>
                                         <button type="button" class="ecard-add-contact-btn"
                                             data-ecard-list="ecard-phone-list" data-ecard-type="phone"
-                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            style="background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
                                             <i class="fa-solid fa-plus"></i>
                                             Add phone
                                         </button>
@@ -1116,7 +1144,7 @@
                                         {% if phone_list is defined and phone_list %}
                                         {% for p in phone_list %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_phone_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;"
@@ -1126,14 +1154,14 @@
                                                 style="flex: 2; background: transparent; border: none;"
                                                 value="{{ p.number or '' }}">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
                                         {% endfor %}
                                         {% else %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_phone_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;">
@@ -1141,7 +1169,7 @@
                                                 placeholder="+54 11 0000 0000"
                                                 style="flex: 2; background: transparent; border: none;">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
@@ -1157,7 +1185,7 @@
                                             style="font-size: 12px; margin-bottom: 0;">Email</label>
                                         <button type="button" class="ecard-add-contact-btn"
                                             data-ecard-list="ecard-email-list" data-ecard-type="email"
-                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            style="background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
                                             <i class="fa-solid fa-plus"></i>
                                             Add email
                                         </button>
@@ -1166,7 +1194,7 @@
                                         {% if email_list is defined and email_list %}
                                         {% for e in email_list %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_email_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;"
@@ -1176,14 +1204,14 @@
                                                 style="flex: 2; background: transparent; border: none;"
                                                 value="{{ e.value or '' }}">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
                                         {% endfor %}
                                         {% else %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_email_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;">
@@ -1191,7 +1219,7 @@
                                                 placeholder="jane@foster.com"
                                                 style="flex: 2; background: transparent; border: none;">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
@@ -1207,7 +1235,7 @@
                                             website</label>
                                         <button type="button" class="ecard-add-contact-btn"
                                             data-ecard-list="ecard-website-list" data-ecard-type="website"
-                                            style="background: white; border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
+                                            style="background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 999px; font-size: 11px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--primary);">
                                             <i class="fa-solid fa-plus"></i>
                                             Add website
                                         </button>
@@ -1217,7 +1245,7 @@
                                         {% if website_list is defined and website_list %}
                                         {% for w in website_list %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_website_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;"
@@ -1227,14 +1255,14 @@
                                                 style="flex: 2; background: transparent; border: none;"
                                                 value="{{ w.value or '' }}">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
                                         {% endfor %}
                                         {% else %}
                                         <div class="ecard-contact-row"
-                                            style="display: flex; gap: 8px; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px;">
+                                            style="display: flex; gap: 8px; align-items: center; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px;">
                                             <input type="text" name="E-card_website_label[]" class="form-control"
                                                 placeholder="Label…"
                                                 style="flex: 1; background: transparent; border: none;">
@@ -1242,7 +1270,7 @@
                                                 placeholder="https://qrfy.com/"
                                                 style="flex: 2; background: transparent; border: none;">
                                             <button type="button" class="ecard-remove-contact-btn"
-                                                style="background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 4px;">
+                                                style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </div>
@@ -1262,10 +1290,10 @@
                         <div class="sub-collapse-body">
                             <div style="margin-top: 16px;">
                                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Add photos to show below your contact card.</p>
-                                <label id="ecard-gallery-upload-label" style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border-color); border-radius: 8px; padding: 20px; cursor: pointer; background: #fafafa; gap: 6px;">
-                                    <i class="fa-regular fa-images" style="font-size: 24px; color: #9ca3af;"></i>
-                                    <span style="font-size: 12px; color: #6b7280;">Click to add photos</span>
-                                    <span style="font-size: 11px; color: #9ca3af;">JPG, PNG — up to 5 images</span>
+                                <label id="ecard-gallery-upload-label" style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border-color); border-radius: 8px; padding: 20px; cursor: pointer; background: var(--bg-sidebar); gap: 6px;">
+                                    <i class="fa-regular fa-images" style="font-size: 24px; color: var(--text-muted);"></i>
+                                    <span style="font-size: 12px; color: var(--text-muted);">Click to add photos</span>
+                                    <span style="font-size: 11px; color: var(--text-muted);">JPG, PNG — up to 5 images</span>
                                     <input type="file" name="ecard_gallery_images[]" id="ecard-gallery-input" multiple accept="image/*" style="display:none;">
                                 </label>
                                 <div id="ecard-gallery-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
@@ -1280,7 +1308,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i>
                         </div>
                         <div class="header-text">
                             <h3>Content</h3>
@@ -1300,7 +1328,7 @@
                                 <label
                                     style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
                                 <label
-                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                    style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                     <div id="welcome-img-preview"
                                         style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                         {% if qrcard and qrcard.get('welcome_img_url') %}
@@ -1310,8 +1338,8 @@
                                         {% else %}
                                         <!-- Placeholder state -->
                                         <div
-                                            style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                            style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
                                         {% endif %}
@@ -1340,7 +1368,7 @@
                                         value="{{ qrcard.get('welcome_bg_color', qrcard.get('E-card_primary_color', '#2F6BFD')) if qrcard is defined and qrcard else '#2F6BFD' }}"
                                         style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
                                     <input type="text" id="welcome_bg_color_hex" readonly
-                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #ffffff;">
                                 </div>
                             </div>
 
@@ -1352,7 +1380,7 @@
                                 </label>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
-                                        style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider"
+                                        style="flex: 1; accent-color: var(--border-color);" id="welcome-time-slider"
                                         value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
                                 </div>
                                 <div
@@ -1415,7 +1443,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                                 <div style="flex: 1;">
@@ -1423,7 +1451,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                             </div>
@@ -1550,7 +1578,7 @@
 
 <!-- Profile image crop modal -->
 <div id="ecard-profile-crop-modal" class="ecard-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
-    <div class="ecard-crop-modal-box" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+    <div class="ecard-crop-modal-box" style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize & crop image</div>
         <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
             <img id="ecard-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
@@ -1738,7 +1766,7 @@
             this.classList.add('active');
             this.style.border = '2px solid var(--primary)';
             // reset others
-            document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid var(--border-color)');
+            document.querySelectorAll('.color-preset:not(.active)').forEach(p => p.style.border = '1px solid #e5e7eb');
 
             if (primaryPicker) {
                 primaryPicker.value = this.dataset.primary;
@@ -1831,8 +1859,8 @@
             let iconColor = '#059669';
             if (type === 'email') {
                 iconClass = 'fa-envelope';
-                bg = '#dbeafe';
-                iconColor = '#2563eb';
+                bg = '#2A2810';
+                iconColor = '#EBA81B';
             } else if (type === 'website') {
                 iconClass = 'fa-globe';
                 bg = '#fee2e2';
@@ -1847,7 +1875,7 @@
             const textWrap = document.createElement('div');
             textWrap.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;';
             const labelEl = document.createElement('div');
-            labelEl.style.cssText = 'font-size:11px;font-weight:600;color:#4b5563;';
+            labelEl.style.cssText = 'font-size:11px;font-weight:600;color:#6b7280;';
             labelEl.textContent = lbl || (type === 'phone' ? 'Phone' : type === 'email' ? 'Email' : 'Website');
             const valueEl = document.createElement('div');
             valueEl.style.cssText = 'font-size:13px;font-weight:700;color:#111827;word-break:break-word;';
@@ -2192,7 +2220,7 @@
     function createContactRow(type) {
         const row = document.createElement('div');
         row.className = 'ecard-contact-row';
-        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;';
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;';
 
         let inner = '';
         if (type === 'phone') {
@@ -2217,7 +2245,7 @@
 
         row.innerHTML = inner
             + '<button type="button" class="ecard-remove-contact-btn" '
-            + 'style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;">'
+            + 'style="background:transparent;border:none;color:#6b7280;cursor:pointer;padding:4px;">'
             + '<i class="fa-solid fa-trash-can"></i>'
             + '</button>';
 
@@ -2421,7 +2449,7 @@
                         alert('Image must be 1 MB or smaller.');
                         this.value = '';
                         if (thumb && !initialUrl) {
-                            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                         }
                         if (deleteBtn && !initialUrl) deleteBtn.style.display = 'none';
                         return;
@@ -2429,7 +2457,7 @@
                     if (file.type.indexOf('image') !== -1) {
                         var url = getPreviewSrc();
                         if (url && thumb) {
-                            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
                         }
                         if (deleteBtn) deleteBtn.style.display = 'inline-flex';
                         if (deleteFlag) deleteFlag.value = '0';
@@ -2442,7 +2470,7 @@
                     welcomeInput.value = '';
                     initialUrl = '';
                     if (thumb) {
-                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                     }
                     if (deleteFlag) deleteFlag.value = '1';
                     this.style.display = 'none';
@@ -2495,10 +2523,10 @@
                 if (card) {
                     if (radio.checked) {
                         card.style.border = '2px solid var(--primary)';
-                        if (span) span.style.color = 'var(--text-main)';
+                        if (span) span.style.color = '#111827';
                     } else {
-                        card.style.border = '1px solid var(--border-color)';
-                        if (span) span.style.color = 'var(--text-muted)';
+                        card.style.border = '1px solid #e5e7eb';
+                        if (span) span.style.color = '#6b7280';
                     }
                 }
             });
@@ -2593,7 +2621,7 @@
             a.href = url || '#';
             a.target = url ? '_blank' : '';
             if (url) a.setAttribute('download', '');
-            a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:white;border-radius:8px;text-decoration:none;gap:8px;';
+            a.style.cssText = 'display:flex;align-items:center;padding:9px 10px;background:#ffffff;border-radius:8px;text-decoration:none;gap:8px;';
 
             var iconBox = document.createElement('div');
             iconBox.style.cssText = 'width:32px;height:32px;background:#f3f4f6;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
@@ -2611,14 +2639,14 @@
             textWrap.appendChild(nameSpan);
             if (desc) {
                 var descSpan = document.createElement('span');
-                descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+                descSpan.style.cssText = 'font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
                 descSpan.textContent = desc;
                 textWrap.appendChild(descSpan);
             }
 
             var chevron = document.createElement('i');
             chevron.className = 'fa-solid fa-chevron-right';
-            chevron.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+            chevron.style.cssText = 'color:#6b7280;font-size:10px;flex-shrink:0;';
 
             a.appendChild(iconBox);
             a.appendChild(textWrap);
@@ -2648,12 +2676,12 @@
                 s1.style.cssText = 'font-size:11px;font-weight:500;color:#111827;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
                 s1.textContent = labelVal || '\u2014';
                 var s2 = document.createElement('span');
-                s2.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                s2.style.cssText = 'font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
                 s2.textContent = subVal || '';
                 wrap.appendChild(s1); wrap.appendChild(s2);
                 var chev = document.createElement('i');
                 chev.className = 'fa-solid fa-chevron-right';
-                chev.style.cssText = 'color:#9ca3af;font-size:10px;flex-shrink:0;';
+                chev.style.cssText = 'color:#6b7280;font-size:10px;flex-shrink:0;';
                 row.appendChild(box); row.appendChild(wrap); row.appendChild(chev);
                 return row;
             }
@@ -2661,7 +2689,7 @@
             document.querySelectorAll('#ecard-phone-list .ecard-contact-row').forEach(function (row) {
                 var lbl = (row.querySelector('input[name="E-card_phone_label[]"]') || {}).value || 'Phone';
                 var num = (row.querySelector('input[name="E-card_phone_number[]"]') || {}).value || '';
-                if (num) listEl.appendChild(makeRow('fa-solid fa-phone', '#2563eb', lbl, num));
+                if (num) listEl.appendChild(makeRow('fa-solid fa-phone', '#EBA81B', lbl, num));
             });
             document.querySelectorAll('#ecard-email-list .ecard-contact-row').forEach(function (row) {
                 var lbl = (row.querySelector('input[name="E-card_email_label[]"]') || {}).value || 'Email';
@@ -2778,7 +2806,7 @@
             textWrap.appendChild(nameSpan);
             if (desc) {
                 var descSpan = document.createElement('span');
-                descSpan.style.cssText = 'font-size:10px;color:#9ca3af;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
+                descSpan.style.cssText = 'font-size:10px;color:#6b7280;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;';
                 descSpan.textContent = desc;
                 textWrap.appendChild(descSpan);
             }
@@ -2883,7 +2911,7 @@
             var thumb = document.getElementById('cover-img-preview');
             var removeBtn = document.getElementById('cover-img-remove-btn');
             var delFlag = document.getElementById('E-card_profile_img_delete');
-            if (thumb) thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+            if (thumb) thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
             if (removeBtn) removeBtn.style.display = 'inline-flex';
             if (delFlag) delFlag.value = '0';
         }
@@ -2991,7 +3019,7 @@
                 // Reset thumb
                 var thumb = document.getElementById('cover-img-preview');
                 if (thumb) {
-                    thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+                    thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Cover Image</span>';
                 }
                 if (delFlag) { delFlag.value = '1'; }
                 this.style.display = 'none';
@@ -3114,7 +3142,7 @@
             if (!container) return;
             var row = document.createElement('div');
             row.className = 'ecard-contact-row';
-            row.style.cssText = 'display:flex;gap:8px;align-items:center;background:white;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;';
+            row.style.cssText = 'display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;';
             var inner = '';
             if (type === 'phone') {
                 inner = '<input type="text" name="E-card_phone_label[]" class="form-control" value="' + (labelVal||'') + '" placeholder="Label…" style="flex:1;background:transparent;border:none;">'
@@ -3126,7 +3154,7 @@
                 inner = '<input type="text" name="E-card_website_label[]" class="form-control" value="' + (labelVal||'') + '" placeholder="Label…" style="flex:1;background:transparent;border:none;">'
                     + '<input type="url" name="E-card_website_value[]" class="form-control" value="' + (valueVal||'') + '" placeholder="https://example.com" style="flex:2;background:transparent;border:none;">';
             }
-            row.innerHTML = inner + '<button type="button" class="ecard-remove-contact-btn" style="background:transparent;border:none;color:#9ca3af;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+            row.innerHTML = inner + '<button type="button" class="ecard-remove-contact-btn" style="background:transparent;border:none;color:#6b7280;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
             container.appendChild(row);
         }
         function applyEcardAutocomplete(dump) {

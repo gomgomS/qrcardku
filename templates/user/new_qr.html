@@ -19,7 +19,7 @@
 
     .qr-preview {
         width: 340px;
-        background-color: #fafafa;
+        background-color: var(--bg-content);
         border-radius: 12px;
         padding: 24px;
         text-align: center;
@@ -84,7 +84,7 @@
         padding: 16px;
         border: 1px solid var(--border-color);
         border-radius: 8px;
-        background: white;
+        background: var(--bg-content);
         cursor: pointer;
         transition: all 0.2s;
     }
@@ -103,7 +103,7 @@
         color: var(--primary);
         font-size: 24px;
         margin-right: 16px;
-        background-color: #eff6ff;
+        background-color: #2A2810;
         border-radius: 8px;
         flex-shrink: 0;
     }
@@ -160,8 +160,8 @@
     .phone-mockup {
         width: 280px;
         height: 560px;
-        background-color: white;
-        border: 12px solid #1a1a1a;
+        background-color: var(--bg-content);
+        border: 12px solid var(--text-main);
         border-radius: 40px;
         margin: 20px auto;
         position: relative;
@@ -180,7 +180,7 @@
     }
 
     .mockup-grid div {
-        background-color: #1a1a1a;
+        background-color: var(--text-main);
         border-radius: 4px;
     }
 
@@ -342,7 +342,7 @@
                     </a>
                     <a href="/qr/new/vcard-static" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
-                            <div class="qr-icon" style="background-color: #ede9fe; color: #7c3aed;"><i class="fa-regular fa-id-badge"></i></div>
+                            <div class="qr-icon" style="background-color: #2A2810; color: #d4941a;"><i class="fa-regular fa-id-badge"></i></div>
                             <div class="qr-info"><h4>vCard</h4><p>Save contact to phone</p></div>
                         </div>
                     </a>
@@ -353,7 +353,7 @@
     </div>
 
     <div class="qr-preview">
-        <h3 style="color: #6b7280; font-weight: 500;">Example</h3>
+        <h3 style="color: var(--text-muted); font-weight: 500;">Example</h3>
         <div class="phone-mockup">
             <div class="mockup-grid">
                 <div></div>

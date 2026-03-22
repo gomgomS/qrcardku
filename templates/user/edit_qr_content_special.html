@@ -83,7 +83,7 @@
     }
 
     .editor-panel {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 24px;
@@ -124,7 +124,7 @@
     }
 
     .section-item {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 16px;
@@ -140,7 +140,7 @@
 
     .section-item.inactive {
         opacity: 0.5;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
     .section-item .section-header {
@@ -176,7 +176,7 @@
         padding: 6px 12px;
         border-radius: 6px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         font-size: 12px;
         cursor: pointer;
         display: flex;
@@ -191,7 +191,7 @@
     }
 
     .section-item .section-actions .btn-edit {
-        background: #fef3c7;
+        background: var(--bg-sidebar);
         border-color: #f59e0b;
         color: #92400e;
     }
@@ -213,16 +213,16 @@
     }
 
     .section-item .section-actions .btn-toggle-active.inactive-btn {
-        background: #f3f4f6;
-        border-color: #6b7280;
-        color: #374151;
+        background: var(--bg-sidebar);
+        border-color: var(--text-muted);
+        color: var(--text-main);
     }
 
     .inactive-badge {
         position: absolute;
         top: 8px;
         right: 8px;
-        background: #6b7280;
+        background: var(--text-muted);
         color: white;
         padding: 2px 8px;
         border-radius: 4px;
@@ -235,7 +235,7 @@
         border-radius: 8px;
         padding: 16px;
         margin-bottom: 12px;
-        background: #fafbfc;
+        background: var(--bg-sidebar);
         position: relative;
     }
 
@@ -255,12 +255,12 @@
     }
 
     .content-block .block-type-badge.type-content {
-        background: #dbeafe;
-        color: #1e40af;
+        background: var(--bg-sidebar);
+        color: #d4941a;
     }
 
     .content-block .block-type-badge.type-html_editor {
-        background: #fef3c7;
+        background: var(--bg-sidebar);
         color: #92400e;
     }
 
@@ -291,7 +291,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         min-height: 200px;
-        background: white;
+        background: var(--bg-content);
     }
 
     .ql-toolbar.ql-snow {
@@ -326,7 +326,7 @@
         padding: 12px;
         margin-top: 8px;
         min-height: 80px;
-        background: white;
+        background: var(--bg-content);
     }
 
     .btn-add-block {
@@ -336,7 +336,7 @@
         padding: 8px 16px;
         border-radius: 6px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s;
@@ -355,7 +355,7 @@
     }
 
     .btn-add-block.btn-warning {
-        background: #fef3c7;
+        background: var(--bg-sidebar);
         border-color: #f59e0b;
         color: #92400e;
     }
@@ -375,7 +375,7 @@
         padding: 14px;
         border: 2px dashed var(--border-color);
         border-radius: 8px;
-        background: white;
+        background: var(--bg-content);
         font-size: 14px;
         font-weight: 500;
         color: var(--text-muted);
@@ -395,7 +395,7 @@
         gap: 12px;
         margin-top: 12px;
         padding: 12px;
-        background: #f9fafb;
+        background: var(--bg-body);
         border-radius: 8px;
     }
 
@@ -434,7 +434,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         overflow: hidden;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
     .url-prefix {
@@ -449,7 +449,7 @@
         flex: 1;
         border: none;
         padding: 10px 14px;
-        background: white;
+        background: var(--bg-content);
     }
 
     .url-prefix-group input:focus {
@@ -491,7 +491,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         transition: .3s;
         border-radius: 20px;
     }
@@ -503,7 +503,7 @@
         width: 16px;
         left: 2px;
         bottom: 2px;
-        background-color: white;
+        background-color: var(--bg-content);
         transition: .3s;
         border-radius: 50%;
     }
@@ -547,8 +547,8 @@
     .phone-mockup {
         width: 100%;
         height: 600px;
-        background-color: white;
-        border: 12px solid #1a1a1a;
+        background-color: var(--bg-content);
+        border: 12px solid var(--text-main);
         border-radius: 40px;
         position: relative;
         overflow: hidden;
@@ -560,13 +560,13 @@
         height: 100%;
         overflow-y: auto;
         overflow-x: hidden;
-        background: #f9fafb;
+        background: var(--bg-body);
         position: relative;
     }
 
     .preview-section {
         padding: 16px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .preview-section:last-child {
@@ -637,7 +637,7 @@
         width: 600px;
         max-width: 90vw;
         height: 100vh;
-        background: white;
+        background: var(--bg-content);
         z-index: 101;
         box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
         overflow-y: auto;
@@ -699,7 +699,7 @@
         padding: 12px;
         border: 1px dashed var(--border-color);
         border-radius: 6px;
-        background: #fafafa;
+        background: var(--bg-sidebar);
         min-height: 40px;
         position: relative;
     }
@@ -854,7 +854,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         padding: 12px;
-        background: white;
+        background: var(--bg-content);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
@@ -899,7 +899,7 @@
     }
 
     .btn-close-tag {
-        background: #f1f5f9;
+        background: var(--bg-sidebar);
         color: var(--text-muted);
         border: none;
         padding: 4px 12px;
@@ -924,7 +924,7 @@
     }
 
     .img-inserter-modal {
-        background: white;
+        background: var(--bg-content);
         width: 400px;
         border-radius: 8px;
         overflow: hidden;
@@ -933,7 +933,7 @@
 
     .img-inserter-header {
         padding: 16px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -947,7 +947,7 @@
     .img-inserter-tabs {
         display: flex;
         gap: 16px;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid var(--border-color);
         margin-bottom: 16px;
     }
 
@@ -955,7 +955,7 @@
         padding: 8px 4px;
         font-size: 13px;
         font-weight: 500;
-        color: #6b7280;
+        color: var(--text-muted);
         cursor: pointer;
         border-bottom: 2px solid transparent;
     }
@@ -974,18 +974,18 @@
     }
 
     .img-drop-zone {
-        border: 2px dashed #d1d5db;
+        border: 2px dashed var(--border-color);
         border-radius: 8px;
         padding: 24px 16px;
         text-align: center;
-        background: #f9fafb;
+        background: var(--bg-body);
         cursor: pointer;
         transition: all 0.2s;
     }
 
     .img-drop-zone.drag-over {
         border-color: #2F6BFD;
-        background: #eff6ff;
+        background: var(--bg-sidebar);
     }
 
     .btn-insert-img {
@@ -1005,7 +1005,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -1016,7 +1016,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -1025,7 +1025,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -1057,7 +1057,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: white;
+            background: var(--bg-content);
             overflow-y: auto;
             padding: 12px 16px 8px;
             box-sizing: border-box;
@@ -1131,7 +1131,7 @@
                             <label
                                 style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
                             <label
-                                style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                 <div id="welcome-img-preview"
                                     style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                     {% if qrcard and qrcard.get('welcome_img_url') %}
@@ -1140,8 +1140,8 @@
                                     <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                     {% else %}
                                     <div
-                                        style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                     </div>
                                     <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
                                     {% endif %}
@@ -1168,7 +1168,7 @@
                                     value="{{ qrcard.get('welcome_bg_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
                                     style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
                                 <input type="text" id="welcome_bg_color_hex" readonly
-                                    style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                    style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: var(--bg-body);">
                             </div>
                         </div>
 
@@ -1180,7 +1180,7 @@
                             </label>
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
-                                    style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider"
+                                    style="flex: 1; accent-color: var(--border-color);" id="welcome-time-slider"
                                     value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
                             </div>
                             <div
@@ -1324,7 +1324,7 @@
         <div
             style="display:flex; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
             <button type="button"
-                style="flex:1; padding:10px; border:1px solid var(--border-color); border-radius:8px; background:white; cursor:pointer;"
+                style="flex:1; padding:10px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-content); cursor:pointer;"
                 onclick="closeEditPanel()">Cancel</button>
             <button type="button"
                 style="flex:1; padding:10px; border:none; border-radius:8px; background:var(--primary); color:white; cursor:pointer; font-weight:600;"
@@ -1338,7 +1338,7 @@
     <div class="img-inserter-modal">
         <div class="img-inserter-header">
             <span>Insert Image</span>
-            <button type="button" style="border:none;background:none;font-size:16px;cursor:pointer;color:#9ca3af;"
+            <button type="button" style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--text-muted);"
                 onclick="closeImgInserter()"><i class="fa-solid fa-times"></i></button>
         </div>
         <div class="img-inserter-body">
@@ -1351,16 +1351,16 @@
             <div class="img-tab-content active" id="imgTabUpload">
                 <div class="img-drop-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
                     <i class="fa-solid fa-cloud-arrow-up"
-                        style="font-size:32px; color:#9ca3af; margin-bottom:12px;"></i>
+                        style="font-size:32px; color:var(--text-muted); margin-bottom:12px;"></i>
                     <p style="font-size:13px; font-weight:500; margin:0 0 4px 0; color:var(--text-main);">Drag & drop an
                         image here</p>
-                    <p style="font-size:11px; color:#6b7280; margin:0;">or click to browse</p>
+                    <p style="font-size:11px; color:var(--text-muted); margin:0;">or click to browse</p>
                     <input type="file" id="imgFileInput" accept="image/*" style="display:none;"
                         onchange="handleImgFileSelect(this)">
                 </div>
                 <div id="imgUploadPreview" style="display:none; margin-top:16px; text-align:center;">
                     <img id="imgUploadPreviewImg" src="" alt="Preview"
-                        style="max-width:100%; max-height:160px; border-radius:6px; border:1px solid #e5e7eb;">
+                        style="max-width:100%; max-height:160px; border-radius:6px; border:1px solid var(--border-color);">
                 </div>
             </div>
 
@@ -1371,10 +1371,10 @@
                     style="font-size:13px;">
                 <div id="imgUrlPreview" style="display:none; margin-top:16px; text-align:center;">
                     <img id="imgUrlPreviewImg" src="" alt="Preview"
-                        style="max-width:100%; max-height:160px; border-radius:6px; border:1px solid #e5e7eb;">
+                        style="max-width:100%; max-height:160px; border-radius:6px; border:1px solid var(--border-color);">
                 </div>
                 <button type="button"
-                    style="margin-top:8px; padding:6px 12px; background:white; border:1px solid var(--border-color); border-radius:6px; font-size:12px; cursor:pointer;"
+                    style="margin-top:8px; padding:6px 12px; background:var(--bg-content); border:1px solid var(--border-color); border-radius:6px; font-size:12px; cursor:pointer;"
                     onclick="previewImgUrl()">Preview</button>
             </div>
             <button type="button" class="btn-insert-img" onclick="insertImgConfirm()"><i class="fa-solid fa-check"></i>
@@ -2569,7 +2569,7 @@
                 if (block.type === 'content' || block.type === 'html_editor') {
                     return `<div style="font-size:11px; line-height:1.5;">${block.data || ''}</div>`;
                 } else if (block.type === 'maps' && block.data && block.data.latitude && block.data.longitude) {
-                    return `<div style="background:#e5e7eb; border-radius:4px; padding:8px; text-align:center; font-size:10px; color:var(--text-muted);">
+                    return `<div style="background:var(--border-color); border-radius:4px; padding:8px; text-align:center; font-size:10px; color:var(--text-muted);">
                     <i class="fa-solid fa-map-marker-alt"></i> Map: ${block.data.latitude}, ${block.data.longitude}
                 </div>`;
                 }
@@ -2681,7 +2681,7 @@
             if (deleteBtn && welcomeInput) {
                 deleteBtn.addEventListener('click', function () {
                     welcomeInput.value = '';
-                    if (thumb) { thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>'; }
+                    if (thumb) { thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>'; }
                     this.style.display = 'none';
                 });
             }

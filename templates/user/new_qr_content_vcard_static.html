@@ -10,13 +10,13 @@
     .form-column { flex: 1; min-width: 0; }
     .preview-column { width: 340px; flex-shrink: 0; }
     .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; }
-    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .collapse-section { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: var(--bg-content); border-bottom: 1px solid var(--border-color); }
     .header-left-col { display: flex; align-items: center; gap: 12px; }
     .header-icon { font-size: 18px; width: 24px; text-align: center; }
     .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
     .header-text p { font-size: 12px; color: var(--text-muted); }
-    .collapse-body { padding: 0 24px 24px; background: white; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease; opacity: 0; }
+    .collapse-body { padding: 0 24px 24px; background: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 1200px; opacity: 1; }
     .form-group { margin-bottom: 16px; }
     .form-group:last-child { margin-bottom: 0; }
@@ -29,22 +29,22 @@
     /* Phone rows */
     .phone-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
     .phone-row { display: flex; align-items: center; gap: 8px; }
-    .phone-type-select { width: 120px; flex-shrink: 0; padding: 10px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: white; cursor: pointer; }
+    .phone-type-select { width: 120px; flex-shrink: 0; padding: 10px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: #ffffff; cursor: pointer; }
     .phone-type-select:focus { outline: none; border-color: var(--primary); }
     .phone-number-input { flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; }
     .phone-number-input:focus { outline: none; border-color: var(--primary); }
     .phone-remove-btn { width: 34px; height: 34px; border: 1px solid #fca5a5; background: #fef2f2; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #dc2626; font-size: 14px; flex-shrink: 0; }
     .phone-remove-btn:hover { background: #fee2e2; }
-    .add-phone-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--primary); background: #eff6ff; border: 1px dashed var(--primary); border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
-    .add-phone-btn:hover { background: #dbeafe; }
+    .add-phone-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--primary); background: var(--bg-sidebar); border: 1px dashed var(--primary); border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
+    .add-phone-btn:hover { background: var(--bg-sidebar); }
 
     /* Preview */
-    .preview-container { position: sticky; top: 24px; background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
+    .preview-container { position: sticky; top: 24px; background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
     .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
-    .static-badge { background: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
-    .vcard-preview-card { border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: white; }
-    .vcard-preview-header { background: linear-gradient(135deg, #2F6BFD, #1d4ed8); padding: 20px 16px; display: flex; align-items: center; gap: 14px; }
+    .static-badge { background: var(--bg-sidebar); color: #EBA81B; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
+    .vcard-preview-card { border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: var(--bg-content); }
+    .vcard-preview-header { background: linear-gradient(135deg, #2F6BFD, #d4941a); padding: 20px 16px; display: flex; align-items: center; gap: 14px; }
     .vcard-avatar { width: 52px; height: 52px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; flex-shrink: 0; }
     .vcard-name-block { color: white; }
     .vcard-preview-name { font-size: 15px; font-weight: 700; line-height: 1.3; }
@@ -59,18 +59,18 @@
     .mobile-bottom-bar {
         display: none; position: fixed;
         bottom: 0; left: 0; right: 0; height: 60px;
-        background: white; border-top: 1px solid var(--border-color);
+        background: var(--bg-content); border-top: 1px solid var(--border-color);
         z-index: 400; align-items: center; justify-content: space-between;
         padding: 0 16px; gap: 12px;
     }
     .mobile-bar-arrow {
         width: 44px; height: 44px; border: 1px solid var(--border-color);
-        background: white; border-radius: 50%;
+        background: var(--bg-content); border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; font-size: 16px; color: var(--text-main);
         flex-shrink: 0; text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-preview-btn {
         flex: 1; height: 40px; background: var(--primary); color: white;
@@ -88,7 +88,7 @@
         .preview-column {
             display: flex; flex-direction: column;
             position: fixed; top: 0; left: 0;
-            width: 100vw; bottom: 60px; z-index: 450; background: #f9fafb;
+            width: 100vw; bottom: 60px; z-index: 450; background: var(--bg-body);
             overflow-y: auto; padding: 12px 16px 8px; box-sizing: border-box;
             transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
         }
@@ -339,7 +339,7 @@ function updatePreview() {
         var row = document.createElement('div');
         row.className = 'vcard-preview-row';
         var label = phoneTypeLabels[p.type] || p.type;
-        row.innerHTML = '<i class="fa-solid fa-phone"></i><span style="color:#6b7280;font-size:11px;min-width:38px;">' + label + '</span><span>' + p.number + '</span>';
+        row.innerHTML = '<i class="fa-solid fa-phone"></i><span style="color:var(--text-muted);font-size:11px;min-width:38px;">' + label + '</span><span>' + p.number + '</span>';
         phonesContainer.appendChild(row);
     });
 

@@ -13,21 +13,21 @@
     .form-column { flex: 1; min-width: 0; }
     .preview-column { width: 340px; flex-shrink: 0; }
     .step-item { display: flex; align-items: center; gap: 8px; }
-    .step-num { width: 24px; height: 24px; background-color: #e5e7eb; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
+    .step-num { width: 24px; height: 24px; background-color: var(--border-color); color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; }
     .step-completed { color: #16a34a; font-weight: 500; }
     .step-completed .step-num { background-color: #16a34a; color: white; }
     .step-active { color: var(--primary); font-weight: 500; }
     .step-active .step-num { background-color: var(--primary); color: white; }
-    .btn-outline { border: 1px solid var(--border-color); background: white; color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+    .btn-outline { border: 1px solid var(--border-color); background: var(--bg-content); color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
     .btn-primary-pill { background-color: var(--primary); color: white; border: none; padding: 6px 20px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
     .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; text-align: center; }
-    .collapse-section { background: white; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
-    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: white; border-bottom: 1px solid var(--border-color); }
+    .collapse-section { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+    .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: var(--bg-content); border-bottom: 1px solid var(--border-color); }
     .header-left-col { display: flex; align-items: center; gap: 12px; }
     .header-icon { color: var(--primary); font-size: 18px; width: 24px; text-align: center; }
     .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
     .header-text p { font-size: 12px; color: var(--text-muted); }
-    .collapse-body { padding: 0 24px 24px 24px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
+    .collapse-body { padding: 0 24px 24px 24px; background-color: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 6000px; opacity: 1; }
     .sub-collapse-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; cursor: pointer; border-top: 1px solid var(--border-color); }
     .sub-collapse-header:first-child { border-top: none; }
@@ -42,92 +42,112 @@
     .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; }
     .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e5e7eb; transition: .3s; border-radius: 20px; }
-    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: .3s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: #ffffff; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.15); }
     input:checked+.slider { background-color: var(--primary); }
     input:checked+.slider:before { transform: translateX(16px); }
-    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #f9fafb; }
+    .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--bg-body); }
     .url-prefix { padding: 10px 14px; color: var(--text-muted); font-size: 14px; border-right: 1px solid var(--border-color); white-space: nowrap; }
-    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: white; }
+    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: #ffffff; }
     .url-prefix-group input:focus { outline: none; }
     .toggle-label-with-icon { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); font-weight: 500; }
+    .template-select-area, .preview-column {
+        --bg-body: #f9fafb; --bg-content: #ffffff; --bg-sidebar: #f3f4f6;
+        --text-main: #111827; --text-muted: #6b7280; --border-color: #e5e7eb;
+    }
     .phone-container { position: sticky; top: 24px; }
     .phone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
-    .phone-mockup { width: 100%; height: calc(100vh - 72px); max-height: 600px; background-color: white; border: 12px solid #1a1a1a; border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-    .mockup-inner { width: 100%; height: 100%; background-color: #f9fafb; display: flex; flex-direction: column; overscroll-behavior-y: contain; }
+    .phone-mockup { width: 100%; height: calc(100vh - 72px); max-height: 600px; background-color: #1a1a1a; border: 12px solid var(--text-muted); border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15); }
+    .mockup-inner { width: 100%; height: 100%; background-color: #181914; display: flex; flex-direction: column; overscroll-behavior-y: contain; }
     .preview-disclaimer { margin-top: 8px; margin-bottom: 0; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
 
     /* Section cards */
     #allinone-sections-container { display: flex; flex-direction: column; gap: 12px; }
-    .section-card { background: white; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .section-card { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .section-card-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: default; user-select: none; border-bottom: 1px solid var(--border-color); }
-    .section-card[data-section-type="contact"] .section-card-header { background: #eff6ff; }
-    .section-card[data-section-type="link"] .section-card-header { background: #f0fdf4; }
-    .section-card[data-section-type="sosmed"] .section-card-header { background: #faf5ff; }
-    .section-card[data-section-type="image"] .section-card-header { background: #fff7ed; }
-    .section-card[data-section-type="video"] .section-card-header { background: #fef2f2; }
-    .section-card[data-section-type="pdf"] .section-card-header { background: #fef2f2; }
+    /* Dark mode (default) — tinted headers, muted icon bg */
+    .section-card[data-section-type="contact"] .section-card-header { background: #26230f; }
+    .section-card[data-section-type="link"] .section-card-header { background: #0f2218; }
+    .section-card[data-section-type="sosmed"] .section-card-header { background: #1a1626; }
+    .section-card[data-section-type="image"] .section-card-header { background: #251a0f; }
+    .section-card[data-section-type="video"] .section-card-header { background: #251010; }
+    .section-card[data-section-type="pdf"] .section-card-header { background: #251010; }
+    .section-card[data-section-type="text"] .section-card-header { background: #0f1825; }
     .section-card.collapsed .section-card-header { border-bottom-color: transparent; }
     .section-card-header-left { display: flex; align-items: center; gap: 8px; }
     .section-card-icon { font-size: 14px; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .section-card[data-section-type="contact"] .section-card-icon { background: #bfdbfe; color: #1d4ed8; }
-    .section-card[data-section-type="link"] .section-card-icon { background: #bbf7d0; color: #15803d; }
-    .section-card[data-section-type="sosmed"] .section-card-icon { background: #ede9fe; color: #6d28d9; }
-    .section-card[data-section-type="image"] .section-card-icon { background: #fed7aa; color: #c2410c; }
-    .section-card[data-section-type="video"] .section-card-icon { background: #fecaca; color: #b91c1c; }
-    .section-card[data-section-type="pdf"] .section-card-icon { background: #fecaca; color: #991b1b; }
-    .section-card[data-section-type="text"] .section-card-header { background: #f0f9ff; }
-    .section-card[data-section-type="text"] .section-card-icon { background: #bae6fd; color: #0369a1; }
-    .allinone-quill-wrap .ql-toolbar { border-radius: 6px 6px 0 0; border-color: var(--border-color); background: #f9fafb; }
-    .allinone-quill-wrap .ql-container { border-radius: 0 0 6px 6px; border-color: var(--border-color); font-size: 13px; min-height: 100px; background: white; }
-    .allinone-quill-wrap .ql-editor { min-height: 100px; }
+    .section-card[data-section-type="contact"] .section-card-icon { background: #3d2e00; color: #f59e0b; }
+    .section-card[data-section-type="link"] .section-card-icon { background: #0a2e16; color: #22c55e; }
+    .section-card[data-section-type="sosmed"] .section-card-icon { background: #1e133a; color: #a78bfa; }
+    .section-card[data-section-type="image"] .section-card-icon { background: #3a1e08; color: #fb923c; }
+    .section-card[data-section-type="video"] .section-card-icon { background: #3a0f0f; color: #f87171; }
+    .section-card[data-section-type="pdf"] .section-card-icon { background: #3a0f0f; color: #f87171; }
+    .section-card[data-section-type="text"] .section-card-icon { background: #0a1e3a; color: #38bdf8; }
+    /* Light mode overrides — pastel tints */
+    [data-theme="light"] .section-card[data-section-type="contact"] .section-card-header { background: #fef9ec; }
+    [data-theme="light"] .section-card[data-section-type="link"] .section-card-header { background: #f0fdf4; }
+    [data-theme="light"] .section-card[data-section-type="sosmed"] .section-card-header { background: #f5f3ff; }
+    [data-theme="light"] .section-card[data-section-type="image"] .section-card-header { background: #fff7ed; }
+    [data-theme="light"] .section-card[data-section-type="video"] .section-card-header { background: #fef2f2; }
+    [data-theme="light"] .section-card[data-section-type="pdf"] .section-card-header { background: #fef2f2; }
+    [data-theme="light"] .section-card[data-section-type="text"] .section-card-header { background: #f0f9ff; }
+    [data-theme="light"] .section-card[data-section-type="contact"] .section-card-icon { background: #fde68a; color: #b45309; }
+    [data-theme="light"] .section-card[data-section-type="link"] .section-card-icon { background: #bbf7d0; color: #15803d; }
+    [data-theme="light"] .section-card[data-section-type="sosmed"] .section-card-icon { background: #ede9fe; color: #6d28d9; }
+    [data-theme="light"] .section-card[data-section-type="image"] .section-card-icon { background: #fed7aa; color: #c2410c; }
+    [data-theme="light"] .section-card[data-section-type="video"] .section-card-icon { background: #fecaca; color: #b91c1c; }
+    [data-theme="light"] .section-card[data-section-type="pdf"] .section-card-icon { background: #fecaca; color: #991b1b; }
+    [data-theme="light"] .section-card[data-section-type="text"] .section-card-icon { background: #e0f2fe; color: #0284c7; }
+    .allinone-quill-wrap .ql-toolbar { border-radius: 6px 6px 0 0; border-color: var(--border-color); background: #ffffff; }
+    .allinone-quill-wrap .ql-container { border-radius: 0 0 6px 6px; border-color: var(--border-color); font-size: 13px; min-height: 100px; background: #ffffff; color: #111827; }
+    .allinone-quill-wrap .ql-editor { min-height: 100px; color: #111827; }
     .section-card-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
-    .section-card-count { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.8); padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); }
+    .section-card-count { font-size: 11px; color: var(--text-muted); background: var(--bg-body); padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border-color); }
     .section-card-actions { display: flex; align-items: center; gap: 4px; }
-    .drag-handle { background: transparent; border: none; color: #c4c4c4; cursor: grab; padding: 5px 6px; font-size: 13px; border-radius: 5px; line-height: 1; touch-action: none; flex-shrink: 0; }
-    .drag-handle:hover { color: #9ca3af; background: rgba(0,0,0,0.04); }
+    .drag-handle { background: transparent; border: none; color: var(--text-muted); cursor: grab; padding: 5px 6px; font-size: 13px; border-radius: 5px; line-height: 1; touch-action: none; flex-shrink: 0; }
+    .drag-handle:hover { color: var(--text-main); background: var(--bg-body); }
     .drag-handle:active { cursor: grabbing; }
-    .section-card.sortable-ghost { opacity: 0.4; background: #f0f4ff; border: 2px dashed var(--primary); }
+    .section-card.sortable-ghost { opacity: 0.4; background: #fef9ec; border: 2px dashed var(--primary); }
     .section-card.sortable-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.15); opacity: 1 !important; }
-    .section-card-toggle-btn, .section-card-delete { background: transparent; border: none; color: #9ca3af; cursor: pointer; padding: 5px 7px; font-size: 12px; border-radius: 5px; transition: all 0.15s; }
-    .section-card-toggle-btn:hover { background: rgba(0,0,0,0.06); color: var(--text-main); }
+    .section-card-toggle-btn, .section-card-delete { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 5px 7px; font-size: 12px; border-radius: 5px; transition: all 0.15s; }
+    .section-card-toggle-btn:hover { background: var(--bg-body); color: var(--text-main); }
     .section-card-delete:hover { color: #ef4444; background: #fee2e2; }
     .section-card-toggle-btn .toggle-icon { display: inline-block; transition: transform 0.2s; }
     .section-card.collapsed .section-card-toggle-btn .toggle-icon { transform: rotate(-180deg); }
     .section-card-body { padding: 16px; }
     .section-card.collapsed .section-card-body { display: none; }
     .section-items-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .section-item-row { display: flex; align-items: flex-start; gap: 8px; background: #f9fafb; border: 1px solid #f0f0f0; border-radius: 8px; padding: 10px 12px; }
+    .section-item-row { display: flex; align-items: flex-start; gap: 8px; background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; }
     .section-item-fields { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-    .section-item-delete { background: transparent; border: none; color: #d1d5db; cursor: pointer; padding: 4px 5px; font-size: 13px; flex-shrink: 0; margin-top: 1px; border-radius: 4px; transition: all 0.15s; }
+    .section-item-delete { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 5px; font-size: 13px; flex-shrink: 0; margin-top: 1px; border-radius: 4px; transition: all 0.15s; }
     .section-item-delete:hover { color: #ef4444; background: #fee2e2; }
-    .add-section-item-btn { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--primary); background: white; border: 1px dashed var(--primary); border-radius: 6px; padding: 7px 14px; cursor: pointer; width: 100%; transition: background 0.15s; box-sizing: border-box; }
-    .add-section-item-btn:hover { background: #eff6ff; }
-    .file-upload-label { display: flex; align-items: center; gap: 8px; border: 1px dashed var(--border-color); border-radius: 6px; padding: 8px 12px; cursor: pointer; background: white; transition: border-color 0.15s; }
+    .add-section-item-btn { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--primary); background: var(--bg-content); border: 1px dashed var(--primary); border-radius: 6px; padding: 7px 14px; cursor: pointer; width: 100%; transition: background 0.15s; box-sizing: border-box; }
+    .add-section-item-btn:hover { background: #fef9ec; }
+    .file-upload-label { display: flex; align-items: center; gap: 8px; border: 1px dashed var(--border-color); border-radius: 6px; padding: 8px 12px; cursor: pointer; background: var(--bg-content); transition: border-color 0.15s; }
     .file-upload-label:hover { border-color: var(--primary); }
     .inline-row { display: flex; gap: 8px; }
     .inline-row .form-control { flex: 1; min-width: 0; }
     .add-block-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .add-block-btn { background: white; border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; font-weight: 500; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); transition: all 0.15s; }
-    .add-block-btn:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .add-block-btn { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; font-weight: 500; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); transition: all 0.15s; }
+    .add-block-btn:hover { border-color: var(--primary); color: var(--primary); background: #fef9ec; }
     /* Block style picker */
     .block-style-picker { display: flex; gap: 5px; margin-bottom: 10px; }
-    .block-style-opt { cursor: pointer; border: 2px solid #e5e7eb; border-radius: 7px; padding: 5px 4px 4px; font-size: 9px; font-weight: 500; color: #9ca3af; background: white; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; flex: 1; }
-    .block-style-opt:hover { border-color: #93c5fd; color: #3b82f6; }
-    .block-style-opt.selected { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+    .block-style-opt { cursor: pointer; border: 2px solid var(--border-color); border-radius: 7px; padding: 5px 4px 4px; font-size: 9px; font-weight: 500; color: var(--text-muted); background: #ffffff; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; flex: 1; }
+    .block-style-opt:hover { border-color: var(--primary); color: var(--primary); }
+    .block-style-opt.selected { border-color: var(--primary); color: var(--primary); background: #fef9ec; }
     .bsp-thumb { width: 100%; height: 20px; border-radius: 3px; overflow: hidden; display: flex; align-items: center; }
-    .bsp-1 { background: #f3f4f6; padding: 0 4px; gap: 3px; }
-    .bsp-2 { background: white; border: 1px solid #e5e7eb; padding: 0 4px; gap: 3px; }
+    .bsp-1 { background: #f9fafb; padding: 0 4px; gap: 3px; }
+    .bsp-2 { background: #ffffff; border: 1px solid var(--border-color); padding: 0 4px; gap: 3px; }
     .bsp-3 { justify-content: center; }
     .bsp-4 { background: #f9fafb; justify-content: center; flex-direction: column; gap: 2px; padding: 2px; }
     /* Block color picker */
-    .block-color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+    .block-color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
     .block-color-row label { font-size: 11px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
     .block-color-input { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px; cursor: pointer; background: transparent; flex-shrink: 0; }
-    .block-color-hex { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 5px; padding: 4px 7px; width: 72px; background: #f9fafb; }
+    .block-color-hex { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 5px; padding: 4px 7px; width: 72px; background: var(--bg-body); }
     /* Autocomplete row */
     .autocomplete-row { display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; gap: 12px; }
     .autocomplete-row-left { display: flex; align-items: center; gap: 10px; }
@@ -137,7 +157,7 @@
     .autocomplete-toggle { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
     .autocomplete-toggle input { opacity: 0; width: 0; height: 0; }
     .autocomplete-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 22px; transition: 0.25s; }
-    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .autocomplete-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #ffffff; border-radius: 50%; transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .autocomplete-toggle input:checked + .autocomplete-slider { background: #16a34a; }
     .autocomplete-toggle input:checked + .autocomplete-slider:before { transform: translateX(18px); }
 
@@ -147,7 +167,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -158,7 +178,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -167,7 +187,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-body); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -204,7 +224,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: #f9fafb;
+            background: var(--bg-body);
             overflow-y: auto;
             padding: 12px 16px 8px;
             margin: 0;
@@ -217,6 +237,22 @@
         .phone-mockup { height: calc(100vh - 60px - 120px); max-height: 560px; }
         .mobile-bottom-bar { display: flex; }
     }
+
+/* header-icon tints */
+.hi-amber { background: #26230f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-green  { background: #0f2218; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-orange { background: #251a0f; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-red    { background: #251010; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-purple { background: #1a1626; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-blue   { background: #0f1825; border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.hi-grey   { background: var(--border-color); border-radius: 6px; padding: 5px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+[data-theme="light"] .hi-amber  { background: #fef9ec; }
+[data-theme="light"] .hi-green  { background: #f0fdf4; }
+[data-theme="light"] .hi-orange { background: #fff7ed; }
+[data-theme="light"] .hi-red    { background: #fef2f2; }
+[data-theme="light"] .hi-purple { background: #f5f3ff; }
+[data-theme="light"] .hi-blue   { background: #f0f9ff; }
+[data-theme="light"] .hi-grey   { background: #f3f4f6; }
 </style>
 {% endblock %}
 
@@ -284,7 +320,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-palette"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-palette"></i></div>
                         <div class="header-text">
                             <h3>Appearance</h3>
                             <p>Customize the style and template.</p>
@@ -300,31 +336,31 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
+                            <div class="template-select-area" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Allinone_template" value="default" {% if not qrcard or qrcard.get('Allinone_template','default')=='default' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-default">
-                                    <div class="template-card" style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: white; margin-bottom: 8px;">
+                                    <div class="template-card" style="border: 2px solid var(--primary); border-radius: 8px; padding: 8px; width: 100px; height: 140px; background: #ffffff; margin-bottom: 8px;">
                                         <div style="background: #2f6bfd; width: 100%; height: 40%; border-radius: 4px 4px 0 0;"></div>
-                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 16px 6px 6px; position: relative;">
+                                        <div style="background: #ffffff; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 16px 6px 6px; position: relative;">
                                             <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; background: #e5e7eb; border-radius: 50%;"></div>
-                                            <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                            <div style="background: #d1d5db; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
+                                            <div style="background: #f3f4f6; border-radius: 3px; padding: 3px 4px; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #2A2810; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-main);">Default</span>
                                 </label>
                                 <label style="cursor: pointer; text-align: center;">
                                     <input type="radio" name="Allinone_template" value="template1" {% if qrcard and qrcard.get('Allinone_template')=='template1' %}checked{% endif %} class="hidden-radio" style="display:none;" id="allinone-radio-template1">
-                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: white; margin-bottom: 8px; overflow: hidden;">
+                                    <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 0; width: 100px; height: 140px; background: #ffffff; margin-bottom: 8px; overflow: hidden;">
                                         {% set _t1_thumb_url = qrcard.get('Allinone_cover_img_url','') if qrcard else '' %}
                                         <div style="width: 100%; height: 44%; position: relative; overflow: hidden; background: #e5e7eb; flex-shrink: 0;">
                                             <img id="allinone-t1-thumb-header-img" src="{{ _t1_thumb_url }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;{{ '' if _t1_thumb_url else 'display:none;' }}">
-                                            <div id="allinone-t1-thumb-placeholder" style="position:absolute;inset:0;background:#dbeafe;display:{{ 'none' if _t1_thumb_url else 'flex' }};align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#93c5fd;font-size:14px;"></i></div>
+                                            <div id="allinone-t1-thumb-placeholder" style="position:absolute;inset:0;background:#2A2810;display:{{ 'none' if _t1_thumb_url else 'flex' }};align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#EBA81B;font-size:14px;"></i></div>
                                         </div>
-                                        <div style="background: white; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
-                                            <div style="background: #9ca3af; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
-                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
+                                        <div style="background: #ffffff; border-radius: 8px 8px 0 0; margin-top: -6px; padding: 5px 6px; position: relative; z-index: 1;">
+                                            <div style="background: #d1d5db; width: 65%; height: 5px; margin: 0 auto 4px; border-radius: 2px;"></div>
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #2A2810; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
+                                            <div style="background: #f3f4f6; border-radius: 4px; padding: 4px 5px; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; background: #2A2810; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 4px; border-radius: 1px;"></div></div>
                                         </div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 1</span>
@@ -334,8 +370,8 @@
                                     <div class="template-card" style="border: 1px solid var(--border-color); border-radius: 8px; width: 100px; height: 140px; background: #2f6bfd; margin-bottom: 8px; display: flex; flex-direction: column; align-items: center; padding: 10px 6px;">
                                         <div style="width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5); margin-bottom: 5px; flex-shrink: 0;"></div>
                                         <div style="background: rgba(255,255,255,0.85); width: 55%; height: 4px; border-radius: 2px; margin-bottom: 7px;"></div>
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
-                                        <div style="background: white; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #bfdbfe; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: #ffffff; border-radius: 4px; padding: 3px 4px; width: 100%; margin-bottom: 3px; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #2A2810; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
+                                        <div style="background: #ffffff; border-radius: 4px; padding: 3px 4px; width: 100%; display: flex; align-items: center; gap: 3px;"><div style="width: 9px; height: 9px; background: #2A2810; border-radius: 2px; flex-shrink: 0;"></div><div style="background: #d1d5db; flex: 1; height: 3px; border-radius: 1px;"></div></div>
                                     </div>
                                     <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">Template 2</span>
                                 </label>
@@ -355,20 +391,20 @@
                                 <div class="color-preset" data-primary="#10b981" data-secondary="#047857" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #10b981; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #047857; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                                 <div class="color-preset" data-primary="#f59e0b" data-secondary="#b45309" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #f59e0b; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #b45309; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                                 <div class="color-preset" data-primary="#ef4444" data-secondary="#b91c1c" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #ef4444; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #b91c1c; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
-                                <div class="color-preset" data-primary="#8b5cf6" data-secondary="#5b21b6" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #8b5cf6; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
+                                <div class="color-preset" data-primary="#EBA81B" data-secondary="#5b21b6" style="cursor: pointer; display: flex; border-radius: 8px; border: 1px solid var(--border-color); padding: 2px; width: 64px; height: 32px; flex-shrink: 0;"><div style="background: #EBA81B; flex: 1; border-radius: 4px 0 0 4px;"></div><div style="background: #5b21b6; flex: 1; border-radius: 0 4px 4px 0;"></div></div>
                             </div>
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 24px;">
                                     <div>
                                         <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Primary</label>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="Allinone_primary_hex" name="Allinone_primary_color" value="{{ qrcard.get('Allinone_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
                                             <input type="color" id="Allinone_primary_picker" value="{{ qrcard.get('Allinone_primary_color', '#2f6bfd') if qrcard else '#2f6bfd' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
                                         </div>
                                     </div>
                                     <div>
                                         <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 4px;">Secondary</label>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px;">
                                             <input type="text" id="Allinone_secondary_hex" name="Allinone_secondary_color" value="{{ qrcard.get('Allinone_secondary_color', '#0E379A') if qrcard else '#0E379A' }}" style="border: none; outline: none; width: 70px; font-size: 13px; color: var(--text-muted);" readonly>
                                             <input type="color" id="Allinone_secondary_picker" value="{{ qrcard.get('Allinone_secondary_color', '#0e379a') if qrcard else '#0e379a' }}" style="width: 20px; height: 20px; border: none; padding: 0; cursor: pointer; background: transparent;">
                                         </div>
@@ -388,32 +424,32 @@
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="background: #f9fafb; border-radius: 8px; padding: 16px;">
+                            <div style="background: var(--bg-body); border-radius: 8px; padding: 16px;">
                                 <div style="margin-bottom: 16px;">
                                     <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Title</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
-                                        <select name="Allinone_title_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                        <select name="Allinone_title_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
                                             {% for f in ['Lato','Roboto','Open Sans','Montserrat'] %}
                                             <option value="{{ f }}" {% if qrcard and qrcard.get('Allinone_title_font','Lato')==f %}selected{% elif not qrcard and f=='Lato' %}selected{% endif %}>{{ f }}</option>
                                             {% endfor %}
                                         </select>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
-                                            <input type="text" id="Allinone_title_color_hex" value="{{ qrcard.get('Allinone_title_color','#111827') if qrcard else '#111827' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
-                                            <input type="color" name="Allinone_title_color" id="Allinone_title_color_picker" value="{{ qrcard.get('Allinone_title_color','#111827') if qrcard else '#111827' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Allinone_title_color_hex" value="{{ qrcard.get('Allinone_title_color','#E8E5DC') if qrcard else '#E8E5DC' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Allinone_title_color" id="Allinone_title_color_picker" value="{{ qrcard.get('Allinone_title_color','#E8E5DC') if qrcard else '#E8E5DC' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
                                 <div>
                                     <label style="font-size: 11px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Texts</label>
                                     <div style="display: flex; gap: 12px; align-items: center;">
-                                        <select name="Allinone_text_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none; background: white;">
+                                        <select name="Allinone_text_font" style="flex: 1; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; outline: none;">
                                             {% for f in ['Lato','Roboto','Open Sans','Montserrat'] %}
                                             <option value="{{ f }}" {% if qrcard and qrcard.get('Allinone_text_font','Lato')==f %}selected{% elif not qrcard and f=='Lato' %}selected{% endif %}>{{ f }}</option>
                                             {% endfor %}
                                         </select>
-                                        <div style="display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
-                                            <input type="text" id="Allinone_text_color_hex" value="{{ qrcard.get('Allinone_text_color','#6b7280') if qrcard else '#6b7280' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
-                                            <input type="color" name="Allinone_text_color" id="Allinone_text_color_picker" value="{{ qrcard.get('Allinone_text_color','#6b7280') if qrcard else '#6b7280' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
+                                        <div style="display: flex; align-items: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 12px; flex: 1;">
+                                            <input type="text" id="Allinone_text_color_hex" value="{{ qrcard.get('Allinone_text_color','#8A8878') if qrcard else '#8A8878' }}" style="border: none; outline: none; width: 100%; font-size: 13px; color: var(--text-muted);" readonly>
+                                            <input type="color" name="Allinone_text_color" id="Allinone_text_color_picker" value="{{ qrcard.get('Allinone_text_color','#8A8878') if qrcard else '#8A8878' }}" style="width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; padding: 0; cursor: pointer;">
                                         </div>
                                     </div>
                                 </div>
@@ -436,7 +472,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="header-icon hi-green"><i class="fa-solid fa-circle-info"></i></div>
                         <div class="header-text">
                             <h3>Basic Information</h3>
                             <p>Title, description and cover image.</p>
@@ -445,13 +481,13 @@
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body">
-                    <div style="background: #f9fafb; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
+                    <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
                         <!-- Cover Image -->
                         <div id="allinone-cover-img-section" style="margin-bottom: 16px;">
                             <label class="form-label" style="font-size: 12px;">Cover image
                                 <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional)</span>
                             </label>
-                            <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: #f9fafb; gap: 10px;">
+                            <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: var(--bg-body); gap: 10px;">
                                 <div id="allinone-cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                     {% set cover_url = qrcard.get('Allinone_cover_img_url','') if qrcard else '' %}
                                     {% if cover_url %}
@@ -459,7 +495,7 @@
                                     <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                     {% else %}
                                     <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        <i class="fa-regular fa-image" style="color: #8A8878;"></i>
                                     </div>
                                     <span style="font-size: 13px; color: var(--text-muted);">Upload Cover Image</span>
                                     {% endif %}
@@ -479,11 +515,11 @@
 
                         <div class="form-group">
                             <label class="form-label" style="font-size: 12px;">Title</label>
-                            <input type="text" name="Allinone_title" id="allinone-title-input" class="form-control" placeholder="Title" style="background: white;" value="{{ qrcard.get('Allinone_title','') if qrcard else '' }}">
+                            <input type="text" name="Allinone_title" id="allinone-title-input" class="form-control" placeholder="Title" value="{{ qrcard.get('Allinone_title','') if qrcard else '' }}">
                         </div>
                         <div class="form-group">
                             <label class="form-label" style="font-size: 12px;">Description</label>
-                            <input type="text" name="Allinone_desc" id="allinone-desc-input" class="form-control" placeholder="Short description" style="background: white;" value="{{ qrcard.get('Allinone_desc','') if qrcard else '' }}">
+                            <input type="text" name="Allinone_desc" id="allinone-desc-input" class="form-control" placeholder="Short description" value="{{ qrcard.get('Allinone_desc','') if qrcard else '' }}">
                         </div>
                     </div>
                 </div>
@@ -493,7 +529,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #f0fdf4;"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="header-icon hi-green"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="header-text">
                             <h3>Content Blocks</h3>
                             <p>Add contacts, links, social media, images, videos and PDFs.</p>
@@ -513,7 +549,7 @@
                         <button type="button" class="add-block-btn" data-block="text"><i class="fa-solid fa-align-left"></i> Text</button>
                     </div>
                     <div id="allinone-sections-container"></div>
-                    <p id="allinone-sections-empty-msg" style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;background:#f9fafb;border-radius:8px;border:1px dashed var(--border-color);">No sections yet. Click a type above to get started.</p>
+                    <p id="allinone-sections-empty-msg" style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;background:#f5f5f5;border-radius:8px;border:1px dashed var(--border-color);">No sections yet. Click a type above to get started.</p>
                     <input type="hidden" name="allinone_sections_json" id="allinone-sections-json-input" value="[]">
                 </div>
             </div>
@@ -570,7 +606,7 @@
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon" style="background: #eff6ff;"><i class="fa-solid fa-object-group"></i></div>
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i></div>
                         <div class="header-text">
                             <h3>Welcome Screen</h3>
                             <p>Optional splash screen before main content.</p>
@@ -587,14 +623,14 @@
                         <div class="sub-collapse-body">
                             <div style="margin-top: 8px;">
                                 <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
-                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: #f9fafb;">
+                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                     <div id="welcome-img-preview" style="display: flex; align-items: center; gap: 8px; width: 100%;">
                                         {% if qrcard and qrcard.get('welcome_img_url') %}
                                         <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
                                         <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
                                         {% else %}
-                                        <div style="width: 32px; height: 32px; background: #e5e7eb; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fa-regular fa-image" style="color: #9ca3af;"></i>
+                                        <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: #8A8878;"></i>
                                         </div>
                                         <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
                                         {% endif %}
@@ -609,7 +645,7 @@
                                     <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
                                         value="{{ qrcard.get('welcome_bg_color', qrcard.get('Allinone_primary_color','#2F6BFD')) if qrcard else '#2F6BFD' }}"
                                         style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
-                                    <input type="text" id="welcome_bg_color_hex" readonly style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #f9fafb;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #ffffff;">
                                 </div>
                             </div>
                             <div style="margin-top: 24px;">
@@ -617,7 +653,7 @@
                                     Time (seconds)
                                 </label>
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5" style="flex: 1; accent-color: #d1d5db;" id="welcome-time-slider" value="{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }}">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5" style="flex: 1; accent-color: #3A3B30;" id="welcome-time-slider" value="{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }}">
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
                                     <span id="welcome-time-display">2.5 seconds</span>
@@ -640,7 +676,7 @@
                     </div>
                 </div>
                 <div class="phone-mockup">
-                    <div class="mockup-inner" style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                    <div class="mockup-inner" style="padding:0;background-color:#1E1F18;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
                         {% set allinone_mode = 'preview' %}
                         {% include 'user/template_allinone_general.html' %}
                     </div>
@@ -668,7 +704,7 @@
 
 <!-- Cover image crop modal -->
 <div id="allinone-profile-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+    <div style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize &amp; crop image</div>
         <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
             <img id="allinone-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
@@ -845,9 +881,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const sectionsJsonInput = document.getElementById('allinone-sections-json-input');
 
     const TYPE_CONFIG = {
-        contact: { icon: 'fa-solid fa-phone',        label: 'Contact',      bg: '#eff6ff', iBg: '#bfdbfe', iColor: '#1d4ed8' },
+        contact: { icon: 'fa-solid fa-phone',        label: 'Contact',      bg: '#2A2810', iBg: '#2A2810', iColor: '#d4941a' },
         link:    { icon: 'fa-solid fa-link',          label: 'Link',         bg: '#f0fdf4', iBg: '#bbf7d0', iColor: '#15803d' },
-        sosmed:  { icon: 'fa-solid fa-share-nodes',   label: 'Social Media', bg: '#faf5ff', iBg: '#ede9fe', iColor: '#6d28d9' },
+        sosmed:  { icon: 'fa-solid fa-share-nodes',   label: 'Social Media', bg: '#faf5ff', iBg: '#2A2810', iColor: '#6d28d9' },
         image:   { icon: 'fa-regular fa-image',       label: 'Image',        bg: '#fff7ed', iBg: '#fed7aa', iColor: '#c2410c' },
         video:   { icon: 'fa-solid fa-play',          label: 'Video',        bg: '#fef2f2', iBg: '#fecaca', iColor: '#b91c1c' },
         pdf:     { icon: 'fa-solid fa-file-pdf',      label: 'PDF',          bg: '#fef2f2', iBg: '#fecaca', iColor: '#991b1b' },
@@ -909,8 +945,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (v4 === 'email') iconHtml = `<i class="fa-solid fa-envelope" style="color:${blockColor};font-size:7px;"></i>`;
             else if (v4 === 'website') iconHtml = `<i class="fa-solid fa-globe" style="color:${blockColor};font-size:7px;"></i>`;
             else iconHtml = `<i class="fa-solid fa-phone" style="color:${blockColor};font-size:7px;"></i>`;
-        } else if (stype === 'link') { iconHtml = '<i class="fa-solid fa-link" style="color:#2563eb;font-size:7px;"></i>'; }
-        else if (stype === 'sosmed') { iconHtml = v1 ? `<i class="${v1}" style="font-size:7px;color:#374151;"></i>` : ''; }
+        } else if (stype === 'link') { iconHtml = '<i class="fa-solid fa-link" style="color:#EBA81B;font-size:7px;"></i>'; }
+        else if (stype === 'sosmed') { iconHtml = v1 ? `<i class="${v1}" style="font-size:7px;color:#111827;"></i>` : ''; }
         else if (stype === 'video') { iconHtml = '<i class="fa-solid fa-play" style="color:#ef4444;font-size:7px;"></i>'; }
         else if (stype === 'pdf') { iconHtml = '<i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i>'; }
         // SOSMED specific styles
@@ -922,7 +958,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
             }
             if (blockStyle === '2') {
-                return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
+                return `<div style="display:flex;align-items:center;gap:5px;background:#f8f9fa;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${smPlatform}</span>${handleHTML}</div></div>`;
             }
             if (blockStyle === '3') {
                 return `<div style="width:18px;height:18px;border-radius:4px;border:1.5px solid ${blockColor};background:${blockColor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="${v1}" style="font-size:8px;color:${blockColor};"></i></div>`;
@@ -944,13 +980,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:7.5px;color:#444;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
             }
             if (blockStyle === '2') {
-                return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:6px;color:#888;letter-spacing:0.3px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:#111;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
+                return `<div style="display:flex;align-items:center;gap:5px;background:#f8f9fa;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:6px;color:#888;letter-spacing:0.3px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:#111;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
             }
             if (blockStyle === '3') {
                 return `<div style="display:flex;align-items:center;gap:4px;padding:4px 5px;background:rgba(255,255,255,0.2);border-radius:3px;"><div style="width:14px;height:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="${v4==='email'?'fa-solid fa-envelope':v4==='website'?'fa-solid fa-globe':'fa-solid fa-phone'}" style="color:white;font-size:7px;"></i></div><div style="flex:1;min-width:0;overflow:hidden;"><span style="font-size:6.5px;color:rgba(255,255,255,0.8);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctLabel}</span><span style="font-size:8px;color:white;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ctVal}</span></div></div>`;
             }
             if (blockStyle === '4') {
-                return `<div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.08);text-align:center;gap:2px;"><div style="width:18px;height:18px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;">${iconHtml}</div><span style="font-size:6.5px;color:#666;font-weight:500;display:block;">${ctLabel}</span><span style="font-size:8px;font-weight:700;color:#111;display:block;">${ctVal}</span></div>`;
+                return `<div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px;background:#f9fafb;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.05);text-align:center;gap:2px;"><div style="width:18px;height:18px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;">${iconHtml}</div><span style="font-size:6.5px;color:#666;font-weight:500;display:block;">${ctLabel}</span><span style="font-size:8px;font-weight:700;color:#111;display:block;">${ctVal}</span></div>`;
             }
         }
         // LINK specific styles
@@ -962,7 +998,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border-bottom:1px solid #ddd;padding:5px 6px;"><div style="width:16px;height:16px;border-radius:3px;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkName}</span>${descHTML}</div><i class="fa-solid fa-chevron-right" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
             }
             if (blockStyle === '2') {
-                return `<div style="display:flex;align-items:center;gap:5px;background:white;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkName}</span>${descHTML}</div></div>`;
+                return `<div style="display:flex;align-items:center;gap:5px;background:#f8f9fa;border-radius:5px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:5px 6px;"><div style="width:16px;height:16px;border-radius:50%;background:${colorAlpha};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconHtml}</div><div style="display:flex;flex-direction:column;gap:1px;flex:1;min-width:0;overflow:hidden;"><span style="font-size:8px;color:#111;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lkName}</span>${descHTML}</div></div>`;
             }
             if (blockStyle === '3') {
                 return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 8px;border-radius:6px;background:${blockColor};text-align:center;"><span style="font-size:8px;color:white;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${lkName}</span>${lkDesc?`<span style="font-size:6px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${lkDesc}</span>`:''}</div>`;
@@ -977,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (v1 && (v1.startsWith('blob:') || /\.(mp4|webm|ogg|mov)(\?|$)/i.test(v1))) {
                 return `<div style="border-radius:6px;overflow:hidden;background:#000;">`
                     + `<video src="${v1}" controls style="width:100%;display:block;max-height:110px;"></video>`
-                    + (vtitle ? `<div style="padding:3px 6px;font-size:7px;color:#374151;font-weight:500;">${vtitle}</div>` : '')
+                    + (vtitle ? `<div style="padding:3px 6px;font-size:7px;color:#111827;font-weight:500;">${vtitle}</div>` : '')
                     + `</div>`;
             }
             return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:6px;background:${blockColor};"><div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-play" style="color:white;font-size:8px;"></i></div><span style="font-size:7px;color:white;font-weight:600;text-align:center;">${vtitle}</span></div>`;
@@ -985,15 +1021,15 @@ document.addEventListener('DOMContentLoaded', function () {
         // PDF specific styles
         if (stype === 'pdf') {
             const pdfname = v2 || 'Download PDF';
-            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:5px 7px;"><div style="width:16px;height:16px;background:#fecaca;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:500;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
-            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 7px;"><div style="width:18px;height:18px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:600;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#9ca3af;font-size:6px;flex-shrink:0;"></i></div>`;
-            if (blockStyle === '3') return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;flex-shrink:0;"></i><span style="font-size:7px;color:#374151;white-space:nowrap;">${pdfname}</span></div>`;
+            if (blockStyle === '1') return `<div style="display:flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e5e7eb;border-radius:5px;padding:5px 7px;"><div style="width:16px;height:16px;background:#fecaca;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:500;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#bbb;font-size:6px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '2') return `<div style="display:flex;align-items:center;gap:5px;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px 7px;"><div style="width:18px;height:18px;background:#ffffff;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;"></i></div><span style="font-size:8px;font-weight:600;color:#111;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pdfname}</span><i class="fa-solid fa-arrow-down" style="color:#6b7280;font-size:6px;flex-shrink:0;"></i></div>`;
+            if (blockStyle === '3') return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:10px;border:1px solid #fecaca;"><i class="fa-solid fa-file-pdf" style="color:#ef4444;font-size:7px;flex-shrink:0;"></i><span style="font-size:7px;color:#111827;white-space:nowrap;">${pdfname}</span></div>`;
             if (blockStyle === '4') return `<div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border-radius:6px;background:${blockColor};"><i class="fa-solid fa-arrow-down" style="color:white;font-size:7px;"></i><span style="font-size:8px;color:white;font-weight:700;">${pdfname}</span></div>`;
         }
         // TEXT block
         if (stype === 'text') {
             if (!v1) return `<div style="font-size:7px;color:#9ca3af;font-style:italic;padding:3px 5px;">No text yet...</div>`;
-            if (blockStyle === '2') return `<div class="pv-text-block" style="background:white;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;">${v1}</div>`;
+            if (blockStyle === '2') return `<div class="pv-text-block" style="background:#f9fafb;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08);padding:4px 6px;">${v1}</div>`;
             if (blockStyle === '3') return `<div class="pv-text-block" style="border-radius:4px;padding:4px 6px;background:${blockColor};color:white;">${v1}</div>`;
             return `<div class="pv-text-block" style="padding:3px 5px;">${v1}</div>`;
         }
@@ -1080,31 +1116,31 @@ document.addEventListener('DOMContentLoaded', function () {
             const v2Val = data.v2 || '';
             fieldsHTML = `<div class="section-item-fields">
                 <div class="inline-row">
-                    <select class="allinone-contact-subtype form-control" style="background:white;flex:0 0 120px;min-width:0;">
+                    <select class="allinone-contact-subtype form-control" style="background:#f9fafb;flex:0 0 120px;min-width:0;">
                         <option value="phone"${subtypeVal==='phone'?' selected':''}>📞 Phone</option>
                         <option value="email"${subtypeVal==='email'?' selected':''}>✉️ Email</option>
                         <option value="website"${subtypeVal==='website'?' selected':''}>🌐 Website</option>
                     </select>
-                    <input type="text" class="allinone-v1 form-control" placeholder="Value" value="${v1Val.replace(/"/g,'&quot;')}" style="background:white;">
+                    <input type="text" class="allinone-v1 form-control" placeholder="Value" value="${v1Val.replace(/"/g,'&quot;')}" style="background:#ffffff;">
                 </div>
-                <input type="text" class="allinone-v2 form-control" placeholder="Label (optional)" value="${v2Val.replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v2 form-control" placeholder="Label (optional)" value="${v2Val.replace(/"/g,'&quot;')}" style="background:#ffffff;">
             </div>`;
         } else if (stype === 'link') {
             fieldsHTML = `<div class="section-item-fields">
-                <input type="text" class="allinone-v1 form-control" placeholder="URL (https://...)" value="${(data.v1||'').replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v1 form-control" placeholder="URL (https://...)" value="${(data.v1||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
                 <div class="inline-row">
-                    <input type="text" class="allinone-v2 form-control" placeholder="Name" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
-                    <input type="text" class="allinone-v3 form-control" placeholder="Description (optional)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:white;">
+                    <input type="text" class="allinone-v2 form-control" placeholder="Name" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
+                    <input type="text" class="allinone-v3 form-control" placeholder="Description (optional)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
                 </div>
             </div>`;
         } else if (stype === 'sosmed') {
             const selVal = data.v1 || 'fa-brands fa-instagram';
             const opts = SOSMED_OPTIONS.map(([v,l]) => `<option value="${v}"${v===selVal?' selected':''}>${l}</option>`).join('');
             fieldsHTML = `<div class="section-item-fields">
-                <select class="allinone-v1-select form-control" style="background:white;">${opts}</select>
+                <select class="allinone-v1-select form-control" style="background:#ffffff;">${opts}</select>
                 <div class="inline-row">
-                    <input type="text" class="allinone-v2 form-control" placeholder="@username or URL" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
-                    <input type="text" class="allinone-v3 form-control" placeholder="Label (optional, replaces platform name)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:white;">
+                    <input type="text" class="allinone-v2 form-control" placeholder="@username or URL" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
+                    <input type="text" class="allinone-v3 form-control" placeholder="Label (optional, replaces platform name)" value="${(data.v3||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
                 </div>
             </div>`;
         } else if (stype === 'image') {
@@ -1119,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <input type="file" accept="image/*" class="allinone-v1-file" data-item-id="${itemId}" style="display:none;">
                 </label>
                 ${existingPreview}
-                <input type="text" class="allinone-v2 form-control" placeholder="Caption (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v2 form-control" placeholder="Caption (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
             </div>`;
         } else if (stype === 'video') {
             const existingUrl = data.v1 || '';
@@ -1130,14 +1166,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 ? `<div class="allinone-video-preview" style="display:block;"><video src="${existingUrl}" controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`
                 : `<div class="allinone-video-preview" style="display:none;"><video controls style="width:100%;border-radius:6px;max-height:140px;background:#000;display:block;"></video></div>`;
             fieldsHTML = `<div class="section-item-fields">
-                <input type="text" class="allinone-v1 form-control allinone-video-url" placeholder="YouTube URL or paste video link" value="${existingUrl.startsWith('http') ? existingUrl.replace(/"/g,'&quot;') : ''}" style="background:white;">
+                <input type="text" class="allinone-v1 form-control allinone-video-url" placeholder="YouTube URL or paste video link" value="${existingUrl.startsWith('http') ? existingUrl.replace(/"/g,'&quot;') : ''}" style="background:#ffffff;">
                 <label class="file-upload-label" style="margin-top:2px;">
                     <i class="fa-solid fa-film" style="color:var(--primary);"></i>
                     <span class="file-label-text" style="font-size:12px;color:var(--text-muted);">${hasFile ? 'Replace video file...' : 'Or upload video file...'}</span>
                     <input type="file" accept="video/*" class="allinone-v1-file" data-item-id="${itemId}" style="display:none;">
                 </label>
                 ${vidPreviewBlock}
-                <input type="text" class="allinone-v2 form-control" placeholder="Title (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v2 form-control" placeholder="Title (optional)" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
             </div>`;
         } else if (stype === 'pdf') {
             const existingUrl = data.v1 || '';
@@ -1148,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <span class="file-label-text" style="font-size:12px;color:var(--text-muted);">${existingUrl ? 'Replace PDF...' : 'Choose PDF...'}</span>
                     <input type="file" accept=".pdf" class="allinone-v1-file" data-item-id="${itemId}" style="display:none;">
                 </label>
-                <input type="text" class="allinone-v2 form-control" placeholder="Document name" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:white;">
+                <input type="text" class="allinone-v2 form-control" placeholder="Document name" value="${(data.v2||'').replace(/"/g,'&quot;')}" style="background:#ffffff;">
             </div>`;
         } else if (stype === 'text') {
             row.dataset.initialHtml = data.v1 || '';
@@ -1249,20 +1285,20 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
             <div class="section-card-body">
                 ${stype === 'text' ? `<div class="block-style-picker">
-                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:transparent;border:1px solid #d1d5db;border-radius:3px;padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div><span>Plain</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:white;border:1px solid #e5e7eb;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div><span>Card</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:3px;padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div><span>Plain</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:#8A8878;border-radius:1px;"></div><div style="height:2px;background:#3A3B30;border-radius:1px;width:70%;"></div></div><span>Card</span></button>
                     <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb" style="background:var(--primary,#2f6bfd);border-radius:3px;padding:2px 4px;flex-direction:column;gap:1px;"><div style="height:2px;background:rgba(255,255,255,0.8);border-radius:1px;"></div><div style="height:2px;background:rgba(255,255,255,0.5);border-radius:1px;width:70%;"></div></div><span>Colored</span></button>
                 </div>` : stype === 'image' ? `<div class="block-style-picker">
-                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:#f3f4f6;justify-content:space-between;padding:0 3px;"><i class="fa-solid fa-chevron-left" style="font-size:5px;color:#9ca3af;"></i><div style="width:14px;height:12px;background:#d1d5db;border-radius:1px;"></div><i class="fa-solid fa-chevron-right" style="font-size:5px;color:#9ca3af;"></i></div><span>Carousel</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:#f9fafb;flex-direction:column;gap:1px;padding:1px 2px;"><div style="width:100%;height:6px;background:#d1d5db;border-radius:1px;"></div><div style="width:100%;height:6px;background:#e5e7eb;border-radius:1px;"></div></div><span>Vertical</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div></div><span>Grid 2-1</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#bbb;border-radius:1px;grid-column:span 2;height:6px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Grid 1-2</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='5'?' selected':''}" data-style="5"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#bbb;border-radius:1px;grid-row:span 2;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Split</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb" style="background:#f3f4f6;justify-content:space-between;padding:0 3px;"><i class="fa-solid fa-chevron-left" style="font-size:5px;color:#6b7280;"></i><div style="width:14px;height:12px;background:#d1d5db;border-radius:1px;"></div><i class="fa-solid fa-chevron-right" style="font-size:5px;color:#6b7280;"></i></div><span>Carousel</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb" style="background:#f5f5f5;flex-direction:column;gap:1px;padding:1px 2px;"><div style="width:100%;height:6px;background:#d1d5db;border-radius:1px;"></div><div style="width:100%;height:6px;background:#e5e7eb;border-radius:1px;"></div></div><span>Vertical</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#9ca3af;border-radius:1px;grid-column:span 2;height:6px;"></div></div><span>Grid 2-1</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#9ca3af;border-radius:1px;grid-column:span 2;height:6px;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Grid 1-2</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='5'?' selected':''}" data-style="5"><div class="bsp-thumb" style="background:#f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:1px;padding:1px;"><div style="background:#9ca3af;border-radius:1px;grid-row:span 2;"></div><div style="background:#d1d5db;border-radius:1px;"></div><div style="background:#d1d5db;border-radius:1px;"></div></div><span>Split</span></button>
                 </div>` : stype === 'video' ? `<div class="block-style-picker"><button type="button" class="block-style-opt selected" data-style="1"><div class="bsp-thumb" style="background:var(--primary,#2f6bfd);border-radius:3px;align-items:center;justify-content:center;"><div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-play" style="font-size:5px;color:white;"></i></div></div><span>Player</span></button></div>` : `<div class="block-style-picker">
-                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb bsp-1"><div style="width:10px;height:10px;background:#ddd;border-radius:2px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#bbb;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div></div><span>Style 1</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb bsp-2"><div style="width:10px;height:10px;background:#e0e7ff;border-radius:50%;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#9ca3af;border-radius:1px;width:50%;"></div><div style="height:2px;background:#bbb;border-radius:1px;"></div></div></div><span>Style 2</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='1'?' selected':''}" data-style="1"><div class="bsp-thumb bsp-1"><div style="width:10px;height:10px;background:#d1d5db;border-radius:2px;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#9ca3af;border-radius:1px;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:70%;"></div></div></div><span>Style 1</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='2'?' selected':''}" data-style="2"><div class="bsp-thumb bsp-2"><div style="width:10px;height:10px;background:#d1d5db;border-radius:50%;flex-shrink:0;"></div><div style="flex:1;display:flex;flex-direction:column;gap:1px;margin-left:3px;"><div style="height:2px;background:#9ca3af;border-radius:1px;width:50%;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;"></div></div></div><span>Style 2</span></button>
                     <button type="button" class="block-style-opt${blockStyle==='3'?' selected':''}" data-style="3"><div class="bsp-thumb bsp-3" style="background:var(--primary,#2f6bfd);border-radius:3px;padding:2px 4px;gap:2px;"><div style="width:8px;height:8px;background:rgba(255,255,255,0.3);border-radius:2px;flex-shrink:0;"></div><div style="flex:1;height:2px;background:rgba(255,255,255,0.5);border-radius:1px;"></div></div><span>Style 3</span></button>
-                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb bsp-4"><div style="width:10px;height:10px;background:#e5e7eb;border-radius:50%;"></div><div style="height:2px;background:#d1d5db;border-radius:1px;width:60%;"></div></div><span>Style 4</span></button>
+                    <button type="button" class="block-style-opt${blockStyle==='4'?' selected':''}" data-style="4"><div class="bsp-thumb bsp-4"><div style="width:10px;height:10px;background:#d1d5db;border-radius:50%;"></div><div style="height:2px;background:#e5e7eb;border-radius:1px;width:60%;"></div></div><span>Style 4</span></button>
                 </div>`}
                 <div class="block-color-row">
                     <label>Color</label>
@@ -1576,7 +1612,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (removeBtn) {
         removeBtn.addEventListener('click', function () {
             if (profilePreview) {
-                profilePreview.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#9ca3af;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+                profilePreview.innerHTML = '<div style="width:32px;height:32px;background:#2C2D25;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
             }
             if (profileInput) profileInput.value = '';
             const acUrl = document.getElementById('allinone_profile_img_autocomplete_url');

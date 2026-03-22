@@ -10,9 +10,9 @@
         margin-top: 16px;
     }
     .frame-card {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #2C2D25;
         border-radius: 10px;
-        background: white;
+        background: #1E1F18;
         overflow: hidden;
         position: relative;
     }
@@ -21,7 +21,7 @@
         aspect-ratio: 4/3;
         object-fit: cover;
         display: block;
-        background: #f3f4f6;
+        background: #252619;
     }
     .frame-card-body {
         padding: 10px 12px;
@@ -33,7 +33,7 @@
     .frame-card-name {
         font-size: 13px;
         font-weight: 500;
-        color: #2b3a4a;
+        color: #E8E5DC;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -42,7 +42,7 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: #9ca3af;
+        color: #8A8878;
         font-size: 13px;
         padding: 4px;
         border-radius: 4px;
@@ -54,11 +54,11 @@
         top: 6px;
         right: 6px;
         background: rgba(255,255,255,0.9);
-        border: 1px solid #e5e7eb;
+        border: 1px solid #2C2D25;
         border-radius: 4px;
         font-size: 10px;
         padding: 2px 6px;
-        color: #00a896;
+        color: #EBA81B;
         display: flex;
         align-items: center;
         gap: 4px;
@@ -75,7 +75,7 @@
     }
     .builder-overlay.open { display: flex; }
     .builder-modal {
-        background: white;
+        background: #1E1F18;
         border-radius: 12px;
         width: 100%;
         max-width: 680px;
@@ -93,7 +93,7 @@
         border: none;
         font-size: 22px;
         cursor: pointer;
-        color: #6b7280;
+        color: #8A8878;
         line-height: 1;
     }
     .builder-close:hover { color: #111; }
@@ -107,7 +107,7 @@
     .builder-step-label {
         font-size: 12px;
         font-weight: 600;
-        color: #5f7a93;
+        color: #8A8878;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 8px;
@@ -118,7 +118,7 @@
     .builder-step-label .step-num {
         width: 20px;
         height: 20px;
-        background: #00a896;
+        background: #EBA81B;
         color: white;
         border-radius: 50%;
         display: flex;
@@ -128,23 +128,23 @@
         flex-shrink: 0;
     }
     .upload-area {
-        border: 2px dashed #d1d9e6;
+        border: 2px dashed #3A3B30;
         border-radius: 8px;
         padding: 28px;
         text-align: center;
         cursor: pointer;
         transition: border-color 0.2s;
-        background: #f9fafb;
+        background: #181914;
     }
-    .upload-area:hover, .upload-area.drag-over { border-color: #00a896; background: #f0fdfa; }
-    .upload-area i { font-size: 28px; color: #9ca3af; margin-bottom: 8px; display: block; }
-    .upload-area p { font-size: 13px; color: #5f7a93; margin: 0; }
-    .upload-area p strong { color: #00a896; }
+    .upload-area:hover, .upload-area.drag-over { border-color: #EBA81B; background: #f0fdfa; }
+    .upload-area i { font-size: 28px; color: #8A8878; margin-bottom: 8px; display: block; }
+    .upload-area p { font-size: 13px; color: #8A8878; margin: 0; }
+    .upload-area p strong { color: #EBA81B; }
     #frame-image-input { display: none; }
     .canvas-wrap {
         display: none;
         position: relative;
-        border: 1px solid #d1d9e6;
+        border: 1px solid #3A3B30;
         border-radius: 8px;
         overflow: hidden;
         background: #1f2937;
@@ -153,7 +153,7 @@
     #frame-canvas { display: block; max-width: 100%; }
     .canvas-hint {
         font-size: 11px;
-        color: #5f7a93;
+        color: #8A8878;
         margin-top: 6px;
         display: flex;
         align-items: center;
@@ -163,7 +163,7 @@
     .builder-name-row input[type="text"] {
         flex: 1;
         padding: 10px 12px;
-        border: 1px solid #d1d9e6;
+        border: 1px solid #3A3B30;
         border-radius: 6px;
         font-size: 13px;
         font-family: 'Inter', sans-serif;
@@ -175,9 +175,9 @@
         margin-top: 24px;
     }
     .btn-cancel {
-        border: 1px solid #d1d9e6;
-        background: white;
-        color: #2b3a4a;
+        border: 1px solid #3A3B30;
+        background: #1E1F18;
+        color: #E8E5DC;
         padding: 8px 20px;
         border-radius: 20px;
         cursor: pointer;
@@ -185,15 +185,15 @@
         font-family: 'Inter', sans-serif;
     }
     .empty-state {
-        background: white;
-        border: 1px solid #e5e7eb;
+        background: #1E1F18;
+        border: 1px solid #2C2D25;
         border-radius: 10px;
         padding: 60px 20px;
         text-align: center;
-        color: #5f7a93;
+        color: #8A8878;
         margin-top: 16px;
     }
-    .empty-state i { font-size: 32px; color: #9ca3af; display: block; margin-bottom: 12px; }
+    .empty-state i { font-size: 32px; color: #8A8878; display: block; margin-bottom: 12px; }
 </style>
 {% endblock %}
 
@@ -201,7 +201,7 @@
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
     <div>
         <h2 style="margin-bottom:4px;">Default QR Frames</h2>
-        <p style="margin:0;font-size:13px;color:#5f7a93;">Upload preset frames visible to all users above their custom frames.</p>
+        <p style="margin:0;font-size:13px;color:#8A8878;">Upload preset frames visible to all users above their custom frames.</p>
     </div>
     <button class="btn btn-primary" onclick="openBuilder()" style="display:flex;align-items:center;gap:8px;">
         &#43; Add Frame
@@ -274,7 +274,7 @@
                 <div class="canvas-hint">
                     &#9997; Click and drag on the image to mark the QR area. Drag again to reposition.
                 </div>
-                <div id="area-status" style="font-size:12px;color:#6b7280;margin-top:6px;"></div>
+                <div id="area-status" style="font-size:12px;color:#8A8878;margin-top:6px;"></div>
             </div>
 
             <div class="builder-step" id="step3" style="display:none;">
@@ -372,7 +372,7 @@
                 rx, ry, rw, rh
             );
             ctx.setLineDash([5, 4]);
-            ctx.strokeStyle = '#00a896';
+            ctx.strokeStyle = '#EBA81B';
             ctx.lineWidth = 2;
             ctx.strokeRect(rx, ry, rw, rh);
             ctx.setLineDash([]);

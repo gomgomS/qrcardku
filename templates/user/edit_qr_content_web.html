@@ -42,7 +42,7 @@
     .step-num {
         width: 24px;
         height: 24px;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         color: var(--text-muted);
         border-radius: 4px;
         display: flex;
@@ -80,7 +80,7 @@
 
     .btn-outline {
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         padding: 6px 16px;
         border-radius: 20px;
@@ -115,7 +115,7 @@
     }
 
     .collapse-section {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         margin-bottom: 16px;
@@ -128,7 +128,7 @@
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        background-color: white;
+        background-color: var(--bg-content);
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -163,7 +163,7 @@
 
     .collapse-body {
         padding: 0 24px 24px 24px;
-        background-color: white;
+        background-color: var(--bg-content);
         max-height: 0;
         overflow: hidden;
         transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -227,6 +227,7 @@
         border-radius: 6px;
         font-size: 14px;
         transition: border-color 0.2s;
+        background: #ffffff;
     }
 
     .form-control:focus {
@@ -241,6 +242,7 @@
         border-radius: 8px;
         font-size: 14px;
         margin-bottom: 24px;
+        background: #ffffff;
     }
 
     /* Toggle Switch Styles */
@@ -286,7 +288,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #e5e7eb;
+        background-color: var(--border-color);
         transition: .3s;
         border-radius: 20px;
     }
@@ -298,7 +300,7 @@
         width: 16px;
         left: 2px;
         bottom: 2px;
-        background-color: white;
+        background-color: var(--bg-content);
         transition: .3s;
         border-radius: 50%;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -319,7 +321,7 @@
         border: 1px solid var(--border-color);
         border-radius: 6px;
         overflow: hidden;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
     .url-prefix {
@@ -333,7 +335,7 @@
         flex: 1;
         border: none;
         padding: 10px 14px;
-        background: white;
+        background: #ffffff;
     }
 
     .url-prefix-group input:focus {
@@ -341,7 +343,7 @@
     }
 
     .btn-secondary-sm {
-        background: white;
+        background: var(--bg-content);
         border: 1px solid var(--border-color);
         padding: 6px 12px;
         border-radius: 6px;
@@ -375,8 +377,8 @@
     .phone-mockup {
         width: 100%;
         height: 600px;
-        background-color: white;
-        border: 12px solid #1a1a1a;
+        background-color: var(--bg-content);
+        border: 12px solid var(--text-main);
         border-radius: 40px;
         position: relative;
         overflow: hidden;
@@ -387,23 +389,23 @@
     .mockup-inner {
         width: 100%;
         height: 100%;
-        background-color: #f9fafb;
+        background-color: var(--bg-body);
         display: flex;
         flex-direction: column;
     }
 
     .mock-browser-bar {
-        background: white;
+        background: var(--bg-content);
         padding: 12px 16px;
         border-bottom: 1px solid var(--border-color);
     }
 
     .mock-url {
-        background: #f3f4f6;
+        background: var(--bg-sidebar);
         border-radius: 12px;
         padding: 6px 12px;
         font-size: 10px;
-        color: #9ca3af;
+        color: var(--text-muted);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -419,7 +421,7 @@
     .mock-img {
         width: 100%;
         height: 140px;
-        background-color: #9ca3af;
+        background-color: var(--text-muted);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -430,7 +432,7 @@
 
     .mock-lines div {
         height: 8px;
-        background-color: #d1d5db;
+        background-color: var(--border-color);
         border-radius: 4px;
         margin-bottom: 8px;
     }
@@ -446,7 +448,7 @@
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background-color: #d1d5db;
+        background-color: var(--border-color);
     }
 
     .preview-disclaimer {
@@ -466,7 +468,7 @@
         position: fixed;
         bottom: 0; left: 0; right: 0;
         height: 60px;
-        background: white;
+        background: var(--bg-content);
         border-top: 1px solid var(--border-color);
         z-index: 400;
         align-items: center;
@@ -477,7 +479,7 @@
     .mobile-bar-arrow {
         width: 44px; height: 44px;
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
@@ -486,7 +488,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #f3f4f6; }
+    .mobile-bar-arrow:hover { background: var(--bg-sidebar); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -518,7 +520,7 @@
             width: 100vw;
             bottom: 60px;
             z-index: 450;
-            background: white;
+            background: var(--bg-content);
             overflow-y: auto;
             padding: 12px 16px 8px;
             box-sizing: border-box;
@@ -594,7 +596,7 @@
                             <div class="url-prefix" style="color: var(--primary);">https://</div>
                             <input type="text" name="url_content" placeholder="www.yourwebsite.com"
                                 value="{{ url_content | default('qrcardku.com', true) }}"
-                                style="width: 100%; border: none; padding: 10px 14px; outline: none; background: white;"
+                                style="width: 100%; border: none; padding: 10px 14px; outline: none; background: #ffffff;"
                                 required>
                         </div>
                     </div>
@@ -652,7 +654,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                                 <div style="flex: 1;">
@@ -660,7 +662,7 @@
                                         style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: #9ca3af;"></i>
+                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
                                     </div>
                                 </div>
                             </div>

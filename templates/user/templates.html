@@ -23,7 +23,7 @@
     .frame-card {
         border: 1px solid var(--border-color);
         border-radius: 10px;
-        background: white;
+        background: var(--bg-content);
         overflow: hidden;
         position: relative;
     }
@@ -33,7 +33,7 @@
         aspect-ratio: 4/3;
         object-fit: cover;
         display: block;
-        background: #f3f4f6;
+        background: #252619;
     }
 
     .frame-card-body {
@@ -57,7 +57,7 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: #9ca3af;
+        color: var(--text-muted);
         font-size: 13px;
         padding: 4px;
         border-radius: 4px;
@@ -84,7 +84,7 @@
     /* ── Empty state ── */
     .empty-state-container {
         border: 1px solid var(--border-color);
-        background-color: white;
+        background-color: var(--bg-content);
         border-radius: 8px;
         padding: 80px 0;
         display: flex;
@@ -103,7 +103,7 @@
         text-align: center;
     }
 
-    .empty-message i { font-size: 28px; color: #9ca3af; }
+    .empty-message i { font-size: 28px; color: var(--text-muted); }
 
     /* ── Builder overlay ── */
     .builder-overlay {
@@ -119,7 +119,7 @@
     .builder-overlay.open { display: flex; }
 
     .builder-modal {
-        background: white;
+        background: var(--bg-content);
         border-radius: 12px;
         width: 100%;
         max-width: 680px;
@@ -187,11 +187,11 @@
         text-align: center;
         cursor: pointer;
         transition: border-color 0.2s;
-        background: #f9fafb;
+        background: var(--bg-body);
     }
 
-    .upload-area:hover, .upload-area.drag-over { border-color: var(--primary); background: #eff6ff; }
-    .upload-area i { font-size: 28px; color: #9ca3af; margin-bottom: 8px; display: block; }
+    .upload-area:hover, .upload-area.drag-over { border-color: var(--primary); background: #2A2810; }
+    .upload-area i { font-size: 28px; color: var(--text-muted); margin-bottom: 8px; display: block; }
     .upload-area p { font-size: 13px; color: var(--text-muted); margin: 0; }
     .upload-area p strong { color: var(--primary); }
 
@@ -245,7 +245,7 @@
 
     .btn-secondary {
         border: 1px solid var(--border-color);
-        background: white;
+        background: var(--bg-content);
         color: var(--text-main);
         padding: 8px 20px;
         border-radius: 20px;
@@ -339,7 +339,7 @@
                     <i class="fa-solid fa-hand-pointer"></i>
                     Click and drag on the image to mark the QR area. Drag again to reposition.
                 </div>
-                <div id="area-status" style="font-size:12px;color:#6b7280;margin-top:6px;"></div>
+                <div id="area-status" style="font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
             </div>
 
             <!-- Step 3: Name + Save -->
