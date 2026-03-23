@@ -2641,55 +2641,55 @@
             }, sec);
         }
 
-        var currentObjectUrl = null;
-        function getPreviewSrc() {
-            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
-            if (file && file.type.indexOf('image') !== -1) {
-                if (file.size > 1024 * 1024) return null;
-                if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
-                currentObjectUrl = URL.createObjectURL(file);
-                return currentObjectUrl;
-            }
-            return null;
-        }
-
+        var _currentSrc = {{ (qrcard.get('welcome_img_url') or '') | tojson }};
         var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
         var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
         if (welcomeBgPicker && welcomeBgHex) {
             welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
-            welcomeBgPicker.addEventListener('input', function () {
-                welcomeBgHex.value = this.value.toUpperCase();
-            });
+            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+        }
+
+        if (_currentSrc) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(_currentSrc); });
+            } else { playWelcomePreview(_currentSrc); }
         }
 
         if (overlay && imgEl) {
             var thumb = document.getElementById('welcome-img-preview');
             var deleteBtn = document.getElementById('welcome-delete-btn');
+            var deleteFlag = document.getElementById('welcome_img_delete');
             if (welcomeInput) {
                 welcomeInput.addEventListener('change', function () {
                     var file = this.files && this.files[0];
                     if (!file) return;
                     if (file.size > 1024 * 1024) { alert('Image must be 1 MB or smaller.'); this.value = ''; return; }
                     if (file.type.indexOf('image') !== -1) {
-                        var url = getPreviewSrc();
-                        if (url && thumb) { thumb.innerHTML = '<img src="' + url + '" alt="Welcome" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>'; }
-                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
-                        if (url) playWelcomePreview(url);
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            _currentSrc = e.target.result;
+                            if (thumb) thumb.innerHTML = '<img src="' + _currentSrc + '" alt="Welcome" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                            if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                            if (deleteFlag) deleteFlag.value = '0';
+                            playWelcomePreview(_currentSrc);
+                        };
+                        reader.readAsDataURL(file);
                     }
                 });
             }
-            if (deleteBtn && welcomeInput) {
+            if (deleteBtn) {
                 deleteBtn.addEventListener('click', function () {
-                    welcomeInput.value = '';
-                    if (thumb) { thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>'; }
+                    if (welcomeInput) welcomeInput.value = '';
+                    _currentSrc = null;
+                    if (thumb) thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    if (deleteFlag) deleteFlag.value = '1';
                     this.style.display = 'none';
                 });
             }
             var previewBtn = document.getElementById('welcome-preview-btn');
             if (previewBtn) {
                 previewBtn.addEventListener('click', function () {
-                    var src = getPreviewSrc();
-                    if (src) playWelcomePreview(src);
+                    if (_currentSrc) playWelcomePreview(_currentSrc);
                     else alert('Upload an image first (max 1 MB).');
                 });
             }

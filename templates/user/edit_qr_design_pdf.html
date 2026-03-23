@@ -722,7 +722,7 @@
 
             {% set pdf_fields = ['pdf_template', 'pdf_primary_color', 'pdf_secondary_color', 'pdf_title_font',
             'pdf_title_color', 'pdf_text_font', 'pdf_text_color', 'pdf_company', 'pdf_title', 'pdf_desc', 'pdf_website',
-            'pdf_btn_text', 'welcome_time'] %}
+            'pdf_btn_text', 'welcome_time', 'welcome_bg_color'] %}
             {% for field in pdf_fields %}
             {% set f_val = qrcard.get(field, '') if qrcard else (pdf_data.get(field, '') if pdf_data else '') %}
             <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
@@ -747,7 +747,7 @@
 
     {% set pdf_fields = ['pdf_template', 'pdf_primary_color', 'pdf_secondary_color', 'pdf_title_font',
     'pdf_title_color', 'pdf_text_font', 'pdf_text_color', 'pdf_company', 'pdf_title', 'pdf_desc', 'pdf_website',
-    'pdf_btn_text', 'welcome_time'] %}
+    'pdf_btn_text', 'welcome_time', 'welcome_bg_color'] %}
     {% for field in pdf_fields %}
     {% set f_val = qrcard.get(field, '') if qrcard else (pdf_data.get(field, '') if pdf_data else '') %}
     <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />

@@ -66,6 +66,9 @@
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
     .phone-mockup { width: 100%; height: 600px; background-color: var(--bg-content); border: 12px solid var(--text-main); border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     .mockup-inner { width: 100%; height: 100%; background-color: #ffffff; display: flex; flex-direction: column; }
+    .preview-welcome-overlay { position: absolute; inset: 0; z-index: 15; background: var(--primary); display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: none; }
+    .preview-welcome-overlay.hide { opacity: 0; }
+    .preview-welcome-overlay img { max-width: 200px; max-height: 280px; width: auto; height: auto; object-fit: contain; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
@@ -534,6 +537,7 @@
                                     <input type="file" name="Links_welcome_img" accept="image/*" style="display: none;" id="links_welcome_img_input">
                                 </label>
                                 <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">Remove</button>
                                     <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
                                 </div>
@@ -645,6 +649,9 @@
                 </div>
                 <div class="phone-mockup">
                     <div class="mockup-inner" style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display:none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
                         {% set links_mode = 'preview' %}
                         {% include 'user/template_links_general.html' %}
                     </div>
@@ -888,18 +895,78 @@
         updateLinksPreview();
 
         // Welcome screen
-        const timeSlider = document.getElementById('welcome-time-slider');
-        const timeDisplay = document.getElementById('welcome-time-display');
-        if (timeSlider && timeDisplay) {
-            timeDisplay.textContent = timeSlider.value + ' seconds';
-            timeSlider.addEventListener('input', e => { timeDisplay.textContent = e.target.value + ' seconds'; });
-        }
-        const welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
-        const welcomeBgHex = document.getElementById('welcome_bg_color_hex');
-        if (welcomeBgPicker && welcomeBgHex) {
-            welcomeBgHex.value = welcomeBgPicker.value.toUpperCase();
-            welcomeBgPicker.addEventListener('input', e => { welcomeBgHex.value = e.target.value.toUpperCase(); });
-        }
+        (function() {
+            var fileInput   = document.getElementById('links_welcome_img_input');
+            var deleteInput = document.getElementById('welcome_img_delete');
+            var previewBtn  = document.getElementById('welcome-preview-btn');
+            var deleteBtn   = document.getElementById('welcome-delete-btn');
+            var imgPreview  = document.getElementById('welcome-img-preview');
+            var bgPicker    = document.getElementById('welcome_bg_color_picker');
+            var bgHex       = document.getElementById('welcome_bg_color_hex');
+            var timeSlider  = document.getElementById('welcome-time-slider');
+            var timeDisplay = document.getElementById('welcome-time-display');
+            var overlay     = document.getElementById('preview-welcome-overlay');
+            var overlayImg  = document.getElementById('preview-welcome-img');
+
+            if (bgPicker && bgHex) {
+                bgHex.value = bgPicker.value.toUpperCase();
+                bgPicker.addEventListener('input', function() {
+                    bgHex.value = this.value.toUpperCase();
+                    if (overlay) overlay.style.background = this.value;
+                });
+            }
+            if (timeSlider && timeDisplay) {
+                timeDisplay.textContent = timeSlider.value + ' seconds';
+                timeSlider.addEventListener('input', function() { timeDisplay.textContent = this.value + ' seconds'; });
+            }
+
+            var _currentSrc = '{{ qrcard.get("welcome_img_url", "") if qrcard else "" }}' || null;
+
+            function playWelcomePreview() {
+                if (!overlay) return;
+                if (overlayImg) { overlayImg.src = _currentSrc || ''; overlayImg.style.display = _currentSrc ? 'block' : 'none'; }
+                overlay.style.background = bgPicker ? bgPicker.value : '#2F6BFD';
+                overlay.style.display = 'flex';
+                overlay.classList.remove('hide');
+                var dur = timeSlider ? parseFloat(timeSlider.value) * 1000 : 2500;
+                setTimeout(function() { overlay.classList.add('hide'); }, Math.max(dur - 800, 0));
+                setTimeout(function() { overlay.style.display = 'none'; overlay.classList.remove('hide'); }, dur);
+            }
+
+            if (previewBtn) previewBtn.addEventListener('click', playWelcomePreview);
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    var file = this.files[0];
+                    if (!file) return;
+                    if (deleteInput) deleteInput.value = '0';
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        _currentSrc = e.target.result;
+                        if (imgPreview) {
+                            imgPreview.innerHTML = '<img src="' + e.target.result + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;">'
+                                + '<span style="font-size:13px;color:var(--text-muted);">' + file.name + '</span>';
+                        }
+                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    _currentSrc = null;
+                    if (fileInput) fileInput.value = '';
+                    if (deleteInput) deleteInput.value = '1';
+                    if (imgPreview) {
+                        imgPreview.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;">'
+                            + '<i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div>'
+                            + '<span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    }
+                    deleteBtn.style.display = 'none';
+                });
+            }
+        })();
 
         // Cover image upload for links
         const profileInput = document.getElementById('links_profile_img_input');

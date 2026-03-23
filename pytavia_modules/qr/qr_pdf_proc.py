@@ -526,7 +526,10 @@ class qr_pdf_proc:
             url_content = "https://" + url_content
         qr_name = (request.form.get("qr_name") or "").strip() or draft.get("qr_name") or "Untitled QR"
         qrcard_for_save = self.get_qrcard(fk_user_id, qrcard_id)
-        welcome_url = draft.get("welcome_img_url") or (qrcard_for_save.get("welcome_img_url") if qrcard_for_save else "") or ""
+        if "welcome_img_url" in draft:
+            welcome_url = draft["welcome_img_url"]
+        else:
+            welcome_url = (qrcard_for_save.get("welcome_img_url") if qrcard_for_save else "") or ""
         cover_url = (
             draft.get("pdf_t1_header_img_url") or draft.get("pdf_t3_circle_img_url") or draft.get("pdf_t4_circle_img_url")
             or (qrcard_for_save.get("pdf_t1_header_img_url") if qrcard_for_save else "")

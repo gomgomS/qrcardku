@@ -66,6 +66,9 @@
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
     .phone-mockup { width: 100%; height: 600px; background-color: var(--bg-content); border: 12px solid var(--text-main); border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     .mockup-inner { width: 100%; height: 100%; background-color: #ffffff; display: flex; flex-direction: column; }
+    .preview-welcome-overlay { position: absolute; inset: 0; z-index: 15; background: var(--primary); display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: none; }
+    .preview-welcome-overlay.hide { opacity: 0; }
+    .preview-welcome-overlay img { max-width: 200px; max-height: 280px; width: auto; height: auto; object-fit: contain; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
@@ -567,6 +570,7 @@
                                     <input type="file" name="Sosmed_welcome_img" accept="image/*" style="display: none;" id="sosmed_welcome_img_input">
                                 </label>
                                 <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">Remove</button>
                                     <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
                                 </div>
@@ -665,6 +669,9 @@
                 </div>
                 <div class="phone-mockup">
                     <div class="mockup-inner" style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display:none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
                         {% set sosmed_mode = 'preview' %}
                         {% include 'user/template_sosmed_general.html' %}
                     </div>
@@ -965,6 +972,70 @@
             welcomeBgHex.value = welcomeBgPicker.value.toUpperCase();
             welcomeBgPicker.addEventListener('input', e => { welcomeBgHex.value = e.target.value.toUpperCase(); });
         }
+
+        // Welcome image upload
+        (function () {
+            var wOverlay = document.getElementById('preview-welcome-overlay');
+            var wImgEl = document.getElementById('preview-welcome-img');
+            var wInput = document.getElementById('sosmed_welcome_img_input');
+            var _currentSrc = {{ (qrcard.get('welcome_img_url') or '') | tojson }};
+            function getWelcomeTimeSec() {
+                var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+                return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+            }
+            function playWelcomePreview(src) {
+                if (!wOverlay) return;
+                if (welcomeBgPicker) wOverlay.style.backgroundColor = welcomeBgPicker.value;
+                if (wImgEl) { wImgEl.src = src || ''; wImgEl.style.display = src ? 'block' : 'none'; }
+                wOverlay.style.display = 'flex';
+                wOverlay.classList.remove('hide');
+                setTimeout(function () {
+                    wOverlay.classList.add('hide');
+                    setTimeout(function () { wOverlay.style.display = 'none'; }, 800);
+                }, getWelcomeTimeSec() * 1000);
+            }
+            if (_currentSrc) {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(_currentSrc); });
+                } else { playWelcomePreview(_currentSrc); }
+            }
+            var wThumb = document.getElementById('welcome-img-preview');
+            var wDeleteBtn = document.getElementById('welcome-delete-btn');
+            var wDeleteFlag = document.getElementById('welcome_img_delete');
+            var wPreviewBtn = document.getElementById('welcome-preview-btn');
+            if (wInput) {
+                wInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    if (file.size > 1024 * 1024) { alert('Image must be 1 MB or smaller.'); this.value = ''; return; }
+                    if (file.type.indexOf('image') !== -1) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            _currentSrc = e.target.result;
+                            if (wThumb) wThumb.innerHTML = '<img src="' + _currentSrc + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
+                            if (wDeleteBtn) wDeleteBtn.style.display = 'inline-flex';
+                            if (wDeleteFlag) wDeleteFlag.value = '0';
+                            playWelcomePreview(_currentSrc);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            if (wDeleteBtn) {
+                wDeleteBtn.addEventListener('click', function () {
+                    if (wInput) wInput.value = '';
+                    _currentSrc = null;
+                    if (wThumb) wThumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
+                    if (wDeleteFlag) wDeleteFlag.value = '1';
+                    this.style.display = 'none';
+                });
+            }
+            if (wPreviewBtn) {
+                wPreviewBtn.addEventListener('click', function () {
+                    playWelcomePreview(_currentSrc);
+                });
+            }
+        })();
 
         // Cover image upload for sosmed
         const profileInput = document.getElementById('sosmed_profile_img_input');

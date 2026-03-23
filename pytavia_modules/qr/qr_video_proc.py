@@ -332,6 +332,10 @@ class qr_video_proc:
                 val = request.form.get(key)
                 if val is not None and str(val).strip() != "":
                     design_update[key] = str(val).strip()
+            elif key in ("welcome_time", "welcome_bg_color"):
+                val = request.form.get(key)
+                if val is not None and str(val).strip() != "":
+                    design_update[key] = str(val).strip()
 
         if request.form.get("video_font_apply_all") in ("on", "true", "1", "yes"):
             design_update["video_font_apply_all"] = True
@@ -343,6 +347,27 @@ class qr_video_proc:
         # ---- Move uploaded videos from tmp ----
         tmp_key = session.pop("video_tmp_key", None)
         tmp_gallery = session.pop("video_tmp_gallery", [])
+
+        # ---- Welcome image: move from tmp to final ----
+        welcome_img_url = ""
+        w_tmp_key = session.pop("video_welcome_img_tmp_key", None)
+        w_tmp_name = session.pop("video_welcome_img_tmp_name", None)
+        if w_tmp_key and w_tmp_name:
+            import os as _os
+            _wext = _os.path.splitext(w_tmp_name)[1] or ".jpg"
+            src_key = f"video/_tmp/{w_tmp_key}/welcome{_wext}"
+            dst_key = f"video/{new_qrcard_id}/welcome{_wext}"
+            try:
+                welcome_img_url = r2.move_file(src_key, dst_key)
+            except Exception:
+                pass
+            try:
+                r2.delete_prefix(f"video/_tmp/{w_tmp_key}/")
+            except Exception:
+                pass
+        if welcome_img_url:
+            design_update["welcome_img_url"] = welcome_img_url
+
         session.modified = True
 
         video_links = []

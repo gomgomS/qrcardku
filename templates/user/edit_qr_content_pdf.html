@@ -2345,17 +2345,7 @@
         }
 
         var initialUrl = {{ (qrcard.get('welcome_img_url') or '') | tojson }};
-        var currentObjectUrl = null;
-        function getPreviewSrc() {
-            var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
-            if (file && file.type.indexOf('image') !== -1) {
-                if (file.size > 1024 * 1024) return null;
-                if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
-                currentObjectUrl = URL.createObjectURL(file);
-                return currentObjectUrl;
-            }
-            return initialUrl || null;
-        }
+        var _currentSrc = initialUrl || null;
         var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
         var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
         if (welcomeBgPicker && welcomeBgHex) {
@@ -2363,11 +2353,11 @@
             welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
         }
         if (overlay && imgEl) {
-            if (initialUrl) {
+            if (_currentSrc) {
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(initialUrl); });
+                    document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(_currentSrc); });
                 } else {
-                    playWelcomePreview(initialUrl);
+                    playWelcomePreview(_currentSrc);
                 }
             }
             var thumb = document.getElementById('welcome-img-preview');
@@ -2387,13 +2377,17 @@
                         return;
                     }
                     if (file.type.indexOf('image') !== -1) {
-                        var url = getPreviewSrc();
-                        if (url && thumb) {
-                            thumb.innerHTML = '<img src=\"' + url + '\" alt=\"Welcome image\" style=\"width:48px;height:48px;border-radius:6px;object-fit:cover;\"><span style=\"font-size:13px;color:#6b7280;\">Selected image</span>';
-                        }
-                        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
-                        if (deleteFlag) deleteFlag.value = '0';
-                        if (url) playWelcomePreview(url);
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            _currentSrc = e.target.result;
+                            if (thumb) {
+                                thumb.innerHTML = '<img src="' + _currentSrc + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
+                            }
+                            if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                            if (deleteFlag) deleteFlag.value = '0';
+                            playWelcomePreview(_currentSrc);
+                        };
+                        reader.readAsDataURL(file);
                     }
                 });
             }
@@ -2401,8 +2395,9 @@
                 deleteBtn.addEventListener('click', function () {
                     welcomeInput.value = '';
                     initialUrl = '';
+                    _currentSrc = null;
                     if (thumb) {
-                        thumb.innerHTML = '<div style=\"width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;\"><i class=\"fa-regular fa-image\" style=\"color:#6b7280;\"></i></div><span style=\"font-size:13px;color:#6b7280;\">Upload Image</span>';
+                        thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                     }
                     if (deleteFlag) deleteFlag.value = '1';
                     this.style.display = 'none';
@@ -2411,9 +2406,7 @@
             var previewBtn = document.getElementById('welcome-preview-btn');
             if (previewBtn) {
                 previewBtn.addEventListener('click', function () {
-                    var src = getPreviewSrc();
-                    if (src) playWelcomePreview(src);
-                    else if (initialUrl) playWelcomePreview(initialUrl);
+                    if (_currentSrc) playWelcomePreview(_currentSrc);
                     else alert('Upload an image first (max 1 MB), or save to use the current welcome image.');
                 });
             }

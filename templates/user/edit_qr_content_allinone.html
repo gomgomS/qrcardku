@@ -59,6 +59,9 @@
     .phone-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 13px; font-weight: 600; }
     .phone-mockup { width: 100%; height: 600px; background-color: var(--bg-content); border: 12px solid var(--text-main); border-radius: 40px; position: relative; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
     .mockup-inner { width: 100%; height: 100%; background-color: var(--bg-body); display: flex; flex-direction: column; }
+    .preview-welcome-overlay { position: absolute; inset: 0; z-index: 15; background: var(--primary); display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: none; }
+    .preview-welcome-overlay.hide { opacity: 0; }
+    .preview-welcome-overlay img { max-width: 200px; max-height: 280px; width: auto; height: auto; object-fit: contain; }
     .preview-disclaimer { margin-top: 16px; font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .template-card { transition: border 0.2s; }
     input[type="radio"].hidden-radio:checked + .template-card { border: 2px solid var(--primary) !important; }
@@ -469,6 +472,77 @@
                 </div>
             </div>
 
+            <!-- Welcome Screen Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i></div>
+                        <div class="header-text">
+                            <h3>Welcome Screen</h3>
+                            <p>Optional splash screen before main content.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="margin-top: 8px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
+                                    <div id="welcome-img-preview" style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                        {% if qrcard and qrcard.get('welcome_img_url') %}
+                                        <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <input type="file" name="Allinone_welcome_img" accept="image/*" style="display: none;" id="allinone_welcome_img_input">
+                                </label>
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                    <button type="button" id="welcome-delete-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
+                                        Remove
+                                    </button>
+                                    <input type="hidden" name="Allinone_welcome_img_delete" id="allinone_welcome_img_delete" value="0">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background color</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
+                                        value="{{ qrcard.get('welcome_bg_color', qrcard.get('Allinone_primary_color','#2F6BFD')) if qrcard else '#2F6BFD' }}"
+                                        style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: #ffffff;">
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+                                    Time (seconds)
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5" style="flex: 1; accent-color: #3A3B30;" id="welcome-time-slider" value="{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }}">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                    <span id="welcome-time-display">{{ qrcard.get('welcome_time','2.5') if qrcard else '2.5' }} seconds</span>
+                                    <span>10 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats -->
             <div class="collapse-section">
                 <div class="collapse-header">
@@ -523,6 +597,10 @@
                 </div>
                 <div class="phone-mockup">
                     <div class="mockup-inner" style="padding:0;background-color:var(--bg-content);display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
+                        <!-- Welcome screen overlay -->
+                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                            <img id="preview-welcome-img" src="" alt="Welcome">
+                        </div>
                         {% set allinone_mode = 'preview' %}
                         {% include 'user/template_allinone_general.html' %}
                     </div>
@@ -1433,6 +1511,90 @@ document.addEventListener('DOMContentLoaded', function () {
             if (sectionsJsonInput) sectionsJsonInput.value = JSON.stringify(sections);
         });
     }
+
+    // ── Welcome screen ─────────────────────────────────────────────────
+    (function () {
+        var overlay = document.getElementById('preview-welcome-overlay');
+        var imgEl = document.getElementById('preview-welcome-img');
+        var welcomeInput = document.getElementById('allinone_welcome_img_input');
+        var timeSlider = document.getElementById('welcome-time-slider');
+        var timeDisplay = document.getElementById('welcome-time-display');
+        if (timeSlider && timeDisplay) {
+            timeDisplay.textContent = parseFloat(timeSlider.value).toFixed(1) + ' seconds';
+            timeSlider.addEventListener('input', function () { timeDisplay.textContent = parseFloat(this.value).toFixed(1) + ' seconds'; });
+        }
+        var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
+        var welcomeBgHex = document.getElementById('welcome_bg_color_hex');
+        if (welcomeBgPicker && welcomeBgHex) {
+            welcomeBgHex.value = (welcomeBgPicker.value || '#2F6BFD').toUpperCase();
+            welcomeBgPicker.addEventListener('input', function () { welcomeBgHex.value = this.value.toUpperCase(); });
+        }
+        function getWelcomeTimeSec() {
+            var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+            return isNaN(val) || val <= 0 ? 2.5 : Math.min(10, Math.max(2.5, val));
+        }
+        function playWelcomePreview(src) {
+            if (!overlay || !imgEl || !src) return;
+            if (welcomeBgPicker) overlay.style.backgroundColor = welcomeBgPicker.value;
+            imgEl.src = src;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var sec = getWelcomeTimeSec() * 1000;
+            setTimeout(function () {
+                overlay.classList.add('hide');
+                setTimeout(function () { overlay.style.display = 'none'; }, 800);
+            }, sec);
+        }
+        var _currentSrc = '{% if qrcard and qrcard.get("welcome_img_url") %}{{ qrcard.get("welcome_img_url") }}{% endif %}' || null;
+        if (_currentSrc) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(_currentSrc); });
+            } else { playWelcomePreview(_currentSrc); }
+        }
+        if (overlay && imgEl) {
+            var thumb = document.getElementById('welcome-img-preview');
+            var deleteBtn = document.getElementById('welcome-delete-btn');
+            var deleteFlag = document.getElementById('allinone_welcome_img_delete');
+            if (welcomeInput) {
+                welcomeInput.addEventListener('change', function () {
+                    var file = this.files && this.files[0];
+                    if (!file) return;
+                    if (file.size > 1024 * 1024) {
+                        alert('Image must be 1 MB or smaller.');
+                        this.value = '';
+                        return;
+                    }
+                    if (file.type.indexOf('image') !== -1) {
+                        var reader = new FileReader();
+                        reader.onload = function (e) {
+                            _currentSrc = e.target.result;
+                            if (thumb) thumb.innerHTML = '<img src="' + _currentSrc + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
+                            if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                            if (deleteFlag) deleteFlag.value = '0';
+                            playWelcomePreview(_currentSrc);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function () {
+                    if (welcomeInput) welcomeInput.value = '';
+                    _currentSrc = null;
+                    if (thumb) thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                    if (deleteFlag) deleteFlag.value = '1';
+                    this.style.display = 'none';
+                });
+            }
+            var previewBtn = document.getElementById('welcome-preview-btn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function () {
+                    if (_currentSrc) playWelcomePreview(_currentSrc);
+                    else alert('Upload an image first (max 1 MB).');
+                });
+            }
+        }
+    })();
 });
 </script>
 {% endblock %}

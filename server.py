@@ -829,11 +829,12 @@ def qr_update_design_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
-                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew = database.get_db_conn(config.mainDB)
+                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
             elif qrcard.get("welcome_img_url"):
                 extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
@@ -915,6 +916,10 @@ def qr_update_content_pdf(qrcard_id):
                     {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                     {"$set": {"welcome_img_url": ""}}
                 )
+                _mgd.db_qrcard_pdf.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {"welcome_img_url": ""}}
+                )
             except Exception:
                 app.logger.exception("Failed to clear welcome_img_url for qrcard %s", qrcard_id)
         else:
@@ -932,12 +937,17 @@ def qr_update_content_pdf(qrcard_id):
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 _r2 = r2_mod.r2_storage_proc()
-                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
+                _wts = int(time.time())
+                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome_{_wts}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
                 ecard_data["welcome_img_url"] = welcome_url
                 qrcard["welcome_img_url"] = welcome_url
                 from pytavia_core import database as _db_w, config as _cfg_w
                 _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
                 _mgd.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {"welcome_img_url": welcome_url}},
+                )
+                _mgd.db_qrcard_pdf.update_one(
                     {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                     {"$set": {"welcome_img_url": welcome_url}},
                 )
@@ -1314,11 +1324,12 @@ def qr_update_content_ecard(qrcard_id):
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
+                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     extra_data["welcome_img_url"] = welcome_url
                     qrcard["welcome_img_url"] = welcome_url
-                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew = database.get_db_conn(config.mainDB)
+                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
             elif qrcard.get("welcome_img_url"):
                 extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
@@ -2782,7 +2793,7 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
@@ -3067,7 +3078,7 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
+                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
@@ -3579,7 +3590,7 @@ def qr_update_content_special(qrcard_id):
                 if welcome_img.tell() <= 1024 * 1024:
                     welcome_img.seek(0)
                     safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_img.filename)
-                    welcome_name = "welcome_" + safe_name
+                    welcome_name = f"welcome_{int(time.time())}_{safe_name}"
                     r2_key = f"special/{qrcard_id}/{welcome_name}"
                     welcome_url = _r2.upload_file(welcome_img, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "special"})
                     extra_data["welcome_img_url"] = welcome_url
@@ -3709,7 +3720,9 @@ def user_new_qr_images():
             for f_info in tmp_gallery:
                 url = _url_for("static", filename=f"uploads/images/_tmp/{session.get('images_tmp_key')}/{f_info['safe_name']}")
                 images_data["images_gallery_files"].append({"url": url, "name": f_info.get("name",""), "desc": f_info.get("desc","")})
-        
+        if session.get("welcome_img_tmp_key") and session.get("welcome_img_tmp_name"):
+            images_data["welcome_img_url"] = _url_for("static", filename=f"uploads/images/_tmp/{session['welcome_img_tmp_key']}/{session['welcome_img_tmp_name']}")
+
         return v.new_qr_content_html(base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
     return v.new_qr_content_html(base_url=config.G_BASE_URL)
 
@@ -3781,9 +3794,29 @@ def user_new_qr_design_images():
         session["images_autocomplete_descs"] = request.form.getlist("images_autocomplete_descs[]")
         session.modified = True
 
+        # Welcome image
+        welcome_img = request.files.get("images_welcome_img")
+        if welcome_img and welcome_img.filename:
+            welcome_img.seek(0, 2)
+            if welcome_img.tell() <= 1024 * 1024:
+                welcome_img.seek(0)
+                _wext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                if _wext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    _wext = ".jpg"
+                _r2.upload_file(welcome_img, f"images/_tmp/{tmp_key}/welcome{_wext}")
+                session["welcome_img_tmp_key"] = tmp_key
+                session["welcome_img_tmp_name"] = "welcome" + _wext
+                session.modified = True
+            else:
+                error_msg = "Welcome image must be 1 MB or smaller."
+        elif request.form.get("images_welcome_img_delete") == "1":
+            session.pop("welcome_img_tmp_key", None)
+            session.pop("welcome_img_tmp_name", None)
+            session.modified = True
+
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
-            
+
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, images_data=images_data)
@@ -3928,7 +3961,32 @@ def user_new_qr_design_video():
                     tmp_gallery.append({"type": "link", "url": embed_url, "name": name.strip(), "desc": desc.strip()})
                     
         session["video_tmp_gallery"] = tmp_gallery
-                
+
+        # ── Welcome image upload ──
+        if request.form.get("video_welcome_img_delete") == "1":
+            session.pop("video_welcome_img_tmp_key", None)
+            session.pop("video_welcome_img_tmp_name", None)
+            video_data["welcome_img_url"] = ""
+        else:
+            welcome_img_file = request.files.get("video_welcome_img")
+            if welcome_img_file and welcome_img_file.filename:
+                welcome_img_file.seek(0, 2)
+                if welcome_img_file.tell() <= 1 * 1024 * 1024:
+                    welcome_img_file.seek(0)
+                    import os as _os
+                    _wext = _os.path.splitext(welcome_img_file.filename)[1].lower() or ".jpg"
+                    _wkey = session.get("video_welcome_img_tmp_key") or _uuid.uuid4().hex
+                    session["video_welcome_img_tmp_key"] = _wkey
+                    session["video_welcome_img_tmp_name"] = "welcome" + _wext
+                    _r2.upload_file(welcome_img_file, f"video/_tmp/{_wkey}/welcome{_wext}")
+                else:
+                    error_msg = "Welcome image exceeds 1 MB limit."
+            # Preserve existing URL if already uploaded previously
+            existing_url = session.get("video_welcome_img_url", "")
+            if existing_url:
+                video_data["welcome_img_url"] = existing_url
+        session.modified = True
+
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, video_data=video_data)
             

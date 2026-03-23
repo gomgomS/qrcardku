@@ -239,6 +239,25 @@ class qr_allinone_proc:
         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": content_update})
         self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": content_update}, upsert=True)
 
+        # Welcome image upload
+        welcome_img = request.files.get("Allinone_welcome_img")
+        if welcome_img and welcome_img.filename:
+            welcome_img.seek(0, 2)
+            if welcome_img.tell() <= 1024 * 1024:
+                welcome_img.seek(0)
+                ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                if ext not in ALLOWED_IMG_EXT:
+                    ext = ".jpg"
+                try:
+                    welcome_url = _r2.upload_file(
+                        welcome_img, f"allinone/{new_id}/welcome{ext}",
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"welcome{ext}"}
+                    )
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+                except Exception:
+                    self.webapp.logger.debug(traceback.format_exc())
+
         # Move tmp cover image from R2 _tmp → R2 final
         cover_tmp_key  = session.pop("allinone_cover_tmp_key",  None)
         cover_tmp_name = session.pop("allinone_cover_tmp_name", None)
@@ -363,6 +382,29 @@ class qr_allinone_proc:
             v = request.form.get(key)
             if v is not None:
                 update_data[key] = v
+
+        # Welcome image
+        welcome_delete = request.form.get("Allinone_welcome_img_delete", "0")
+        if welcome_delete == "1":
+            update_data["welcome_img_url"] = ""
+        else:
+            welcome_img = request.files.get("Allinone_welcome_img")
+            if welcome_img and welcome_img.filename:
+                welcome_img.seek(0, 2)
+                if welcome_img.tell() <= 1024 * 1024:
+                    welcome_img.seek(0)
+                    ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                    if ext not in ALLOWED_IMG_EXT:
+                        ext = ".jpg"
+                    try:
+                        update_data["welcome_img_url"] = _r2.upload_file(
+                            welcome_img, f"allinone/{qrcard_id}/welcome{ext}",
+                            track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": f"welcome{ext}"}
+                        )
+                    except Exception:
+                        self.webapp.logger.debug(traceback.format_exc())
+            elif existing.get("welcome_img_url"):
+                update_data["welcome_img_url"] = existing["welcome_img_url"]
 
         # Cover image
         cover_delete = request.form.get("Allinone_profile_img_delete", "0")
