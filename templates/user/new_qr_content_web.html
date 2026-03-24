@@ -623,7 +623,7 @@
                         <div class="url-prefix-group">
                             <div class="url-prefix" style="color: var(--primary);">https://</div>
                             <input type="text" name="url_content" placeholder="www.yourwebsite.com"
-                                value="{{ url_content | default('qrcardku.com', true) }}"
+                                value="{{ url_content | default('QRkartu', true) }}"
                                 style="width: 100%; border: none; padding: 10px 14px; outline: none; background: #ffffff;"
                                 required>
                         </div>
@@ -715,7 +715,7 @@
                                 <label class="form-label" style="font-size: 12px;">URL</label>
                                 <div class="url-prefix-group">
                                     <div class="url-prefix" id="stats-url-prefix">{{ base_url |
-                                        default('https://qrcardku.com') }}/web/</div>
+                                        default('https://QRkartu') }}/web/</div>
                                     <input type="text" name="short_code" id="stats-short-code-input"
                                         placeholder="Letters, numbers, '-' and '_' only" value="{{ short_code | default('', true) }}"
                                         pattern="[a-zA-Z0-9_-]{2,32}"
@@ -782,7 +782,7 @@
                         <!-- Fake browser bar -->
                         <div class="mock-browser-bar">
                             <div class="mock-url">
-                                <i class="fa-solid fa-lock"></i> https://qrcardku.com/
+                                <i class="fa-solid fa-lock"></i> https://QRkartu/
                             </div>
                         </div>
 
@@ -885,7 +885,7 @@
 
         if (urlInput && mockUrlText) {
             urlInput.addEventListener('input', function (e) {
-                let val = e.target.value || 'qrcardku.com';
+                let val = e.target.value || 'QRkartu';
                 if (!val.startsWith('http://') && !val.startsWith('https://')) {
                     val = 'https://' + val;
                 }

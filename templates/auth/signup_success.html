@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful - QRkartu</title>
+    <style>
+        :root {
+            --primary-blue: #EBA81B;
+            --primary-hover: #d4941a;
+            --text-dark: #E8E5DC;
+            --text-muted: #8A8878;
+            --border-color: #2C2D25;
+            --input-bg: #1E1F18;
+            --btn-disabled: #3A3B30;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #1E1F18;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .auth-card {
+            width: 100%;
+            background: #181914;
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .auth-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div style="font-size: 4rem; color: #EBA81B; margin-bottom: 20px;">
+                &#10003;
+            </div>
+            
+            <h2 class="auth-title">Registration Successful!</h2>
+            <p class="auth-subtitle">
+                Your account has been created successfully. You can now log into your account.
+            </p>
+
+            <div style="background-color: #1E1F18; padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: left; border: 1px solid var(--border-color);">
+                <h4 style="color: #EBA81B; margin-top: 0; margin-bottom: 15px; font-weight: 600;">What's next?</h4>
+                <ol style="color: var(--text-dark); margin-bottom: 0; padding-left: 20px; line-height: 1.8; font-size: 14px;">
+                    <li>Click the button below to go to the login page.</li>
+                    <li>Log in using your registered credentials.</li>
+                    <li>You will receive an email containing a 6-digit verification code.</li>
+                    <li>Enter the code to verify your account and start using the system.</li>
+                </ol>
+            </div>
+
+            <a href="/login" class="btn-primary">
+                Go to Login
+            </a>
+        </div>
+    </div>
+</body>
+</html>

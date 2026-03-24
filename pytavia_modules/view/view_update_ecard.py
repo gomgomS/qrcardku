@@ -26,7 +26,7 @@ class view_update_ecard:
                 qr_type="ecard",
                 qrcard_id=cid,
                 qrcard=qrcard,
-                url_content=url_content_display or "qrcardku.com",
+                url_content=url_content_display or "QRkartu",
                 qr_name=(qr_name if qr_name is not None else qrcard.get("name")) or "",
                 short_code=(short_code if short_code is not None else qrcard.get("short_code")) or "",
                 form_action="/qr/update/ecard/{}".format(cid),
@@ -47,7 +47,7 @@ class view_update_ecard:
         """Step 2 (design): edit_qr_design_ecard.html with /qr/update/save/ecard/<id> and back to content."""
         try:
             cid = qrcard.get("qrcard_id")
-            url_content = url_content or qrcard.get("url_content") or "qrcardku.com"
+            url_content = url_content or qrcard.get("url_content") or "QRkartu"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
             return render_template(
                 "/user/edit_qr_design_ecard.html",

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>qrcardku.com - Log In</title>
+    <title>QRkartu - Log In</title>
     <style>
         :root {
             --primary-blue: #EBA81B;
@@ -403,7 +403,7 @@
 
     <div class="auth-container">
         <a href="/" class="header-logo">
-            <span class="logo-icon">QR</span> qrcardku.com
+            <span class="logo-icon">QR</span> QRkartu
         </a>
 
         <div class="auth-form-wrapper">
@@ -436,7 +436,7 @@
                 </div>
 
                 <div class="forgot-password">
-                    Have you forgotten your password? <a href="#">Click here</a>
+                    Have you forgotten your password? <a href="/forgot-password">Click here</a>
                 </div>
 
                 <button type="submit" class="btn-submit" id="submitBtn">Log In</button>
@@ -459,15 +459,11 @@
                     <img src="{{ url_for('static', filename='assets/icons/linkedin-color.svg') }}" alt="LinkedIn"
                         width="24" height="24">
                 </a>
-                <a href="/auth/login/facebook" class="social-btn">
-                    <img src="{{ url_for('static', filename='assets/icons/facebook-color.svg') }}" alt="Facebook"
-                        width="24" height="24">
-                </a>
             </div>
         </div>
 
         <div class="footer-text">
-            2026 &copy; qrcardku.com - 'QR card' is a trademark of DENSO WAVE INCORPORATED
+            2026 &copy; QRkartu - 'QR card' is a trademark of DENSO WAVE INCORPORATED
         </div>
     </div>
 

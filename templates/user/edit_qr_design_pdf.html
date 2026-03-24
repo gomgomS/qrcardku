@@ -870,9 +870,9 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        // Generate QR: for PDF use short URL (qrcardku.com/pdf/xxx), else use url_content
+        // Generate QR: for PDF use short URL (QRkartu/pdf/xxx), else use url_content
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
-        const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
+        const urlContent = "{{ url_content if url_content else 'https://QRkartu' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
 
         // We use a high width to ensure maximum crispness, CSS scales it cleanly

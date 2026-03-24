@@ -329,7 +329,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
-        const urlContent = "{{ url_content if url_content else 'https://qrcardku.com' }}";
+        const urlContent = "{{ url_content if url_content else 'https://QRkartu' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
 
         QRCode.toDataURL(finalUrl, { width: 400, margin: 2, color: { dark: '#000000', light: '#ffffff' }, errorCorrectionLevel: 'H' })

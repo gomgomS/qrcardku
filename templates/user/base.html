@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QRCardKu - {{ page_title | default('User Dashboard') }}</title>
+    <title>QRkartu - {{ page_title | default('User Dashboard') }}</title>
     <!-- Apply theme before paint to avoid flash -->
     <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('qrku-theme')||'dark');})();</script>
     <!-- Use Google Fonts (Inter is close to the reference) -->
@@ -509,7 +509,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="main-sidebar">
         <div class="sidebar-header">
-            <i class="fa-solid fa-qrcode"></i> QRCardKu
+            <i class="fa-solid fa-qrcode"></i> QRkartu
         </div>
 
         <nav class="sidebar-nav">
@@ -564,7 +564,7 @@
         <!-- Mobile top nav (always visible on mobile) -->
         <div class="mobile-nav-bar">
             <div class="mobile-nav-logo"><i class="fa-solid fa-qrcode"></i></div>
-            <div class="mobile-nav-title">QRCardKu</div>
+            <div class="mobile-nav-title">QRkartu</div>
             <button class="mobile-nav-toggle" id="sidebar-toggle-btn" aria-label="Toggle menu">
                 <i class="fa-solid fa-bars"></i>
             </button>
@@ -577,7 +577,7 @@
                 <!-- Browser like URL bar in the QRFY dashboard -->
                 <div class="url-input">
                     <i class="fa-solid fa-lock"></i>
-                    <span>qrcardku.com/app/{{ active_page | default('') | replace('_', '-') }}</span>
+                    <span>QRkartu/app/{{ active_page | default('') | replace('_', '-') }}</span>
                 </div>
             </div>
 

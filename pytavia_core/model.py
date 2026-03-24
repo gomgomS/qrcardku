@@ -413,7 +413,7 @@ db = {
         "qr_type"                   : "web",    # web (dynamic), web-static, vcard, pdf, etc.
         "name"                      : "",       # user specified name
         "url_content"               : "",       # destination URL (for web: redirect target; for web-static: encoded in QR)
-        "short_code"                : "",       # for web (dynamic): unique slug for qrcardku.com/p/<short_code>; empty for web-static
+        "short_code"                : "",       # for web (dynamic): unique slug for QRkartu/p/<short_code>; empty for web-static
         "design_data"               : {},       # JSON object for frame/color configurations
         
         # --- PDF Specific Fields ---

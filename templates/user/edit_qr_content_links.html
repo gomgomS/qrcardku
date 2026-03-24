@@ -567,7 +567,7 @@
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="font-size: 12px;">URL</label>
                                 <div class="url-prefix-group">
-                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://qrcardku.com') }}/links/</div>
+                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://QRkartu') }}/links/</div>
                                     <input type="text" name="short_code" id="stats-short-code-input" placeholder="Letters, numbers, '-' and '_' only" value="{{ qrcard.get('short_code','') if qrcard else '' }}" pattern="[a-zA-Z0-9_\-]{2,32}" maxlength="32">
                                 </div>
                                 <p id="stats-url-preview" style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;"></p>

@@ -99,7 +99,7 @@ class view_user:
                 qr_type=qr_type,
                 qrcard_id=qrcard.get("qrcard_id"),
                 qrcard=qrcard,
-                url_content=url_content_display or "qrcardku.com",
+                url_content=url_content_display or "QRkartu",
                 qr_name=(qr_name if qr_name is not None else qrcard.get("name")) or "",
                 short_code=(short_code if short_code is not None else qrcard.get("short_code")) or "",
                 form_action="/qr/update/{}/{}".format(qr_type, qrcard.get("qrcard_id")),
@@ -118,7 +118,7 @@ class view_user:
     def update_qr_design_html(self, qr_type, qrcard, url_content=None, qr_name=None, qr_encode_url=None, msg=None, error_msg=None):
         """Step-based update: design step (reuses new_qr_design layout with update URLs)."""
         try:
-            url_content = url_content or qrcard.get("url_content") or "qrcardku.com"
+            url_content = url_content or qrcard.get("url_content") or "QRkartu"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
             cid = qrcard.get("qrcard_id")
             if qr_type == "web":

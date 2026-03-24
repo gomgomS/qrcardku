@@ -30,7 +30,7 @@ class view_update_links:
                 qrcard_id=cid,
                 qrcard=qrcard,
                 links_list=links_list,
-                url_content=url_content_display or "qrcardku.com",
+                url_content=url_content_display or "QRkartu",
                 qr_name=(qr_name if qr_name is not None else qrcard.get("name")) or "",
                 short_code=(short_code if short_code is not None else qrcard.get("short_code")) or "",
                 form_action="/qr/update/links/{}".format(cid),
@@ -51,7 +51,7 @@ class view_update_links:
                                qr_encode_url=None, msg=None, error_msg=None):
         try:
             cid = qrcard.get("qrcard_id")
-            url_content = url_content or qrcard.get("url_content") or "qrcardku.com"
+            url_content = url_content or qrcard.get("url_content") or "QRkartu"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
             return render_template(
                 "/user/edit_qr_design_links.html",

@@ -121,18 +121,8 @@ oauth.register(
     client_kwargs={'scope': 'r_liteprofile r_emailaddress'}
 )
 
-oauth.register(
-    name='facebook',
-    client_id=os.getenv('FACEBOOK_CLIENT_ID', 'placeholder_facebook_id'),
-    client_secret=os.getenv('FACEBOOK_CLIENT_SECRET', 'placeholder_facebook_secret'),
-    access_token_url='https://graph.facebook.com/v11.0/oauth/access_token',
-    authorize_url='https://www.facebook.com/v11.0/dialog/oauth',
-    api_base_url='https://graph.facebook.com/v11.0/',
-    client_kwargs={'scope': 'email public_profile'}
-)
-
-
 #
+
 # Utility Function
 #
 # @app.errorhandler(CSRFError)
@@ -276,6 +266,80 @@ def admin_redirect():
 def login_view():
     return view_login.view_login().html()
 
+@app.route('/auth/login/<provider>')
+def auth_social_login(provider):
+    if provider == 'google':
+        redirect_uri = url_for('auth_social_callback', provider='google', _external=True)
+        return oauth.google.authorize_redirect(redirect_uri)
+    elif provider == 'linkedin':
+        redirect_uri = url_for('auth_social_callback', provider='linkedin', _external=True)
+        return oauth.linkedin.authorize_redirect(redirect_uri)
+    return abort(404)
+
+import traceback
+@app.route('/auth/callback/<provider>')
+def auth_social_callback(provider):
+    try:
+        if provider == 'google':
+            token = oauth.google.authorize_access_token()
+            user_info = oauth.google.parse_id_token(token, nonce=None)
+            if not user_info:
+                user_info = oauth.google.userinfo()
+        elif provider == 'linkedin':
+            token = oauth.linkedin.authorize_access_token()
+            resp = oauth.linkedin.get('me?projection=(id,localizedFirstName,localizedLastName)')
+            user_info = resp.json()
+            email_resp = oauth.linkedin.get('emailAddress?q=members&projection=(elements*(handle~))')
+            email_info = email_resp.json()
+            if email_info.get('elements'):
+                user_info['email'] = email_info['elements'][0]['handle~']['emailAddress']
+        else:
+            return abort(404)
+            
+        response = auth_proc.auth_proc(app).social_login(provider, user_info)
+        if response.get("message_action") == "LOGIN_SUCCESS":
+            session["fk_user_id"] = response["message_data"]["fk_user_id"]
+            session["username"]   = response["message_data"]["username"]
+            return redirect(url_for("user_dashboard"))
+        else:
+            return view_login.view_login().html(error_msg=response.get("message_desc", "Error"))
+    except Exception as e:
+        app.logger.debug(traceback.format_exc())
+        return view_login.view_login().html(error_msg=f"Social login failed: {str(e)}")
+
+@app.route('/email-verification')
+def email_verification():
+    token = request.args.get('token')
+    response = auth_proc.auth_proc(app).verify_email(token)
+    return view_login.view_login().html(error_msg=response["message_desc"])
+
+@app.route('/forgot-password', methods=["GET"])
+def forgot_password_view():
+    return view_login.view_login().forgot_password_html()
+
+@app.route('/forgot-password', methods=["POST"])
+def forgot_password_post():
+    email = request.form.get("email")
+    response = auth_proc.auth_proc(app).forgot_password_request(email)
+    msg = response.get("message_desc", "")
+    return view_login.view_login().forgot_password_html(msg=msg)
+
+@app.route('/password-reset', methods=["GET"])
+def reset_password_view():
+    token = request.args.get("token")
+    if not token:
+        return redirect(url_for('login_view'))
+    return view_login.view_login().reset_password_html(token=token)
+
+@app.route('/password-reset', methods=["POST"])
+def reset_password_post():
+    params = request.form.to_dict()
+    response = auth_proc.auth_proc(app).reset_password(params)
+    if response["message_action"] == "RESET_PASSWORD_SUCCESS":
+        return view_login.view_login().html(error_msg="Password reset successful. Please log in.")
+    else:
+        return view_login.view_login().reset_password_html(token=params.get("token"), error_msg=response["message_desc"])
+
 @app.route("/admin/login", methods=["GET"])
 def admin_login_view():
     return view_login.view_login().admin_html()
@@ -288,8 +352,47 @@ def auth_login():
         session["fk_user_id"] = response["message_data"]["fk_user_id"]
         session["username"]   = response["message_data"]["username"]
         return redirect(url_for("user_dashboard"))
+    elif response["message_action"] == "LOGIN_UNVERIFIED":
+        session["unverified_user_id"] = response["message_data"]["fk_user_id"]
+        session["unverified_email"] = response["message_data"]["email"]
+        return redirect(url_for("verify_otp_view"))
     else:
         return view_login.view_login().html(error_msg=response["message_desc"])
+
+@app.route("/verify-otp", methods=["GET"])
+def verify_otp_view():
+    if "unverified_user_id" not in session:
+        return redirect(url_for("login_view"))
+    return view_login.view_login().verify_otp_html(email=session.get("unverified_email"))
+
+@app.route("/auth/verify-otp", methods=["POST"])
+def auth_verify_otp():
+    if "unverified_user_id" not in session:
+        return redirect(url_for("login_view"))
+    
+    params = request.form.to_dict()
+    params["fk_user_id"] = session["unverified_user_id"]
+    response = auth_proc.auth_proc(app).verify_otp(params)
+    
+    if response["message_action"] == "VERIFY_SUCCESS":
+        session.pop("unverified_user_id", None)
+        session.pop("unverified_email", None)
+        session["fk_user_id"] = response["message_data"]["fk_user_id"]
+        session["username"]   = response["message_data"]["username"]
+        return redirect(url_for("user_dashboard"))
+    else:
+        return view_login.view_login().verify_otp_html(
+            email=session.get("unverified_email"), 
+            error_msg=response["message_desc"]
+        )
+
+@app.route("/auth/resend-otp", methods=["POST"])
+def auth_resend_otp():
+    if "unverified_user_id" not in session:
+        return jsonify({"message_action": "RESEND_FAILED", "message_desc": "Session expired."})
+    
+    response = auth_proc.auth_proc(app).resend_otp({"fk_user_id": session["unverified_user_id"]})
+    return jsonify(response)
 
 @app.route("/auth/admin_login", methods=["POST"])
 def auth_admin_login():
@@ -319,6 +422,28 @@ def admin_admins():
     if session.get("admin_role") != "superadmin":
         return redirect(url_for("admin_admins"))
     return view_admin.view_admin(app).admins_html()
+
+@app.route("/admin/users")
+def admin_users():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    msg = request.args.get("msg")
+    error_msg = request.args.get("error_msg")
+    return view_admin.view_admin(app).users_html(msg=msg, error_msg=error_msg)
+
+@app.route("/admin/user/delete", methods=["POST"])
+def admin_user_delete():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    if session.get("admin_role") != "superadmin":
+        return redirect(url_for("admin_users"))
+    
+    params = request.form.to_dict()
+    response = admin_proc.admin_proc(app).delete_user(params)
+    if response["message_action"] == "DELETE_USER_SUCCESS":
+        return redirect(url_for("admin_users", msg="User deleted successfully."))
+    else:
+        return redirect(url_for("admin_users", error_msg=response["message_desc"]))
 
 @app.route("/admin/admin/add", methods=["POST"])
 def admin_admin_add():
@@ -909,7 +1034,7 @@ def qr_update_design_pdf(qrcard_id):
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     if request.method == "POST":
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -927,10 +1052,10 @@ def qr_update_design_pdf(qrcard_id):
         draft = _get_qr_draft(session, qrcard_id)
         if draft:
             qrcard.update(draft)
-            url_content = draft.get("url_content") or qrcard.get("url_content") or "qrcardku.com"
+            url_content = draft.get("url_content") or qrcard.get("url_content") or "QRkartu"
             qr_name = draft.get("qr_name") or qrcard.get("name") or "Untitled QR"
         else:
-            url_content = qrcard.get("url_content") or "qrcardku.com"
+            url_content = qrcard.get("url_content") or "QRkartu"
             qr_name = qrcard.get("name") or "Untitled QR"
     qr_encode_url = None
     if qrcard.get("short_code"):
@@ -955,7 +1080,7 @@ def qr_update_design_web(qrcard_id):
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     if request.method == "POST":
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -966,10 +1091,10 @@ def qr_update_design_web(qrcard_id):
         draft = _get_qr_draft(session, qrcard_id)
         if draft:
             qrcard.update(draft)
-            url_content = draft.get("url_content") or qrcard.get("url_content") or "qrcardku.com"
+            url_content = draft.get("url_content") or qrcard.get("url_content") or "QRkartu"
             qr_name = draft.get("qr_name") or qrcard.get("name") or "Untitled QR"
         else:
-            url_content = qrcard.get("url_content") or "qrcardku.com"
+            url_content = qrcard.get("url_content") or "QRkartu"
             qr_name = qrcard.get("name") or "Untitled QR"
     qr_encode_url = config.G_BASE_URL + "/web/" + qrcard["short_code"] if qrcard.get("short_code") else None
     return view_update_web.view_update_web(app).update_qr_design_html(
@@ -991,7 +1116,7 @@ def qr_update_design_ecard(qrcard_id):
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -1070,10 +1195,10 @@ def qr_update_design_ecard(qrcard_id):
         draft = _get_qr_draft(session, qrcard_id)
         if draft:
             qrcard.update(draft)
-            url_content = draft.get("url_content") or qrcard.get("url_content") or "qrcardku.com"
+            url_content = draft.get("url_content") or qrcard.get("url_content") or "QRkartu"
             qr_name = draft.get("qr_name") or qrcard.get("name") or "Untitled QR"
         else:
-            url_content = qrcard.get("url_content") or "qrcardku.com"
+            url_content = qrcard.get("url_content") or "QRkartu"
             qr_name = qrcard.get("name") or "Untitled QR"
     qr_encode_url = config.G_BASE_URL + "/ecard/" + qrcard["short_code"] if qrcard.get("short_code") else None
     return view_update_ecard.view_update_ecard(app).update_qr_design_html(
@@ -1436,7 +1561,7 @@ def qr_update_content_ecard(qrcard_id):
             short_code = (request.form.get("short_code") or "").strip()
             # Rebuild qrcard from form (scalars + contact arrays)
             draft = dict(qrcard)
-            draft["url_content"] = url_content or draft.get("url_content") or "qrcardku.com"
+            draft["url_content"] = url_content or draft.get("url_content") or "QRkartu"
             draft["name"] = qr_name or draft.get("name") or "Untitled QR"
             draft["short_code"] = short_code or draft.get("short_code") or ""
             for key in request.form:
@@ -1464,7 +1589,7 @@ def qr_update_content_ecard(qrcard_id):
             url_content_display = raw_url[8:] if raw_url.startswith("https://") else (raw_url[7:] if raw_url.startswith("http://") else raw_url)
             return view_update_ecard.view_update_ecard(app).update_qr_content_html(
                 qrcard=draft,
-                url_content=url_content_display or "qrcardku.com",
+                url_content=url_content_display or "QRkartu",
                 qr_name=draft.get("name") or "",
                 short_code=draft.get("short_code") or "",
                 base_url=config.G_BASE_URL,
@@ -1624,14 +1749,14 @@ def user_new_qr_design_pdf():
     from pytavia_modules.qr import qr_pdf_proc
     v = view_pdf.view_pdf(app)
     proc = qr_pdf_proc.qr_pdf_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     pdf_data = {}
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -2434,13 +2559,13 @@ def user_new_qr_design_web():
     from pytavia_modules.qr import qr_web_proc
     v = view_web.view_web(app)
     proc = qr_web_proc.qr_web_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -2473,7 +2598,7 @@ def user_new_qr_ecard():
     if request.method == "POST":
         # Back from design: re-show content form with saved data
         from itertools import zip_longest
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -2548,14 +2673,14 @@ def user_new_qr_design_ecard():
     from pytavia_modules.qr import qr_ecard_proc
     v = view_ecard.view_ecard(app)
     proc = qr_ecard_proc.qr_ecard_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     ecard_data = {}
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -2748,7 +2873,7 @@ def user_new_qr_links():
     from pytavia_modules.view import view_links
     v = view_links.view_links(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -2791,14 +2916,14 @@ def user_new_qr_design_links():
     from pytavia_modules.qr import qr_links_proc
     v = view_links.view_links(app)
     proc = qr_links_proc.qr_links_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     links_data = {}
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3056,7 +3181,7 @@ def user_new_qr_sosmed():
     from pytavia_modules.view import view_sosmed
     v = view_sosmed.view_sosmed(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3095,14 +3220,14 @@ def user_new_qr_design_sosmed():
     from pytavia_modules.qr import qr_sosmed_proc
     v = view_sosmed.view_sosmed(app)
     proc = qr_sosmed_proc.qr_sosmed_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     sosmed_data = {}
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3349,7 +3474,7 @@ def user_new_qr_allinone():
     from pytavia_modules.view import view_allinone
     v = view_allinone.view_allinone(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3382,14 +3507,14 @@ def user_new_qr_design_allinone():
     from pytavia_modules.qr import qr_allinone_proc
     v = view_allinone.view_allinone(app)
     proc = qr_allinone_proc.qr_allinone_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     allinone_data = {}
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3949,7 +4074,7 @@ def user_new_qr_special():
     from pytavia_modules.view import view_special
     v = view_special.view_special(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -3979,14 +4104,14 @@ def user_new_qr_design_special():
     from pytavia_modules.qr import qr_special_proc
     v = view_special.view_special(app)
     proc = qr_special_proc.qr_special_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
     error_msg = None
     special_sections = []
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -4117,7 +4242,7 @@ def qr_update_content_special(qrcard_id):
             draft["short_code"] = short_code or draft.get("short_code", "")
             return view_update_special.view_update_special(app).update_qr_content_html(
                 qrcard=draft, base_url=config.G_BASE_URL,
-                url_content=draft.get("url_content", "qrcardku.com"),
+                url_content=draft.get("url_content", "QRkartu"),
                 qr_name=draft.get("name", ""),
                 short_code=draft.get("short_code", ""),
                 special_sections=special_sections,
@@ -4181,7 +4306,7 @@ def qr_update_content_special(qrcard_id):
     special_sections = qrcard.get("special_sections", [])
     return view_update_special.view_update_special(app).update_qr_content_html(
         qrcard=qrcard, base_url=config.G_BASE_URL,
-        url_content=qrcard.get("url_content", "qrcardku.com"),
+        url_content=qrcard.get("url_content", "QRkartu"),
         qr_name=qrcard.get("name", ""),
         short_code=qrcard.get("short_code", ""),
         special_sections=special_sections,
@@ -4203,11 +4328,11 @@ def qr_update_design_special(qrcard_id):
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
         qrcard.update(draft)
-        url_content = draft.get("url_content") or qrcard.get("url_content") or "qrcardku.com"
+        url_content = draft.get("url_content") or qrcard.get("url_content") or "QRkartu"
         qr_name = draft.get("qr_name") or qrcard.get("name") or "Untitled QR"
         special_sections = draft.get("special_sections", qrcard.get("special_sections", []))
     else:
-        url_content = qrcard.get("url_content") or "qrcardku.com"
+        url_content = qrcard.get("url_content") or "QRkartu"
         qr_name = qrcard.get("name") or "Untitled QR"
         special_sections = qrcard.get("special_sections", [])
     qr_encode_url = config.G_BASE_URL + "/special/" + qrcard["short_code"] if qrcard.get("short_code") else None
@@ -4273,7 +4398,7 @@ def user_new_qr_images():
     from pytavia_modules.view import view_images
     v = view_images.view_images(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -4311,7 +4436,7 @@ def user_new_qr_design_images():
     from pytavia_modules.qr import qr_images_proc
     v = view_images.view_images(app)
     proc = qr_images_proc.qr_images_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
@@ -4319,7 +4444,7 @@ def user_new_qr_design_images():
     images_data = {}
     
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -4444,7 +4569,7 @@ def user_new_qr_video():
     from pytavia_modules.view import view_video
     v = view_video.view_video(app)
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -4472,7 +4597,7 @@ def user_new_qr_design_video():
     from pytavia_modules.qr import qr_video_proc
     v = view_video.view_video(app)
     proc = qr_video_proc.qr_video_proc(app)
-    url_content = "qrcardku.com"
+    url_content = "QRkartu"
     qr_name = "Untitled QR"
     short_code = ""
     qr_encode_url = None
@@ -4480,7 +4605,7 @@ def user_new_qr_design_video():
     video_data = {}
     
     if request.method == "POST":
-        url_content = request.form.get("url_content", "qrcardku.com")
+        url_content = request.form.get("url_content", "QRkartu")
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
         qr_name = request.form.get("qr_name", "Untitled QR")
@@ -4620,7 +4745,7 @@ def qr_update_content_images(qrcard_id):
                 short_code=short_code, base_url=config.G_BASE_URL
             )
             
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -4709,7 +4834,7 @@ def qr_update_design_images(qrcard_id):
     qrcard = _merge_images_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     
     if request.method == "POST":
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -4796,7 +4921,7 @@ def qr_update_content_video(qrcard_id):
                 short_code=short_code, base_url=config.G_BASE_URL
             )
             
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -4893,7 +5018,7 @@ def qr_update_design_video(qrcard_id):
     qrcard = _merge_video_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     
     if request.method == "POST":
-        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "qrcardku.com"
+        url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -5235,10 +5360,13 @@ def auth_register():
     params = request.form.to_dict()
     response = auth_proc.auth_proc(app).register(params)
     if response["message_action"] == "REGISTER_SUCCESS":
-        # Usually redirect to login page with a success flash message or auto-login
-        return redirect(url_for("login_view"))
+        return redirect(url_for("signup_success_view"))
     else:
         return view_login.view_login().register_html(error_msg=response["message_desc"])
+
+@app.route("/signup-success", methods=["GET"])
+def signup_success_view():
+    return view_login.view_login().signup_success_html()
 
 @app.route('/auth/login/<provider>')
 def social_login(provider):

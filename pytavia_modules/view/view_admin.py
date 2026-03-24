@@ -28,6 +28,15 @@ class view_admin:
             error_msg=error_msg,
         )
 
+    def users_html(self, msg=None, error_msg=None):
+        users = admin_proc.admin_proc(self.webapp).get_all_users()
+        return render_template(
+            "admin/users.html",
+            users=users,
+            msg=msg,
+            error_msg=error_msg,
+        )
+
     def frames_html(self, msg=None, error_msg=None):
         frames = admin_frame_proc.admin_frame_proc(self.webapp).get_all_frames()
         return render_template(

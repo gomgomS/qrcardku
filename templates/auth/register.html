@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>qrcardku.com - Create Account</title>
+    <title>QRkartu - Create Account</title>
     <style>
         :root {
             --primary-blue: #EBA81B;
@@ -489,7 +489,7 @@
 
     <div class="auth-container">
         <a href="/" class="header-logo">
-            <span class="logo-icon">QR</span> qrcardku.com
+            <span class="logo-icon">QR</span> QRkartu
         </a>
 
         <div class="auth-form-wrapper">
@@ -527,8 +527,18 @@
                     <div class="strength-bar" id="str3"></div>
                     <div class="strength-bar" id="str4"></div>
                 </div>
+                <div class="strength-info" id="strength-info" style="font-size: 11px; color: var(--text-muted); margin-bottom: 20px; text-align: left; display: flex; flex-direction: column; gap: 4px;">
+                    <span id="req-text">Enter at least 8 characters.</span>
+                </div>
 
-                <button type="submit" class="btn-submit" id="submitBtn">Sign up now</button>
+                <div class="input-group">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Confirm your password..."
+                        required oninput="checkForm()">
+                </div>
+                <div id="password-match-msg" style="font-size: 12px; margin-bottom: 20px; text-align: right; min-height: 18px;"></div>
+
+                <button type="submit" class="btn-submit" id="submitBtn" disabled>Sign up now</button>
             </form>
 
             <div class="login-link">
@@ -548,10 +558,6 @@
                     <img src="{{ url_for('static', filename='assets/icons/linkedin-color.svg') }}" alt="LinkedIn"
                         width="24" height="24">
                 </a>
-                <a href="/auth/login/facebook" class="social-btn">
-                    <img src="{{ url_for('static', filename='assets/icons/facebook-color.svg') }}" alt="Facebook"
-                        width="24" height="24">
-                </a>
             </div>
 
             <div class="terms-text">
@@ -561,7 +567,7 @@
         </div>
 
         <div class="footer-text">
-            2026 &copy; qrcardku.com - 'QR card' is a trademark of DENSO WAVE INCORPORATED
+            2026 &copy; QRkartu - 'QR card' is a trademark of DENSO WAVE INCORPORATED
         </div>
     </div>
 
@@ -617,28 +623,91 @@
         function checkForm() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirm_password').value;
             const btn = document.getElementById('submitBtn');
+            
             const str1 = document.getElementById('str1');
+            const str2 = document.getElementById('str2');
+            const str3 = document.getElementById('str3');
+            const str4 = document.getElementById('str4');
+            const passMsg = document.getElementById('password-match-msg');
+            
+            const reqText = document.getElementById('req-text');
 
-            if (pass.length > 0) {
-                str1.classList.add('active'); // minimal strength
+            // Password strength calculation
+            let hasLength = pass.length >= 8;
+            let hasNum = /[0-9]/.test(pass);
+            let hasUpper = /[A-Z]/.test(pass);
+            let hasSpec = /[^A-Za-z0-9]/.test(pass);
+            
+            // Progressive one-by-one status message
+            if (pass.length === 0) {
+                reqText.textContent = 'Enter at least 8 characters.';
+                reqText.style.color = 'var(--text-muted)';
+            } else if (!hasLength) {
+                reqText.textContent = 'Weak: Needs at least 8 characters.';
+                reqText.style.color = '#ef4444';
+            } else if (!hasNum) {
+                reqText.textContent = 'Fair: Add a number to make it stronger.';
+                reqText.style.color = '#eab308';
+            } else if (!hasUpper) {
+                reqText.textContent = 'Good: Add an uppercase letter.';
+                reqText.style.color = '#eab308';
+            } else if (!hasSpec) {
+                reqText.textContent = 'Strong: Add a special character for max security.';
+                reqText.style.color = '#10b981';
             } else {
-                str1.classList.remove('active');
+                reqText.textContent = 'Excellent: Your password is very secure!';
+                reqText.style.color = '#10b981';
             }
 
-            if (user.length > 0 && pass.length > 0) {
+            // Determine color based on active requirements
+            let reqCount = (hasLength?1:0) + (hasNum?1:0) + (hasUpper?1:0) + (hasSpec?1:0);
+            let strengthColor = '#ef4444'; // Red (weak)
+            if (reqCount >= 3) strengthColor = '#eab308'; // Yellow (medium)
+            if (reqCount === 4) strengthColor = '#10b981'; // Green (strong)
+
+            // Ensure bars align with their specific rule
+            str1.style.backgroundColor = hasLength ? strengthColor : 'var(--border-color)';
+            str2.style.backgroundColor = hasNum ? strengthColor : 'var(--border-color)';
+            str3.style.backgroundColor = hasUpper ? strengthColor : 'var(--border-color)';
+            str4.style.backgroundColor = hasSpec ? strengthColor : 'var(--border-color)';
+
+            // Check passwords match
+            let isMatch = false;
+            if (confirmPass.length > 0) {
+                if (pass === confirmPass) {
+                    passMsg.textContent = "Passwords match";
+                    passMsg.style.color = "#10b981";
+                    isMatch = true;
+                } else {
+                    passMsg.textContent = "Passwords do not match";
+                    passMsg.style.color = "#ef4444";
+                    isMatch = false;
+                }
+            } else {
+                passMsg.textContent = "";
+            }
+
+            // Enable submit if valid
+            if (user.length > 0 && pass.length >= 8 && isMatch) {
                 btn.classList.add('active');
+                btn.disabled = false;
             } else {
                 btn.classList.remove('active');
+                btn.disabled = true;
             }
         }
 
         function togglePwd() {
             const pwd = document.getElementById('password');
+            const cpwd = document.getElementById('confirm_password');
             if (pwd.type === 'password') {
                 pwd.type = 'text';
+                cpwd.type = 'text';
             } else {
                 pwd.type = 'password';
+                cpwd.type = 'password';
             }
         }
     </script>

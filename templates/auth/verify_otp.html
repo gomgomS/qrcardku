@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - QRkartu</title>
+    <style>
+        :root {
+            --primary-blue: #EBA81B;
+            --primary-hover: #d4941a;
+            --text-dark: #E8E5DC;
+            --text-muted: #8A8878;
+            --border-color: #2C2D25;
+            --input-bg: #1E1F18;
+            --btn-disabled: #3A3B30;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #1E1F18;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .auth-card {
+            width: 100%;
+            background: #181914;
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .auth-subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background-color: var(--input-bg);
+            color: var(--text-dark);
+            transition: border-color 0.2s;
+            margin-bottom: 20px;
+            margin-top: 8px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-resend {
+            background-color: transparent;
+            border: 1px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-resend:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .success-msg {
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        label {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 class="auth-title">Verify Your Account</h2>
+                <p class="auth-subtitle">
+                    We've sent a 6-digit code to <strong style="color: var(--text-dark);">{{ email }}</strong>.<br>Please enter it below to verify your account.
+                </p>
+            </div>
+
+            {% if error_msg %}
+            <div class="error-msg">
+                {{ error_msg }}
+            </div>
+            {% endif %}
+            {% if msg %}
+            <div class="success-msg">
+                {{ msg }}
+            </div>
+            {% endif %}
+
+            <form action="/auth/verify-otp" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div style="text-align: left;">
+                    <label for="otp">Verification Code</label>
+                    <input type="text" id="otp" name="otp" class="form-control" placeholder="123456" 
+                           required maxlength="6" pattern="\d{6}" 
+                           style="font-size: 2rem; letter-spacing: 15px; text-align: center; padding: 15px;">
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Verify Account</button>
+            </form>
+
+            <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Didn't receive the email?</span>
+                <button id="resend-btn" class="btn-resend" disabled>
+                    Resend Code (<span id="timer">60</span>s)
+                </button>
+                <span id="resend-msg" style="color: #22c55e; font-size: 0.85rem; display: none;">Code resent successfully!</span>
+                <span id="resend-error" style="color: #ef4444; font-size: 0.85rem; display: none;"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const resendBtn = document.getElementById('resend-btn');
+            const timerSpan = document.getElementById('timer');
+            const resendMsg = document.getElementById('resend-msg');
+            const resendError = document.getElementById('resend-error');
+            
+            let timeLeft = 60;
+            let countdownInterval;
+
+            function startTimer() {
+                resendBtn.disabled = true;
+                
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    let currentTimerSpan = document.getElementById('timer');
+                    if (currentTimerSpan) {
+                         currentTimerSpan.textContent = timeLeft;
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownInterval);
+                        resendBtn.disabled = false;
+                        resendBtn.innerHTML = 'Resend Code';
+                    }
+                }, 1000);
+            }
+
+            // Start countdown immediately on page load
+            startTimer();
+
+            resendBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (resendBtn.disabled) return;
+                
+                // Hide previous messages
+                resendMsg.style.display = 'none';
+                resendError.style.display = 'none';
+                
+                // Call resend API using fetch
+                fetch('/auth/resend-otp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'csrf_token': document.querySelector('input[name="csrf_token"]').value
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message_action === "RESEND_SUCCESS") {
+                        resendMsg.textContent = data.message_desc || "Code resent successfully!";
+                        resendMsg.style.display = 'block';
+                        
+                        // Restart timer
+                        timeLeft = 60;
+                        resendBtn.innerHTML = 'Resend Code (<span id="timer">60</span>s)';
+                        // Re-fetch elements since innerHTML changed
+                        startTimer();
+                    } else {
+                        resendError.textContent = data.message_desc || "Failed to resend code.";
+                        resendError.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    resendError.textContent = "An error occurred. Please try again later.";
+                    resendError.style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

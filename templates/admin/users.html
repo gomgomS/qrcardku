@@ -1,0 +1,75 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Admin - Registered Users{% endblock %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 20px;">
+    <h2>Registered Users Management</h2>
+    <p style="color: #666; margin-top: 5px;">Manage all registered users in the system.</p>
+</div>
+
+{% if msg %}
+<div style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+    &#10003; {{ msg }}
+</div>
+{% endif %}
+{% if error_msg %}
+<div style="background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;">
+    &#9888; {{ error_msg }}
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+
+    <!-- Users Table -->
+    <div class="table-container" style="flex: 1; min-width: 400px; max-width: 1000px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th style="text-align:center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>{{ user.email or '—' }}</td>
+                    <td>{{ user.name or '—' }}</td>
+                    <td>
+                        {% if user.status == 'UNVERIFIED' %}
+                        <span style="color:#b91c1c;font-size:12px;font-weight:600;">Unverified</span>
+                        {% else %}
+                        <span style="color:#065f46;font-size:12px;font-weight:600;">Active</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                        {% if session.get('admin_role') == 'superadmin' %}
+                        <form action="/admin/user/delete" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                            <input type="hidden" name="user_id" value="{{ user.pkey }}" />
+                            <button type="submit"
+                                style="font-size:12px;padding:4px 12px;border-radius:6px;cursor:pointer;border:1px solid;
+                                background:#fef2f2;color:#b91c1c;border-color:#fca5a5;"
+                                onclick="return confirm('Are you sure you want to permanently delete user: {{ user.username }}?')">
+                                Delete
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="font-size:11px;color:#8A8878; font-style:italic;">No Permission</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#8A8878;padding:32px;">No registered users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

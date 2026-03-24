@@ -537,7 +537,7 @@
     var _qrFgColor = '#000000';
     var _qrBgColor = '#ffffff';
     var _qrRaw = "{{ qr_encode_url or url_content or '' }}";
-    var _qrFinalUrl = _qrRaw && _qrRaw.startsWith('http') ? _qrRaw : ('https://' + (_qrRaw || 'qrcardku.com'));
+    var _qrFinalUrl = _qrRaw && _qrRaw.startsWith('http') ? _qrRaw : ('https://' + (_qrRaw || 'QRkartu'));
 
     function generateQR() {
         QRCode.toDataURL(_qrFinalUrl, {

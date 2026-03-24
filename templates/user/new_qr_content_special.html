@@ -1202,7 +1202,7 @@
                     <div class="form-group">
                         <label class="form-label">Custom URL Path</label>
                         <div class="url-prefix-group">
-                            <span class="url-prefix">{{ base_url | default('qrcardku.com') }}/special/</span>
+                            <span class="url-prefix">{{ base_url | default('QRkartu') }}/special/</span>
                             <input type="text" name="short_code" placeholder="my-page"
                                 value="{{ short_code | default('', true) }}" pattern="[a-z0-9_\-]{2,32}">
                         </div>
@@ -1212,8 +1212,8 @@
 
                     <div class="form-group">
                         <label class="form-label">URL Content (fallback)</label>
-                        <input type="text" name="url_content" class="form-control" placeholder="qrcardku.com"
-                            value="{{ url_content | default('qrcardku.com', true) }}">
+                        <input type="text" name="url_content" class="form-control" placeholder="QRkartu"
+                            value="{{ url_content | default('QRkartu', true) }}">
                     </div>
 
                     <div class="toggle-row">

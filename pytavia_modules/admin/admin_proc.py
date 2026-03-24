@@ -61,6 +61,31 @@ class admin_proc:
         except Exception:
             return []
 
+    def get_all_users(self):
+        try:
+            return list(self.mgdDB.db_user.find({}).sort("_id", -1))
+        except Exception:
+            return []
+
+    def delete_user(self, params):
+        response = {"message_action": "DELETE_USER_SUCCESS", "message_desc": ""}
+        try:
+            user_id = params.get("user_id")
+            if not user_id:
+                response["message_action"] = "DELETE_USER_FAILED"
+                response["message_desc"]   = "user_id required"
+                return response
+            
+            # Delete from db_user and db_user_auth
+            self.mgdDB.db_user.delete_one({"pkey": user_id})
+            self.mgdDB.db_user_auth.delete_one({"fk_user_id": user_id})
+        except Exception as e:
+            if self.webapp:
+                self.webapp.logger.debug(traceback.format_exc())
+            response["message_action"] = "DELETE_USER_FAILED"
+            response["message_desc"]   = str(e)
+        return response
+
     def add_admin(self, params):
         response = {"message_action": "ADD_ADMIN_SUCCESS", "message_desc": "", "message_data": {}}
         try:
