@@ -239,9 +239,26 @@ def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
 
         # Upload to R2
         key = f"qr-composites/{fk_user_id}/{qrcard_id}.png"
+        file_size = buf.getbuffer().nbytes
         url = _r2_mod.r2_storage_proc().upload_bytes(
             buf, key, content_type="image/png",
         )
+
+        # Track composite in db_qr_assets (replace old entry for same key)
+        try:
+            from pytavia_modules.user import asset_tracker_proc as _atp
+            _tracker = _atp.asset_tracker_proc()
+            _tracker.untrack_key(key)
+            _tracker.track(
+                fk_user_id=fk_user_id,
+                r2_key=key,
+                file_size=file_size,
+                qrcard_id=qrcard_id,
+                qr_type="composite",
+                file_name=f"{qrcard_id}.png",
+            )
+        except Exception:
+            pass
 
         # Persist URL on the QR record
         _db.db_qrcard.update_one(
@@ -582,6 +599,39 @@ def api_qr_download(qrcard_id):
     except Exception:
         app.logger.debug("api_qr_download failed", exc_info=True)
         return "Download failed", 500
+
+@app.route("/api/qr/preview/<qrcard_id>")
+def api_qr_preview(qrcard_id):
+    """Serve composite QR image inline (for scan modal preview) — always fresh, no browser cache."""
+    if "fk_user_id" not in session:
+        return "Unauthorized", 401
+    import re, io
+    from pytavia_core import database as _db_mod, config as _cfg
+    from pytavia_modules.storage import r2_storage_proc as _r2_mod
+    try:
+        fk_user_id = session["fk_user_id"]
+        _db  = _db_mod.get_db_conn(_cfg.mainDB)
+        doc  = _db.db_qrcard.find_one(
+            {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
+            {"qr_composite_url": 1, "_id": 0},
+        )
+        if not doc or not doc.get("qr_composite_url"):
+            return "Not found", 404
+        composite_url = doc["qr_composite_url"]
+        allowed_base  = _cfg.R2_PUBLIC_BASE_URL.rstrip("/")
+        if not composite_url.startswith(allowed_base + "/"):
+            return "Forbidden", 403
+        key = composite_url[len(allowed_base) + 1:]
+        r2  = _r2_mod.r2_storage_proc()
+        obj = r2._client.get_object(Bucket=r2._bucket, Key=key)
+        data = obj["Body"].read()
+        resp = Response(data, content_type="image/png")
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+    except Exception:
+        app.logger.debug("api_qr_preview failed", exc_info=True)
+        return "Preview failed", 500
+
 
 @app.route("/api/qr/composite-url/<qrcard_id>")
 def api_qr_composite_url(qrcard_id):
@@ -5178,6 +5228,57 @@ def user_storage():
     from pytavia_modules.user import user_storage_proc as _usp
     info = _usp.user_storage_proc(app).get_storage_info(session["fk_user_id"])
     return render_template("user/storage.html", info=info)
+
+@app.route("/api/storage/garbage")
+def api_storage_garbage():
+    """Return orphaned (garbage) assets for the logged-in user."""
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False, "error": "Not logged in"}), 401
+    from pytavia_modules.user import user_storage_proc as _usp
+    files = _usp.user_storage_proc(app).get_garbage_files(session["fk_user_id"])
+    total = sum(f["size"] for f in files)
+    from pytavia_modules.user.user_storage_proc import _fmt_size
+    return jsonify({"ok": True, "files": files, "count": len(files), "total_fmt": _fmt_size(total), "total_bytes": total})
+
+
+@app.route("/api/storage/cleanup_garbage", methods=["POST"])
+def api_storage_cleanup_garbage():
+    """Delete all orphaned assets from R2 and mark them DELETED in db_qr_assets."""
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False, "error": "Not logged in"}), 401
+    try:
+        from pytavia_modules.user import user_storage_proc as _usp
+        from pytavia_modules.storage import r2_storage_proc as _r2_mod
+        from pytavia_modules.user import asset_tracker_proc as _atp
+        from pytavia_core import database as _db_mod, config as _cfg
+
+        fk_user_id = session["fk_user_id"]
+        garbage = _usp.user_storage_proc(app).get_garbage_files(fk_user_id)
+        if not garbage:
+            return jsonify({"ok": True, "deleted": 0, "freed_bytes": 0, "freed_fmt": "0 B"})
+
+        _r2 = _r2_mod.r2_storage_proc()
+        tracker = _atp.asset_tracker_proc(app)
+        freed_bytes = 0
+        deleted = 0
+        for f in garbage:
+            key = f.get("r2_key", "")
+            if not key:
+                continue
+            try:
+                _r2.delete_file(key)
+            except Exception:
+                pass
+            tracker.untrack_key(key)
+            freed_bytes += f.get("size", 0)
+            deleted += 1
+
+        from pytavia_modules.user.user_storage_proc import _fmt_size
+        return jsonify({"ok": True, "deleted": deleted, "freed_bytes": freed_bytes, "freed_fmt": _fmt_size(freed_bytes)})
+    except Exception:
+        app.logger.debug("cleanup_garbage failed", exc_info=True)
+        return jsonify({"ok": False, "error": "Cleanup failed"}), 500
+
 
 @app.route("/api/storage/delete_qr_assets", methods=["POST"])
 def api_storage_delete_qr_assets():

@@ -56,6 +56,78 @@ class user_storage_proc:
     def __init__(self, app=None):
         self.webapp = app
 
+    def get_garbage_files(self, fk_user_id: str) -> list:
+        """
+        Return db_qr_assets records that are tracked (ACTIVE) but whose R2 key is no
+        longer referenced by any field in any of the user's QR / frame documents.
+        These are safe to delete — orphaned files left behind after edits.
+        """
+        try:
+            _r2 = r2_mod.r2_storage_proc()
+            base_url = _r2._public_base.rstrip("/")
+
+            # ── 1. All tracked active assets for this user ────────────────
+            all_assets = list(self.mgdDB.db_qr_assets.find(
+                {"fk_user_id": fk_user_id, "status": "ACTIVE"},
+                {"asset_id": 1, "r2_key": 1, "file_name": 1, "file_size": 1,
+                 "file_category": 1, "qrcard_id": 1, "qr_type": 1, "_id": 0}
+            ))
+            if not all_assets:
+                return []
+
+            # ── 2. Collect all R2 keys currently referenced in any document ─
+            referenced_keys = set()
+
+            def _extract(obj):
+                if isinstance(obj, str):
+                    s = obj.strip()
+                    if s.startswith(base_url + "/"):
+                        referenced_keys.add(s[len(base_url) + 1:])
+                elif isinstance(obj, dict):
+                    for v in obj.values():
+                        _extract(v)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        _extract(item)
+
+            scan_collections = [
+                "db_qrcard", "db_qrcard_pdf", "db_qrcard_allinone",
+                "db_qrcard_images", "db_qrcard_video", "db_qrcard_ecard",
+                "db_qr_frame",
+            ]
+            for col_name in scan_collections:
+                col = getattr(self.mgdDB, col_name, None)
+                if col is None:
+                    continue
+                for doc in col.find(
+                    {"fk_user_id": fk_user_id, "status": {"$in": ["ACTIVE", "DRAFT"]}},
+                    {"_id": 0},
+                ):
+                    _extract(doc)
+
+            # ── 3. Garbage = tracked but not referenced ───────────────────
+            garbage = []
+            for asset in all_assets:
+                key = asset.get("r2_key", "")
+                if key and key not in referenced_keys:
+                    garbage.append({
+                        "asset_id":     asset.get("asset_id", ""),
+                        "r2_key":       key,
+                        "fname":        asset.get("file_name", key.split("/")[-1]),
+                        "size":         asset.get("file_size", 0),
+                        "size_fmt":     _fmt_size(asset.get("file_size", 0)),
+                        "category":     asset.get("file_category", _file_category(key)),
+                        "qrcard_id":    asset.get("qrcard_id", ""),
+                        "qr_type":      asset.get("qr_type", ""),
+                    })
+
+            garbage.sort(key=lambda x: x["size"], reverse=True)
+            return garbage
+        except Exception:
+            if self.webapp:
+                self.webapp.logger.debug(traceback.format_exc())
+            return []
+
     def get_storage_info(self, fk_user_id: str) -> dict:
         """
         Return storage info for a user.
@@ -109,17 +181,25 @@ class user_storage_proc:
                 key   = doc.get("r2_key", "")
                 total_bytes += size
                 tracked_qrs.add(qid)
+                qr_type = doc.get("qr_type", meta.get("qr_type", ""))
+                if qr_type == "frame":
+                    storage_group = "template"
+                elif qr_type == "composite":
+                    storage_group = "generated"
+                else:
+                    storage_group = "assets"
                 files.append({
-                    "key":       key,
-                    "url":       _r2.public_url(key),
-                    "fname":     doc.get("file_name", key.split("/")[-1]),
-                    "size":      size,
-                    "size_fmt":  _fmt_size(size),
-                    "category":  doc.get("file_category", _file_category(key)),
-                    "qr_name":   meta.get("qr_name", ""),
-                    "qr_type":   doc.get("qr_type", meta.get("qr_type", "")),
-                    "qrcard_id": qid,
-                    "edit_url":  meta.get("edit_url", "#"),
+                    "key":           key,
+                    "url":           _r2.public_url(key),
+                    "fname":         doc.get("file_name", key.split("/")[-1]),
+                    "size":          size,
+                    "size_fmt":      _fmt_size(size),
+                    "category":      doc.get("file_category", _file_category(key)),
+                    "qr_name":       meta.get("qr_name", ""),
+                    "qr_type":       qr_type,
+                    "qrcard_id":     qid,
+                    "edit_url":      meta.get("edit_url", "#"),
+                    "storage_group": storage_group,
                 })
 
             # ── 2. R2 fallback for QRs with no tracked assets yet ────────
@@ -136,20 +216,23 @@ class user_storage_proc:
             if untracked_pairs:
                 for prefix, qid, meta in untracked_pairs:
                     for obj in _r2.list_prefix(prefix):
-                        key  = obj["key"]
-                        size = obj["size"]
+                        key      = obj["key"]
+                        size     = obj["size"]
+                        _qt      = meta["qr_type"]
+                        _sg      = "template" if _qt == "frame" else "generated" if _qt == "composite" else "assets"
                         total_bytes += size
                         files.append({
-                            "key":       key,
-                            "url":       _r2.public_url(key),
-                            "fname":     key.split("/")[-1],
-                            "size":      size,
-                            "size_fmt":  _fmt_size(size),
-                            "category":  _file_category(key),
-                            "qr_name":   meta["qr_name"],
-                            "qr_type":   meta["qr_type"],
-                            "qrcard_id": qid,
-                            "edit_url":  meta["edit_url"],
+                            "key":           key,
+                            "url":           _r2.public_url(key),
+                            "fname":         key.split("/")[-1],
+                            "size":          size,
+                            "size_fmt":      _fmt_size(size),
+                            "category":      _file_category(key),
+                            "qr_name":       meta["qr_name"],
+                            "qr_type":       _qt,
+                            "qrcard_id":     qid,
+                            "edit_url":      meta["edit_url"],
+                            "storage_group": _sg,
                         })
 
             files.sort(key=lambda x: x["size"], reverse=True)

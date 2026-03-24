@@ -403,6 +403,128 @@
         .file-action .btn-edit span { display: none; }
         .qr-filter-select { max-width: 140px; }
     }
+
+    /* ── Page tabs ── */
+    .storage-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--border-color);
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+    .storage-tab {
+        padding: 9px 20px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: color 0.15s;
+        user-select: none;
+    }
+    .storage-tab:hover { color: var(--text-main); }
+    .storage-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .storage-tab-badge {
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 8px;
+        display: none;
+    }
+    .storage-tab-badge.visible { display: inline-block; }
+
+    /* ── Garbage section ── */
+    .garbage-card {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-top: 24px;
+    }
+    .garbage-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .garbage-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+    .garbage-badge {
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    .garbage-summary {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    .btn-cleanup {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 16px;
+        border-radius: 7px;
+        border: 1px solid #fecaca;
+        background: var(--bg-content);
+        color: #dc2626;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    .btn-cleanup:hover { background: #fef2f2; border-color: #dc2626; }
+    .btn-cleanup:disabled { opacity: 0.5; cursor: not-allowed; }
+    .garbage-empty {
+        padding: 32px 20px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 13px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .garbage-empty i { font-size: 28px; opacity: 0.4; }
+    .garbage-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .garbage-row:last-child { border-bottom: none; }
+    .garbage-row .file-icon { flex-shrink: 0; }
+    .garbage-row .file-info { flex: 1; min-width: 0; }
+    .orphan-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #fef3c7;
+        color: #92400e;
+        padding: 2px 7px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -446,6 +568,20 @@
     </div>
 </div>
 
+<!-- Tabs -->
+<div class="storage-tabs">
+    <div class="storage-tab active" id="tab-storage" onclick="switchTab('storage')">
+        <i class="fa-solid fa-hard-drive"></i> Storage
+    </div>
+    <div class="storage-tab" id="tab-garbage" onclick="switchTab('garbage')">
+        <i class="fa-solid fa-trash-can"></i> Garbage
+        <span class="storage-tab-badge" id="tab-garbage-badge"></span>
+    </div>
+</div>
+
+<!-- Storage panel -->
+<div id="panel-storage">
+
 <!-- File list -->
 <div class="files-card">
     <div class="files-card-header">
@@ -462,8 +598,13 @@
             </div>
         </div>
         <div class="filter-row">
-            <span class="filter-row-label">QR type:</span>
-            <div class="files-filter" id="qrtype-filter-bar"></div>
+            <span class="filter-row-label">Group:</span>
+            <div class="files-filter" id="group-filter-bar">
+                <button class="filter-btn active" data-group="all" onclick="filterByGroup(this, 'all')">All</button>
+                <button class="filter-btn" data-group="assets" onclick="filterByGroup(this, 'assets')"><i class="fa-solid fa-folder"></i> QR Assets</button>
+                <button class="filter-btn" data-group="generated" onclick="filterByGroup(this, 'generated')"><i class="fa-solid fa-qrcode"></i> QR Generated</button>
+                <button class="filter-btn" data-group="template" onclick="filterByGroup(this, 'template')"><i class="fa-solid fa-border-all"></i> Template Frames</button>
+            </div>
         </div>
         <div class="filter-row" id="qrcard-filter-row">
             <span class="filter-row-label">QR card:</span>
@@ -511,7 +652,7 @@
     <div id="file-list">
         {% for f in info.files %}
         {% set pct = [(f.size * 100 // info.limit_bytes), 100] | min %}
-        <div class="file-row" data-category="{{ f.category }}" data-qr="{{ f.qr_name | e }}" data-qr-type="{{ f.qr_type }}" data-size="{{ f.size }}">
+        <div class="file-row" data-category="{{ f.category }}" data-qr="{{ f.qr_name | e }}" data-qr-type="{{ f.qr_type }}" data-group="{{ f.storage_group }}" data-size="{{ f.size }}">
             <div class="file-icon {{ f.category }}">
                 {% if f.category == 'image' %}<i class="fa-regular fa-image"></i>
                 {% elif f.category == 'video' %}<i class="fa-solid fa-play"></i>
@@ -565,6 +706,53 @@
     {% endif %}
 </div>
 
+</div><!-- /panel-storage -->
+
+<!-- Garbage panel -->
+<div id="panel-garbage" style="display:none;">
+<div class="garbage-card" id="garbage-card">
+    <div class="garbage-card-header">
+        <div>
+            <div class="garbage-card-title">
+                <i class="fa-solid fa-trash-can" style="color:#f59e0b;"></i>
+                Garbage
+                <span class="garbage-badge" id="garbage-count-badge" style="display:none;"></span>
+            </div>
+            <div class="garbage-summary" id="garbage-summary" style="margin-top:3px;">
+                Checking for unused files…
+            </div>
+        </div>
+        <button type="button" class="btn-cleanup" id="btn-cleanup" style="display:none;"
+                onclick="confirmCleanup()">
+            <i class="fa-solid fa-broom"></i> Clean up
+        </button>
+    </div>
+    <div id="garbage-list"></div>
+</div>
+
+</div><!-- /panel-garbage -->
+
+<!-- Cleanup confirm modal -->
+<div class="del-modal-overlay" id="gc-modal-overlay">
+    <div class="del-modal">
+        <div class="del-modal-icon"><i class="fa-solid fa-broom" style="color:#f59e0b;"></i></div>
+        <div class="del-modal-title">Delete unused files?</div>
+        <div class="del-modal-body" id="gc-modal-body">
+            These files are no longer used by any QR card and can be safely removed.
+        </div>
+        <div class="del-modal-warning">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            This action is permanent and cannot be undone.
+        </div>
+        <div class="del-modal-actions">
+            <button type="button" class="btn-cancel-del" onclick="closeGcModal()">Cancel</button>
+            <button type="button" class="btn-confirm-del" id="gc-confirm-btn" onclick="doCleanup()">
+                <i class="fa-solid fa-broom"></i> Yes, clean up
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="toast-notif" id="toast-notif">
     <i class="fa-solid fa-circle-check"></i>
     <span id="toast-notif-msg"></span>
@@ -607,21 +795,29 @@
     var TOTAL_BYTES = {{ info.total_bytes }};
     var LIMIT_BYTES = {{ info.limit_bytes }};
 
-    var _activeCat    = 'all';
-    var _activeQr     = 'all';
-    var _activeQrType = 'all';
-    var _currentPage  = 1;
-    var _perPage      = 10;
+    var _activeCat   = 'all';
+    var _activeQr    = 'all';
+    var _activeGroup = 'all';
+    var _currentPage = 1;
+    var _perPage     = 10;
 
     var _allRows = Array.from(document.querySelectorAll('#file-list .file-row'));
 
     function getFilteredRows() {
         return _allRows.filter(function(row) {
-            var catOk    = _activeCat    === 'all' || row.dataset.category === _activeCat;
-            var qrOk     = _activeQr     === 'all' || row.dataset.qr === _activeQr;
-            var typeOk   = _activeQrType === 'all' || row.dataset.qrType === _activeQrType;
-            return catOk && qrOk && typeOk;
+            var catOk   = _activeCat   === 'all' || row.dataset.category === _activeCat;
+            var qrOk    = _activeQr    === 'all' || row.dataset.qr === _activeQr;
+            var groupOk = _activeGroup === 'all' || row.dataset.group === _activeGroup;
+            return catOk && qrOk && groupOk;
         });
+    }
+
+    function filterByGroup(btn, group) {
+        document.querySelectorAll('#group-filter-bar .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _activeGroup = group;
+        _currentPage = 1;
+        renderPage();
     }
 
     function renderPage() {
@@ -698,21 +894,6 @@
         btn.classList.add('active');
         _activeCat = cat;
         _currentPage = 1;
-        renderPage();
-    }
-
-    function filterByQrType(btn, type) {
-        document.querySelectorAll('#qrtype-filter-bar .filter-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        _activeQrType = type;
-        _currentPage = 1;
-        // Reset QR card filter when switching QR type
-        _activeQr = 'all';
-        document.getElementById('qr-filter-select').value = 'all';
-        document.getElementById('qr-info-panel').classList.remove('visible');
-        // Hide QR card filter for types that don't use it (e.g. frame)
-        var qrCardRow = document.getElementById('qrcard-filter-row');
-        if (qrCardRow) qrCardRow.style.display = type === 'frame' ? 'none' : '';
         renderPage();
     }
 
@@ -821,51 +1002,108 @@
         });
     });
 
-    // ── Build QR type filter buttons ─────────────────────────────────────
-    (function () {
-        var TYPE_META = {
-            'pdf':      { label: 'PDF',         icon: 'fa-solid fa-file-pdf' },
-            'images':   { label: 'Images',      icon: 'fa-regular fa-images' },
-            'video':    { label: 'Video',        icon: 'fa-solid fa-play' },
-            'sosmed':   { label: 'Sosmed',       icon: 'fa-solid fa-share-nodes' },
-            'links':    { label: 'Links',        icon: 'fa-solid fa-link' },
-            'ecard':    { label: 'E-Card',       icon: 'fa-regular fa-id-card' },
-            'allinone': { label: 'All-in-One',   icon: 'fa-solid fa-layer-group' },
-            'special':  { label: 'Special',      icon: 'fa-solid fa-star' },
-            'frame':    { label: 'Frame',        icon: 'fa-solid fa-border-all' }
-        };
-        var seenTypes = {};
-        _allRows.forEach(function (r) {
-            var t = r.dataset.qrType;
-            if (t) seenTypes[t] = true;
-        });
-        var bar = document.getElementById('qrtype-filter-bar');
-        if (!bar) return;
-
-        var allBtn = document.createElement('button');
-        allBtn.type = 'button';
-        allBtn.className = 'filter-btn active';
-        allBtn.textContent = 'All';
-        allBtn.onclick = function () { filterByQrType(this, 'all'); };
-        bar.appendChild(allBtn);
-
-        Object.keys(seenTypes).forEach(function (t) {
-            var meta = TYPE_META[t] || { label: t, icon: 'fa-solid fa-qrcode' };
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'filter-btn';
-            btn.innerHTML = '<i class="' + meta.icon + '"></i> ' + meta.label;
-            btn.onclick = function () { filterByQrType(this, t); };
-            bar.appendChild(btn);
-        });
-
-        // Hide the row entirely if only one QR type exists (nothing useful to filter)
-        if (Object.keys(seenTypes).length <= 1) {
-            var row = bar.closest('.filter-row');
-            if (row) row.style.display = 'none';
-        }
-    })();
-
     renderPage();
+
+    // ── Tab switching ─────────────────────────────────────────────────────
+    function switchTab(tab) {
+        document.getElementById('panel-storage').style.display = tab === 'storage' ? '' : 'none';
+        document.getElementById('panel-garbage').style.display = tab === 'garbage' ? '' : 'none';
+        document.getElementById('tab-storage').classList.toggle('active', tab === 'storage');
+        document.getElementById('tab-garbage').classList.toggle('active', tab === 'garbage');
+    }
+
+    // ── Garbage collection ────────────────────────────────────────────────
+    var _garbageFiles = [];
+
+    function iconForCat(cat) {
+        if (cat === 'image') return '<i class="fa-regular fa-image"></i>';
+        if (cat === 'video') return '<i class="fa-solid fa-play"></i>';
+        if (cat === 'pdf')   return '<i class="fa-solid fa-file-pdf"></i>';
+        return '<i class="fa-regular fa-file"></i>';
+    }
+
+    function loadGarbage() {
+        var csrf = (document.getElementById('csrf-token-val') || {}).value || '';
+        fetch('/api/storage/garbage', { headers: { 'X-CSRFToken': csrf } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                _garbageFiles = data.files || [];
+                var list    = document.getElementById('garbage-list');
+                var summary = document.getElementById('garbage-summary');
+                var badge   = document.getElementById('garbage-count-badge');
+                var btn     = document.getElementById('btn-cleanup');
+
+                var tabBadge = document.getElementById('tab-garbage-badge');
+                if (!_garbageFiles.length) {
+                    summary.textContent = 'No unused files found. Your storage is clean.';
+                    badge.style.display = 'none';
+                    btn.style.display   = 'none';
+                    if (tabBadge) { tabBadge.textContent = ''; tabBadge.classList.remove('visible'); }
+                    list.innerHTML = '<div class="garbage-empty"><i class="fa-solid fa-circle-check" style="color:#16a34a;opacity:1;"></i><span>All files are in use — nothing to clean up.</span></div>';
+                    return;
+                }
+
+                badge.textContent  = _garbageFiles.length;
+                badge.style.display = '';
+                if (tabBadge) { tabBadge.textContent = _garbageFiles.length; tabBadge.classList.add('visible'); }
+                summary.textContent = _garbageFiles.length + ' unused file' + (_garbageFiles.length !== 1 ? 's' : '') + ' — ' + data.total_fmt + ' can be freed';
+                btn.style.display   = '';
+
+                var html = '';
+                _garbageFiles.forEach(function(f) {
+                    html += '<div class="garbage-row">'
+                        + '<div class="file-icon ' + f.category + '">' + iconForCat(f.category) + '</div>'
+                        + '<div class="file-info">'
+                        +   '<div class="file-name" title="' + f.fname + '">' + f.fname + '</div>'
+                        +   '<div class="file-meta"><span class="orphan-badge"><i class="fa-solid fa-unlink"></i> Not used</span></div>'
+                        + '</div>'
+                        + '<div class="file-size">' + f.size_fmt + '</div>'
+                        + '</div>';
+                });
+                list.innerHTML = html;
+            })
+            .catch(function() {
+                document.getElementById('garbage-summary').textContent = 'Could not check for unused files.';
+            });
+    }
+
+    function confirmCleanup() {
+        var body = document.getElementById('gc-modal-body');
+        body.textContent = _garbageFiles.length + ' unused file' + (_garbageFiles.length !== 1 ? 's' : '') + ' will be permanently deleted.';
+        document.getElementById('gc-modal-overlay').classList.add('open');
+    }
+
+    function closeGcModal() {
+        document.getElementById('gc-modal-overlay').classList.remove('open');
+    }
+
+    function doCleanup() {
+        var btn = document.getElementById('gc-confirm-btn');
+        btn.disabled = true;
+        var csrf = (document.getElementById('csrf-token-val') || {}).value || '';
+        fetch('/api/storage/cleanup_garbage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({}),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            closeGcModal();
+            btn.disabled = false;
+            if (data.ok) {
+                showToast('Cleaned up ' + data.deleted + ' file' + (data.deleted !== 1 ? 's' : '') + ', freed ' + data.freed_fmt);
+                loadGarbage();
+            } else {
+                alert('Cleanup failed: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(function() { closeGcModal(); btn.disabled = false; alert('Cleanup failed.'); });
+    }
+
+    document.getElementById('gc-modal-overlay').addEventListener('click', function(e) {
+        if (e.target === this) closeGcModal();
+    });
+
+    loadGarbage();
 </script>
 {% endblock %}

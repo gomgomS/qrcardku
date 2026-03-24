@@ -3,8 +3,8 @@
 All file uploads in the application go through this module instead of the
 local filesystem.  Key naming mirrors the old static/uploads/ structure:
 
-    frames/{frame_id}/frame_bg.ext
-    admin_frames/{frame_id}/frame_bg.ext
+    frames/{frame_id}/frame_bg_{frame_id}.ext
+    admin_frames/{frame_id}/frame_bg_{frame_id}.ext
     pdf/{qrcard_id}/welcome.ext
     pdf/{qrcard_id}/{safe_name}
     pdf/_tmp/{tmp_key}/{safe_name}

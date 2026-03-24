@@ -52,7 +52,7 @@ class admin_frame_proc:
                 return {"ok": False, "error": "Image exceeds 5 MB limit."}
 
             frame_id  = uuid.uuid4().hex
-            key       = f"admin_frames/{frame_id}/frame_bg{ext}"
+            key       = f"admin_frames/{frame_id}/frame_bg_{frame_id}{ext}"
             image_url = r2_mod.r2_storage_proc().upload_file(image_file, key)
 
             current_time = int(time.time() * 1000)

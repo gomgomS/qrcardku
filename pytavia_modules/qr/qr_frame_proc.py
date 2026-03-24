@@ -54,7 +54,7 @@ class qr_frame_proc:
                 return {"ok": False, "error": "Image exceeds 5 MB limit."}
 
             frame_id  = uuid.uuid4().hex
-            key       = f"frames/{frame_id}/frame_bg{ext}"
+            key       = f"frames/{frame_id}/frame_bg_{frame_id}{ext}"
             image_url = r2_mod.r2_storage_proc().upload_file(image_file, key, track_meta={"fk_user_id": fk_user_id, "frame_id": frame_id, "qr_type": "frame"})
 
             current_time = int(time.time() * 1000)

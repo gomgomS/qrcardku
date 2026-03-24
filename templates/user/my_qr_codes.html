@@ -817,18 +817,21 @@
                     }
                 }
 
-                if (compositeUrl) {
-                    renderQR(compositeUrl);
-                } else if (frameId && qrcardId) {
-                    /* Composite may still be generating in background — fetch latest from server */
-                    renderQR(null);  // show CSS overlay immediately as fallback
+                if (qrcardId && compositeUrl) {
+                    /* Use server-proxied preview endpoint — always fresh, bypasses browser/CDN cache */
+                    currentCompositeUrl = '/api/qr/preview/' + qrcardId;
+                    currentQrcardId = qrcardId;
+                    showPlainQR('/api/qr/preview/' + qrcardId);
+                } else if (qrcardId && frameId) {
+                    /* No composite yet — show CSS overlay, then try server */
+                    renderQR(null);
                     fetch('/api/qr/composite-url/' + qrcardId)
                         .then(function(r) { return r.json(); })
                         .then(function(data) {
                             if (data.url && overlay.classList.contains('show')) {
-                                currentCompositeUrl = data.url;
+                                currentCompositeUrl = '/api/qr/preview/' + qrcardId;
                                 trigger.setAttribute('data-composite-url', data.url);
-                                showPlainQR(data.url);
+                                showPlainQR('/api/qr/preview/' + qrcardId);
                             }
                         })
                         .catch(function() {});
