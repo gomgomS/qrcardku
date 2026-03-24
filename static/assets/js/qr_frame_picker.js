@@ -21,49 +21,93 @@
         });
         _obs.observe(qrImg, { attributes: true, attributeFilter: ['src'] });
 
-        /* Composite QR onto frame image at the marked area */
-        function compositeQR(qrDataUrl, frame) {
-            return new Promise(function (resolve, reject) {
-                var fi = new Image();
-                fi.onload = function () {
-                    var qi = new Image();
-                    qi.onload = function () {
-                        var cv = document.createElement('canvas');
-                        cv.width  = fi.naturalWidth;
-                        cv.height = fi.naturalHeight;
-                        var ctx = cv.getContext('2d');
-                        ctx.drawImage(fi, 0, 0);
-                        ctx.drawImage(qi,
-                            frame.qr_x * cv.width,
-                            frame.qr_y * cv.height,
-                            frame.qr_w * cv.width,
-                            frame.qr_h * cv.height
-                        );
-                        resolve(cv.toDataURL('image/png'));
-                    };
-                    qi.onerror = reject;
-                    qi.src = qrDataUrl;
-                };
-                fi.onerror = reject;
-                fi.src = frame.image_url;
-            });
+        /* CSS overlay approach — no canvas, no CORS issues.
+           Frame image sits behind (z-index 1) as background decoration;
+           QR is positioned on top (z-index 2) at the user-marked area. */
+        function applyCustomFrame(frame) {
+            var fi = new Image();
+            fi.onload = function () {
+                var ratio = fi.naturalHeight / fi.naturalWidth;
+                var W = 200;
+                var H = Math.round(W * ratio);
+
+                /* Set up container */
+                frameDiv.className        = 'qr-preview-frame frame-none';
+                frameDiv.style.position   = 'relative';
+                frameDiv.style.width      = W + 'px';
+                frameDiv.style.height     = H + 'px';
+                frameDiv.style.padding    = '0';
+                frameDiv.style.overflow   = 'hidden';
+                frameDiv.style.background = 'transparent';
+                frameDiv.style.display    = 'block';
+
+                /* Hide caption (frame image carries its own design) */
+                var caption = document.getElementById('frame-caption');
+                if (caption) caption.style.display = 'none';
+
+                /* Remove any previous frame overlay */
+                var old = frameDiv.querySelector('.frame-img-overlay');
+                if (old) old.remove();
+
+                /* Frame image as BACKGROUND layer (z-index 1) */
+                var overlay = document.createElement('img');
+                overlay.className = 'frame-img-overlay';
+                overlay.src = frame.image_url;
+                overlay.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1;';
+                frameDiv.insertBefore(overlay, frameDiv.firstChild);
+
+                /* QR inner ON TOP of frame image (z-index 2) at the marked area.
+                   Must clear aspect-ratio:1 from stylesheet so height isn't forced square. */
+                var qrInner = frameDiv.querySelector('.qr-inner');
+                if (qrInner) {
+                    qrInner.style.position    = 'absolute';
+                    qrInner.style.left        = (frame.qr_x * 100) + '%';
+                    qrInner.style.top         = (frame.qr_y * 100) + '%';
+                    qrInner.style.width       = (frame.qr_w * 100) + '%';
+                    qrInner.style.height      = (frame.qr_h * 100) + '%';
+                    qrInner.style.maxWidth    = 'none';
+                    qrInner.style.aspectRatio = 'auto';
+                    qrInner.style.zIndex      = '2';
+                    qrInner.style.display     = 'block';
+                    qrInner.style.overflow    = 'hidden';
+                }
+
+                /* Restore plain QR and make it fill the marked area */
+                if (plainQrDataUrl) qrImg.src = plainQrDataUrl;
+                qrImg.style.width     = '100%';
+                qrImg.style.height    = '100%';
+                qrImg.style.maxWidth  = 'none';
+                qrImg.style.maxHeight = 'none';
+                qrImg.style.objectFit = 'contain';
+                qrImg.style.display   = 'block';
+            };
+            fi.onerror = function () {
+                console.warn('QFP: could not load frame image', frame.image_url);
+            };
+            fi.src = frame.image_url;
         }
 
-        function applyCustomFrame(frame) {
-            var src = plainQrDataUrl || qrImg.getAttribute('src') || '';
-            if (!src.startsWith('data:')) return;
-            compositeQR(src, frame)
-                .then(function (composited) {
-                    qrImg.src = composited;
-                    frameDiv.className         = 'qr-preview-frame frame-none';
-                    frameDiv.style.backgroundImage = '';
-                    qrImg.style.maxWidth  = '100%';
-                    qrImg.style.maxHeight = '320px';
-                    qrImg.style.width     = 'auto';
-                    qrImg.style.height    = 'auto';
-                    qrImg.style.display   = 'block';
-                })
-                .catch(function (err) { console.error('QFP error:', err); });
+        /* Reset preview back to a CSS-based preset frame */
+        function resetToPreset(frameName) {
+            /* Remove overlay */
+            var old = frameDiv.querySelector('.frame-img-overlay');
+            if (old) old.remove();
+
+            /* Restore container */
+            frameDiv.style.cssText = '';
+            frameDiv.className = 'qr-preview-frame frame-' + (frameName || 'none');
+
+            /* Restore qr-inner */
+            var qrInner = frameDiv.querySelector('.qr-inner');
+            if (qrInner) qrInner.style.cssText = '';
+
+            /* Restore QR image */
+            if (plainQrDataUrl) qrImg.src = plainQrDataUrl;
+            qrImg.style.cssText = '';
+
+            /* Show caption again */
+            var caption = document.getElementById('frame-caption');
+            if (caption) caption.style.display = '';
         }
 
         function selectFrame(el) {
@@ -80,25 +124,19 @@
                     image_url: el.getAttribute('data-frame-img'),
                     qr_x: parseFloat(el.getAttribute('data-frame-qx') || 0),
                     qr_y: parseFloat(el.getAttribute('data-frame-qy') || 0),
-                    qr_w: parseFloat(el.getAttribute('data-frame-qw') || 0),
-                    qr_h: parseFloat(el.getAttribute('data-frame-qh') || 0),
+                    qr_w: parseFloat(el.getAttribute('data-frame-qw') || 1),
+                    qr_h: parseFloat(el.getAttribute('data-frame-qh') || 1),
                 });
             } else {
                 if (frameInput) frameInput.value = '';
-                frameDiv.className         = 'qr-preview-frame frame-' + (el.getAttribute('data-frame') || 'none');
-                frameDiv.style.backgroundImage = '';
-                if (plainQrDataUrl) {
-                    qrImg.src = plainQrDataUrl;
-                    qrImg.style.maxWidth = qrImg.style.maxHeight =
-                    qrImg.style.width    = qrImg.style.height = '';
-                }
+                resetToPreset(el.getAttribute('data-frame') || 'none');
             }
         }
 
-        /* Expose selectFrame globally so dynamically-added frames (e.g. admin defaults) can use it */
+        /* Expose selectFrame globally so dynamically-added frames can use it */
         window.qfpSelectFrame = selectFrame;
 
-        /* Attach click handlers to preset frame options (fires before inline handler) */
+        /* Attach click handlers to preset frame options */
         document.querySelectorAll('.frame-option').forEach(function (item) {
             item.addEventListener('click', function () { selectFrame(this); });
         });

@@ -728,11 +728,12 @@
         <a href="{{ back_url | default('/qr/new/' ~ qr_type) }}" class="btn-outline"><i
                 class="fa-solid fa-arrow-left"></i> Back</a>
         {% endif %}
-        <button form="design-form" type="submit" class="btn-next">Complete</button>
+        <button type="button" class="btn-next" onclick="submitDesignWithOverlay()">Complete</button>
     </div>
 </div>
 
 <form id="design-form" method="POST" action="{{ form_action | default('/qr/save') }}">
+<input type="hidden" name="qrcard_id" value="{{ qrcard_id | default('') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="qr_type" value="{{ qr_type }}" />
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
@@ -835,13 +836,38 @@
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
         <i class="fa-regular fa-eye"></i> Preview
     </button>
-    <button type="submit" form="design-form" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete">
+    <button type="button" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete" onclick="submitDesignWithOverlay()">
         <i class="fa-solid fa-arrow-right"></i>
     </button>
+</div>
+<div id="design-complete-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+    <div style="width:56px;height:56px;border:4px solid rgba(255,255,255,0.15);border-top-color:#ffffff;border-radius:50%;animation:spin 0.9s linear infinite;"></div>
+    <div id="design-overlay-msg" style="color:#fff;font-size:16px;font-weight:600;">Saving your QR design…</div>
+    <div id="design-overlay-sub" style="color:rgba(255,255,255,0.7);font-size:13px;">Almost done, activating your QR card</div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+function submitDesignWithOverlay() {
+    var overlay = document.getElementById('design-complete-overlay');
+    var msgEl = document.getElementById('design-overlay-msg');
+    var subEl = document.getElementById('design-overlay-sub');
+    var hasFrame = (document.getElementById('frame_id') || {}).value || '';
+    if (hasFrame) {
+        msgEl.textContent = 'Compositing QR + frame image\u2026';
+        subEl.textContent = 'Uploading to cloud storage, this may take a moment';
+    } else {
+        msgEl.textContent = 'Saving your QR design\u2026';
+        subEl.textContent = 'Almost done, activating your QR card';
+    }
+    overlay.style.display = 'flex';
+    document.getElementById('design-form').submit();
+}
+</script>
 <script>
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');

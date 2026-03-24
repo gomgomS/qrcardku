@@ -29,8 +29,9 @@ class view_sosmed:
             return "Failed to load New QR Content (Sosmed)"
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None,
-                            qr_encode_url=None, msg=None, error_msg=None, sosmed_data=None):
+                            qr_encode_url=None, msg=None, error_msg=None, sosmed_data=None, qrcard_id=None):
         try:
+            form_action = f"/qr/update/save/sosmed/{qrcard_id}" if qrcard_id else "/qr/save/sosmed"
             return render_template(
                 "/user/new_qr_design_sosmed.html",
                 qr_type="sosmed",
@@ -41,7 +42,8 @@ class view_sosmed:
                 msg=msg,
                 error_msg=error_msg,
                 sosmed_data=sosmed_data or {},
-                form_action="/qr/save/sosmed",
+                form_action=form_action,
+                qrcard_id=qrcard_id or "",
             )
         except Exception:
             if self.webapp:

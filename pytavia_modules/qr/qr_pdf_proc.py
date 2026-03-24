@@ -334,11 +334,12 @@ class qr_pdf_proc:
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated", "url_content": "", "qr_name": "", "short_code": "", "qr_encode_url": None, "pdf_data": {}}
 
+        _url_content_raw = request.form.get("url_content", "").strip()
         params = {
             "fk_user_id": fk_user_id,
             "qr_type": "pdf",
             "name": request.form.get("qr_name", "Untitled QR"),
-            "url_content": request.form.get("url_content", ""),
+            "url_content": _url_content_raw or config.G_BASE_URL.rstrip("/"),
             "short_code": (request.form.get("short_code") or "").strip().lower(),
             "pdf_template": request.form.get("pdf_template", "default"),
             "pdf_primary_color": request.form.get("pdf_primary_color", "#2F6BFD"),
@@ -386,14 +387,21 @@ class qr_pdf_proc:
             }
 
         new_qrcard_id = result["message_data"]["qrcard_id"]
+        if not _url_content_raw:
+            _qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": new_qrcard_id}, {"short_code": 1}) or {}
+            _sc = _qrcard.get("short_code", "")
+            if _sc:
+                _real_url = config.G_BASE_URL.rstrip("/") + "/pdf/" + _sc
+                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"url_content": _real_url}})
+                self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"url_content": _real_url}})
         tmp_key = session.pop("pdf_tmp_key", None)
         tmp_files = session.pop("pdf_tmp_files", [])
         welcome_tmp_key = session.pop("welcome_img_tmp_key", None)
         welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
         cover_tmp_key = session.pop("cover_img_tmp_key", None)
         cover_tmp_name = session.pop("cover_img_tmp_name", "pdf_cover_img.jpg")
-        saved_display_names = session.pop("pdf_display_names", [])
-        saved_item_descs = session.pop("pdf_item_descs", [])
+        saved_display_names = request.form.getlist("pdf_display_names") or session.pop("pdf_display_names", []) or []
+        saved_item_descs = request.form.getlist("pdf_item_descs") or session.pop("pdf_item_descs", []) or []
         session.modified = True
 
         import os
@@ -425,7 +433,7 @@ class qr_pdf_proc:
             except Exception:
                 pass
         else:
-            ac_cover = session.pop("pdf_t1_header_img_autocomplete_url", "") or ""
+            ac_cover = request.form.get("pdf_t1_header_img_autocomplete_url", "").strip() or session.pop("pdf_t1_header_img_autocomplete_url", "") or ""
             if ac_cover and ac_cover.startswith("/static/"):
                 ext = os.path.splitext(ac_cover)[1] or ".jpg"
                 local_path = os.path.join(root_path or config.G_HOME_PATH, ac_cover.lstrip("/").replace("/", os.sep))
@@ -475,7 +483,7 @@ class qr_pdf_proc:
         if saved_files:
             self.update_pdf_files(fk_user_id, new_qrcard_id, saved_files)
         elif not saved_files:
-            ac_pdf_urls = session.pop("pdf_autocomplete_urls", []) or []
+            ac_pdf_urls = request.form.getlist("pdf_autocomplete_urls") or session.pop("pdf_autocomplete_urls", []) or []
             if ac_pdf_urls:
                 ac_saved_files = []
                 for i, ac_url in enumerate(ac_pdf_urls):
@@ -499,6 +507,38 @@ class qr_pdf_proc:
                 if ac_saved_files:
                     self.update_pdf_files(fk_user_id, new_qrcard_id, ac_saved_files)
         return {"success": True, "qrcard_id": new_qrcard_id}
+
+    def save_draft(self, request, session, root_path=None):
+        """Create pdf QR as DRAFT: calls complete_pdf_save then downgrades status."""
+        fk_user_id = session.get("fk_user_id")
+        if not fk_user_id:
+            return {"status": "error", "message_desc": "Not authenticated"}
+        qr_name = (request.form.get("qr_name") or "Untitled QR").strip()
+        # Delete orphaned DRAFTs with same name
+        try:
+            old_drafts = list(self.mgdDB.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": qr_name, "status": "DRAFT"},
+                {"qrcard_id": 1}
+            ))
+            if old_drafts:
+                old_ids = [d["qrcard_id"] for d in old_drafts]
+                self.mgdDB.db_qrcard.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qrcard_pdf.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qr_index.delete_many({"qrcard_id": {"$in": old_ids}})
+        except Exception:
+            pass
+        result = self.complete_pdf_save(request, session, root_path)
+        if not result.get("success"):
+            return {"status": "error", "message_desc": result.get("error_msg", "Save failed.")}
+        qrcard_id = result["qrcard_id"]
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qr_index.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": qrcard_id}, {"short_code": 1}) or {}
+        sc = qrcard.get("short_code", "")
+        qr_encode_url = config.G_BASE_URL.rstrip("/") + "/pdf/" + sc if sc else ""
+        return {"status": "ok", "qrcard_id": qrcard_id, "short_code": sc, "qr_encode_url": qr_encode_url}
+
 
     # ##### edit section pdf #####
     # Handles update (save from design step): updates db_qrcard, db_qrcard_pdf, db_qr_index; manages pdf_files.

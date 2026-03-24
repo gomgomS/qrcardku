@@ -29,8 +29,10 @@ class view_allinone:
             return "Failed to load New QR Content (All-in-One)"
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None,
-                            qr_encode_url=None, msg=None, error_msg=None, allinone_data=None):
+                            qr_encode_url=None, msg=None, error_msg=None, allinone_data=None,
+                            qrcard_id=None):
         try:
+            form_action = f"/qr/update/save/allinone/{qrcard_id}" if qrcard_id else "/qr/save/allinone"
             return render_template(
                 "/user/new_qr_design_allinone.html",
                 qr_type="allinone",
@@ -41,7 +43,8 @@ class view_allinone:
                 msg=msg,
                 error_msg=error_msg,
                 allinone_data=allinone_data or {},
-                form_action="/qr/save/allinone",
+                form_action=form_action,
+                qrcard_id=qrcard_id or "",
             )
         except Exception:
             if self.webapp:

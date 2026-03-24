@@ -187,10 +187,11 @@ class qr_links_proc:
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated", "url_content": "", "qr_name": "", "short_code": "", "qr_encode_url": None}
 
+        _url_content_raw = request.form.get("url_content", "").strip()
         params = {
             "fk_user_id": fk_user_id,
             "name": request.form.get("qr_name", "Untitled QR"),
-            "url_content": request.form.get("url_content", ""),
+            "url_content": _url_content_raw or config.G_BASE_URL.rstrip("/"),
             "short_code": (request.form.get("short_code") or "").strip().lower(),
             "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
             "scan_limit_value": int(v) if (v := (request.form.get("scan_limit_value") or "").strip()).isdigit() else 0,
@@ -202,6 +203,13 @@ class qr_links_proc:
             return {"success": False, "error_msg": result.get("message_desc", "Save failed."), "url_content": request.form.get("url_content", ""), "qr_name": request.form.get("qr_name", ""), "short_code": sc, "qr_encode_url": (config.G_BASE_URL + "/links/" + sc) if sc else None}
 
         new_id = result["message_data"]["qrcard_id"]
+        if not _url_content_raw:
+            _qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": new_id}, {"short_code": 1}) or {}
+            _sc = _qrcard.get("short_code", "")
+            if _sc:
+                _real_url = config.G_BASE_URL.rstrip("/") + "/links/" + _sc
+                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"url_content": _real_url}})
+                self.mgdDB.db_qrcard_links.update_one({"qrcard_id": new_id}, {"$set": {"url_content": _real_url}})
 
         # Build links list
         urls = request.form.getlist("Links_link_url[]")
@@ -277,3 +285,34 @@ class qr_links_proc:
                         pass
 
         return {"success": True, "qrcard_id": new_id}
+
+    def save_draft(self, request, session, root_path=None):
+        """Create links QR as DRAFT: calls complete_links_save then downgrades status."""
+        fk_user_id = session.get("fk_user_id")
+        if not fk_user_id:
+            return {"status": "error", "message_desc": "Not authenticated"}
+        qr_name = (request.form.get("qr_name") or "Untitled QR").strip()
+        # Delete orphaned DRAFTs with same name
+        try:
+            old_drafts = list(self.mgdDB.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": qr_name, "status": "DRAFT"},
+                {"qrcard_id": 1}
+            ))
+            if old_drafts:
+                old_ids = [d["qrcard_id"] for d in old_drafts]
+                self.mgdDB.db_qrcard.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qrcard_links.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qr_index.delete_many({"qrcard_id": {"$in": old_ids}})
+        except Exception:
+            pass
+        result = self.complete_links_save(request, session, root_path)
+        if not result.get("success"):
+            return {"status": "error", "message_desc": result.get("error_msg", "Save failed.")}
+        qrcard_id = result["qrcard_id"]
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qrcard_links.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qr_index.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": qrcard_id}, {"short_code": 1}) or {}
+        sc = qrcard.get("short_code", "")
+        qr_encode_url = config.G_BASE_URL.rstrip("/") + "/links/" + sc if sc else ""
+        return {"status": "ok", "qrcard_id": qrcard_id, "short_code": sc, "qr_encode_url": qr_encode_url}

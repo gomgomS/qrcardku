@@ -25,8 +25,9 @@ class view_web:
                 self.webapp.logger.debug(traceback.format_exc())
             return "Failed to load New QR Content (Web)"
 
-    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None):
+    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None, qrcard_id=None):
         try:
+            form_action = f"/qr/update/save/web/{qrcard_id}" if qrcard_id else "/qr/save/web"
             return render_template(
                 "/user/new_qr_design_web.html",
                 qr_type="web",
@@ -37,7 +38,8 @@ class view_web:
                 msg=msg,
                 error_msg=error_msg,
                 pdf_data=pdf_data,
-                form_action="/qr/save/web",
+                form_action=form_action,
+                qrcard_id=qrcard_id or "",
             )
         except Exception:
             if self.webapp:

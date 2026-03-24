@@ -453,7 +453,7 @@
             <div class="files-card-title">Files ({{ info.file_count }})</div>
         </div>
         <div class="filter-row">
-            <span class="filter-row-label">Type:</span>
+            <span class="filter-row-label">File type:</span>
             <div class="files-filter" id="filter-bar">
                 <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')">All</button>
                 <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> Images</button>
@@ -462,6 +462,10 @@
             </div>
         </div>
         <div class="filter-row">
+            <span class="filter-row-label">QR type:</span>
+            <div class="files-filter" id="qrtype-filter-bar"></div>
+        </div>
+        <div class="filter-row" id="qrcard-filter-row">
             <span class="filter-row-label">QR card:</span>
             <select class="qr-filter-select" id="qr-filter-select" onchange="filterByQr(this.value)">
                 <option value="all">All QR cards</option>
@@ -507,7 +511,7 @@
     <div id="file-list">
         {% for f in info.files %}
         {% set pct = [(f.size * 100 // info.limit_bytes), 100] | min %}
-        <div class="file-row" data-category="{{ f.category }}" data-qr="{{ f.qr_name | e }}" data-size="{{ f.size }}">
+        <div class="file-row" data-category="{{ f.category }}" data-qr="{{ f.qr_name | e }}" data-qr-type="{{ f.qr_type }}" data-size="{{ f.size }}">
             <div class="file-icon {{ f.category }}">
                 {% if f.category == 'image' %}<i class="fa-regular fa-image"></i>
                 {% elif f.category == 'video' %}<i class="fa-solid fa-play"></i>
@@ -534,10 +538,17 @@
             </div>
             <div class="file-size">{{ f.size_fmt }}</div>
             <div class="file-action">
+                {% if f.qr_type == 'frame' %}
+                <a href="{{ f.edit_url }}" class="btn-edit">
+                    <i class="fa-solid fa-border-all"></i>
+                    <span>Template</span>
+                </a>
+                {% else %}
                 <a href="{{ f.edit_url }}" class="btn-edit">
                     <i class="fa-solid fa-pen"></i>
                     <span>Edit QR</span>
                 </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
@@ -596,18 +607,20 @@
     var TOTAL_BYTES = {{ info.total_bytes }};
     var LIMIT_BYTES = {{ info.limit_bytes }};
 
-    var _activeCat  = 'all';
-    var _activeQr   = 'all';
-    var _currentPage = 1;
-    var _perPage     = 10;
+    var _activeCat    = 'all';
+    var _activeQr     = 'all';
+    var _activeQrType = 'all';
+    var _currentPage  = 1;
+    var _perPage      = 10;
 
     var _allRows = Array.from(document.querySelectorAll('#file-list .file-row'));
 
     function getFilteredRows() {
         return _allRows.filter(function(row) {
-            var catOk = _activeCat === 'all' || row.dataset.category === _activeCat;
-            var qrOk  = _activeQr  === 'all' || row.dataset.qr === _activeQr;
-            return catOk && qrOk;
+            var catOk    = _activeCat    === 'all' || row.dataset.category === _activeCat;
+            var qrOk     = _activeQr     === 'all' || row.dataset.qr === _activeQr;
+            var typeOk   = _activeQrType === 'all' || row.dataset.qrType === _activeQrType;
+            return catOk && qrOk && typeOk;
         });
     }
 
@@ -685,6 +698,21 @@
         btn.classList.add('active');
         _activeCat = cat;
         _currentPage = 1;
+        renderPage();
+    }
+
+    function filterByQrType(btn, type) {
+        document.querySelectorAll('#qrtype-filter-bar .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _activeQrType = type;
+        _currentPage = 1;
+        // Reset QR card filter when switching QR type
+        _activeQr = 'all';
+        document.getElementById('qr-filter-select').value = 'all';
+        document.getElementById('qr-info-panel').classList.remove('visible');
+        // Hide QR card filter for types that don't use it (e.g. frame)
+        var qrCardRow = document.getElementById('qrcard-filter-row');
+        if (qrCardRow) qrCardRow.style.display = type === 'frame' ? 'none' : '';
         renderPage();
     }
 
@@ -792,6 +820,51 @@
             btn.innerHTML = '<i class="fa-solid fa-trash"></i> Yes, delete permanently';
         });
     });
+
+    // ── Build QR type filter buttons ─────────────────────────────────────
+    (function () {
+        var TYPE_META = {
+            'pdf':      { label: 'PDF',         icon: 'fa-solid fa-file-pdf' },
+            'images':   { label: 'Images',      icon: 'fa-regular fa-images' },
+            'video':    { label: 'Video',        icon: 'fa-solid fa-play' },
+            'sosmed':   { label: 'Sosmed',       icon: 'fa-solid fa-share-nodes' },
+            'links':    { label: 'Links',        icon: 'fa-solid fa-link' },
+            'ecard':    { label: 'E-Card',       icon: 'fa-regular fa-id-card' },
+            'allinone': { label: 'All-in-One',   icon: 'fa-solid fa-layer-group' },
+            'special':  { label: 'Special',      icon: 'fa-solid fa-star' },
+            'frame':    { label: 'Frame',        icon: 'fa-solid fa-border-all' }
+        };
+        var seenTypes = {};
+        _allRows.forEach(function (r) {
+            var t = r.dataset.qrType;
+            if (t) seenTypes[t] = true;
+        });
+        var bar = document.getElementById('qrtype-filter-bar');
+        if (!bar) return;
+
+        var allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.className = 'filter-btn active';
+        allBtn.textContent = 'All';
+        allBtn.onclick = function () { filterByQrType(this, 'all'); };
+        bar.appendChild(allBtn);
+
+        Object.keys(seenTypes).forEach(function (t) {
+            var meta = TYPE_META[t] || { label: t, icon: 'fa-solid fa-qrcode' };
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'filter-btn';
+            btn.innerHTML = '<i class="' + meta.icon + '"></i> ' + meta.label;
+            btn.onclick = function () { filterByQrType(this, t); };
+            bar.appendChild(btn);
+        });
+
+        // Hide the row entirely if only one QR type exists (nothing useful to filter)
+        if (Object.keys(seenTypes).length <= 1) {
+            var row = bar.closest('.filter-row');
+            if (row) row.style.display = 'none';
+        }
+    })();
 
     renderPage();
 </script>

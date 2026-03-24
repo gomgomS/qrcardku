@@ -54,7 +54,7 @@ class qr_allinone_proc:
 
     def is_short_code_unique(self, short_code, exclude_qrcard_id=None):
         try:
-            query = {"short_code": short_code, "status": "ACTIVE"}
+            query = {"short_code": short_code, "status": {"$in": ["ACTIVE", "DRAFT"]}}
             if exclude_qrcard_id:
                 query["qrcard_id"] = {"$ne": exclude_qrcard_id}
             return self.mgdDB.db_qrcard.find_one(query) is None
@@ -62,9 +62,10 @@ class qr_allinone_proc:
             self.webapp.logger.debug(traceback.format_exc())
             return False
 
-    def is_name_unique(self, fk_user_id, name, exclude_id=None):
+    def is_name_unique(self, fk_user_id, name, exclude_id=None, include_draft=True):
         try:
-            query = {"fk_user_id": fk_user_id, "name": name, "status": "ACTIVE"}
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if include_draft else "ACTIVE"
+            query = {"fk_user_id": fk_user_id, "name": name, "status": status_filter}
             if exclude_id:
                 query["qrcard_id"] = {"$ne": exclude_id}
             return self.mgdDB.db_qrcard.find_one(query) is None
@@ -115,7 +116,7 @@ class qr_allinone_proc:
                 "stats": {"scan_count": 0},
                 "scan_limit_enabled": bool(params.get("scan_limit_enabled", False)),
                 "scan_limit_value": max(int(params.get("scan_limit_value", 0)) if str(params.get("scan_limit_value", 0)).strip().isdigit() else 0, 0),
-                "status": "ACTIVE",
+                "status": params.get("status", "ACTIVE"),
                 "created_at": created_at,
                 "timestamp": current_time,
             }
@@ -130,7 +131,7 @@ class qr_allinone_proc:
                 "qr_type": "allinone",
                 "name": name,
                 "short_code": short_code,
-                "status": "ACTIVE",
+                "status": params.get("status", "ACTIVE"),
                 "created_at": created_at,
                 "timestamp": current_time,
             }
@@ -142,17 +143,18 @@ class qr_allinone_proc:
             self.webapp.logger.debug(err)
             return {"message_action": "ADD_QRCARD_FAILED", "message_desc": "An internal error occurred.", "message_data": {}}
 
-    def get_allinone_by_qrcard_id(self, qrcard_id, fk_user_id=None):
-        """Fetch merged qrcard + allinone doc."""
+    def get_allinone_by_qrcard_id(self, qrcard_id, fk_user_id=None, allow_draft=False):
+        """Fetch merged qrcard + allinone doc. If allow_draft=True, also returns DRAFT records."""
         try:
-            query = {"qrcard_id": qrcard_id, "status": "ACTIVE"}
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
+            query = {"qrcard_id": qrcard_id, "status": status_filter}
             if fk_user_id:
                 query["fk_user_id"] = fk_user_id
             doc = self.mgdDB.db_qrcard_allinone.find_one(query)
             if doc:
                 return doc
             # Fallback: try db_qrcard
-            q2 = {"qrcard_id": qrcard_id, "qr_type": "allinone", "status": "ACTIVE"}
+            q2 = {"qrcard_id": qrcard_id, "qr_type": "allinone", "status": status_filter}
             if fk_user_id:
                 q2["fk_user_id"] = fk_user_id
             return self.mgdDB.db_qrcard.find_one(q2)
@@ -185,9 +187,23 @@ class qr_allinone_proc:
         qr_name = request.form.get("qr_name", "Untitled QR")
         short_code = (request.form.get("short_code") or "").strip().lower()
 
-        # Validate name uniqueness
-        if not self.is_name_unique(fk_user_id, qr_name):
+        # Validate name uniqueness — only block on ACTIVE records (DRAFTs are incomplete)
+        if not self.is_name_unique(fk_user_id, qr_name, include_draft=False):
             return {"status": "error", "message_desc": "A QR card with this name already exists."}
+
+        # Delete orphaned DRAFTs with the same name so the new ACTIVE doesn't create a duplicate row
+        try:
+            old_drafts = list(self.mgdDB.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": qr_name, "status": "DRAFT"},
+                {"qrcard_id": 1}
+            ))
+            if old_drafts:
+                old_ids = [d["qrcard_id"] for d in old_drafts]
+                self.mgdDB.db_qrcard.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qrcard_allinone.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qr_index.delete_many({"qrcard_id": {"$in": old_ids}})
+        except Exception:
+            self.webapp.logger.debug(traceback.format_exc())
 
         params = {
             "fk_user_id": fk_user_id,
@@ -331,6 +347,181 @@ class qr_allinone_proc:
             "status": "ok",
             "qrcard_id": new_id,
             "url_content": url_content,
+            "short_code": used_short_code,
+            "qr_encode_url": qr_encode_url,
+        }
+
+    def save_draft(self, request, session, root_path):
+        """Create allinone QR as DRAFT: insert records with DRAFT status, upload files directly (no _tmp)."""
+        fk_user_id = session.get("fk_user_id")
+        if not fk_user_id:
+            return {"status": "error", "message_desc": "Not authenticated"}
+
+        # For allinone, url_content is the allinone page URL (auto-generated from short_code).
+        # The form does not send url_content, so we use a placeholder that will be updated below.
+        url_content = request.form.get("url_content", "").strip()
+        if url_content and not url_content.startswith("http"):
+            url_content = "https://" + url_content
+        if not url_content:
+            url_content = config.G_BASE_URL.rstrip("/")  # placeholder; replaced after short_code is known
+        qr_name = request.form.get("qr_name", "Untitled QR")
+        short_code = (request.form.get("short_code") or "").strip().lower()
+
+        if not self.is_name_unique(fk_user_id, qr_name, include_draft=False):
+            return {"status": "error", "message_desc": "A QR card with this name already exists."}
+
+        # Delete any orphaned DRAFTs with the same name before creating a new one,
+        # so retrying "Save & Next" never accumulates ghost records.
+        try:
+            old_drafts = list(self.mgdDB.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": qr_name, "status": "DRAFT"},
+                {"qrcard_id": 1}
+            ))
+            if old_drafts:
+                old_ids = [d["qrcard_id"] for d in old_drafts]
+                self.mgdDB.db_qrcard.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qrcard_allinone.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qr_index.delete_many({"qrcard_id": {"$in": old_ids}})
+        except Exception:
+            self.webapp.logger.debug(traceback.format_exc())
+
+        params = {
+            "fk_user_id": fk_user_id,
+            "name": qr_name,
+            "url_content": url_content,
+            "short_code": short_code,
+            "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
+            "scan_limit_value": int(v) if (v := (request.form.get("scan_limit_value") or "").strip()).isdigit() else 0,
+            "status": "DRAFT",
+        }
+
+        result = self._add_qrcard_base(params)
+        if result.get("message_action") == "ADD_QRCARD_FAILED":
+            return {"status": "error", "message_desc": result.get("message_desc", "Save failed.")}
+
+        new_id = result["message_data"]["qrcard_id"]
+        used_short_code = result["message_data"]["short_code"]
+        # Set the real allinone URL now that we have the short_code
+        real_url_content = config.G_BASE_URL.rstrip("/") + "/allinone/" + used_short_code
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"url_content": real_url_content}})
+        self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"url_content": real_url_content}}, upsert=True)
+        _r2 = r2_mod.r2_storage_proc()
+
+        sections_json_str = request.form.get("allinone_sections_json", "")
+        sections = []
+        if sections_json_str:
+            try:
+                sections = json.loads(sections_json_str)
+                if not isinstance(sections, list):
+                    sections = []
+            except Exception:
+                sections = []
+
+        _skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
+        content_update = {}
+        for key in request.form:
+            if key.startswith("Allinone_") and not key.endswith("[]") and key not in _skip:
+                val = request.form.get(key)
+                if val is not None:
+                    content_update[key] = val.strip() if isinstance(val, str) else val
+
+        if request.form.get("Allinone_font_apply_all") in ("on", "true", "1", "yes"):
+            content_update["Allinone_font_apply_all"] = True
+
+        for key in ["welcome_time", "welcome_bg_color"]:
+            v = request.form.get(key)
+            if v:
+                content_update[key] = v
+
+        content_update["Allinone_sections"] = sections
+
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": content_update})
+        self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": content_update}, upsert=True)
+
+        # Welcome image
+        welcome_img = request.files.get("Allinone_welcome_img")
+        if welcome_img and welcome_img.filename:
+            welcome_img.seek(0, 2)
+            if welcome_img.tell() <= 1024 * 1024:
+                welcome_img.seek(0)
+                ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
+                if ext not in ALLOWED_IMG_EXT:
+                    ext = ".jpg"
+                try:
+                    welcome_url = _r2.upload_file(
+                        welcome_img, f"allinone/{new_id}/welcome{ext}",
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"welcome{ext}"}
+                    )
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+                except Exception:
+                    self.webapp.logger.debug(traceback.format_exc())
+
+        # Cover image — direct upload (no _tmp)
+        cover_img = request.files.get("Allinone_profile_img")
+        if cover_img and cover_img.filename:
+            cover_img.seek(0, 2)
+            if cover_img.tell() <= MAX_COVER_SIZE:
+                cover_img.seek(0)
+                ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
+                if ext not in ALLOWED_IMG_EXT:
+                    ext = ".jpg"
+                try:
+                    cover_url = _r2.upload_file(
+                        cover_img, f"allinone/{new_id}/allinone_cover{ext}",
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"}
+                    )
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}}, upsert=True)
+                except Exception:
+                    self.webapp.logger.debug(traceback.format_exc())
+        else:
+            ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
+            if ac_url:
+                if ac_url.startswith("/static/"):
+                    ext = os.path.splitext(ac_url)[1] or ".jpg"
+                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/allinone_cover{ext}", root_path,
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"})
+                if ac_url:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
+
+        # Section file uploads — directly to permanent paths
+        updated_sections = []
+        for i, s in enumerate(sections):
+            s = dict(s)
+            v1 = s.get("v1", "")
+            stype = s.get("type", "")
+            if stype in ("image", "video", "pdf"):
+                fkey = f"allinone_file_{i}"
+                fobj = request.files.get(fkey)
+                if fobj and fobj.filename:
+                    fobj.seek(0, 2)
+                    if fobj.tell() <= MAX_FILE_SIZE:
+                        fobj.seek(0)
+                        ext = os.path.splitext(fobj.filename)[1].lower()
+                        if stype == "image" and ext not in ALLOWED_IMG_EXT:
+                            ext = ".jpg"
+                        elif stype == "pdf" and ext not in ALLOWED_PDF_EXT:
+                            ext = ".pdf"
+                        fname = f"{stype}_{i}_{new_id[:8]}{ext}"
+                        s["v1"] = _r2.upload_file(fobj, f"allinone/{new_id}/{fname}",
+                            track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": fname})
+                elif v1 and v1.startswith("/static/"):
+                    ext = os.path.splitext(v1)[1] or (".mp4" if stype == "video" else ".jpg" if stype == "image" else ".pdf")
+                    fname = f"{stype}_{i}_{new_id[:8]}{ext}"
+                    s["v1"] = self._upload_static_to_r2(_r2, v1, f"allinone/{new_id}/{fname}", root_path,
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": fname})
+            updated_sections.append(s)
+
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_sections": updated_sections}})
+        self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_sections": updated_sections}}, upsert=True)
+
+        qr_encode_url = "{}allinone/{}".format(config.G_BASE_URL.rstrip("/") + "/", used_short_code)
+
+        return {
+            "status": "ok",
+            "qrcard_id": new_id,
             "short_code": used_short_code,
             "qr_encode_url": qr_encode_url,
         }

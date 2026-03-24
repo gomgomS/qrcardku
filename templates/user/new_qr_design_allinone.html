@@ -162,6 +162,11 @@
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
             <span>Content</span>
         </a>
+        {% elif qrcard_id %}
+        <a href="/qr/update/allinone/{{ qrcard_id }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Content</span>
+        </a>
         {% else %}
         <a href="/qr/new/allinone" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
@@ -183,6 +188,11 @@
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
+        {% elif qrcard_id %}
+        <a href="/qr/update/allinone/{{ qrcard_id }}" class="btn-outline" id="design-back-link">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+        <form id="design-back-form" style="display: none;"></form>
         {% else %}
         <form id="design-back-form" method="POST" action="/qr/new/allinone/back" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -209,7 +219,7 @@
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </form>
         {% endif %}
-        <button form="design-form" type="submit" class="btn-next">Complete</button>
+        <button type="button" class="btn-next" onclick="submitDesignWithOverlay()">Complete</button>
     </div>
 </div>
 
@@ -227,6 +237,7 @@
 <form id="design-form" method="POST" action="{{ form_action | default('/qr/save/allinone') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="qr_type" value="allinone" />
+    {% if qrcard_id %}<input type="hidden" name="qrcard_id" value="{{ qrcard_id }}" />{% endif %}
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
     {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
@@ -343,16 +354,34 @@
 
 <!-- Mobile bottom bar -->
 <div class="mobile-bottom-bar">
+    {% if qrcard_id %}
+    <a href="/qr/update/allinone/{{ qrcard_id }}" class="mobile-bar-arrow" title="Back" style="text-decoration:none;">
+        <i class="fa-solid fa-arrow-left"></i>
+    </a>
+    {% else %}
     <button type="button" class="mobile-bar-arrow" onclick="document.getElementById('design-back-form').submit()" title="Back">
         <i class="fa-solid fa-arrow-left"></i>
     </button>
+    {% endif %}
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
         <i class="fa-regular fa-eye"></i> Preview
     </button>
-    <button type="submit" form="design-form" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete">
+    <button type="button" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete" onclick="submitDesignWithOverlay()">
         <i class="fa-solid fa-arrow-right"></i>
     </button>
 </div>
+
+<!-- Complete loading overlay -->
+<div id="design-complete-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+    <div style="width:56px;height:56px;border:4px solid rgba(255,255,255,0.15);border-top-color:#ffffff;border-radius:50%;animation:spin 0.9s linear infinite;"></div>
+    <div style="text-align:center;">
+        <div id="design-overlay-msg" style="color:#ffffff;font-size:16px;font-weight:600;margin-bottom:6px;">Saving your QR design…</div>
+        <div id="design-overlay-sub" style="color:rgba(255,255,255,0.65);font-size:13px;">Generating QR code and compositing frame</div>
+    </div>
+</div>
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
 
 {% endblock %}
 
@@ -404,6 +433,29 @@
             });
         }
         if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
+
+        // Show overlay on form submit (covers both button click and any native submit)
+        document.getElementById('design-form').addEventListener('submit', function () {
+            var overlay = document.getElementById('design-complete-overlay');
+            if (overlay) overlay.style.display = 'flex';
+        });
     });
+</script>
+<script>
+function submitDesignWithOverlay() {
+    var overlay = document.getElementById('design-complete-overlay');
+    var msgEl   = document.getElementById('design-overlay-msg');
+    var subEl   = document.getElementById('design-overlay-sub');
+    if (overlay) overlay.style.display = 'flex';
+    var hasFrame = (document.getElementById('frame_id') || {}).value || '';
+    if (hasFrame) {
+        if (msgEl) msgEl.textContent = 'Compositing QR + frame image\u2026';
+        if (subEl) subEl.textContent = 'Uploading to cloud storage, this may take a moment';
+    } else {
+        if (msgEl) msgEl.textContent = 'Saving your QR design\u2026';
+        if (subEl) subEl.textContent = 'Almost done, activating your QR card';
+    }
+    document.getElementById('design-form').submit();
+}
 </script>
 {% endblock %}

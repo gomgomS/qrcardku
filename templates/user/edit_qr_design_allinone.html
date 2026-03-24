@@ -299,6 +299,24 @@
 <script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
 <script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
+    /* Auto-select the stored frame when editing */
+    (function () {
+        var storedFrameId = (document.getElementById('frame_id') || {}).value || '';
+        if (!storedFrameId) return; // no custom frame stored — nothing to auto-select
+        var MAX_TRIES = 20, INTERVAL = 300, tries = 0;
+        var timer = setInterval(function () {
+            tries++;
+            var el = document.querySelector('[data-custom-frame-id="' + storedFrameId + '"]');
+            if (el) {
+                clearInterval(timer);
+                if (window.qfpSelectFrame) window.qfpSelectFrame(el);
+                return;
+            }
+            if (tries >= MAX_TRIES) clearInterval(timer);
+        }, INTERVAL);
+    })();
+</script>
+<script>
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
         var btn = document.getElementById('mobile-preview-btn');

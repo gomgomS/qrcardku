@@ -244,7 +244,11 @@
         margin-bottom: 20px;
     }
 
-    .scan-qr-modal .qr-image-wrap img {
+    #scan-qr-inner {
+        display: inline-block;
+    }
+
+    #scan-qr-inner img#scan-qr-image {
         display: block;
         max-width: 260px;
         max-height: 340px;
@@ -591,49 +595,116 @@
         var closeBtn = document.getElementById('scan-qr-close');
         var imgEl = document.getElementById('scan-qr-image');
         var currentDataUrl = null;
+        var currentFrame = null;
+        var currentCompositeUrl = null;
+        var currentQrcardId = null;
 
-        // Cache frames from API (loaded once)
+        // Cache frames from API (loaded once) — includes both user custom frames and admin default frames
         var framesCache = null;
         function getFrames(cb) {
             if (framesCache !== null) { cb(framesCache); return; }
-            fetch('/user/frames/api')
-                .then(function(r){ return r.json(); })
-                .then(function(list){ framesCache = list; cb(framesCache); })
-                .catch(function(){ framesCache = []; cb([]); });
+            Promise.all([
+                fetch('/user/frames/api').then(function(r){ return r.json(); }).catch(function(){ return []; }),
+                fetch('/api/frames/default').then(function(r){ return r.json(); }).catch(function(){ return []; })
+            ]).then(function(results) {
+                framesCache = (results[0] || []).concat(results[1] || []);
+                cb(framesCache);
+            }).catch(function(){ framesCache = []; cb([]); });
         }
 
-        /**
-         * Composite a QR data URL onto a frame image.
-         * frame: {image_url, qr_x, qr_y, qr_w, qr_h}
-         * Returns a Promise<dataUrl> of the composited canvas.
-         */
-        function compositeQROnFrame(qrDataUrl, frame) {
-            return new Promise(function(resolve, reject) {
-                var fImg = new Image();
-                fImg.crossOrigin = 'anonymous';
-                fImg.onload = function() {
-                    var qrImg = new Image();
-                    qrImg.onload = function() {
-                        var canvas = document.createElement('canvas');
-                        canvas.width  = fImg.naturalWidth;
-                        canvas.height = fImg.naturalHeight;
-                        var ctx = canvas.getContext('2d');
-                        // Draw frame background
-                        ctx.drawImage(fImg, 0, 0);
-                        // Draw QR in the marked area
-                        var x = frame.qr_x * canvas.width;
-                        var y = frame.qr_y * canvas.height;
-                        var w = frame.qr_w * canvas.width;
-                        var h = frame.qr_h * canvas.height;
-                        ctx.drawImage(qrImg, x, y, w, h);
-                        resolve(canvas.toDataURL('image/png'));
-                    };
-                    qrImg.onerror = reject;
-                    qrImg.src = qrDataUrl;
+        /* Show plain QR with no frame overlay */
+        function showPlainQR(qrDataUrl) {
+            var inner = document.getElementById('scan-qr-inner');
+            inner.style.cssText = '';
+            var fbg = document.getElementById('scan-qr-frame-bg');
+            fbg.style.display = 'none';
+            fbg.src = '';
+            imgEl.style.cssText = '';
+            imgEl.src = qrDataUrl;
+        }
+
+        /* CSS overlay: frame image as background (z-index 1), QR on top at marked area (z-index 2).
+           No canvas / no CORS needed for display. */
+        function applyFrameOverlayCSS(qrDataUrl, frame) {
+            var fi = new Image();
+            fi.onload = function () {
+                var ratio = fi.naturalHeight / fi.naturalWidth;
+                var W = 220;
+                var H = Math.round(W * ratio);
+
+                var inner = document.getElementById('scan-qr-inner');
+                inner.style.cssText = 'position:relative;width:' + W + 'px;height:' + H + 'px;display:block;overflow:hidden;';
+
+                var fbg = document.getElementById('scan-qr-frame-bg');
+                fbg.src = frame.image_url;
+                fbg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:1;display:block;';
+
+                imgEl.src = qrDataUrl;
+                imgEl.style.cssText = 'position:absolute;' +
+                    'left:'   + (frame.qr_x * 100) + '%;' +
+                    'top:'    + (frame.qr_y * 100) + '%;' +
+                    'width:'  + (frame.qr_w * 100) + '%;' +
+                    'height:' + (frame.qr_h * 100) + '%;' +
+                    'z-index:2;display:block;object-fit:contain;';
+            };
+            fi.onerror = function () { showPlainQR(qrDataUrl); };
+            fi.src = frame.image_url;
+        }
+
+        /* Canvas compositing for download (requires R2 CORS; falls back to plain QR) */
+        /* Load frame through the server proxy so canvas compositing isn't CORS-tainted */
+        function downloadComposited(qrDataUrl, frame, filename) {
+            var proxyUrl = '/api/proxy-image?url=' + encodeURIComponent(frame.image_url);
+            var fImg = new Image();
+            fImg.crossOrigin = 'anonymous';
+            fImg.onload = function () {
+                var qi = new Image();
+                qi.onload = function () {
+                    var cv = document.createElement('canvas');
+                    cv.width  = fImg.naturalWidth;
+                    cv.height = fImg.naturalHeight;
+                    var ctx = cv.getContext('2d');
+                    ctx.drawImage(fImg, 0, 0);
+                    ctx.drawImage(qi,
+                        frame.qr_x * cv.width,
+                        frame.qr_y * cv.height,
+                        frame.qr_w * cv.width,
+                        frame.qr_h * cv.height);
+                    try {
+                        doDownload(cv.toDataURL('image/png'), filename);
+                    } catch (e) {
+                        doDownload(qrDataUrl, filename);
+                    }
                 };
-                fImg.onerror = reject;
-                fImg.src = frame.image_url;
-            });
+                qi.onerror = function () { doDownload(qrDataUrl, filename); };
+                qi.src = qrDataUrl;
+            };
+            fImg.onerror = function () { doDownload(qrDataUrl, filename); };
+            fImg.src = proxyUrl;
+        }
+
+        function doDownload(url, filename) {
+            // For same-origin or data URLs download directly
+            if (url.startsWith('data:') || url.startsWith('/') || url.startsWith(window.location.origin)) {
+                fetch(url)
+                    .then(function(r) { return r.blob(); })
+                    .then(function(blob) {
+                        var blobUrl = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = filename;
+                        a.style.display = 'none';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 1000);
+                    })
+                    .catch(function() {
+                        window.open(url, '_blank');
+                    });
+            } else {
+                window.open(url, '_blank');
+            }
         }
 
         function normUrl(url) {
@@ -668,6 +739,8 @@
                 var textContent = trigger.getAttribute('data-text-content') || '';
                 var editUrl = trigger.getAttribute('data-edit-url') || '#';
                 var frameId = trigger.getAttribute('data-frame-id') || '';
+                var compositeUrl = trigger.getAttribute('data-composite-url') || '';
+                var qrcardId = trigger.getAttribute('data-qrcard-id') || '';
 
                 var displayUrl = url;
                 if (shortCode) {
@@ -702,43 +775,65 @@
 
                 imgEl.src = '';
                 currentDataUrl = null;
+                currentQrcardId = qrcardId;
                 overlay.classList.add('show');
                 overlay.setAttribute('aria-hidden', 'false');
 
                 var staticDirect = (qrType === 'wa-static' || qrType === 'email-static' || qrType === 'vcard-static');
                 var content = qrType === 'text' ? (textContent || 'Hello World') : (staticDirect ? (url || displayUrl || '') : (displayUrl || url || 'https://qrcardku.com'));
 
-                if (typeof QRCode !== 'undefined') {
-                    QRCode.toDataURL(content, { width: 400, margin: 2 })
-                        .then(function (qrDataUrl) {
-                            if (frameId) {
-                                // Try compositing QR onto custom frame
-                                getFrames(function(frames) {
-                                    var frame = null;
-                                    for (var i = 0; i < frames.length; i++) {
-                                        if (frames[i].frame_id === frameId) { frame = frames[i]; break; }
-                                    }
-                                    if (frame && frame.qr_w > 0 && frame.qr_h > 0) {
-                                        compositeQROnFrame(qrDataUrl, frame)
-                                            .then(function(composited) {
-                                                imgEl.src = composited;
-                                                currentDataUrl = composited;
-                                            })
-                                            .catch(function() {
-                                                imgEl.src = qrDataUrl;
-                                                currentDataUrl = qrDataUrl;
-                                            });
-                                    } else {
-                                        imgEl.src = qrDataUrl;
-                                        currentDataUrl = qrDataUrl;
-                                    }
-                                });
-                            } else {
-                                imgEl.src = qrDataUrl;
+                function renderQR(cUrl) {
+                    if (cUrl) {
+                        currentDataUrl = null;
+                        currentFrame = null;
+                        currentCompositeUrl = cUrl;
+                        /* Update the trigger's data attr so next open is instant */
+                        trigger.setAttribute('data-composite-url', cUrl);
+                        showPlainQR(cUrl);
+                    } else if (typeof QRCode !== 'undefined') {
+                        currentCompositeUrl = null;
+                        QRCode.toDataURL(content, { width: 400, margin: 2 })
+                            .then(function (qrDataUrl) {
                                 currentDataUrl = qrDataUrl;
+                                currentFrame = null;
+                                if (frameId) {
+                                    getFrames(function(frames) {
+                                        var frame = null;
+                                        for (var i = 0; i < frames.length; i++) {
+                                            if (frames[i].frame_id === frameId) { frame = frames[i]; break; }
+                                        }
+                                        if (frame && frame.qr_w > 0 && frame.qr_h > 0) {
+                                            currentFrame = frame;
+                                            applyFrameOverlayCSS(qrDataUrl, frame);
+                                        } else {
+                                            showPlainQR(qrDataUrl);
+                                        }
+                                    });
+                                } else {
+                                    showPlainQR(qrDataUrl);
+                                }
+                            })
+                            .catch(function (err) { console.error('QR generate error:', err); });
+                    }
+                }
+
+                if (compositeUrl) {
+                    renderQR(compositeUrl);
+                } else if (frameId && qrcardId) {
+                    /* Composite may still be generating in background — fetch latest from server */
+                    renderQR(null);  // show CSS overlay immediately as fallback
+                    fetch('/api/qr/composite-url/' + qrcardId)
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (data.url && overlay.classList.contains('show')) {
+                                currentCompositeUrl = data.url;
+                                trigger.setAttribute('data-composite-url', data.url);
+                                showPlainQR(data.url);
                             }
                         })
-                        .catch(function (err) { console.error('QR generate error:', err); });
+                        .catch(function() {});
+                } else {
+                    renderQR(null);
                 }
             });
         });
@@ -746,6 +841,14 @@
         function closeModal() {
             overlay.classList.remove('show');
             overlay.setAttribute('aria-hidden', 'true');
+            var inner = document.getElementById('scan-qr-inner');
+            if (inner) inner.style.cssText = '';
+            var fbg = document.getElementById('scan-qr-frame-bg');
+            if (fbg) { fbg.style.display = 'none'; fbg.src = ''; }
+            if (imgEl) imgEl.style.cssText = '';
+            currentFrame = null;
+            currentCompositeUrl = null;
+            currentQrcardId = null;
         }
 
         closeBtn.addEventListener('click', closeModal);
@@ -769,11 +872,15 @@
         });
 
         document.getElementById('scan-qr-download-btn').addEventListener('click', function () {
-            if (!currentDataUrl) return;
-            var a = document.createElement('a');
-            a.href = currentDataUrl;
-            a.download = (document.getElementById('scan-qr-title').textContent || 'qr-code').replace(/[^a-z0-9-_]/gi, '-') + '.png';
-            a.click();
+            var filename = (document.getElementById('scan-qr-title').textContent || 'qr-code').replace(/[^a-z0-9-_]/gi, '-') + '.png';
+            if (currentCompositeUrl && currentQrcardId) {
+                /* Download pre-rendered composite via dedicated endpoint (no URL in params) */
+                doDownload('/api/qr/download/' + currentQrcardId, filename);
+            } else if (currentFrame && currentFrame.qr_w > 0 && currentDataUrl) {
+                downloadComposited(currentDataUrl, currentFrame, filename);
+            } else if (currentDataUrl) {
+                doDownload(currentDataUrl, filename);
+            }
         });
     })();
 </script>
@@ -844,13 +951,21 @@
                 <td><input type="checkbox" class="qr-row-checkbox" name="qrcard_ids" value="{{ qr.qrcard_id }}"></td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
+                        {% if qr.status == 'DRAFT' %}
+                        <span style="color:var(--text-muted);cursor:not-allowed;opacity:0.4;" title="Complete the QR design to activate scan">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </span>
+                        {% else %}
                         <span class="qr-scan-trigger" data-tooltip="Click to scan" data-name="{{ qr.name }}"
                             data-qr-type="{{ qr.qr_type }}" data-status="{{ qr.status }}"
                             data-url="{{ qr.url_content }}" data-short-code="{{ qr.short_code or '' }}"
                             data-text-content="{{ qr.text_content or '' }}"
                             data-frame-id="{{ qr.get('frame_id', '') }}"
+                            data-composite-url="{{ qr.get('qr_composite_url', '') }}"
+                            data-qrcard-id="{{ qr.qrcard_id }}"
                             data-edit-url="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}" role="button"
                             aria-label="Click to scan QR card"><i class="fa-solid fa-qrcode"></i></span>
+                        {% endif %}
                         <div>{{ qr.name }}</div>
                     </div>
                 </td>
@@ -872,7 +987,15 @@
                     </span></td>
                 <td>{{ qr.created_at[:10] }}</td>
                 <td>-</td>
-                <td><span class="status-active">{{ qr.status | capitalize }}</span></td>
+                <td>
+                    {% if qr.status == 'DRAFT' %}
+                    <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600;">
+                        <i class="fa-solid fa-pen-to-square"></i> Draft
+                    </span>
+                    {% else %}
+                    <span class="status-active">{{ qr.status | capitalize }}</span>
+                    {% endif %}
+                </td>
                 <td>
                     {% set limit = qr.scan_limit_value if qr.scan_limit_enabled else None %}
                     {% if limit and limit > 0 %}
@@ -888,9 +1011,15 @@
                             onclick="toggleDropdown(event, this)"><i class="fa-solid fa-ellipsis-vertical"></i></button>
                         <div class="dropdown-content"
                             style="display: none; position: absolute; right: 0; background-color: var(--bg-content); min-width: 120px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; border-radius: 4px; overflow: hidden; margin-top: 4px;">
+                            {% if qr.status == 'DRAFT' %}
+                            <a href="/qr/new/{{ qr.qr_type }}/design/{{ qr.qrcard_id }}"
+                                style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--primary); font-size: 13px; display: block; text-decoration: none;">
+                                <i class="fa-solid fa-arrow-right"></i> Continue</a>
+                            {% else %}
                             <a href="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}"
                                 style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--text-main); font-size: 13px; display: block; text-decoration: none;"><i
                                     class="fa-solid fa-pen"></i> Edit</a>
+                            {% endif %}
                             <button type="button"
                                 style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: #dc2626; font-size: 13px;"
                                 data-qrcard-id="{{ qr.qrcard_id }}"
@@ -1059,7 +1188,10 @@
             </div>
             <div class="qr-section-title">Scan the QR card</div>
             <div class="qr-image-wrap">
-                <img id="scan-qr-image" src="" alt="QR card" width="200" height="200">
+                <div id="scan-qr-inner">
+                    <img id="scan-qr-frame-bg" src="" alt="" style="display:none;">
+                    <img id="scan-qr-image" src="" alt="QR card">
+                </div>
             </div>
             <div class="qr-section-title">Preview</div>
             <div class="preview-row">

@@ -27,8 +27,9 @@ class view_images:
                 self.webapp.logger.debug(traceback.format_exc())
             return "Failed to load New QR Content (Images)"
 
-    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, images_data=None):
+    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, images_data=None, qrcard_id=None):
         try:
+            form_action = f"/qr/update/save/images/{qrcard_id}" if qrcard_id else "/qr/save/images"
             return render_template(
                 "/user/new_qr_design_images.html",
                 qr_type="images",
@@ -39,7 +40,8 @@ class view_images:
                 msg=msg,
                 error_msg=error_msg,
                 images_data=images_data,
-                form_action="/qr/save/images",
+                form_action=form_action,
+                qrcard_id=qrcard_id or "",
             )
         except Exception:
             if self.webapp:

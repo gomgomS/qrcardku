@@ -76,6 +76,7 @@ from flask              import flash, get_flashed_messages
 from flask              import abort
 from flask              import jsonify
 from flask              import send_from_directory
+from flask              import Response
 
 from authlib.integrations.flask_client import OAuth
 import os
@@ -178,6 +179,87 @@ def _update_frame_id(fk_user_id, qrcard_id, form_frame_id):
         )
     except Exception:
         pass
+
+
+def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
+    """Generate QR+frame composite image, upload to R2, store URL in db_qrcard.
+    Runs synchronously so the composite is guaranteed ready on the next page load."""
+    if not frame_id or not qrcard_id or not qr_encode_url:
+        return
+    try:
+        import io
+        import urllib.request as _ureq
+        import qrcode
+        from PIL import Image
+        from pytavia_core import database as _db_mod, config as _cfg
+        from pytavia_modules.storage import r2_storage_proc as _r2_mod
+
+        _db = _db_mod.get_db_conn(_cfg.mainDB)
+
+        # Locate frame (user frame first, then admin frame)
+        frame = _db.db_qr_frame.find_one(
+            {"frame_id": frame_id, "fk_user_id": fk_user_id, "status": "ACTIVE"}
+        )
+        if not frame:
+            frame = _db.db_admin_frame.find_one({"frame_id": frame_id, "status": "ACTIVE"})
+        if not frame or not frame.get("image_url"):
+            return
+
+        qr_x = float(frame.get("qr_x", 0))
+        qr_y = float(frame.get("qr_y", 0))
+        qr_w = float(frame.get("qr_w", 0))
+        qr_h = float(frame.get("qr_h", 0))
+        if qr_w <= 0 or qr_h <= 0:
+            return
+
+        # Generate QR code as PIL image
+        qr_obj = qrcode.QRCode(
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10, border=2,
+        )
+        qr_obj.add_data(qr_encode_url)
+        qr_obj.make(fit=True)
+        qr_pil = qr_obj.make_image(fill_color="black", back_color="white").convert("RGBA")
+
+        # Load frame image from R2
+        req = _ureq.Request(frame["image_url"], headers={"User-Agent": "Mozilla/5.0"})
+        with _ureq.urlopen(req, timeout=15) as resp:
+            frame_bytes = resp.read()
+        frame_pil = Image.open(io.BytesIO(frame_bytes)).convert("RGBA")
+
+        # Composite: paste QR at the marked area using object-fit:contain semantics
+        # (matches the design preview which uses object-fit:contain on the QR image)
+        fw, fh = frame_pil.size
+        x = int(qr_x * fw)
+        y = int(qr_y * fh)
+        w = int(qr_w * fw)
+        h = int(qr_h * fh)
+        # Keep QR square (1:1), centered in the marked area
+        side = min(w, h)
+        cx = x + (w - side) // 2
+        cy = y + (h - side) // 2
+        qr_resized = qr_pil.resize((side, side), Image.LANCZOS)
+        result = frame_pil.copy()
+        result.paste(qr_resized, (cx, cy))
+
+        # Encode to PNG bytes
+        buf = io.BytesIO()
+        result.save(buf, format="PNG")
+        buf.seek(0)
+
+        # Upload to R2
+        key = f"qr-composites/{fk_user_id}/{qrcard_id}.png"
+        url = _r2_mod.r2_storage_proc().upload_bytes(
+            buf, key, content_type="image/png",
+        )
+
+        # Persist URL on the QR record
+        _db.db_qrcard.update_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+            {"$set": {"qr_composite_url": url}},
+        )
+    except Exception:
+        app.logger.debug(traceback.format_exc())
 
 
 @app.route("/")
@@ -312,6 +394,110 @@ def api_frames_default():
             "qr_h"     : f.get("qr_h"),
         })
     return jsonify(result)
+
+@app.route("/api/proxy-image")
+def api_proxy_image():
+    """Serve an R2 image via boto3 for canvas CORS use. Supports ?download=1&name=file.png."""
+    import re, os
+    from pytavia_modules.storage import r2_storage_proc as _r2_mod
+    url = request.args.get("url", "").strip()
+    allowed_base = config.R2_PUBLIC_BASE_URL.rstrip("/")
+    if not url.startswith(allowed_base + "/"):
+        return "Forbidden", 403
+    key = url[len(allowed_base) + 1:]
+    if not key:
+        return "Bad Request", 400
+    try:
+        r2 = _r2_mod.r2_storage_proc()
+        obj = r2._client.get_object(Bucket=r2._bucket, Key=key)
+        data = obj["Body"].read()
+        content_type = obj.get("ContentType", "image/png")
+        resp = Response(data, content_type=content_type)
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Cache-Control"] = "public, max-age=3600"
+        if request.args.get("download"):
+            fname = request.args.get("name", "") or os.path.basename(key) or "image.png"
+            fname = re.sub(r'[^\w\-. ]', '_', fname)
+            resp.headers["Content-Disposition"] = f'attachment; filename="{fname}"'
+        return resp
+    except Exception:
+        app.logger.debug("api_proxy_image failed", exc_info=True)
+        return "Could not fetch image", 502
+
+@app.route("/api/qr/download/<qrcard_id>")
+def api_qr_download(qrcard_id):
+    """Download the composite QR image for a QR card directly via R2 boto3."""
+    if "fk_user_id" not in session:
+        return "Unauthorized", 401
+    import re, os, io
+    from pytavia_core import database as _db_mod, config as _cfg
+    from pytavia_modules.storage import r2_storage_proc as _r2_mod
+    try:
+        fk_user_id = session["fk_user_id"]
+        _db  = _db_mod.get_db_conn(_cfg.mainDB)
+        doc  = _db.db_qrcard.find_one(
+            {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
+            {"qr_composite_url": 1, "name": 1, "_id": 0},
+        )
+        if not doc or not doc.get("qr_composite_url"):
+            return "Not found", 404
+        composite_url = doc["qr_composite_url"]
+        allowed_base  = _cfg.R2_PUBLIC_BASE_URL.rstrip("/")
+        if not composite_url.startswith(allowed_base + "/"):
+            return "Forbidden", 403
+        key = composite_url[len(allowed_base) + 1:]
+        r2  = _r2_mod.r2_storage_proc()
+        obj = r2._client.get_object(Bucket=r2._bucket, Key=key)
+        data = obj["Body"].read()
+        fname = re.sub(r'[^\w\-. ]', '-', doc.get("name", "qr-code")) + ".png"
+        resp = Response(data, content_type="image/png")
+        resp.headers["Content-Disposition"] = f'attachment; filename="{fname}"'
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
+    except Exception:
+        app.logger.debug("api_qr_download failed", exc_info=True)
+        return "Download failed", 500
+
+@app.route("/api/qr/composite-url/<qrcard_id>")
+def api_qr_composite_url(qrcard_id):
+    """Return the stored qr_composite_url. If missing but frame_id is set, generate on demand."""
+    if "fk_user_id" not in session:
+        return jsonify({"url": ""}), 401
+    try:
+        from pytavia_core import database as _db_mod, config as _cfg
+        _db = _db_mod.get_db_conn(_cfg.mainDB)
+        fk_user_id = session["fk_user_id"]
+        doc = _db.db_qrcard.find_one(
+            {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
+            {"qr_composite_url": 1, "frame_id": 1, "qr_type": 1, "short_code": 1, "url_content": 1, "_id": 0},
+        )
+        if not doc:
+            return jsonify({"url": ""})
+        composite_url = doc.get("qr_composite_url", "")
+        if not composite_url:
+            frame_id = doc.get("frame_id", "")
+            if frame_id:
+                # Construct qr_encode_url from qr_type + short_code
+                qr_type   = doc.get("qr_type", "")
+                short_code = doc.get("short_code", "")
+                _static_types = {"web-static", "wa-static", "email-static", "vcard-static", "text"}
+                if qr_type in _static_types:
+                    qr_encode_url = doc.get("url_content", "")
+                elif short_code and qr_type:
+                    qr_encode_url = _cfg.G_BASE_URL.rstrip("/") + "/" + qr_type + "/" + short_code
+                else:
+                    qr_encode_url = ""
+                if qr_encode_url:
+                    _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id)
+                    # Re-fetch the URL that was just saved
+                    updated = _db.db_qrcard.find_one(
+                        {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
+                        {"qr_composite_url": 1, "_id": 0},
+                    )
+                    composite_url = (updated or {}).get("qr_composite_url", "")
+        return jsonify({"url": composite_url})
+    except Exception:
+        return jsonify({"url": ""}), 500
 
 @app.route("/auth/logout")
 def auth_logout():
@@ -597,16 +783,20 @@ def qr_update_save_pdf(qrcard_id):
         return redirect(url_for("login_view"))
     from pytavia_modules.qr import qr_pdf_proc
     proc = qr_pdf_proc.qr_pdf_proc(app)
+    _frame_id_pdf = request.form.get("frame_id", "")
+    _fk_pdf = session.get("fk_user_id")
+    # Activate DRAFT if needed before update (so complete_pdf_update can find the record)
+    _enc_url_pdf = _activate_draft_qrcard(_fk_pdf, qrcard_id, "db_qrcard_pdf", "/pdf/")
     result = proc.complete_pdf_update(request, session, qrcard_id, app.root_path)
     if not result.get("success"):
-        fk_user_id = session.get("fk_user_id")
-        qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+        qrcard = proc.get_qrcard(_fk_pdf, qrcard_id)
         if qrcard:
             return view_update_pdf.view_update_pdf(app).update_qr_design_html(
                 qrcard=qrcard, error_msg=result.get("error_msg", "Save failed.")
             )
         return redirect(url_for("user_qr_list"))
-    _update_frame_id(session.get("fk_user_id"), qrcard_id, request.form.get("frame_id", ""))
+    _update_frame_id(_fk_pdf, qrcard_id, _frame_id_pdf)
+    _save_qr_composite(app, _fk_pdf, qrcard_id, _enc_url_pdf, _frame_id_pdf)
     return redirect(url_for("user_qr_list"))
 
 
@@ -631,9 +821,12 @@ def qr_update_save_web(qrcard_id):
     params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled") or draft.get("scan_limit_enabled"))
     raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+    _frame_id_web = request.form.get("frame_id", "")
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_web)
+    _enc_url_web = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_web", "/web/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_web, _frame_id_web)
     return redirect(url_for("user_qr_list"))
 
 
@@ -696,8 +889,11 @@ def qr_update_save_ecard(qrcard_id):
             proc.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}})
             proc.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}}, upsert=True)
 
+    _frame_id_ecard = request.form.get("frame_id", "")
     _clear_qr_draft(session, qrcard_id)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_ecard)
+    _enc_url_ecard = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_ecard", "/ecard/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_ecard, _frame_id_ecard)
     return redirect(url_for("user_qr_list"))
 
 
@@ -2826,8 +3022,7 @@ def qr_update_save_links(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_links_proc as _qrl
     proc = _qrl.qr_links_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
-    if not qrcard:
+    if not database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}):
         return redirect(url_for("user_qr_list"))
     design_update = {}
     for key in request.form:
@@ -2837,9 +3032,17 @@ def qr_update_save_links(qrcard_id):
                 design_update[key] = val.strip()
     if request.form.get("Links_font_apply_all") in ("on", "true", "1", "yes"):
         design_update["Links_font_apply_all"] = True
-    params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **design_update}
+    params = {
+        "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
+        "name": (request.form.get("qr_name") or "").strip() or "Untitled QR",
+        "url_content": (request.form.get("url_content") or "").strip(),
+        **design_update,
+    }
     proc.edit_qrcard(params)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _frame_id_links = request.form.get("frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_links)
+    _enc_url_links = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_links", "/links/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_links, _frame_id_links)
     return redirect(url_for("user_qr_list"))
 
 
@@ -3111,8 +3314,7 @@ def qr_update_save_sosmed(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_sosmed_proc as _qrs
     proc = _qrs.qr_sosmed_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
-    if not qrcard:
+    if not database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}):
         return redirect(url_for("user_qr_list"))
     design_update = {}
     for key in request.form:
@@ -3122,9 +3324,17 @@ def qr_update_save_sosmed(qrcard_id):
                 design_update[key] = val.strip()
     if request.form.get("Sosmed_font_apply_all") in ("on", "true", "1", "yes"):
         design_update["Sosmed_font_apply_all"] = True
-    params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **design_update}
+    params = {
+        "fk_user_id": fk_user_id, "qrcard_id": qrcard_id,
+        "name": (request.form.get("qr_name") or "").strip() or "Untitled QR",
+        "url_content": (request.form.get("url_content") or "").strip(),
+        **design_update,
+    }
     proc.edit_qrcard(params)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _frame_id_sosmed = request.form.get("frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_sosmed)
+    _enc_url_sosmed = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_sosmed", "/sosmed/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_sosmed, _frame_id_sosmed)
     return redirect(url_for("user_qr_list"))
 
 
@@ -3236,7 +3446,7 @@ def user_new_qr_design_allinone():
                         sections[i]["v1"] = _r2.upload_file(fobj, f"allinone/_tmp/{tmp_key}/{fname}")
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
-        if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
+        if not proc.is_name_unique(session.get("fk_user_id"), qr_name, include_draft=False):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         if short_code:
@@ -3257,6 +3467,333 @@ def user_new_qr_design_allinone():
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, allinone_data=allinone_data)
 
 
+@app.route("/qr/new/allinone/save-draft", methods=["POST"])
+def qr_new_allinone_save_draft():
+    """AJAX endpoint: save allinone QR as DRAFT and return JSON with qrcard_id."""
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_allinone_proc
+    proc = qr_allinone_proc.qr_allinone_proc(app)
+    response = proc.save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({
+        "status": "ok",
+        "qrcard_id": response["qrcard_id"],
+        "short_code": response["short_code"],
+        "qr_encode_url": response["qr_encode_url"],
+    }), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/allinone/design/<qrcard_id>", methods=["GET"])
+def qr_new_allinone_design_draft(qrcard_id):
+    """Load design step for a DRAFT allinone QR (created via save-draft)."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.qr import qr_allinone_proc as _qra
+    from pytavia_modules.view import view_allinone
+    proc = _qra.qr_allinone_proc(app)
+    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id, allow_draft=True)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_allinone_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
+    short_code = qrcard.get("short_code") or ""
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/allinone/" + short_code if short_code else None
+    v = view_allinone.view_allinone(app)
+    return v.new_qr_design_html(
+        url_content=qrcard.get("url_content", ""),
+        qr_name=qrcard.get("name", ""),
+        short_code=short_code,
+        qr_encode_url=qr_encode_url,
+        allinone_data=qrcard,
+        qrcard_id=qrcard_id,
+    )
+
+
+# ─── DRAFT save-draft + design routes for all 8 types ────────────────────────
+
+def _activate_draft_qrcard(fk_user_id, qrcard_id, type_collection, qr_type_path):
+    """If qrcard is DRAFT, set ACTIVE in all 3 collections and return (short_code, qr_encode_url)."""
+    from pytavia_core import database as _db_m, config as _cfg
+    _db = _db_m.get_db_conn(_cfg.mainDB)
+    _qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if _qrcard.get("status") == "DRAFT":
+        _db.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "ACTIVE"}})
+        getattr(_db, type_collection).update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "ACTIVE"}})
+        _db.db_qr_index.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "ACTIVE"}})
+    sc = _qrcard.get("short_code", "")
+    qr_encode_url = _cfg.G_BASE_URL.rstrip("/") + qr_type_path + sc if sc else ""
+    return qr_encode_url
+
+
+@app.route("/qr/new/web/save-draft", methods=["POST"])
+def qr_new_web_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_web_proc
+    response = qr_web_proc.qr_web_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/web/design/<qrcard_id>", methods=["GET"])
+def qr_new_web_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_web
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/web/" + sc if sc else None
+    return view_web.view_web(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+    )
+
+
+@app.route("/qr/new/ecard/save-draft", methods=["POST"])
+def qr_new_ecard_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_ecard_proc
+    response = qr_ecard_proc.qr_ecard_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/ecard/design/<qrcard_id>", methods=["GET"])
+def qr_new_ecard_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_ecard
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/ecard/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_ecard.view_ecard(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        ecard_data=_data,
+    )
+
+
+@app.route("/qr/new/links/save-draft", methods=["POST"])
+def qr_new_links_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_links_proc
+    response = qr_links_proc.qr_links_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/links/design/<qrcard_id>", methods=["GET"])
+def qr_new_links_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_links
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/links/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_links.view_links(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        links_data=_data,
+    )
+
+
+@app.route("/qr/new/sosmed/save-draft", methods=["POST"])
+def qr_new_sosmed_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_sosmed_proc
+    response = qr_sosmed_proc.qr_sosmed_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/sosmed/design/<qrcard_id>", methods=["GET"])
+def qr_new_sosmed_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_sosmed
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/sosmed/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_sosmed.view_sosmed(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        sosmed_data=_data,
+    )
+
+
+@app.route("/qr/new/pdf/save-draft", methods=["POST"])
+def qr_new_pdf_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_pdf_proc
+    response = qr_pdf_proc.qr_pdf_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/pdf/design/<qrcard_id>", methods=["GET"])
+def qr_new_pdf_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_pdf
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/pdf/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_pdf.view_pdf(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        pdf_data=_data,
+    )
+
+
+@app.route("/qr/new/images/save-draft", methods=["POST"])
+def qr_new_images_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_images_proc
+    response = qr_images_proc.qr_images_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/images/design/<qrcard_id>", methods=["GET"])
+def qr_new_images_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_images
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/images/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_images.view_images(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        images_data=_data,
+    )
+
+
+@app.route("/qr/new/video/save-draft", methods=["POST"])
+def qr_new_video_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_video_proc
+    response = qr_video_proc.qr_video_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/video/design/<qrcard_id>", methods=["GET"])
+def qr_new_video_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_video
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/video/" + sc if sc else None
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
+    return view_video.view_video(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url, qrcard_id=qrcard_id,
+        video_data=_data,
+    )
+
+
+@app.route("/qr/new/special/save-draft", methods=["POST"])
+def qr_new_special_save_draft():
+    import json as _json
+    if "fk_user_id" not in session:
+        return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
+    from pytavia_modules.qr import qr_special_proc
+    response = qr_special_proc.qr_special_proc(app).save_draft(request, session, app.root_path)
+    if response.get("status") != "ok":
+        return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
+
+
+@app.route("/qr/new/special/design/<qrcard_id>", methods=["GET"])
+def qr_new_special_design_draft(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session.get("fk_user_id")
+    from pytavia_modules.view import view_special
+    _db = database.get_db_conn(config.mainDB)
+    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    sc = qrcard.get("short_code", "")
+    qr_encode_url = config.G_BASE_URL.rstrip("/") + "/special/" + sc if sc else None
+    _special_sections = qrcard.get("special_sections", [])
+    if isinstance(_special_sections, str):
+        import json as _json
+        try:
+            _special_sections = _json.loads(_special_sections)
+        except Exception:
+            _special_sections = []
+    return view_special.view_special(app).new_qr_design_html(
+        url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
+        short_code=sc, qr_encode_url=qr_encode_url,
+        special_sections=_special_sections, qrcard_id=qrcard_id,
+    )
+
+
 @app.route("/qr/save/allinone", methods=["POST"])
 def qr_save_allinone():
     if "fk_user_id" not in session:
@@ -3271,7 +3808,12 @@ def qr_save_allinone():
             short_code=request.form.get("short_code", ""),
             error_msg=response.get("message_desc", "Save failed."),
         )
-    _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+    _frame_id = request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", "")
+    _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), _frame_id)
+    _save_qr_composite(
+        app, session.get("fk_user_id"), response.get("qrcard_id", ""),
+        response.get("qr_encode_url", ""), _frame_id,
+    )
     from pytavia_modules.user import user_activity_proc as _uap_aio
     _uap_aio.user_activity_proc(app).log(
         fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -3303,7 +3845,7 @@ def qr_update_content_allinone(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_allinone_proc as _qra
     proc = _qra.qr_allinone_proc(app)
-    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id)
+    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_allinone_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -3330,7 +3872,7 @@ def qr_update_design_allinone(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_allinone_proc as _qra
     proc = _qra.qr_allinone_proc(app)
-    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id)
+    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_allinone_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -3345,7 +3887,7 @@ def qr_update_save_allinone(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_allinone_proc as _qra
     proc = _qra.qr_allinone_proc(app)
-    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id)
+    qrcard = proc.get_allinone_by_qrcard_id(qrcard_id, fk_user_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     design_update = {}
@@ -3356,14 +3898,43 @@ def qr_update_save_allinone(qrcard_id):
                 design_update[key] = val.strip()
     if request.form.get("Allinone_font_apply_all") in ("on", "true", "1", "yes"):
         design_update["Allinone_font_apply_all"] = True
-    if design_update:
-        database.get_db_conn(config.mainDB).db_qrcard.update_one(
-            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": design_update}
+    # Always activate when completing design step
+    design_update["status"] = "ACTIVE"
+    database.get_db_conn(config.mainDB).db_qrcard.update_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": design_update}
+    )
+    database.get_db_conn(config.mainDB).db_qrcard_allinone.update_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": design_update}, upsert=True
+    )
+    database.get_db_conn(config.mainDB).db_qr_index.update_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"status": "ACTIVE"}}
+    )
+    # Clean up any other DRAFT records with the same name (orphans from old sessions / double-submits)
+    _qr_name = qrcard.get("name", "")
+    if _qr_name:
+        _mgd = database.get_db_conn(config.mainDB)
+        _orphan_ids = [
+            d["qrcard_id"] for d in _mgd.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": _qr_name, "status": "DRAFT",
+                 "qrcard_id": {"$ne": qrcard_id}},
+                {"qrcard_id": 1}
+            )
+        ]
+        if _orphan_ids:
+            _mgd.db_qrcard.delete_many({"qrcard_id": {"$in": _orphan_ids}})
+            _mgd.db_qrcard_allinone.delete_many({"qrcard_id": {"$in": _orphan_ids}})
+            _mgd.db_qr_index.delete_many({"qrcard_id": {"$in": _orphan_ids}})
+
+    _frame_id = request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id)
+    _qr_encode_url = config.G_BASE_URL.rstrip("/") + "/allinone/" + (qrcard.get("short_code") or "")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _qr_encode_url, _frame_id)
+    if qrcard.get("status") == "DRAFT":
+        from pytavia_modules.user import user_activity_proc as _uap_aio2
+        _uap_aio2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=qrcard.get("name", ""), qr_type="allinone", source="create",
         )
-        database.get_db_conn(config.mainDB).db_qrcard_allinone.update_one(
-            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": design_update}, upsert=True
-        )
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 
@@ -3687,7 +4258,10 @@ def qr_update_save_special(qrcard_id):
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _frame_id_special = request.form.get("frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_special)
+    _enc_url_special = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_special", "/special/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_special, _frame_id_special)
     return redirect(url_for("user_qr_list"))
 
 
@@ -4194,7 +4768,10 @@ def qr_update_save_images(qrcard_id):
     params["images_hide_labels"] = request.form.get("images_hide_labels") in ("on", "true", "1", "yes")
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _frame_id_images = request.form.get("frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_images)
+    _enc_url_images = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_images", "/images/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_images, _frame_id_images)
     return redirect(url_for("user_qr_list"))
 
 
@@ -4375,7 +4952,10 @@ def qr_update_save_video(qrcard_id):
             
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
-    _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _frame_id_video = request.form.get("frame_id", "")
+    _update_frame_id(fk_user_id, qrcard_id, _frame_id_video)
+    _enc_url_video = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_video", "/video/")
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_video, _frame_id_video)
     return redirect(url_for("user_qr_list"))
 
 

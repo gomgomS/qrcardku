@@ -301,3 +301,34 @@ class qr_web_proc:
             }
         return {"success": True, "qrcard_id": result["message_data"]["qrcard_id"]}
 
+    def save_draft(self, request, session, root_path=None):
+        """Create web QR as DRAFT: calls complete_web_save then downgrades status."""
+        fk_user_id = session.get("fk_user_id")
+        if not fk_user_id:
+            return {"status": "error", "message_desc": "Not authenticated"}
+        qr_name = (request.form.get("qr_name") or "Untitled QR").strip()
+        # Delete orphaned DRAFTs with same name
+        try:
+            old_drafts = list(self.mgdDB.db_qrcard.find(
+                {"fk_user_id": fk_user_id, "name": qr_name, "status": "DRAFT"},
+                {"qrcard_id": 1}
+            ))
+            if old_drafts:
+                old_ids = [d["qrcard_id"] for d in old_drafts]
+                self.mgdDB.db_qrcard.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qrcard_web.delete_many({"qrcard_id": {"$in": old_ids}})
+                self.mgdDB.db_qr_index.delete_many({"qrcard_id": {"$in": old_ids}})
+        except Exception:
+            pass
+        result = self.complete_web_save(request, session)
+        if not result.get("success"):
+            return {"status": "error", "message_desc": result.get("error_msg", "Save failed.")}
+        qrcard_id = result["qrcard_id"]
+        self.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qrcard_web.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        self.mgdDB.db_qr_index.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": qrcard_id}, {"short_code": 1}) or {}
+        sc = qrcard.get("short_code", "")
+        qr_encode_url = config.G_BASE_URL.rstrip("/") + "/web/" + sc if sc else ""
+        return {"status": "ok", "qrcard_id": qrcard_id, "short_code": sc, "qr_encode_url": qr_encode_url}
+
