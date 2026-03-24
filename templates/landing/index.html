@@ -5,7 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRkartu - QR card Generator</title>
+    <link rel="icon" type="image/x-icon" href="/static/assets/img/favicon_io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/img/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/img/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/static/assets/img/favicon_io/site.webmanifest">
     <link href="/static/assets/vendor/css/inter-bold.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/assets/vendor/fontawesome/css/all.min.css">
     <style>
         :root {
             --primary-color: #EBA81B;
@@ -29,10 +35,15 @@
             line-height: 1.5;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             background-color: var(--bg-lighter);
             color: var(--text-main);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -75,7 +86,7 @@
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             border: none;
         }
@@ -83,13 +94,13 @@
         .btn-primary {
             background: var(--primary-color);
             color: var(--white);
-            box-shadow: 0 4px 14px 0 rgba(0, 82, 255, 0.39);
+            box-shadow: 0 4px 14px 0 rgba(235, 168, 27, 0.3);
         }
 
         .btn-primary:hover {
             background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 82, 255, 0.23);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(235, 168, 27, 0.4);
         }
 
         .btn-outline {
@@ -113,7 +124,7 @@
 
         /* 1. Header */
         header {
-            background: var(--white);
+            background: #10100c;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             position: sticky;
             top: 0;
@@ -163,7 +174,8 @@
         /* 2. Hero & QR Tool */
         .hero {
             padding: 80px 0;
-            background: linear-gradient(180deg, rgba(238, 242, 255, 1) 0%, rgba(248, 250, 255, 1) 100%);
+            background: radial-gradient(circle at 50% -20%, rgba(235,168,27,0.25) 0%, #10100c 50%, #181914 100%);
+            position: relative;
             text-align: center;
         }
 
@@ -185,9 +197,9 @@
         .qr-tool {
             max-width: 1000px;
             margin: 0 auto;
-            background: var(--white);
+            background: #1E1F18;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border-color);
             overflow: hidden;
             display: flex;
@@ -251,12 +263,12 @@
         .qr-form-group input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(235, 168, 27, 0.15);
         }
 
         .qr-preview {
-            background: var(--bg-lighter);
-            border: 2px dashed #cbd5e1;
+            background: var(--bg-light);
+            border: 2px dashed var(--border-color);
             border-radius: 12px;
             padding: 32px;
             display: flex;
@@ -326,7 +338,7 @@
         .section-title {
             text-align: center;
             margin-bottom: 60px;
-            max-width: 700px;
+            max-width: 800px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -334,13 +346,15 @@
         .section-title h2 {
             font-size: 2.5rem;
             font-weight: 800;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             letter-spacing: -0.02em;
         }
 
         .section-title p {
             font-size: 1.125rem;
             color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 0;
         }
 
         /* 3. CTA */
@@ -365,10 +379,17 @@
         .how-card {
             text-align: center;
             position: relative;
-            padding: 40px 20px;
+            padding: 40px 24px;
             background: #1E1F18;
             border-radius: 20px;
             border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .how-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
         }
 
         .how-number {
@@ -420,8 +441,16 @@
         }
 
         .type-card .icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--badge-bg);
+            color: var(--primary-color);
+            border-radius: 8px;
+            font-size: 24px;
         }
 
         .type-card span {
@@ -459,7 +488,8 @@
         }
 
         .phone-frame {
-            width: 300px;
+            width: 100%;
+            max-width: 300px;
             height: 600px;
             border: 12px solid #1f2937;
             border-radius: 40px;
@@ -469,6 +499,7 @@
             overflow: hidden;
             padding: 40px 20px;
             text-align: center;
+            box-sizing: border-box;
         }
 
         .phone-notch {
@@ -496,6 +527,13 @@
             border-radius: 24px;
             border: 1px solid var(--border-color);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-color: var(--primary-color);
         }
 
         .bento-large {
@@ -519,12 +557,13 @@
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border-color);
-            transition: transform 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .strategy-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.06);
+            transform: translateY(-6px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            border-color: var(--primary-color);
         }
 
         .strategy-img {
@@ -548,7 +587,7 @@
 
         /* 9. Visual Branding */
         .branding-section {
-            background: linear-gradient(135deg, #E8E5DC 0%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #181914 0%, #10100c 100%);
             color: white;
             text-align: center;
         }
@@ -736,6 +775,158 @@
             .footer-links {
                 grid-template-columns: 1fr 1fr;
             }
+
+            nav.nav-links {
+                display: none;
+            }
+            .auth-buttons a {
+                display: none !important;
+            }
+            .mobile-menu-btn {
+                display: block !important;
+            }
+            
+            .qr-tabs {
+                display: none !important;
+            }
+            .qr-mobile-dropdown {
+                display: block !important;
+            }
+            .mobile-layout {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Mobile Dropdown Custom CSS */
+        .qr-mobile-dropdown {
+            display: none;
+            position: relative;
+            padding: 16px 24px;
+            background: #181914;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .qr-mobile-dropdown-btn {
+            width: 100%;
+            padding: 12px 14px;
+            background: #1E1F18;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .qr-mobile-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 70px;
+            left: 24px;
+            right: 24px;
+            background: #1E1F18;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            z-index: 100;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .qr-mobile-dropdown-menu.open {
+            display: flex;
+        }
+
+        .qr-mobile-dropdown-item {
+            padding: 12px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .qr-mobile-dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .qr-mobile-dropdown-item:hover, .qr-mobile-dropdown-item.active {
+            background: var(--badge-bg);
+            color: var(--primary-color);
+        }
+
+        /* Mobile Menu Overlay CSS */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg-lighter);
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+
+        .mobile-menu-overlay.open {
+            transform: translateX(0);
+        }
+
+        .mobile-menu-overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .mobile-menu-overlay-links {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .mobile-menu-overlay-links a {
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        /* Shiny Text Animation */
+        .shiny-text {
+            background: linear-gradient(
+                120deg,
+                var(--primary-color) 0%,
+                var(--primary-color) 40%,
+                #ffffff 50%,
+                var(--primary-color) 60%,
+                var(--primary-color) 100%
+            );
+            background-size: 200% auto;
+            color: var(--primary-color);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
         }
     </style>
 </head>
@@ -745,7 +936,9 @@
     <!-- 1. Top Navigation Bar -->
     <header>
         <div class="container header-content">
-            <a href="/" class="logo"><span class="badge">QR</span> QRkartu</a>
+            <a href="/" class="logo" style="text-decoration: none;">
+                <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 64px; width: auto; display: block;">
+            </a>
             <nav class="nav-links">
                 <a href="#">Products</a>
                 <a href="#">Features</a>
@@ -757,9 +950,35 @@
                 <a href="/login" class="nav-links"
                     style="text-decoration: none; color: var(--text-dark); font-weight: 600;">Log In</a>
                 <a href="/register" class="btn btn-primary">Sign Up</a>
+                
+                <button class="mobile-menu-btn" id="open-mobile-menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+        <div class="mobile-menu-overlay-header">
+            <a href="/" style="text-decoration: none;">
+                <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 48px; width: auto;">
+            </a>
+            <button class="mobile-menu-btn" id="close-mobile-menu" style="display:block;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="mobile-menu-overlay-links">
+            <a href="#">Products</a>
+            <a href="#">Features</a>
+            <a href="#">Solutions</a>
+            <a href="#">Support</a>
+            <a href="#">Pricing</a>
+            <hr style="border-color: var(--border-color); margin: 8px 0;">
+            <a href="/login">Log In</a>
+            <a href="/register" class="btn btn-primary" style="text-align: center;">Sign Up</a>
+        </div>
+    </div>
 
     <!-- 2. Hero & QR Creator Tool -->
     <section class="hero">
@@ -770,30 +989,56 @@
 
             <div class="qr-tool">
                 <div class="qr-tabs">
-                    <div class="qr-tab active">🌐 Website</div>
-                    <div class="qr-tab">📄 PDF</div>
-                    <div class="qr-tab">👤 vCard Plus</div>
-                    <div class="qr-tab">🖼️ Images</div>
-                    <div class="qr-tab">📝 Text</div>
-                    <div class="qr-tab">🎥 Video</div>
-                    <div class="qr-tab">📱 Apps</div>
+                    <div class="qr-tab active"><i class="fa-solid fa-globe"></i> Website</div>
+                    <div class="qr-tab"><i class="fa-solid fa-font"></i> Text</div>
+                    <div class="qr-tab"><i class="fa-regular fa-file-pdf"></i> PDF</div>
+                    <div class="qr-tab"><i class="fa-regular fa-id-badge"></i> vCard Plus</div>
+                    <div class="qr-tab"><i class="fa-regular fa-images"></i> Images</div>
+                    <div class="qr-tab"><i class="fa-solid fa-play"></i> Video</div>
+                    <div class="qr-tab"><i class="fa-brands fa-app-store-ios"></i> Apps</div>
+                </div>
+                <div class="qr-mobile-dropdown">
+                    <div class="qr-mobile-dropdown-btn" id="qr-dropdown-btn">
+                        <span><i class="fa-solid fa-globe"></i> <span>Website</span></span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="qr-mobile-dropdown-menu" id="qr-dropdown-menu">
+                        <div class="qr-mobile-dropdown-item active"><i class="fa-solid fa-globe"></i> <span>Website</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-solid fa-font"></i> <span>Text</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-regular fa-file-pdf"></i> <span>PDF</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-regular fa-id-badge"></i> <span>vCard Plus</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-regular fa-images"></i> <span>Images</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-solid fa-play"></i> <span>Video</span></div>
+                        <div class="qr-mobile-dropdown-item"><i class="fa-brands fa-app-store-ios"></i> <span>Apps</span></div>
+                    </div>
                 </div>
                 <div class="qr-body">
                     <div class="qr-input">
-                        <div class="qr-form-group">
+                        <div id="input-website" class="qr-form-group">
                             <label>Submit URL</label>
-                            <input type="url" placeholder="https://yourwebsite.com">
+                            <input type="url" id="val-website" placeholder="https://yourwebsite.com" value="https://">
+                        </div>
+                        <div id="input-text" class="qr-form-group" style="display:none;">
+                            <label>Submit Text</label>
+                            <textarea id="val-text" placeholder="Enter your text here..." maxlength="200" rows="3" style="width:100%; padding:14px; border:1px solid var(--border-color); border-radius:8px; font-size:1rem; background:transparent; color:var(--text-main); font-family:inherit;"></textarea>
+                            <div style="font-size:12px; color:var(--text-muted); text-align:right; margin-top:4px;"><span id="text-count">0</span>/200</div>
                         </div>
                         <p class="text-muted" style="font-size: 0.9rem;">Your QR card will be generated automatically
                             after you enter the details.</p>
                     </div>
                     <div class="qr-preview">
-                        <div class="qr-placeholder">
-                            <div class="qr-pattern">
+                        <div class="qr-placeholder" id="qr-result-box" style="padding: 16px; background-color: white;">
+                            <img id="qr-live-img" src="" alt="QR" style="display:none; width: 100%; height: auto;">
+                            <div class="qr-pattern" id="qr-pattern-default">
                                 <div class="qr-pattern-bottom"></div>
                             </div>
                         </div>
-                        <span class="fw-bold">Scan ME!</span>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                            <span class="fw-bold">Scan ME!</span>
+                            <button id="btn-download-qr" class="btn btn-primary" style="display:none; padding: 10px 24px; font-size: 0.9rem; border-radius: 50px;">
+                                <i class="fa-solid fa-download"></i> Download QR
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -847,28 +1092,28 @@
             </div>
             <div class="type-grid">
                 <div class="type-card">
-                    <div class="icon">🌐</div><span>Website</span>
+                    <div class="icon"><i class="fa-solid fa-globe"></i></div><span>Website</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">👤</div><span>vCard Plus</span>
+                    <div class="icon"><i class="fa-solid fa-font"></i></div><span>Text</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">📄</div><span>PDF</span>
+                    <div class="icon"><i class="fa-regular fa-id-badge"></i></div><span>vCard Plus</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">🖼️</div><span>Images</span>
+                    <div class="icon"><i class="fa-regular fa-file-pdf"></i></div><span>PDF</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">🎥</div><span>Video</span>
+                    <div class="icon"><i class="fa-regular fa-images"></i></div><span>Images</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">📜</div><span>Menu</span>
+                    <div class="icon"><i class="fa-solid fa-play"></i></div><span>Video</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">🎵</div><span>Audio</span>
+                    <div class="icon"><i class="fa-solid fa-music"></i></div><span>Audio</span>
                 </div>
                 <div class="type-card">
-                    <div class="icon">📱</div><span>Apps</span>
+                    <div class="icon"><i class="fa-brands fa-app-store-ios"></i></div><span>Apps</span>
                 </div>
             </div>
         </div>
@@ -1073,9 +1318,9 @@
 
             <div class="footer-links">
                 <div style="padding-right: 40px;">
-                    <a href="/" class="logo"
-                        style="color: white; font-size: 28px; margin-bottom: 24px; display: inline-flex;"><span
-                            class="badge">QR</span> QRkartu</a>
+                    <a href="/" class="logo" style="text-decoration: none; margin-bottom: 24px; display: inline-block;">
+                        <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 64px; width: auto; display: block;">
+                    </a>
                     <p style="color: #a1a1aa; line-height: 1.6;">The complete QR card marketing platform for modern,
                         ambitious teams looking to connect physical and digital spaces seamlessly.</p>
                 </div>
@@ -1126,6 +1371,158 @@
             </div>
         </div>
     </footer>
+
+<script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.qr-tab');
+    const inputWebsite = document.getElementById('input-website');
+    const inputText = document.getElementById('input-text');
+    const valWebsite = document.getElementById('val-website');
+    const valText = document.getElementById('val-text');
+    const textCount = document.getElementById('text-count');
+    const qrImg = document.getElementById('qr-live-img');
+    const qrPattern = document.getElementById('qr-pattern-default');
+    const btnDownload = document.getElementById('btn-download-qr');
+
+    let currentType = 'website';
+
+    function generateQR() {
+        let content = '';
+        if (currentType === 'website') {
+            content = valWebsite.value.trim();
+        } else if (currentType === 'text') {
+            content = valText.value.trim();
+        }
+
+        if (!content || content === 'https://') {
+            qrImg.style.display = 'none';
+            qrPattern.style.display = 'block';
+            btnDownload.style.display = 'none';
+            return;
+        }
+
+        QRCode.toDataURL(content, {
+            width: 300,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' }
+        }).then(url => {
+            qrPattern.style.display = 'none';
+            qrImg.style.display = 'block';
+            qrImg.src = url;
+            btnDownload.style.display = 'inline-block';
+        }).catch(err => console.error(err));
+    }
+
+    valWebsite.addEventListener('input', generateQR);
+    valText.addEventListener('input', function() {
+        textCount.textContent = this.value.length;
+        generateQR();
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const text = this.textContent.trim();
+            if (text.includes('Website')) {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                inputWebsite.style.display = 'block';
+                inputText.style.display = 'none';
+                currentType = 'website';
+                generateQR();
+            } else if (text.includes('Text')) {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                inputWebsite.style.display = 'none';
+                inputText.style.display = 'block';
+                currentType = 'text';
+                generateQR();
+            } else {
+                window.location.href = '/register';
+            }
+        });
+    });
+
+    const qrDropdownBtn = document.getElementById('qr-dropdown-btn');
+    const qrDropdownMenu = document.getElementById('qr-dropdown-menu');
+    const qrDropdownItems = document.querySelectorAll('.qr-mobile-dropdown-item');
+
+    if (qrDropdownBtn && qrDropdownMenu) {
+        qrDropdownBtn.addEventListener('click', () => {
+            qrDropdownMenu.classList.toggle('open');
+        });
+
+        qrDropdownItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const text = this.querySelector('span').textContent.trim();
+                const iconHTML = this.querySelector('i').outerHTML;
+                
+                qrDropdownItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                qrDropdownBtn.querySelector('span').innerHTML = iconHTML + ' <span>' + text + '</span>';
+                qrDropdownMenu.classList.remove('open');
+
+                if (text === 'Website') {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabs[0].classList.add('active');
+                    inputWebsite.style.display = 'block';
+                    inputText.style.display = 'none';
+                    currentType = 'website';
+                    generateQR();
+                } else if (text === 'Text') {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabs[1].classList.add('active');
+                    inputWebsite.style.display = 'none';
+                    inputText.style.display = 'block';
+                    currentType = 'text';
+                    generateQR();
+                } else {
+                    window.location.href = '/register';
+                }
+            });
+        });
+
+        // Close dropdown when outside click
+        document.addEventListener('click', function(event) {
+            if (!qrDropdownBtn.contains(event.target) && !qrDropdownMenu.contains(event.target)) {
+                qrDropdownMenu.classList.remove('open');
+            }
+        });
+    }
+
+    btnDownload.addEventListener('click', function() {
+        if (qrImg.src) {
+            const a = document.createElement('a');
+            a.href = qrImg.src;
+            a.download = 'qrkartu-code.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    });
+
+    // Mobile Menu Toggle Logic
+    const openMenuBtn = document.getElementById('open-mobile-menu');
+    const closeMenuBtn = document.getElementById('close-mobile-menu');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+
+    if (openMenuBtn && closeMenuBtn && mobileMenuOverlay) {
+        openMenuBtn.addEventListener('click', () => {
+            mobileMenuOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        });
+
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenuOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        });
+    }
+    
+    // Initial trigger
+    generateQR();
+});
+</script>
 </body>
 
 </html>
