@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRkartu - {{ page_title | default('User Dashboard') }}</title>
+    <link rel="icon" type="image/x-icon" href="/static/assets/img/favicon_io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/img/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/img/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/static/assets/img/favicon_io/site.webmanifest">
     <!-- Apply theme before paint to avoid flash -->
     <script>(function(){document.documentElement.setAttribute('data-theme',localStorage.getItem('qrku-theme')||'dark');})();</script>
     <!-- Use Google Fonts (Inter is close to the reference) -->
@@ -499,6 +504,30 @@
             .top-header { display: none !important; }
             .main-content { padding: 16px; }
         }
+
+        /* Shiny Text Animation */
+        .shiny-text {
+            background: linear-gradient(
+                120deg,
+                var(--text-main) 0%,
+                var(--text-main) 40%,
+                #ffffff 50%,
+                var(--text-main) 60%,
+                var(--text-main) 100%
+            );
+            background-size: 200% auto;
+            color: var(--text-main);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -508,8 +537,8 @@
 
     <!-- Sidebar -->
     <aside class="sidebar" id="main-sidebar">
-        <div class="sidebar-header">
-            <i class="fa-solid fa-qrcode"></i> QRkartu
+        <div class="sidebar-header" style="justify-content: flex-start;">
+            <img src="/static/assets/img/mainlogo.png" style="height: 38px; width: auto;" alt="QR">
         </div>
 
         <nav class="sidebar-nav">
@@ -563,8 +592,9 @@
     <div class="main-wrapper">
         <!-- Mobile top nav (always visible on mobile) -->
         <div class="mobile-nav-bar">
-            <div class="mobile-nav-logo"><i class="fa-solid fa-qrcode"></i></div>
-            <div class="mobile-nav-title">QRkartu</div>
+            <div class="mobile-nav-logo">
+                <img src="/static/assets/img/mainlogo.png" style="height: 32px; width: auto;" alt="QR">
+            </div>
             <button class="mobile-nav-toggle" id="sidebar-toggle-btn" aria-label="Toggle menu">
                 <i class="fa-solid fa-bars"></i>
             </button>

@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QRkartu - Create Account</title>
+    <link rel="icon" type="image/x-icon" href="/static/assets/img/favicon_io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/img/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/img/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/static/assets/img/favicon_io/site.webmanifest">
     <style>
         :root {
             --primary-blue: #EBA81B;
@@ -244,7 +249,12 @@
             align-items: center;
         }
 
-        /* Subtle glow light coming from top */
+        @keyframes pulseGlow {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
         .glow-light {
             position: absolute;
             top: -20%;
@@ -252,8 +262,9 @@
             transform: translateX(-50%);
             width: 80%;
             height: 100%;
-            background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.8) 0%, transparent 60%);
+            background: radial-gradient(ellipse at top, rgba(235, 168, 27, 0.15) 0%, transparent 60%);
             z-index: 0;
+            animation: pulseGlow 4s ease-in-out infinite;
         }
 
         .illustration-content {
@@ -264,6 +275,21 @@
         }
 
         /* Floating QR card */
+        @keyframes floatQR {
+            0% {
+                transform: translateY(0) rotate(-5deg);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            }
+            50% {
+                transform: translateY(-20px) rotate(-2deg);
+                box-shadow: 0 25px 40px rgba(0, 0, 0, 0.2);
+            }
+            100% {
+                transform: translateY(0) rotate(-5deg);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            }
+        }
+
         .floating-qr {
             width: 120px;
             height: 120px;
@@ -274,6 +300,7 @@
             padding: 16px;
             transform: rotate(-5deg);
             position: relative;
+            animation: floatQR 5s ease-in-out infinite;
         }
 
         .qr-grid {
@@ -482,14 +509,38 @@
                 max-width: 100%;
             }
         }
+
+        /* Shiny Text Animation */
+        .shiny-text {
+            background: linear-gradient(
+                120deg,
+                var(--text-dark) 0%,
+                var(--text-dark) 40%,
+                #ffffff 50%,
+                var(--text-dark) 60%,
+                var(--text-dark) 100%
+            );
+            background-size: 200% auto;
+            color: var(--text-dark);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
     </style>
 </head>
 
 <body>
 
     <div class="auth-container">
-        <a href="/" class="header-logo">
-            <span class="logo-icon">QR</span> QRkartu
+        <a href="/" class="header-logo" style="display: flex; justify-content: center;">
+            <img src="/static/assets/img/mainlogo.png" style="height: 48px; width: auto;" alt="QR">
         </a>
 
         <div class="auth-form-wrapper">
@@ -606,8 +657,8 @@
             </div>
 
             <div class="promo-text">
-                <h2>Generate unlimited QR codes</h2>
-                <p>Create various types of QR in just a few clicks.</p>
+                <h2 style="color: var(--primary-blue);">Simple to make, easy to share!</h2>
+                <p style="color: var(--text-dark);">Generate, customize, and manage your QR codes in just a few clicks.</p>
             </div>
 
             <div class="dots">

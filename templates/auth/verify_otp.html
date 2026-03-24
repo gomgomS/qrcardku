@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify OTP - QRkartu</title>
+    <link rel="icon" type="image/x-icon" href="/static/assets/img/favicon_io/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/assets/img/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/img/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/img/favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="/static/assets/img/favicon_io/site.webmanifest">
     <style>
         :root {
             --primary-blue: #EBA81B;
@@ -138,15 +143,47 @@
             font-size: 13px;
         }
 
-        label {
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 800;
             color: var(--text-dark);
-            font-weight: 600;
-            font-size: 14px;
+            text-decoration: none;
+            margin-bottom: 24px;
+        }
+
+        /* Shiny Text Animation */
+        .shiny-text {
+            background: linear-gradient(
+                120deg,
+                var(--text-dark) 0%,
+                var(--text-dark) 40%,
+                #ffffff 50%,
+                var(--text-dark) 60%,
+                var(--text-dark) 100%
+            );
+            background-size: 200% auto;
+            color: var(--text-dark);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="auth-container">
+        <a href="/" class="header-logo" style="display: flex; justify-content: center;">
+            <img src="/static/assets/img/mainlogo.png" style="height: 48px; width: auto;" alt="QR">
+        </a>
         <div class="auth-card">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 class="auth-title">Verify Your Account</h2>
