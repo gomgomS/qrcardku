@@ -171,6 +171,60 @@ def _update_frame_id(fk_user_id, qrcard_id, form_frame_id):
         pass
 
 
+def _save_custom_qr_image(fk_user_id, qrcard_id, qr_image_data, style_fields):
+    """Decode base64 PNG from client, upload to R2, store as qr_image_url in db_qrcard."""
+    if not qrcard_id or not qr_image_data:
+        return
+    try:
+        import io, base64
+        from pytavia_core import database as _db_mod, config as _cfg
+        from pytavia_modules.storage import r2_storage_proc as _r2_mod
+
+        # Strip data URI prefix if present
+        if "," in qr_image_data:
+            qr_image_data = qr_image_data.split(",", 1)[1]
+
+        img_bytes = base64.b64decode(qr_image_data)
+        buf = io.BytesIO(img_bytes)
+        buf.seek(0)
+
+        import time as _time
+        key = f"qr-images/{fk_user_id}/{qrcard_id}.png"
+        file_size = len(img_bytes)
+        url = _r2_mod.r2_storage_proc().upload_bytes(buf, key, content_type="image/png")
+        url = url + "?v=" + str(int(_time.time()))
+
+        # Track asset
+        try:
+            from pytavia_modules.user import asset_tracker_proc as _atp
+            _tracker = _atp.asset_tracker_proc()
+            _tracker.untrack_key(key)
+            _tracker.track(
+                fk_user_id=fk_user_id,
+                r2_key=key,
+                file_size=file_size,
+                qrcard_id=qrcard_id,
+                qr_type="qr_image",
+                file_name=f"{qrcard_id}.png",
+            )
+        except Exception:
+            pass
+
+        _db = _db_mod.get_db_conn(_cfg.mainDB)
+        update_fields = {"qr_image_url": url}
+        update_fields.update(style_fields or {})
+        _db.db_qrcard.update_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+            {
+                "$set": update_fields,
+                "$unset": {"qr_composite_url": ""},  # cleared; _save_qr_composite will rebuild if frame exists
+            },
+        )
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
+
 def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
     """Generate QR+frame composite image, upload to R2, store URL in db_qrcard.
     Runs synchronously so the composite is guaranteed ready on the next page load."""
@@ -202,14 +256,24 @@ def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
         if qr_w <= 0 or qr_h <= 0:
             return
 
-        # Generate QR code as PIL image
-        qr_obj = qrcode.QRCode(
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=10, border=2,
+        # Use custom styled QR if user saved one, otherwise generate plain QR
+        qr_record = _db.db_qrcard.find_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+            {"qr_image_url": 1},
         )
-        qr_obj.add_data(qr_encode_url)
-        qr_obj.make(fit=True)
-        qr_pil = qr_obj.make_image(fill_color="black", back_color="white").convert("RGBA")
+        custom_qr_url = qr_record.get("qr_image_url", "") if qr_record else ""
+        if custom_qr_url:
+            req_qr = _ureq.Request(custom_qr_url, headers={"User-Agent": "Mozilla/5.0"})
+            with _ureq.urlopen(req_qr, timeout=15) as resp_qr:
+                qr_pil = Image.open(io.BytesIO(resp_qr.read())).convert("RGBA")
+        else:
+            qr_obj = qrcode.QRCode(
+                error_correction=qrcode.constants.ERROR_CORRECT_H,
+                box_size=10, border=2,
+            )
+            qr_obj.add_data(qr_encode_url)
+            qr_obj.make(fit=True)
+            qr_pil = qr_obj.make_image(fill_color="black", back_color="white").convert("RGBA")
 
         # Load frame image from R2
         req = _ureq.Request(frame["image_url"], headers={"User-Agent": "Mozilla/5.0"})
@@ -238,11 +302,13 @@ def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
         buf.seek(0)
 
         # Upload to R2
+        import time as _time
         key = f"qr-composites/{fk_user_id}/{qrcard_id}.png"
         file_size = buf.getbuffer().nbytes
         url = _r2_mod.r2_storage_proc().upload_bytes(
             buf, key, content_type="image/png",
         )
+        url = url + "?v=" + str(int(_time.time()))
 
         # Track composite in db_qr_assets (replace old entry for same key)
         try:
@@ -537,6 +603,55 @@ def api_frames_default():
         })
     return jsonify(result)
 
+@app.route("/api/frames/svg-standard")
+def api_frames_svg_standard():
+    """Public API: returns SVG standard frames with QR-area coords extracted from svg-qr-frame.json."""
+    import os, re as _re, json as _json
+    json_path = os.path.join(os.path.dirname(__file__), "static", "json_file", "svg-qr-frame.json")
+    try:
+        with open(json_path, "r", encoding="utf-8") as _f:
+            raw_frames = _json.load(_f).get("frames", [])
+    except Exception:
+        return jsonify([])
+    result = []
+    for fr in raw_frames:
+        if fr.get("id") == "frame0":
+            continue
+        svg = fr.get("svg", "")
+        vb = _re.search(r'viewBox=["\']([^"\']+)["\']', svg)
+        if not vb:
+            continue
+        vb_vals = [float(x) for x in vb.group(1).split()]
+        vW, vH = vb_vals[2], vb_vals[3]
+        # Find the QR placeholder rect (fill: rgb(229,231,239) or #e5e7ef)
+        qr_rect = _re.search(
+            r'<rect([^>]*)(?:fill=["\']#e5e7ef["\']|style=["\'][^"\']*rgb\(229[^)]+\)[^"\']*["\'])([^>]*)>',
+            svg, _re.I
+        )
+        if not qr_rect:
+            continue
+        full = qr_rect.group(0)
+        x_m = _re.search(r'\bx=["\']?([0-9.]+)', full)
+        y_m = _re.search(r'\by=["\']?([0-9.]+)', full)
+        w_m = _re.search(r'\bwidth=["\']?([0-9.]+)', full)
+        h_m = _re.search(r'\bheight=["\']?([0-9.]+)', full)
+        if not all([x_m, y_m, w_m, h_m]):
+            continue
+        result.append({
+            "id"   : fr["id"],
+            "name" : fr["name"],
+            "svg"  : svg,
+            "qr_x" : round(float(x_m.group(1)) / vW, 4),
+            "qr_y" : round(float(y_m.group(1)) / vH, 4),
+            "qr_w" : round(float(w_m.group(1)) / vW, 4),
+            "qr_h" : round(float(h_m.group(1)) / vH, 4),
+            "vW"   : vW,
+            "vH"   : vH,
+        })
+    resp = jsonify(result)
+    resp.headers["Cache-Control"] = "public, max-age=3600"
+    return resp
+
 @app.route("/api/proxy-image")
 def api_proxy_image():
     """Serve an R2 image via boto3 for canvas CORS use. Supports ?download=1&name=file.png."""
@@ -546,7 +661,7 @@ def api_proxy_image():
     allowed_base = config.R2_PUBLIC_BASE_URL.rstrip("/")
     if not url.startswith(allowed_base + "/"):
         return "Forbidden", 403
-    key = url[len(allowed_base) + 1:]
+    key = url[len(allowed_base) + 1:].split("?")[0]
     if not key:
         return "Bad Request", 400
     try:
@@ -579,15 +694,17 @@ def api_qr_download(qrcard_id):
         _db  = _db_mod.get_db_conn(_cfg.mainDB)
         doc  = _db.db_qrcard.find_one(
             {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
-            {"qr_composite_url": 1, "name": 1, "_id": 0},
+            {"qr_composite_url": 1, "qr_image_url": 1, "name": 1, "_id": 0},
         )
-        if not doc or not doc.get("qr_composite_url"):
+        if not doc:
             return "Not found", 404
-        composite_url = doc["qr_composite_url"]
+        image_url = doc.get("qr_composite_url") or doc.get("qr_image_url")
+        if not image_url:
+            return "Not found", 404
         allowed_base  = _cfg.R2_PUBLIC_BASE_URL.rstrip("/")
-        if not composite_url.startswith(allowed_base + "/"):
+        if not image_url.startswith(allowed_base + "/"):
             return "Forbidden", 403
-        key = composite_url[len(allowed_base) + 1:]
+        key = image_url[len(allowed_base) + 1:].split("?")[0]
         r2  = _r2_mod.r2_storage_proc()
         obj = r2._client.get_object(Bucket=r2._bucket, Key=key)
         data = obj["Body"].read()
@@ -613,15 +730,17 @@ def api_qr_preview(qrcard_id):
         _db  = _db_mod.get_db_conn(_cfg.mainDB)
         doc  = _db.db_qrcard.find_one(
             {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id},
-            {"qr_composite_url": 1, "_id": 0},
+            {"qr_composite_url": 1, "qr_image_url": 1, "_id": 0},
         )
-        if not doc or not doc.get("qr_composite_url"):
+        if not doc:
             return "Not found", 404
-        composite_url = doc["qr_composite_url"]
+        image_url = doc.get("qr_composite_url") or doc.get("qr_image_url")
+        if not image_url:
+            return "Not found", 404
         allowed_base  = _cfg.R2_PUBLIC_BASE_URL.rstrip("/")
-        if not composite_url.startswith(allowed_base + "/"):
+        if not image_url.startswith(allowed_base + "/"):
             return "Forbidden", 403
-        key = composite_url[len(allowed_base) + 1:]
+        key = image_url[len(allowed_base) + 1:].split("?")[0]
         r2  = _r2_mod.r2_storage_proc()
         obj = r2._client.get_object(Bucket=r2._bucket, Key=key)
         data = obj["Body"].read()
@@ -971,6 +1090,13 @@ def qr_update_save_pdf(qrcard_id):
             )
         return redirect(url_for("user_qr_list"))
     _update_frame_id(_fk_pdf, qrcard_id, _frame_id_pdf)
+    _save_custom_qr_image(_fk_pdf, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, _fk_pdf, qrcard_id, _enc_url_pdf, _frame_id_pdf)
     return redirect(url_for("user_qr_list"))
 
@@ -1001,6 +1127,13 @@ def qr_update_save_web(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_web)
     _enc_url_web = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_web", "/web/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_web, _frame_id_web)
     return redirect(url_for("user_qr_list"))
 
@@ -1068,6 +1201,13 @@ def qr_update_save_ecard(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_ecard)
     _enc_url_ecard = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_ecard", "/ecard/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_ecard, _frame_id_ecard)
     return redirect(url_for("user_qr_list"))
 
@@ -1487,6 +1627,16 @@ def qr_update_content_web(qrcard_id):
             return view_update_web.view_update_web(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists. Please choose a unique name.", base_url=config.G_BASE_URL
             )
+        # If user confirmed URL change, wipe saved custom QR so design page starts fresh
+        if request.form.get("reset_qr_style") == "1":
+            database.get_db_conn(_cfg.mainDB).db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": {"qr_image_url": "", "qr_composite_url": "",
+                            "qr_dot_style": "", "qr_corner_style": "",
+                            "qr_dot_color": "", "qr_bg_color": ""}},
+            )
+            qrcard.pop("qr_image_url", None)
+            qrcard.pop("qr_composite_url", None)
         _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, None)
         qrcard["url_content"] = url_content
         qrcard["name"] = qr_name
@@ -1948,6 +2098,15 @@ def qr_save_text():
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
         _qid = result.get("message_data", {}).get("qrcard_id")
         _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        _enc_url_s = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": _qid}, {"url_content": 1}) or {}).get("url_content", "")
+        _save_custom_qr_image(session.get("fk_user_id"), _qid, request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), _qid, _enc_url_s, request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_t
         _uap_t.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -2036,6 +2195,15 @@ def qr_save_web_static():
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
         _qid = result.get("message_data", {}).get("qrcard_id")
         _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        _enc_url_s = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": _qid}, {"url_content": 1}) or {}).get("url_content", "")
+        _save_custom_qr_image(session.get("fk_user_id"), _qid, request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), _qid, _enc_url_s, request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_ws
         _uap_ws.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -2098,6 +2266,15 @@ def qr_update_save_web_static(qrcard_id):
         "name": qr_name, "url_content": url_content,
     })
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _enc_url_u = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id}, {"url_content": 1}) or {}).get("url_content", "")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/update/text/<qrcard_id>", methods=["GET", "POST"])
@@ -2139,6 +2316,15 @@ def qr_update_save_text(qrcard_id):
         "name": qr_name, "text_content": text_content,
     })
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _enc_url_u = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id}, {"url_content": 1}) or {}).get("url_content", "")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/wa-static")
@@ -2217,6 +2403,15 @@ def qr_save_wa_static():
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
         _qid = result.get("message_data", {}).get("qrcard_id")
         _update_frame_id(fk_user_id, _qid, request.form.get("frame_id", ""))
+        _enc_url_s = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": _qid}, {"url_content": 1}) or {}).get("url_content", "")
+        _save_custom_qr_image(fk_user_id, _qid, request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, fk_user_id, _qid, _enc_url_s, request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_wa
         _uap_wa.user_activity_proc(app).log(
             fk_user_id=fk_user_id, action="CREATE_QR",
@@ -2278,6 +2473,15 @@ def qr_update_save_wa_static(qrcard_id):
         "name": qr_name, "wa_phone": wa_phone, "wa_message": wa_message,
     })
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _enc_url_u = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id}, {"url_content": 1}) or {}).get("url_content", "")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/vcard-static")
@@ -2348,6 +2552,15 @@ def qr_save_vcard_static():
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
         _qid = result.get("message_data", {}).get("qrcard_id")
         _update_frame_id(session.get("fk_user_id"), _qid, request.form.get("frame_id", ""))
+        _enc_url_s = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": _qid}, {"url_content": 1}) or {}).get("url_content", "")
+        _save_custom_qr_image(session.get("fk_user_id"), _qid, request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), _qid, _enc_url_s, request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_vc
         _uap_vc.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -2435,6 +2648,15 @@ def qr_update_save_vcard_static(qrcard_id):
         "vcard_website": _vd("vcard_website"),
     })
     _update_frame_id(session.get("fk_user_id"), qrcard_id, request.form.get("frame_id", ""))
+    _enc_url_u = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id}, {"url_content": 1}) or {}).get("url_content", "")
+    _save_custom_qr_image(session.get("fk_user_id"), qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
+    _save_qr_composite(app, session.get("fk_user_id"), qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/email-static")
@@ -2521,6 +2743,15 @@ def qr_save_email_static():
     if result.get("message_action") == "ADD_QRCARD_SUCCESS":
         _qid = result.get("message_data", {}).get("qrcard_id")
         _update_frame_id(fk_user_id, _qid, request.form.get("frame_id", ""))
+        _enc_url_s = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": _qid}, {"url_content": 1}) or {}).get("url_content", "")
+        _save_custom_qr_image(fk_user_id, _qid, request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, fk_user_id, _qid, _enc_url_s, request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_em
         _uap_em.user_activity_proc(app).log(
             fk_user_id=fk_user_id, action="CREATE_QR",
@@ -2590,6 +2821,15 @@ def qr_update_save_email_static(qrcard_id):
         "email_body": email_body,
     })
     _update_frame_id(fk_user_id, qrcard_id, request.form.get("frame_id", ""))
+    _enc_url_u = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id}, {"url_content": 1}) or {}).get("url_content", "")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
+    _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/web")
@@ -2839,6 +3079,14 @@ def qr_save_pdf():
     response = qr_pdf_proc.qr_pdf_proc(app).complete_pdf_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_pdf
         _uap_pdf.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -2867,6 +3115,14 @@ def qr_save_web():
     response = qr_web_proc.qr_web_proc(app).complete_web_save(request, session)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_web
         _uap_web.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -2895,6 +3151,14 @@ def qr_save_ecard():
     response = qr_ecard_proc.qr_ecard_proc(app).complete_ecard_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_ec
         _uap_ec.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -3050,6 +3314,14 @@ def qr_save_links():
     response = qr_links_proc.qr_links_proc(app).complete_links_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
         from pytavia_modules.user import user_activity_proc as _uap_lk
         _uap_lk.user_activity_proc(app).log(
             fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
@@ -3217,6 +3489,13 @@ def qr_update_save_links(qrcard_id):
     _frame_id_links = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_links)
     _enc_url_links = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_links", "/links/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_links, _frame_id_links)
     return redirect(url_for("user_qr_list"))
 
@@ -3354,6 +3633,14 @@ def qr_save_sosmed():
     response = qr_sosmed_proc.qr_sosmed_proc(app).complete_sosmed_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+            "qr_dot_style": request.form.get("qr_dot_style", "square"),
+            "qr_corner_style": request.form.get("qr_corner_style", "square"),
+            "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+            "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+        })
+        _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
         return redirect(url_for("user_qr_list"))
     return view_sosmed.view_sosmed(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -3509,6 +3796,13 @@ def qr_update_save_sosmed(qrcard_id):
     _frame_id_sosmed = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_sosmed)
     _enc_url_sosmed = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_sosmed", "/sosmed/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_sosmed, _frame_id_sosmed)
     return redirect(url_for("user_qr_list"))
 
@@ -3985,6 +4279,13 @@ def qr_save_allinone():
         )
     _frame_id = request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", "")
     _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), _frame_id)
+    _save_custom_qr_image(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(
         app, session.get("fk_user_id"), response.get("qrcard_id", ""),
         response.get("qr_encode_url", ""), _frame_id,
@@ -4102,6 +4403,13 @@ def qr_update_save_allinone(qrcard_id):
 
     _frame_id = request.form.get("frame_id", "") or request.form.get("Allinone_frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id)
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _qr_encode_url = config.G_BASE_URL.rstrip("/") + "/allinone/" + (qrcard.get("short_code") or "")
     _save_qr_composite(app, fk_user_id, qrcard_id, _qr_encode_url, _frame_id)
     if qrcard.get("status") == "DRAFT":
@@ -4436,6 +4744,13 @@ def qr_update_save_special(qrcard_id):
     _frame_id_special = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_special)
     _enc_url_special = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_special", "/special/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_special, _frame_id_special)
     return redirect(url_for("user_qr_list"))
 
@@ -4946,6 +5261,13 @@ def qr_update_save_images(qrcard_id):
     _frame_id_images = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_images)
     _enc_url_images = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_images", "/images/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_images, _frame_id_images)
     return redirect(url_for("user_qr_list"))
 
@@ -5130,6 +5452,13 @@ def qr_update_save_video(qrcard_id):
     _frame_id_video = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_video)
     _enc_url_video = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_video", "/video/")
+    _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
+        "qr_dot_style": request.form.get("qr_dot_style", "square"),
+        "qr_corner_style": request.form.get("qr_corner_style", "square"),
+        "qr_dot_color": request.form.get("qr_dot_color", "#000000"),
+        "qr_bg_color": request.form.get("qr_bg_color", "#ffffff"),
+        "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
+    })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_video, _frame_id_video)
     return redirect(url_for("user_qr_list"))
 

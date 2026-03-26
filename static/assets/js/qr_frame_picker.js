@@ -133,8 +133,93 @@
             }
         }
 
-        /* Expose selectFrame globally so dynamically-added frames can use it */
+        /* ── SVG Standard Frame support ──────────────────────────────────── */
+        var _currentSvgFrame = null;
+
+        function applySvgStandardFrame(frame) {
+            var vRatio = frame.vH / frame.vW;
+            var W = 200;
+            var H = Math.round(W * vRatio);
+
+            frameDiv.className      = 'qr-preview-frame frame-none';
+            frameDiv.style.position = 'relative';
+            frameDiv.style.width    = W + 'px';
+            frameDiv.style.height   = H + 'px';
+            frameDiv.style.padding  = '0';
+            frameDiv.style.overflow = 'hidden';
+            frameDiv.style.background = 'transparent';
+            frameDiv.style.display  = 'block';
+
+            var caption = document.getElementById('frame-caption');
+            if (caption) caption.style.display = 'none';
+
+            var old = frameDiv.querySelector('.frame-img-overlay');
+            if (old) old.remove();
+
+            /* Render SVG as an img via blob URL */
+            var svgBlob = new Blob([frame.svg], { type: 'image/svg+xml' });
+            var svgUrl  = URL.createObjectURL(svgBlob);
+            var overlay = document.createElement('img');
+            overlay.className = 'frame-img-overlay';
+            overlay.src = svgUrl;
+            overlay.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1;';
+            overlay.onload = function () { URL.revokeObjectURL(svgUrl); };
+            frameDiv.insertBefore(overlay, frameDiv.firstChild);
+
+            var qrInner = frameDiv.querySelector('.qr-inner');
+            if (qrInner) {
+                qrInner.style.position    = 'absolute';
+                qrInner.style.left        = (frame.qr_x * 100) + '%';
+                qrInner.style.top         = (frame.qr_y * 100) + '%';
+                qrInner.style.width       = (frame.qr_w * 100) + '%';
+                qrInner.style.height      = (frame.qr_h * 100) + '%';
+                qrInner.style.maxWidth    = 'none';
+                qrInner.style.aspectRatio = 'auto';
+                qrInner.style.zIndex      = '2';
+                qrInner.style.display     = 'block';
+                qrInner.style.overflow    = 'hidden';
+            }
+
+            if (plainQrDataUrl) qrImg.src = plainQrDataUrl;
+            qrImg.style.width     = '100%';
+            qrImg.style.height    = '100%';
+            qrImg.style.maxWidth  = 'none';
+            qrImg.style.maxHeight = 'none';
+            qrImg.style.objectFit = 'contain';
+            qrImg.style.display   = 'block';
+
+            _currentSvgFrame = frame;
+        }
+
+        function selectSvgFrame(el, frame) {
+            document.querySelectorAll('.frame-option, .frame-option-custom, .frame-option-svg').forEach(function (s) {
+                s.classList.remove('active');
+            });
+            el.classList.add('active');
+            if (frameInput) frameInput.value = '';   // no DB frame — composite baked client-side
+            applySvgStandardFrame(frame);
+        }
+
+        /* Override selectFrame to also clear _currentSvgFrame when a non-SVG frame is picked */
+        var _origSelectFrame = selectFrame;
+        selectFrame = function (el) {
+            _currentSvgFrame = null;
+            document.querySelectorAll('.frame-option-svg').forEach(function (s) { s.classList.remove('active'); });
+            _origSelectFrame(el);
+        };
         window.qfpSelectFrame = selectFrame;
+
+        /* Expose current SVG frame for submit handler */
+        window.qfpGetCurrentSvgFrame = function () { return _currentSvgFrame; };
+
+        /* Expose selectSvgFrame globally */
+        window.qfpSelectSvgFrame = selectSvgFrame;
+
+        /* Allow external code to re-render current SVG frame with modified data (e.g. after color/text change) */
+        window.qfpUpdateSvgFrame = function (modifiedFrame) {
+            _currentSvgFrame = modifiedFrame;
+            applySvgStandardFrame(modifiedFrame);
+        };
 
         /* Attach click handlers to preset frame options */
         document.querySelectorAll('.frame-option').forEach(function (item) {

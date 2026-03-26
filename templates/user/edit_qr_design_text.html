@@ -86,6 +86,17 @@
         .preview-container { position: static; }
         .mobile-bottom-bar { display: flex; }
     }
+    /* ── QR Code Style picker ── */
+    .qrs-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; margin-top: 4px; }
+    .qr-dot-grid, .qr-corner-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; margin-bottom: 4px; }
+    .qr-shape-thumb { width: 36px; height: 36px; flex-shrink: 0; }
+    .qrs-color-row { display: flex; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+    .qrs-color-item { display: flex; flex-direction: column; gap: 6px; }
+    .qrs-color-item label { font-size: 12px; font-weight: 600; color: var(--text-main); }
+    .qrs-color-swatch-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; position: relative; }
+    .qrs-color-swatch-wrap input[type="color"] { position: absolute; opacity: 0; width: 28px; height: 28px; cursor: pointer; }
+    .qrs-color-swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; }
+    .qrs-color-hex { font-size: 12px; color: var(--text-muted); font-family: monospace; }
 </style>
 {% endblock %}
 
@@ -123,6 +134,11 @@
     <input type="hidden" name="text_content" value="{{ text_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
     <input type="hidden" name="frame_id" id="frame_id" value="">
+    <input type="hidden" name="qr_dot_style"    id="qr_dot_style_input"    value="square">
+    <input type="hidden" name="qr_corner_style" id="qr_corner_style_input" value="square">
+    <input type="hidden" name="qr_dot_color"    id="qr_dot_color_input"    value="#000000">
+    <input type="hidden" name="qr_bg_color"     id="qr_bg_color_input"     value="#ffffff">
+    <input type="hidden" name="qr_image_data"   id="qr_image_data" value="">
 </form>
 
 <div class="new-qr-container">
@@ -197,7 +213,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/assets/vendor/qrcode/qrcode.min.js"></script>
+<script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
 <script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
     function toggleMobilePreview() {
@@ -208,12 +224,42 @@
     }
 </script>
 <script>
+    // ── QR Code Styling — globals ─────────────────────────────────────────────
+    var _qrFinalUrl = '';
+    var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
+    var _qrStyling = null;
+
+    function _buildQROpts() {
+        return {
+            width: 400, height: 400, type: 'canvas',
+            data: _qrFinalUrl || 'https://QRkartu',
+            margin: 8,
+            qrOptions: { errorCorrectionLevel: 'H' },
+            dotsOptions:          { color: _qrStyle.dotColor, type: _qrStyle.dots },
+            backgroundOptions:    { color: _qrStyle.bgColor },
+            cornersSquareOptions: { type: _qrStyle.corners },
+            cornersDotOptions:    { type: _qrStyle.corners === 'dot' ? 'dot' : 'square' },
+        };
+    }
+
+    function refreshQRPreview() {
+        if (!window.QRCodeStyling) return;
+        if (!_qrStyling) {
+            _qrStyling = new QRCodeStyling(_buildQROpts());
+        } else {
+            _qrStyling.update(_buildQROpts());
+        }
+        _qrStyling.getRawData('png').then(function(blob) {
+            var url = URL.createObjectURL(blob);
+            document.getElementById('qrcode-img').src = url;
+        }).catch(function(e){ console.error('QR style:', e); });
+    }
+
 document.addEventListener('DOMContentLoaded', function () {
     var textContent = {{ text_content | tojson if text_content else '""' }};
     var finalText = textContent || 'Hello World';
-    QRCode.toDataURL(finalText, { width: 400, margin: 2, color: { dark: '#000000', light: '#ffffff' }, errorCorrectionLevel: 'M' })
-        .then(function(url) { document.getElementById('qrcode-img').src = url; })
-        .catch(function(err) { console.error(err); });
+    _qrFinalUrl = finalText;
+    refreshQRPreview();
 
     document.querySelectorAll('.collapse-header').forEach(function(h) {
         h.addEventListener('click', function() {
@@ -242,4 +288,38 @@ document.addEventListener('DOMContentLoaded', function () {
     if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
 });
 </script>
+<script>
+// ── QR Style picker handlers ──────────────────────────────────────────────────
+function selectDotStyle(btn, style) {
+    document.querySelectorAll('#qr-dot-grid .grid-item').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    _qrStyle.dots = style;
+    document.getElementById('qr_dot_style_input').value = style;
+    refreshQRPreview();
+}
+
+function selectCornerStyle(btn, style) {
+    document.querySelectorAll('#qr-corner-grid .grid-item').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    _qrStyle.corners = style;
+    document.getElementById('qr_corner_style_input').value = style;
+    refreshQRPreview();
+}
+
+function onQRColorChange(target, value) {
+    if (target === 'dot') {
+        _qrStyle.dotColor = value;
+        document.getElementById('qr-dot-swatch').style.background = value;
+        document.getElementById('qr-dot-hex').textContent = value;
+        document.getElementById('qr_dot_color_input').value = value;
+    } else {
+        _qrStyle.bgColor = value;
+        document.getElementById('qr-bg-swatch').style.background = value;
+        document.getElementById('qr-bg-hex').textContent = value;
+        document.getElementById('qr_bg_color_input').value = value;
+    }
+    refreshQRPreview();
+}
+</script>
+
 {% endblock %}

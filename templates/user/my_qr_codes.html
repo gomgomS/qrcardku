@@ -817,24 +817,18 @@
                     }
                 }
 
-                if (qrcardId && compositeUrl) {
-                    /* Use server-proxied preview endpoint — always fresh, bypasses browser/CDN cache */
-                    currentCompositeUrl = '/api/qr/preview/' + qrcardId;
+                if (qrcardId) {
+                    /* Always use server-proxied endpoint — serves composite if exists, else custom QR image */
+                    var proxyUrl = '/api/qr/preview/' + qrcardId;
+                    currentCompositeUrl = proxyUrl;
                     currentQrcardId = qrcardId;
-                    showPlainQR('/api/qr/preview/' + qrcardId);
-                } else if (qrcardId && frameId) {
-                    /* No composite yet — show CSS overlay, then try server */
-                    renderQR(null);
-                    fetch('/api/qr/composite-url/' + qrcardId)
-                        .then(function(r) { return r.json(); })
-                        .then(function(data) {
-                            if (data.url && overlay.classList.contains('show')) {
-                                currentCompositeUrl = '/api/qr/preview/' + qrcardId;
-                                trigger.setAttribute('data-composite-url', data.url);
-                                showPlainQR('/api/qr/preview/' + qrcardId);
-                            }
-                        })
-                        .catch(function() {});
+                    var proxyImg = new Image();
+                    proxyImg.onload = function() { showPlainQR(proxyUrl); };
+                    proxyImg.onerror = function() {
+                        /* Proxy returned 404 (no image saved yet) — fall back to plain QR generation */
+                        renderQR(null);
+                    };
+                    proxyImg.src = proxyUrl;
                 } else {
                     renderQR(null);
                 }
