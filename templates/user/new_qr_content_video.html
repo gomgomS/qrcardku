@@ -1130,15 +1130,30 @@
 
         // ── Video Link Logic ──
         var itemsList = document.getElementById('video-items-list');
-        var galleryVideos = []; // [{type: 'link'|'upload', url: '', name: '', desc: '', fileIndex: null}]
-        var uploadedFiles = []; // Array of actual File objects
+        var galleryVideos = window.galleryVideos = []; // [{type: 'link'|'upload', url: '', name: '', desc: '', fileIndex: null}]
+        var uploadedFiles = window.uploadedFiles = []; // Array of actual File objects
         var videoBlobUrls = {}; // fileIndex → blob URL
 
         function getBlobSrc(vid) {
             return (vid.fileIndex !== null && videoBlobUrls[vid.fileIndex]) ? videoBlobUrls[vid.fileIndex] : '';
         }
 
-        function buildVideoPlayerHtml(src, forPreview) {
+        var _MIME_MAP = { 'webm': 'video/webm', 'ogg': 'video/ogg', 'ogv': 'video/ogg', 'mov': 'video/quicktime', 'avi': 'video/x-msvideo', 'mkv': 'video/x-matroska' };
+        var _UNSUPPORTED_BROWSER = { 'video/quicktime': true, 'video/x-msvideo': true, 'video/x-matroska': true };
+
+        function getVideoMimeType(vid) {
+            if (vid && vid.type === 'upload' && vid.fileIndex !== null) {
+                var f = uploadedFiles[vid.fileIndex];
+                if (f && f.type) return f.type;
+                var nm = (f && f.name) ? f.name : (vid.url || '');
+                var ext = nm.split('.').pop().toLowerCase();
+                return _MIME_MAP[ext] || 'video/mp4';
+            }
+            var ext = (vid && vid.url ? vid.url : '').split('?')[0].split('.').pop().toLowerCase();
+            return _MIME_MAP[ext] || 'video/mp4';
+        }
+
+        function buildVideoPlayerHtml(src, forPreview, mimeType) {
             if (!src) {
                 return '<div style="width:100%;aspect-ratio:16/9;background:#000;display:flex;align-items:center;justify-content:center;color:white;">'
                      + '<i class="fa-solid fa-play" style="font-size:' + (forPreview ? '18px' : '28px') + ';opacity:0.5;"></i></div>';
@@ -1146,8 +1161,14 @@
             if (src.indexOf('youtube.com') !== -1 || src.indexOf('youtu.be') !== -1 || src.indexOf('vimeo.com') !== -1) {
                 return '<iframe src="' + escapeHtml(src) + '" style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;" allowfullscreen loading="lazy"></iframe>';
             }
-            return '<video src="' + escapeHtml(src) + '" controls style="width:100%;aspect-ratio:16/9;border:none;display:block;background:#000;'
-                 + (forPreview ? 'max-height:80px;' : 'max-height:140px;') + '"></video>';
+            if (mimeType && _UNSUPPORTED_BROWSER[mimeType]) {
+                var ext = src.split('?')[0].split('.').pop().toUpperCase();
+                return '<div style="width:100%;aspect-ratio:16/9;background:#111827;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f59e0b;gap:6px;padding:8px;text-align:center;">'
+                     + '<i class="fa-solid fa-triangle-exclamation" style="font-size:' + (forPreview ? '16px' : '24px') + ';"></i>'
+                     + '<span style="font-size:' + (forPreview ? '9px' : '12px') + ';">.' + escapeHtml(ext) + ' not supported by browsers.<br>Re-upload as MP4 or WebM.</span></div>';
+            }
+            var style = 'width:100%;aspect-ratio:16/9;display:block;background:#000;' + (forPreview ? 'max-height:120px;' : 'max-height:160px;');
+            return '<video controls src="' + escapeHtml(src) + '" style="' + style + '" preload="metadata"></video>';
         }
 
         function renderVideoItems() {
@@ -1160,11 +1181,11 @@
                 var sourceField = '';
                 if (vid.type === 'link') {
                     var linkSrc = vid.url;
-                    sourceField = buildVideoPlayerHtml(linkSrc, false)
+                    sourceField = buildVideoPlayerHtml(linkSrc, false, getVideoMimeType(vid))
                         + '<input type="text" placeholder="Video URL (YouTube, Vimeo, etc.)" value="' + escapeHtml(vid.url) + '" oninput="updateVideoUrl(' + idx + ',this.value);rerenderVideoItem(' + idx + ')" style="margin-top:6px;">';
                 } else {
                     var blobSrc = getBlobSrc(vid);
-                    sourceField = buildVideoPlayerHtml(blobSrc, false)
+                    sourceField = buildVideoPlayerHtml(blobSrc, false, getVideoMimeType(vid))
                         + '<div style="padding:6px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;margin-top:6px;background:#f3f4f6;display:flex;align-items:center;gap:6px;">'
                         + '<i class="fa-solid fa-file-video" style="color:#6b7280;"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(vid.url) + '</span></div>';
                 }
@@ -1235,7 +1256,7 @@
                 var item = document.createElement('div');
                 item.className = 'preview-gallery-item';
                 item.style.cssText = 'background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;flex-direction:column;';
-                var html = buildVideoPlayerHtml(src, true);
+                var html = buildVideoPlayerHtml(src, true, getVideoMimeType(vid));
                 if (vid.name || vid.desc) {
                     html += '<div style="padding:6px 8px;">';
                     if (vid.name) html += '<div style="font-size:10px;font-weight:600;color:#111827;margin-bottom:2px;">' + escapeHtml(vid.name) + '</div>';
@@ -1494,7 +1515,18 @@ function saveAndNext() {
     msgEl.textContent = 'Saving your content\u2026';
     subEl.textContent = 'Please wait, uploading assets to the cloud';
     var form = document.getElementById('content-form');
-    var fd = new FormData(form);
+    // Build FormData without the file input, then append all upload files in gallery order
+    var fd = new FormData();
+    new FormData(form).forEach(function(val, key) {
+        if (key !== 'video_files') fd.append(key, val);
+    });
+    var _gv = window.galleryVideos || [];
+    var _uf = window.uploadedFiles || [];
+    _gv.forEach(function(vid) {
+        if (vid.type === 'upload' && vid.fileIndex !== null && _uf[vid.fileIndex]) {
+            fd.append('video_files', _uf[vid.fileIndex], _uf[vid.fileIndex].name);
+        }
+    });
     fetch('/qr/new/video/save-draft', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {

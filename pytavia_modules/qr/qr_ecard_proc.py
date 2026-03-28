@@ -185,9 +185,7 @@ class qr_ecard_proc:
             doc = self.mgdDB.db_qrcard_ecard.find_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
             )
-            if doc:
-                return doc
-            return self.mgdDB.db_qrcard.find_one(
+            base_doc = self.mgdDB.db_qrcard.find_one(
                 {
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
@@ -195,6 +193,14 @@ class qr_ecard_proc:
                     "status": "ACTIVE",
                 }
             )
+            if doc and base_doc:
+                for key in ["qr_image_url", "qr_composite_url", "frame_id", "url_content", "name", "short_code"]:
+                    if key in base_doc:
+                        doc[key] = base_doc[key]
+                return doc
+            if doc:
+                return doc
+            return base_doc
         except Exception:
             self.webapp.logger.debug("qr_ecard_proc.get_qrcard failed", exc_info=True)
             return None

@@ -407,14 +407,53 @@ class qr_video_proc:
             except Exception:
                 pass
         else:
-            # Fallback if session wasn't fully processed
+            # Direct upload path: save-draft called without prior session tmp setup
+            import os as _os
+            video_types = request.form.getlist("video_type[]")
             url_list = request.form.getlist("video_url[]")
             name_list = request.form.getlist("video_name[]")
             desc_list = request.form.getlist("video_desc[]")
+            video_files = request.files.getlist("video_files")
+            file_idx = 0
             from itertools import zip_longest
-            for u, n, d in zip_longest(url_list, name_list, desc_list, fillvalue=""):
-                if u.strip():
-                    video_links.append({"url": u.strip(), "name": n.strip(), "desc": d.strip(), "type": "link"})
+            for i, (vtype, u, n, d) in enumerate(zip_longest(video_types, url_list, name_list, desc_list, fillvalue="")):
+                u = (u or "").strip()
+                n = (n or "").strip()
+                d = (d or "").strip()
+                if vtype == "upload":
+                    # Try uploaded file first
+                    fobj = video_files[file_idx] if file_idx < len(video_files) else None
+                    file_idx += 1
+                    if fobj and fobj.filename:
+                        fobj.seek(0, 2)
+                        if fobj.tell() <= 50 * 1024 * 1024:
+                            fobj.seek(0)
+                            ext = _os.path.splitext(fobj.filename)[1].lower() or ".mp4"
+                            safe_name = uuid.uuid4().hex + ext
+                            r2_key = f"videos/{new_qrcard_id}/{safe_name}"
+                            try:
+                                file_url = r2.upload_file(fobj, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name})
+                                video_links.append({"url": file_url, "name": n, "desc": d, "type": "upload"})
+                            except Exception:
+                                pass
+                    elif u.startswith("/static/"):
+                        # Autocomplete static file — upload from disk to R2
+                        base = root_path or config.G_HOME_PATH
+                        local_path = _os.path.join(base, u.lstrip("/").replace("/", _os.sep))
+                        ext = _os.path.splitext(u)[1].lower() or ".mp4"
+                        safe_name = uuid.uuid4().hex + ext
+                        r2_key = f"videos/{new_qrcard_id}/{safe_name}"
+                        try:
+                            with open(local_path, "rb") as f_static:
+                                file_url = r2.upload_file(f_static, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name})
+                            video_links.append({"url": file_url, "name": n, "desc": d, "type": "upload"})
+                        except Exception:
+                            pass
+                    elif u.startswith("http"):
+                        video_links.append({"url": u, "name": n, "desc": d, "type": "upload"})
+                else:
+                    if u:
+                        video_links.append({"url": u, "name": n, "desc": d, "type": "link"})
 
         # Store into main and video-specific collections
         full_update = {**about_update, **design_update, "video_links": video_links}

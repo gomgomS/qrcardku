@@ -425,7 +425,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: var(--bg-content);
+        background: #ffffff;
         position: relative;
     }
 
@@ -680,7 +680,7 @@
         .new-qr-step-nav { display: none; }
         .new-qr-container { flex-direction: column; height: auto; gap: 0; }
         .form-column { padding-bottom: 76px; }
-        .preview-column { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100vw; bottom: 60px; z-index: 450; background: var(--bg-body); overflow-y: auto; padding: 16px; box-sizing: border-box; transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+        .preview-column { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100vw; bottom: 60px; z-index: 450; background: #ffffff; overflow-y: auto; padding: 16px; box-sizing: border-box; transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
         .preview-column.mobile-open { transform: translateY(0); }
         .preview-container { position: static; }
         .mobile-bottom-bar { display: flex; }
@@ -1091,7 +1091,28 @@
         if (window._qfpRefreshSvgPreview) window._qfpRefreshSvgPreview();
     }
 
-    function _compositeQrWithSvgFrame(qrDataUrl, frame) {
+    
+function submitDesignWithOverlay() {
+    var overlay = document.getElementById('design-complete-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    var svgFrame = window.qfpGetCurrentSvgFrame ? window.qfpGetCurrentSvgFrame() : null;
+    if (_qrStyling) {
+        _qrStyling.getRawData('png').then(function(blob) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var qrDataUrl = e.target.result;
+                function doSubmit(d) { var el = document.getElementById('qr_image_data'); if (el) el.value = d; document.getElementById('design-form').submit(); }
+                if (svgFrame) { _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(qrDataUrl); }); }
+                else { doSubmit(qrDataUrl); }
+            };
+            reader.readAsDataURL(blob);
+        }).catch(function() { document.getElementById('design-form').submit(); });
+    } else {
+        document.getElementById('design-form').submit();
+    }
+}
+
+function _compositeQrWithSvgFrame(qrDataUrl, frame) {
         return new Promise(function (resolve, reject) {
             var CANVAS_W = 600;
             var CANVAS_H = Math.round(CANVAS_W * frame.vH / frame.vW);

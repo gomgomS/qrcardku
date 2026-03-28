@@ -1520,6 +1520,21 @@ def qr_update_content_pdf(qrcard_id):
             return view_update_pdf.view_update_pdf(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists. Please choose a unique name.", base_url=config.G_BASE_URL
             )
+        # If user confirmed URL change, wipe saved custom QR so design page starts fresh
+        if request.form.get("reset_qr_style") == "1":
+            from pytavia_core import database as _db_rs, config as _cfg_rs
+            _db_rs.get_db_conn(_cfg_rs.mainDB).db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": {"qr_image_url": "", "qr_composite_url": "",
+                            "qr_dot_style": "", "qr_corner_style": "",
+                            "qr_dot_color": "", "qr_bg_color": ""}},
+            )
+            _db_rs.get_db_conn(_cfg_rs.mainDB).db_qrcard_pdf.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": {"qr_image_url": "", "qr_composite_url": ""}},
+            )
+            qrcard.pop("qr_image_url", None)
+            qrcard.pop("qr_composite_url", None)
         _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), ecard_data)
         qrcard.update(ecard_data)
         pdf_file_list = request.files.getlist("pdf_files")
@@ -1587,9 +1602,7 @@ def qr_update_content_pdf(qrcard_id):
             _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), ecard_data)
     # GET or POST success -> design
     if request.method == "POST" and not request.form.get("back_from_design"):
-        return view_update_pdf.view_update_pdf(app).update_qr_design_html(
-            qrcard=qrcard, url_content=url_content, qr_name=qr_name
-        )
+        return redirect(url_for("qr_update_design_pdf", qrcard_id=qrcard_id))
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
         qrcard.update(draft)
@@ -1641,10 +1654,7 @@ def qr_update_content_web(qrcard_id):
         qrcard["url_content"] = url_content
         qrcard["name"] = qr_name
         qrcard["short_code"] = short_code or qrcard.get("short_code")
-        return view_update_web.view_update_web(app).update_qr_design_html(
-            qrcard=qrcard, url_content=url_content, qr_name=qr_name,
-            qr_encode_url=config.G_BASE_URL + "/web/" + short_code if short_code else None
-        )
+        return redirect(url_for("qr_update_design_web", qrcard_id=qrcard_id))
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
         qrcard.update(draft)
@@ -1684,7 +1694,7 @@ def _merge_ecard_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
 
 
 def _merge_images_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
-    """Overlay db_qrcard_images document onto qrcard so edit pages get full Images fields."""
+    """Combine db_qrcard (authoritative base) with images-specific fields from db_qrcard_images."""
     if not qrcard:
         return qrcard
     images_doc = mgd_db.db_qrcard_images.find_one(
@@ -1703,9 +1713,16 @@ def _merge_images_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
             mgd_db.db_qrcard_images.insert_one(images_doc)
         except Exception:
             pass
-    out = dict(qrcard)
+    # Always start from db_qrcard so base fields (qr_image_url, qr_composite_url,
+    # name, short_code, etc.) are authoritative. db_qrcard_images never stores these.
+    base_doc = mgd_db.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+    )
+    out = {k: v for k, v in (base_doc or qrcard).items() if k != "_id"}
+    # Overlay images-specific fields from db_qrcard_images (skip base fields)
+    _BASE_KEYS = {"_id", "name", "url_content", "short_code", "status", "qrcard_id", "fk_user_id"}
     for key, value in images_doc.items():
-        if key != "_id":
+        if key not in _BASE_KEYS:
             out[key] = value
     return out
 
@@ -1730,9 +1747,13 @@ def _merge_video_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
             mgd_db.db_qrcard_video.insert_one(video_doc)
         except Exception:
             pass
-    out = dict(qrcard)
+    base_doc = mgd_db.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+    )
+    out = {k: v for k, v in (base_doc or qrcard).items() if k != "_id"}
+    _BASE_KEYS = {"_id", "name", "url_content", "short_code", "status", "qrcard_id", "fk_user_id"}
     for key, value in video_doc.items():
-        if key != "_id":
+        if key not in _BASE_KEYS:
             out[key] = value
     return out
 
@@ -1916,9 +1937,7 @@ def qr_update_content_ecard(qrcard_id):
         qrcard["url_content"] = url_content
         qrcard["name"] = qr_name
         qrcard["short_code"] = short_code or qrcard.get("short_code")
-        return view_update_ecard.view_update_ecard(app).update_qr_design_html(
-            qrcard=qrcard, url_content=url_content, qr_name=qr_name
-        )
+        return redirect(url_for("qr_update_design_ecard", qrcard_id=qrcard_id))
     draft = _get_qr_draft(session, qrcard_id)
     if draft:
         qrcard.update(draft)
@@ -4168,6 +4187,13 @@ def qr_new_images_save_draft():
     response = qr_images_proc.qr_images_proc(app).save_draft(request, session, app.root_path)
     if response.get("status") != "ok":
         return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
+    if request.form.get("reset_qr_style") == "1":
+        _fk = session.get("fk_user_id")
+        _qid = response["qrcard_id"]
+        database.get_db_conn(config.mainDB).db_qrcard.update_one(
+            {"fk_user_id": _fk, "qrcard_id": _qid},
+            {"$unset": {"qr_dot_style": "", "qr_corner_style": "", "qr_dot_color": "", "qr_bg_color": "", "card_bg_color": "", "qr_image_url": "", "qr_composite_url": ""}},
+        )
     return _json.dumps({"status": "ok", "qrcard_id": response["qrcard_id"], "short_code": response["short_code"], "qr_encode_url": response["qr_encode_url"]}), 200, {"Content-Type": "application/json"}
 
 
@@ -4183,7 +4209,7 @@ def qr_new_images_design_draft(qrcard_id):
         return redirect(url_for("user_qr_list"))
     sc = qrcard.get("short_code", "")
     qr_encode_url = config.G_BASE_URL.rstrip("/") + "/images/" + sc if sc else None
-    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url'}
+    _QRCARD_BASE = {'qrcard_id','fk_user_id','qr_type','name','url_content','short_code','status','created_at','timestamp','stats','qr_image_url','design_data','frame_id','qr_composite_url','scan_limit_enabled','scan_limit_value','welcome_img_url','qr_dot_style','qr_corner_style','qr_dot_color','qr_bg_color','card_bg_color'}
     _data = {k: v for k, v in qrcard.items() if k not in _QRCARD_BASE and k != '_id' and isinstance(v, (str, int, float, bool, type(None)))}
     return view_images.view_images(app).new_qr_design_html(
         url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
@@ -5170,13 +5196,22 @@ def qr_update_content_images(qrcard_id):
         
         _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), images_data)
         qrcard.update(images_data)
-        
+
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             return view_update_images.view_update_images(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists.", base_url=config.G_BASE_URL
             )
-            
-        return view_update_images.view_update_images(app).update_qr_design_html(qrcard=qrcard, url_content=url_content, qr_name=qr_name)
+
+        if request.form.get("reset_qr_style") == "1":
+            _unset_fields = {"qr_composite_url": "", "qr_image_url": "", "qr_dot_style": "", "qr_corner_style": "", "qr_dot_color": "", "qr_bg_color": "", "card_bg_color": ""}
+            database.get_db_conn(config.mainDB).db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$unset": _unset_fields}
+            )
+            database.get_db_conn(config.mainDB).db_qrcard_images.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$unset": {"qr_composite_url": "", "qr_image_url": ""}}
+            )
+
+        return redirect(url_for("qr_update_design_images", qrcard_id=qrcard_id))
     
     draft = _get_qr_draft(session, qrcard_id)
     if draft: qrcard.update(draft)
@@ -5255,7 +5290,8 @@ def qr_update_save_images(qrcard_id):
         if key not in params and key not in ["url_content", "qr_name", "short_code"]:
             params[key] = val
             
-    params["images_hide_labels"] = request.form.get("images_hide_labels") in ("on", "true", "1", "yes")
+    _hl_raw = request.form.get("images_hide_labels") if "images_hide_labels" in request.form else params.get("images_hide_labels", "")
+    params["images_hide_labels"] = str(_hl_raw or "").lower() in ("on", "true", "1", "yes")
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
     _frame_id_images = request.form.get("frame_id", "")

@@ -262,7 +262,7 @@
     .preview-container {
         position: sticky;
         top: 24px;
-        background: var(--bg-content);
+        background: #ffffff;
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 24px;
@@ -285,7 +285,7 @@
     }
 
     .qr-card {
-        background: var(--bg-content);
+        background: #ffffff;
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 24px;
@@ -338,7 +338,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: var(--bg-content);
+        background: #ffffff;
         position: relative;
     }
 
@@ -399,6 +399,9 @@
     .custom-frames-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
     .custom-frames-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
     .frame-option-custom { border: 2px solid var(--border-color); }
+    .frame-option-svg { border: 2px solid var(--border-color); }
+    .frame-option-svg.active { border-color: var(--primary); }
+    .frame-option-svg img { height:48px;width:auto;max-width:48px;object-fit:contain;border-radius:4px;display:block; }
     .mobile-bottom-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--bg-content); border-top: 1px solid var(--border-color); z-index: 500; align-items: center; justify-content: space-between; padding: 0 16px; gap: 12px; }
     .mobile-bar-arrow { width: 44px; height: 44px; border: 1px solid var(--border-color); background: var(--bg-content); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--text-main); flex-shrink: 0; }
     .mobile-bar-arrow:hover { background: var(--bg-body); }
@@ -411,7 +414,7 @@
         .new-qr-step-nav { display: none; }
         .new-qr-container { flex-direction: column; height: auto; gap: 0; }
         .form-column { padding-bottom: 76px; }
-        .preview-column { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100vw; bottom: 60px; z-index: 450; background: var(--bg-body); overflow-y: auto; padding: 16px; box-sizing: border-box; transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
+        .preview-column { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; width: 100vw; bottom: 60px; z-index: 450; background: #ffffff; overflow-y: auto; padding: 16px; box-sizing: border-box; transform: translateY(110%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1); }
         .preview-column.mobile-open { transform: translateY(0); }
         .preview-container { position: static; }
         .mobile-bottom-bar { display: flex; }
@@ -536,6 +539,7 @@ function onQRColorChange(target, value) {
     <input type="hidden" name="qr_corner_style" id="qr_corner_style_input" value="square">
     <input type="hidden" name="qr_dot_color"    id="qr_dot_color_input"    value="#000000">
     <input type="hidden" name="qr_bg_color"     id="qr_bg_color_input"     value="#ffffff">
+    <input type="hidden" name="card_bg_color"   id="card_bg_color_input"   value="#ffffff">
     <input type="hidden" name="qr_image_data"   id="qr_image_data" value="">
 </form>
 
@@ -631,6 +635,32 @@ function onQRColorChange(target, value) {
                 <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
             </div>
             <div class="collapse-body show">
+                <!-- Standard SVG frames -->
+                <div class="custom-frames-section" id="standard-frames-section" style="display:none;">
+                    <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
+                    <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
+                </div>
+                <!-- SVG frame controls -->
+                <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
+                    <div class="frame-text-color-row" style="margin-bottom:6px;">
+                        <label for="svg-frame-color">Frame color</label>
+                        <input type="color" id="svg-frame-color" value="#000000" title="Frame color">
+                        <span id="svg-frame-color-hex" style="font-size:12px;color:var(--text-muted);">#000000</span>
+                    </div>
+                    <div class="frame-text-color-row" style="margin-bottom:6px;">
+                        <label for="card-bg-color-picker">Background</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('card-bg-color-picker').click()" style="position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="color" id="card-bg-color-picker" value="#ffffff" style="position:absolute;opacity:0;width:28px;height:28px;cursor:pointer;" oninput="onCardBgChange(this.value)">
+                            <div id="card-bg-swatch" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border-color);background:#ffffff;flex-shrink:0;"></div>
+                            <span id="card-bg-hex" style="font-size:12px;color:var(--text-muted);font-family:monospace;">#ffffff</span>
+                        </div>
+                    </div>
+                    <div class="frame-text-row">
+                        <label for="svg-frame-text">Frame text</label>
+                        <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
+                    </div>
+                </div>
                 <!-- Default frames (from admin) -->
                 <div class="custom-frames-section" id="default-frames-section" style="display:none;">
                     <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
@@ -642,14 +672,6 @@ function onQRColorChange(target, value) {
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
                     <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
                     <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
-                </div>
-                <div class="frame-text-row">
-                    <label for="frame-text">Text</label>
-                    <input type="text" id="frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="32">
-                </div>
-                <div class="frame-text-color-row">
-                    <label style="font-size:12px; font-weight:600;">Text Color</label>
-                    <input type="color" id="frame-text-color" value="#000000">
                 </div>
             </div>
         </div>
@@ -733,26 +755,56 @@ function onQRColorChange(target, value) {
     function submitDesignWithOverlay() {
         var overlay = document.getElementById('design-loading-overlay');
         if (overlay) { overlay.style.display = 'flex'; }
-    if (_qrStyling) {
-        _qrStyling.getRawData('png').then(function(blob) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var el = document.getElementById('qr_image_data');
-                if (el) el.value = e.target.result;
-                document.getElementById('design-form').submit();
-            };
-            reader.readAsDataURL(blob);
-        }).catch(function() {
+        var svgFrame = window.qfpGetCurrentSvgFrame ? window.qfpGetCurrentSvgFrame() : null;
+        function doSubmit(d) {
+            var el = document.getElementById('qr_image_data');
+            if (el && d) el.value = d;
             document.getElementById('design-form').submit();
-        });
-    } else {
-        document.getElementById('design-form').submit();
-    }
+        }
+        if (svgFrame) {
+            var qrImg = document.getElementById('qrcode-img');
+            var qrDataUrl = qrImg ? qrImg.src : null;
+            if (qrDataUrl) {
+                _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(null); });
+            } else { doSubmit(null); }
+        } else { doSubmit(null); }
     }
 </script>
 <style>
     @keyframes spin { to { transform: rotate(360deg); } }
 </style>
+<script>
+function _compositeQrWithSvgFrame(qrDataUrl, frame) {
+    return new Promise(function(resolve, reject) {
+        var CANVAS_W = 600, CANVAS_H = Math.round(CANVAS_W * frame.vH / frame.vW);
+        var canvas = document.createElement('canvas');
+        canvas.width = CANVAS_W; canvas.height = CANVAS_H;
+        var ctx = canvas.getContext('2d');
+        var svgBlob = new Blob([frame.svg], { type: 'image/svg+xml' });
+        var svgUrl = URL.createObjectURL(svgBlob);
+        var frameImg = new Image();
+        frameImg.onload = function() {
+            ctx.drawImage(frameImg, 0, 0, CANVAS_W, CANVAS_H);
+            URL.revokeObjectURL(svgUrl);
+            var qrImg2 = new Image();
+            qrImg2.onload = function() {
+                ctx.drawImage(qrImg2, Math.round(frame.qr_x*CANVAS_W), Math.round(frame.qr_y*CANVAS_H), Math.round(frame.qr_w*CANVAS_W), Math.round(frame.qr_h*CANVAS_H));
+                resolve(canvas.toDataURL('image/png'));
+            };
+            qrImg2.onerror = function() { reject(new Error('qr load failed')); };
+            qrImg2.src = qrDataUrl;
+        };
+        frameImg.onerror = function() { URL.revokeObjectURL(svgUrl); reject(new Error('svg load failed')); };
+        frameImg.src = svgUrl;
+    });
+}
+function onCardBgChange(value) {
+    var s = document.getElementById('card-bg-swatch'); var h = document.getElementById('card-bg-hex'); var inp = document.getElementById('card_bg_color_input');
+    if (s) s.style.background = value; if (h) h.textContent = value; if (inp) inp.value = value;
+    var qrCard = document.querySelector('.qr-card'); if (qrCard) qrCard.style.background = value;
+    if (window._qfpRefreshSvgPreview) window._qfpRefreshSvgPreview();
+}
+</script>
 <script src="https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
 <script src="/static/assets/js/qr_frame_picker.js"></script>
 <script>
@@ -824,6 +876,61 @@ function onQRColorChange(target, value) {
                 document.getElementById('frame_type_input').value = opt.dataset.frame || '';
             });
         });
+
+        // SVG frame helpers
+        var _svgFrameBase = null;
+        var svgFrameColorEl = document.getElementById('svg-frame-color');
+        var svgFrameTextEl = document.getElementById('svg-frame-text');
+        var svgFrameColorHex = document.getElementById('svg-frame-color-hex');
+        var svgFrameControls = document.getElementById('svg-frame-controls');
+        function _applyFrameCustomizations(svgStr) {
+            var frameColor = (svgFrameColorEl || {}).value || '#000000';
+            var bgColor = (document.getElementById('card-bg-color-picker') || {}).value || '#ffffff';
+            var frameText = (svgFrameTextEl || {}).value || 'Scan me!';
+            svgStr = svgStr.replace(/currentColor/g, frameColor);
+            svgStr = svgStr.replace(/fill:\s*rgb\(\s*255\s*,\s*255\s*,\s*255\s*\)/g, 'fill:' + bgColor);
+            svgStr = svgStr.replace(/fill:\s*#ffffff/gi, 'fill:' + bgColor);
+            svgStr = svgStr.replace(/fill:\s*white\b/gi, 'fill:' + bgColor);
+            var esc = frameText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            svgStr = svgStr.replace(/(<text\b[^>]*>)[^]*?(<\/text>)/g, '$1' + esc + '$2');
+            return svgStr;
+        }
+        function _refreshSvgPreview() {
+            if (!_svgFrameBase || !window.qfpUpdateSvgFrame) return;
+            window.qfpUpdateSvgFrame(Object.assign({}, _svgFrameBase, { svg: _applyFrameCustomizations(_svgFrameBase.svg) }));
+        }
+        window._qfpRefreshSvgPreview = _refreshSvgPreview;
+        if (svgFrameColorEl) svgFrameColorEl.addEventListener('input', function() { if (svgFrameColorHex) svgFrameColorHex.textContent = this.value; _refreshSvgPreview(); });
+        if (svgFrameTextEl) svgFrameTextEl.addEventListener('input', _refreshSvgPreview);
+        fetch('/api/frames/svg-standard')
+            .then(function(r) { return r.json(); })
+            .then(function(frames) {
+                var section = document.getElementById('standard-frames-section');
+                var grid = document.getElementById('standard-frames-grid');
+                if (!grid || !frames || frames.length === 0) return;
+                if (section) section.style.display = 'block';
+                frames.forEach(function(frame) {
+                    var d = document.createElement('div');
+                    d.className = 'grid-item frame-option-svg'; d.title = frame.name; d.style.cursor = 'pointer';
+                    var svgBlob = new Blob([frame.svg], { type: 'image/svg+xml' });
+                    var svgUrl = URL.createObjectURL(svgBlob);
+                    var img = document.createElement('img');
+                    img.src = svgUrl; img.alt = frame.name;
+                    img.style.cssText = 'height:48px;width:auto;max-width:48px;object-fit:contain;border-radius:4px;display:block;flex-shrink:0;';
+                    img.onload = function() { URL.revokeObjectURL(svgUrl); };
+                    var lbl = document.createElement('span'); lbl.className = 'frame-label'; lbl.textContent = frame.name;
+                    d.appendChild(img); d.appendChild(lbl);
+                    d.addEventListener('click', function() {
+                        _svgFrameBase = frame;
+                        if (svgFrameColorEl) { svgFrameColorEl.value = '#000000'; if (svgFrameColorHex) svgFrameColorHex.textContent = '#000000'; }
+                        if (svgFrameTextEl) svgFrameTextEl.value = 'Scan me!';
+                        if (svgFrameControls) svgFrameControls.style.display = 'block';
+                        var modifiedFrame = Object.assign({}, frame, { svg: _applyFrameCustomizations(frame.svg) });
+                        if (window.qfpSelectSvgFrame) window.qfpSelectSvgFrame(d, modifiedFrame);
+                    });
+                    grid.appendChild(d);
+                });
+            }).catch(function() {});
     });
 </script>
 {% endblock %}

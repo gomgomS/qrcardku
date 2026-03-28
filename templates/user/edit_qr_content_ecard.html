@@ -1466,21 +1466,51 @@
 
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="font-size: 12px;">URL</label>
-                                <div class="url-prefix-group">
-                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url |
-                                        default('https://QRkartu') }}/ecard/</div>
-                                    <input type="text" name="short_code" id="stats-short-code-input"
-                                        placeholder="Letters, numbers, '-' and '_' only"
-                                        value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
-                                        pattern="[a-zA-Z0-9_\-]{2,32}"
-                                        title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2â€“32 characters)"
-                                        maxlength="32">
+                                                                <!-- Static display (shown by default) -->
+                                <div id="url-static-display" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-body);">
+                                    <span style="font-size:13px; color:var(--primary); word-break:break-all; font-family:monospace;">
+                                        {{ base_url | default('https://QRkartu') }}/ecard/{{ short_code | default(qrcard.short_code if qrcard else '', true) }}
+                                    </span>
+                                    <button type="button" onclick="startUrlEdit()" style="flex-shrink:0; padding:5px 12px; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer; white-space:nowrap;">
+                                        <i class="fa-solid fa-pen"></i> Change
+                                    </button>
                                 </div>
-                                <p id="stats-url-preview"
-                                    style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;">
-                                </p>
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers,
-                                    '-' and '_' only, no spaces or other symbols (2â€“32 characters).</p>
+
+                                <!-- Warning shown after clicking Change -->
+                                <div id="url-change-warning" style="display:none; margin-top:10px; padding:12px; border-radius:6px; border:1px solid #f59e0b; background:#fffbeb;">
+                                    <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:10px;">
+                                        <i class="fa-solid fa-triangle-exclamation" style="color:#d97706; margin-top:2px; flex-shrink:0;"></i>
+                                        <div style="font-size:12px; color:#92400e; font-weight:600;">
+                                            Changing the URL will permanently reset your custom QR style. This cannot be undone.
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:8px;">
+                                        <button type="button" onclick="confirmUrlEdit()"
+                                            style="flex:1; padding:7px 0; font-size:12px; font-weight:600; border:none; background:#d97706; color:white; border-radius:6px; cursor:pointer;">
+                                            Yes, change URL &amp; reset QR
+                                        </button>
+                                        <button type="button" onclick="cancelUrlEdit()"
+                                            style="flex:1; padding:7px 0; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer;">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Input (hidden until confirmed) -->
+                                <div id="url-input-group" style="display:none; margin-top:8px;">
+                                    <div class="url-prefix-group">
+                                        <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://QRkartu') }}/ecard/</div>
+                                        <input type="text" name="short_code" id="stats-short-code-input"
+                                            placeholder="Letters, numbers, '-' and '_' only"
+                                            value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
+                                            pattern="[a-zA-Z0-9_-]{2,32}"
+                                            maxlength="32">
+                                    </div>
+                                    <p id="stats-url-preview" style="font-size:11px; color:var(--primary); margin-top:6px; word-break:break-all;"></p>
+                                    <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Letters, numbers, '-' and '_' only (2–32 characters).</p>
+                                </div>
+
+                                <input type="hidden" name="reset_qr_style" id="reset-qr-style-flag" value="0">
                             </div>
                         </div>
                     </div>
@@ -3011,6 +3041,31 @@
         // Show saved gallery in preview immediately on load
         updateAllGalleryPreviews();
     })();
+</script>
+
+<script>
+    var _originalShortCode = {{ (qrcard.short_code if qrcard and qrcard.get('short_code') else '') | tojson }};
+
+    function startUrlEdit() {
+        document.getElementById('url-change-warning').style.display = 'block';
+    }
+
+    function confirmUrlEdit() {
+        document.getElementById('url-change-warning').style.display = 'none';
+        document.getElementById('url-static-display').style.display = 'none';
+        document.getElementById('url-input-group').style.display = 'block';
+        document.getElementById('reset-qr-style-flag').value = '1';
+        var inp = document.getElementById('stats-short-code-input');
+        inp.focus();
+        // Trigger preview update
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (previewEl && prefixEl) previewEl.textContent = inp.value ? prefixEl.textContent.trim() + inp.value : '';
+    }
+
+    function cancelUrlEdit() {
+        document.getElementById('url-change-warning').style.display = 'none';
+    }
 </script>
 
 {% endblock %}

@@ -1281,7 +1281,8 @@
         <button type="submit" form="content-form" class="mobile-bar-arrow primary" title="Save">
             <i class="fa-solid fa-arrow-right"></i>
         </button>
-    </div>
+    </div>    <input type="hidden" name="reset_qr_style" id="reset-qr-style-flag" value="0">
+
 </form>
 
 <!-- Edit Section Side Panel -->
@@ -2698,5 +2699,25 @@
 
     // ==================== INIT ====================
     renderSections();
+
+    var _originalShortCode = {{ (qrcard.short_code if qrcard and qrcard.get('short_code') else '') | tojson }};
+
+    function startUrlEdit() {
+        var w = document.getElementById('url-change-warning');
+        if (w) w.style.display = 'block';
+    }
+
+    function confirmUrlEdit() {
+        var w = document.getElementById('url-change-warning'); if (w) w.style.display = 'none';
+        var sd = document.getElementById('url-static-display'); if (sd) sd.style.display = 'none';
+        var ig = document.getElementById('url-input-group'); if (ig) ig.style.display = 'block';
+        var flag = document.getElementById('reset-qr-style-flag'); if (flag) flag.value = '1';
+        var inp = document.getElementById('stats-short-code-input'); if (inp) inp.focus();
+    }
+
+    function cancelUrlEdit() {
+        var w = document.getElementById('url-change-warning'); if (w) w.style.display = 'none';
+    }
+
 </script>
 {% endblock %}
