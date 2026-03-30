@@ -234,7 +234,7 @@ class qr_allinone_proc:
                 sections = []
 
         # Build content_update
-        _new_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
+        _new_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url", "Allinone_welcome_img_autocomplete_url"}
         content_update = {}
         for key in request.form:
             if key.startswith("Allinone_") and not key.endswith("[]") and key not in _new_skip:
@@ -273,6 +273,27 @@ class qr_allinone_proc:
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
                 except Exception:
                     self.webapp.logger.debug(traceback.format_exc())
+        else:
+            ac_welcome_url = (request.form.get("Allinone_welcome_img_autocomplete_url") or "").strip()
+            if ac_welcome_url and (ac_welcome_url.startswith("http://") or ac_welcome_url.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome_url}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_welcome_url and ac_welcome_url.startswith("/static/"):
+                ext = os.path.splitext(ac_welcome_url)[1] or ".jpg"
+                unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                saved_welcome_url = self._upload_static_to_r2(
+                    _r2,
+                    ac_welcome_url,
+                    f"allinone/{new_id}/{unique_welcome_name}",
+                    root_path,
+                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_welcome_name},
+                )
+                if saved_welcome_url:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": saved_welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": saved_welcome_url}}, upsert=True)
 
         # Move tmp cover image from R2 _tmp → R2 final
         cover_tmp_key  = session.pop("allinone_cover_tmp_key",  None)
@@ -293,11 +314,16 @@ class qr_allinone_proc:
                 self.webapp.logger.debug(traceback.format_exc())
         else:
             ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
-            if ac_url:
-                if ac_url.startswith("/static/"):
-                    ext = os.path.splitext(ac_url)[1] or ".jpg"
-                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
-                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
+            if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_url and ac_url.startswith("/static/"):
+                ext = os.path.splitext(ac_url)[1] or ".jpg"
+                unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
                 if ac_url:
                     self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
@@ -419,7 +445,7 @@ class qr_allinone_proc:
             except Exception:
                 sections = []
 
-        _skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
+        _skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url", "Allinone_welcome_img_autocomplete_url"}
         content_update = {}
         for key in request.form:
             if key.startswith("Allinone_") and not key.endswith("[]") and key not in _skip:
@@ -458,6 +484,27 @@ class qr_allinone_proc:
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
                 except Exception:
                     self.webapp.logger.debug(traceback.format_exc())
+        else:
+            ac_welcome_url = (request.form.get("Allinone_welcome_img_autocomplete_url") or "").strip()
+            if ac_welcome_url and (ac_welcome_url.startswith("http://") or ac_welcome_url.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome_url}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_welcome_url and ac_welcome_url.startswith("/static/"):
+                ext = os.path.splitext(ac_welcome_url)[1] or ".jpg"
+                unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                saved_welcome_url = self._upload_static_to_r2(
+                    _r2,
+                    ac_welcome_url,
+                    f"allinone/{new_id}/{unique_welcome_name}",
+                    root_path,
+                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_welcome_name},
+                )
+                if saved_welcome_url:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": saved_welcome_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": saved_welcome_url}}, upsert=True)
 
         # Cover image — direct upload (no _tmp)
         cover_img = request.files.get("Allinone_profile_img")
@@ -480,12 +527,17 @@ class qr_allinone_proc:
                     self.webapp.logger.debug(traceback.format_exc())
         else:
             ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
-            if ac_url:
-                if ac_url.startswith("/static/"):
-                    ext = os.path.splitext(ac_url)[1] or ".jpg"
-                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
-                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path,
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
+            if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
+                    self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_url and ac_url.startswith("/static/"):
+                ext = os.path.splitext(ac_url)[1] or ".jpg"
+                unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path,
+                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
                 if ac_url:
                     self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
@@ -563,7 +615,7 @@ class qr_allinone_proc:
                 update_data["short_code"] = new_sc
 
         # Allinone_ fields
-        _allinone_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url"}
+        _allinone_skip = {"Allinone_profile_img_delete", "Allinone_profile_img_autocomplete_url", "Allinone_welcome_img_autocomplete_url"}
         for key in request.form:
             if key.startswith("Allinone_") and not key.endswith("[]") and key not in _allinone_skip:
                 val = request.form.get(key)
@@ -598,8 +650,22 @@ class qr_allinone_proc:
                         )
                     except Exception:
                         self.webapp.logger.debug(traceback.format_exc())
-            elif existing.get("welcome_img_url"):
-                update_data["welcome_img_url"] = existing["welcome_img_url"]
+            else:
+                ac_welcome_url = (request.form.get("Allinone_welcome_img_autocomplete_url") or "").strip()
+                if ac_welcome_url.startswith("/static/"):
+                    ext = os.path.splitext(ac_welcome_url)[1] or ".jpg"
+                    unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                    ac_welcome_url = self._upload_static_to_r2(
+                        _r2,
+                        ac_welcome_url,
+                        f"allinone/{qrcard_id}/{unique_welcome_name}",
+                        root_path,
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": unique_welcome_name},
+                    )
+                if ac_welcome_url:
+                    update_data["welcome_img_url"] = ac_welcome_url
+                elif existing.get("welcome_img_url"):
+                    update_data["welcome_img_url"] = existing["welcome_img_url"]
 
         # Cover image
         cover_delete = request.form.get("Allinone_profile_img_delete", "0")
@@ -621,11 +687,12 @@ class qr_allinone_proc:
                     )
             else:
                 ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
-                if ac_url:
-                    if ac_url.startswith("/static/"):
-                        ext = os.path.splitext(ac_url)[1] or ".jpg"
-                        unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
-                        ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{qrcard_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": unique_cover_name})
+                if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                    update_data["Allinone_cover_img_url"] = ac_url
+                elif ac_url and ac_url.startswith("/static/"):
+                    ext = os.path.splitext(ac_url)[1] or ".jpg"
+                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{qrcard_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": unique_cover_name})
                     if ac_url:
                         update_data["Allinone_cover_img_url"] = ac_url
 

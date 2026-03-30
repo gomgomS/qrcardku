@@ -336,7 +336,7 @@ class qr_video_proc:
         # Design fields from form
         design_update = {}
         for key in request.form:
-            if key.startswith("video_") and not key.endswith("[]"):
+            if key.startswith("video_") and not key.endswith("[]") and key != "video_welcome_img_autocomplete_url":
                 val = request.form.get(key)
                 if val is not None and str(val).strip() != "":
                     design_update[key] = str(val).strip()
@@ -373,6 +373,28 @@ class qr_video_proc:
                 r2.delete_prefix(f"video/_tmp/{w_tmp_key}/")
             except Exception:
                 pass
+        else:
+            # Welcome image selected from assets (autocomplete/static)
+            import os as _os
+            ac_welcome = (request.form.get("video_welcome_img_autocomplete_url")
+                          or session.pop("video_welcome_img_autocomplete_url", "")).strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                welcome_img_url = ac_welcome
+            elif ac_welcome and ac_welcome.startswith("/static/"):
+                base = root_path or config.G_HOME_PATH
+                local_path = _os.path.join(base, ac_welcome.lstrip("/").replace("/", _os.sep))
+                _wext = _os.path.splitext(ac_welcome)[1] or ".jpg"
+                unique_welcome = f"welcome_{uuid.uuid4().hex[:12]}{_wext}"
+                dst_key = f"video/{new_qrcard_id}/{unique_welcome}"
+                try:
+                    with open(local_path, "rb") as f_static:
+                        welcome_img_url = r2.upload_file(
+                            f_static,
+                            dst_key,
+                            track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": unique_welcome},
+                        )
+                except Exception:
+                    pass
         if welcome_img_url:
             design_update["welcome_img_url"] = welcome_img_url
 

@@ -10,6 +10,20 @@
     href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap"
     rel="stylesheet">
 <style>
+    .btn-outline {
+        border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        color: var(--text-main);
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
     .new-qr-container {
         display: flex;
         gap: 32px;
@@ -954,13 +968,17 @@
                                     </div>
                                     <input type="file" name="images_welcome_img" accept="image/*" style="display: none;" id="images_welcome_img_input">
                                 </label>
-                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
                                         Remove
                                     </button>
+                                    <button type="button" class="btn-outline" style="color: var(--primary); border-color: var(--primary);" onclick="openImagesWelcomeAssetPicker()">
+                                        <i class="fa-solid fa-images"></i> Pick from My Assets
+                                    </button>
                                     <input type="hidden" name="images_welcome_img_delete" id="images_welcome_img_delete" value="0">
+                                    <input type="hidden" name="images_welcome_img_autocomplete_url" id="images_welcome_img_autocomplete_url" value="">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                             </div>
@@ -1918,6 +1936,8 @@
                 currentObjectUrl = URL.createObjectURL(file);
                 return currentObjectUrl;
             }
+            var assetUrl = overlay && overlay.dataset && overlay.dataset.assetUrl;
+            if (assetUrl) return assetUrl;
             return initialUrl || null;
         }
 
@@ -1942,6 +1962,9 @@
                         if (url && thumb) thumb.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">Selected image</span>';
                         if (deleteBtn) deleteBtn.style.display = 'inline-flex';
                         if (deleteFlag) deleteFlag.value = '0';
+                        var acImgWelcome = document.getElementById('images_welcome_img_autocomplete_url');
+                        if (acImgWelcome) acImgWelcome.value = '';
+                        if (overlay && overlay.dataset) overlay.dataset.assetUrl = '';
                         if (url) playWelcomePreview(url);
                     }
                 });
@@ -1951,6 +1974,9 @@
                 deleteBtn.addEventListener('click', function () {
                     welcomeInput.value = '';
                     initialUrl = '';
+                    var acImgWelcomeRm = document.getElementById('images_welcome_img_autocomplete_url');
+                    if (acImgWelcomeRm) acImgWelcomeRm.value = '';
+                    if (overlay && overlay.dataset) overlay.dataset.assetUrl = '';
                     if (thumb) thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
                     if (deleteFlag) deleteFlag.value = '1';
                     this.style.display = 'none';
@@ -2000,5 +2026,118 @@ function saveAndNext() {
             console.error(err);
         });
 }
+
+// ── Images Welcome Asset Picker ───────────────────────────────────────────
+(function () {
+    var _imgAssets = [];
+    var _imgLoaded = false;
+
+    window.openImagesWelcomeAssetPicker = function () {
+        var modal = document.getElementById('images-welcome-asset-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        document.getElementById('images-welcome-asset-search').value = '';
+        if (!_imgLoaded) loadImgAssets();
+        else renderImgGrid(_imgAssets);
+    };
+
+    window.closeImagesWelcomeAssetPicker = function () {
+        var modal = document.getElementById('images-welcome-asset-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('images-welcome-asset-modal');
+        if (modal) modal.addEventListener('click', function (e) { if (e.target === this) closeImagesWelcomeAssetPicker(); });
+    });
+
+    function loadImgAssets() {
+        fetch('/api/user/image_assets')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _imgLoaded = true;
+                _imgAssets = (data.images || []);
+                renderImgGrid(_imgAssets);
+            })
+            .catch(function () {
+                var el = document.getElementById('images-welcome-asset-loading');
+                if (el) el.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:6px;"></i>Failed to load assets.';
+            });
+    }
+
+    function renderImgGrid(images) {
+        var grid = document.getElementById('images-welcome-asset-grid');
+        var loading = document.getElementById('images-welcome-asset-loading');
+        var empty = document.getElementById('images-welcome-asset-empty');
+        if (loading) loading.style.display = 'none';
+        grid.querySelectorAll('.iwap-item').forEach(function (el) { el.remove(); });
+        if (!images.length) { if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        images.forEach(function (img) {
+            var item = document.createElement('div');
+            item.className = 'iwap-item';
+            item.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;background:#252619;';
+            item.title = img.file_name;
+            item.innerHTML =
+                '<div style="width:100%;padding-top:100%;position:relative;background:#181914;">' +
+                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
+                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                '</div>' +
+                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
+            item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
+            item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
+            item.addEventListener('click', function () { selectImagesWelcomeAsset(img.url, img.file_name); });
+            grid.appendChild(item);
+        });
+    }
+
+    window.filterImgWelcomeAssets = function () {
+        var q = (document.getElementById('images-welcome-asset-search').value || '').toLowerCase();
+        var filtered = q ? _imgAssets.filter(function (i) { return i.file_name.toLowerCase().indexOf(q) !== -1; }) : _imgAssets;
+        renderImgGrid(filtered);
+    };
+
+    function selectImagesWelcomeAsset(url, fileName) {
+        var acField = document.getElementById('images_welcome_img_autocomplete_url');
+        if (acField) acField.value = url;
+        var welcomeInput = document.getElementById('images_welcome_img_input');
+        if (welcomeInput) welcomeInput.value = '';
+        var deleteFlag = document.getElementById('images_welcome_img_delete');
+        if (deleteFlag) deleteFlag.value = '0';
+        var thumb = document.getElementById('welcome-img-preview');
+        if (thumb) thumb.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">' + (fileName || 'Asset selected') + '</span>';
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        // Store for getPreviewSrc() and update preview overlay image
+        var overlay = document.getElementById('preview-welcome-overlay');
+        if (overlay) overlay.dataset.assetUrl = url;
+        var imgEl = document.getElementById('preview-welcome-img');
+        if (imgEl) imgEl.src = url;
+        closeImagesWelcomeAssetPicker();
+    }
+}());
 </script>
+
+<!-- Images Welcome Asset Picker Modal -->
+<div id="images-welcome-asset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeImagesWelcomeAssetPicker()" style="background:none;border:none;cursor:pointer;color:#8A8878;font-size:18px;line-height:1;padding:2px 6px;">&times;</button>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid #2C2D25;">
+            <input type="text" id="images-welcome-asset-search" placeholder="Search by filename…" oninput="filterImgWelcomeAssets()"
+                style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
+        </div>
+        <div id="images-welcome-asset-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;min-height:180px;">
+            <div id="images-welcome-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+            </div>
+        </div>
+        <div id="images-welcome-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+            <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+        </div>
+    </div>
+</div>
 {% endblock %}

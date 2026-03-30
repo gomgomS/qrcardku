@@ -260,6 +260,28 @@ class qr_sosmed_proc:
                 self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
                 pass
+        else:
+            # Handle autocomplete/static welcome image
+            ac_welcome = (request.form.get("sosmed_welcome_img_autocomplete_url", "")
+                          or session.pop("sosmed_welcome_img_autocomplete_url", "")).strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                    self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_welcome and ac_welcome.startswith("/static/"):
+                ext = os.path.splitext(ac_welcome)[1] or ".jpg"
+                local_path = os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", os.sep))
+                if os.path.isfile(local_path):
+                    try:
+                        unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                        with open(local_path, "rb") as f:
+                            welcome_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_welcome_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_welcome_name})
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
+                        self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+                    except Exception:
+                        pass
 
         if cover_tmp_key and cover_tmp_name:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
@@ -272,8 +294,15 @@ class qr_sosmed_proc:
                 pass
         else:
             # Handle autocomplete static image upload
-            ac_url = request.form.get("sosmed_cover_img_autocomplete_url", "")
-            if ac_url and ac_url.startswith("/static/"):
+            ac_url = (request.form.get("sosmed_cover_img_autocomplete_url", "")
+                      or session.pop("sosmed_cover_img_autocomplete_url", "")).strip()
+            if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}})
+                    self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_url and ac_url.startswith("/static/"):
                 ext = os.path.splitext(ac_url)[1] or ".jpg"
                 local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
                 if os.path.isfile(local_path):

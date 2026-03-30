@@ -1142,11 +1142,16 @@
                                     id="special_welcome_img_input">
                             </label>
                             <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-                                <button type="button" id="welcome-preview-btn" class="btn-outline"
+                                <button type="button" id="welcome-preview-btn" class="btn-outline" onclick="__specialWelcomePreview()"
                                     style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                <button type="button" class="btn-outline"
+                                    style="padding: 4px 12px; font-size: 12px;"
+                                    onclick="openSpecialWelcomeAssetPicker()">Pick from My Assets</button>
                                 <button type="button" id="welcome-delete-btn" class="btn-outline"
                                     style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; display: none;">Remove</button>
                             </div>
+                            <input type="hidden" name="special_welcome_img_autocomplete_url"
+                                id="special_welcome_img_autocomplete_url" value="{{ qrcard.get('welcome_img_url','') if qrcard else '' }}">
                             <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                         </div>
 
@@ -1180,6 +1185,89 @@
                         </div>
                     </div>
                 </div>
+                <script>
+                // Early global fallback so inline onclick always resolves.
+                window.__specialWelcomeUserSelected = false;
+                window.__specialWelcomePreview = window.__specialWelcomePreview || function () {
+                    console.log('[SPECIAL_WELCOME][early] click -> __specialWelcomePreview()');
+                    var overlay = document.getElementById('preview-welcome-overlay');
+                    var imgEl = document.getElementById('preview-welcome-img');
+                    var fileInput = document.getElementById('special_welcome_img_input');
+                    var hidden = document.getElementById('special_welcome_img_autocomplete_url');
+                    var timeSlider = document.getElementById('welcome-time-slider');
+                    var bgInput = document.getElementById('welcome_bg_color_picker');
+
+                    // Self-heal: recreate welcome overlay inside right preview if missing.
+                    if (!overlay || !imgEl) {
+                        var previewContainer = document.getElementById('previewContainer');
+                        if (previewContainer) {
+                            overlay = document.createElement('div');
+                            overlay.id = 'preview-welcome-overlay';
+                            overlay.className = 'preview-welcome-overlay';
+                            overlay.style.display = 'none';
+                            imgEl = document.createElement('img');
+                            imgEl.id = 'preview-welcome-img';
+                            imgEl.alt = 'Welcome';
+                            imgEl.style.display = 'none';
+                            overlay.appendChild(imgEl);
+                            previewContainer.insertBefore(overlay, previewContainer.firstChild);
+                            console.log('[SPECIAL_WELCOME][early] recreated overlay in #previewContainer');
+                        }
+                    }
+
+                    console.log('[SPECIAL_WELCOME][early] dom', {
+                        overlay: !!overlay,
+                        imgEl: !!imgEl,
+                        fileInput: !!fileInput,
+                        hidden: !!hidden,
+                        timeSlider: !!timeSlider,
+                        bgInput: !!bgInput
+                    });
+                    if (!overlay || !imgEl) {
+                        console.log('[SPECIAL_WELCOME][early] abort: overlay/img missing');
+                        return;
+                    }
+
+                    var src = '';
+                    var f = fileInput && fileInput.files && fileInput.files[0];
+                    if (f && f.type && f.type.indexOf('image') !== -1) src = URL.createObjectURL(f);
+                    if (!src && hidden && hidden.value) src = hidden.value;
+                    if (!src) {
+                        var thumbImg = document.querySelector('#welcome-img-preview img');
+                        if (thumbImg && thumbImg.src) src = thumbImg.src;
+                    }
+                    console.log('[SPECIAL_WELCOME][early] source', {
+                        hasFile: !!(f && f.type && f.type.indexOf('image') !== -1),
+                        hiddenValue: hidden ? hidden.value : null,
+                        resolvedSrc: src
+                    });
+                    if (!window.__specialWelcomeUserSelected) {
+                        alert('Please upload or pick a welcome image first.');
+                        return;
+                    }
+                    if (!src) { alert('Upload or pick an image first (max 1 MB for uploads).'); return; }
+
+                    var sec = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+                    if (isNaN(sec) || sec <= 0) sec = 2.5;
+                    sec = Math.min(10, Math.max(2.5, sec));
+                    console.log('[SPECIAL_WELCOME][early] play', { sec: sec, bg: bgInput ? bgInput.value : null });
+
+                    if (bgInput) overlay.style.backgroundColor = bgInput.value;
+                    imgEl.src = src;
+                    imgEl.style.display = 'block';
+                    overlay.style.display = 'flex';
+                    overlay.classList.remove('hide');
+                    console.log('[SPECIAL_WELCOME][early] overlay shown', {
+                        overlayDisplay: overlay.style.display,
+                        imgDisplay: imgEl.style.display,
+                        imgSrc: imgEl.src
+                    });
+                    setTimeout(function () {
+                        overlay.classList.add('hide');
+                        setTimeout(function () { overlay.style.display = 'none'; }, 800);
+                    }, sec * 1000);
+                };
+                </script>
 
                 <button type="button" class="btn-add-section" onclick="addNewSection()">
                     <i class="fa-solid fa-plus"></i> Add New Section
@@ -1428,9 +1516,8 @@
     let draggedImageElement = null;
     // Load initial data from server
     try {
-        const initial = {{ special_sections | default ([], true) | tojson | safe
-    }};
-    if (Array.isArray(initial) && initial.length > 0) sections = initial;
+        const initial = {{ special_sections | default([], true) | tojson | safe }};
+        if (Array.isArray(initial) && initial.length > 0) sections = initial;
     } catch (e) { console.error('Error loading initial sections:', e); }
 
     // ==================== TAB SWITCHING ====================
@@ -2631,6 +2718,7 @@
         var overlay = document.getElementById('preview-welcome-overlay');
         var imgEl = document.getElementById('preview-welcome-img');
         var welcomeInput = document.getElementById('special_welcome_img_input');
+        var welcomeAssetInput = document.getElementById('special_welcome_img_autocomplete_url');
         var timeSlider = document.getElementById('welcome-time-slider');
         var timeDisplay = document.getElementById('welcome-time-display');
 
@@ -2660,6 +2748,7 @@
                 setTimeout(function () { overlay.style.display = 'none'; }, 800);
             }, sec);
         }
+        window.playSpecialWelcomePreview = playWelcomePreview;
 
         var currentObjectUrl = null;
         function getPreviewSrc() {
@@ -2670,6 +2759,9 @@
                 currentObjectUrl = URL.createObjectURL(file);
                 return currentObjectUrl;
             }
+            if (welcomeAssetInput && welcomeAssetInput.value) return welcomeAssetInput.value;
+            var thumbImg = document.querySelector('#welcome-img-preview img');
+            if (thumbImg && thumbImg.src) return thumbImg.src;
             return null;
         }
 
@@ -2689,6 +2781,8 @@
                 welcomeInput.addEventListener('change', function () {
                     var file = this.files && this.files[0];
                     if (!file) return;
+                    window.__specialWelcomeUserSelected = true;
+                    if (welcomeAssetInput) welcomeAssetInput.value = '';
                     if (file.size > 1024 * 1024) { alert('Image must be 1 MB or smaller.'); this.value = ''; return; }
                     if (file.type.indexOf('image') !== -1) {
                         var url = getPreviewSrc();
@@ -2701,6 +2795,8 @@
             if (deleteBtn && welcomeInput) {
                 deleteBtn.addEventListener('click', function () {
                     welcomeInput.value = '';
+                    window.__specialWelcomeUserSelected = false;
+                    if (welcomeAssetInput) welcomeAssetInput.value = '';
                     if (thumb) { thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>'; }
                     this.style.display = 'none';
                 });
@@ -2710,11 +2806,84 @@
                 previewBtn.addEventListener('click', function () {
                     var src = getPreviewSrc();
                     if (src) playWelcomePreview(src);
-                    else alert('Upload an image first (max 1 MB).');
+                    else alert('Upload or pick an image first (max 1 MB for uploads).');
                 });
             }
         }
     })();
+
+    // ==================== SPECIAL WELCOME ASSET PICKER ====================
+    window.specialWelcomeAssets = [];
+    function openSpecialWelcomeAssetPicker() {
+        var overlay = document.getElementById('special-welcome-asset-picker-overlay');
+        var grid = document.getElementById('special-welcome-assets-grid');
+        if (!overlay || !grid) return;
+        overlay.style.display = 'flex';
+        grid.innerHTML = '<div style="padding:12px;color:var(--text-muted);">Loading assets...</div>';
+        fetch('/api/user/image_assets')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                var assets = [];
+                if (data && Array.isArray(data.images)) assets = data.images;
+                else if (data && Array.isArray(data.items)) assets = data.items;
+                window.specialWelcomeAssets = assets.map(function (a) {
+                    return {
+                        url: a.url || a.file_url || '',
+                        file_name: a.file_name || a.name || 'Image'
+                    };
+                }).filter(function (a) {
+                    return !!a.url;
+                });
+                filterSpecialWelcomeAssets('');
+            })
+            .catch(function () {
+                grid.innerHTML = '<div style="padding:12px;color:#dc2626;">Failed to load assets.</div>';
+            });
+    }
+
+    function closeSpecialWelcomeAssetPicker() {
+        var overlay = document.getElementById('special-welcome-asset-picker-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+
+    function filterSpecialWelcomeAssets(q) {
+        var grid = document.getElementById('special-welcome-assets-grid');
+        if (!grid) return;
+        var query = (q || '').toLowerCase().trim();
+        var list = (window.specialWelcomeAssets || []).filter(function (a) {
+            var name = (a.file_name || '').toLowerCase();
+            return !query || name.indexOf(query) !== -1;
+        });
+        if (!list.length) {
+            grid.innerHTML = '<div style="padding:12px;color:var(--text-muted);">No matching image assets.</div>';
+            return;
+        }
+        grid.innerHTML = list.map(function (a) {
+            var url = a.url || a.file_url || '';
+            var name = a.file_name || 'Image';
+            return '<button type="button" onclick="selectSpecialWelcomeAsset(\'' + String(url).replace(/'/g, "\\'") + '\', \'' + String(name).replace(/'/g, "\\'") + '\')" style="border:1px solid var(--border-color);border-radius:8px;padding:8px;background:var(--bg-content);cursor:pointer;text-align:left;">' +
+                '<img src="' + url + '" alt="' + name + '" style="width:100%;height:96px;object-fit:cover;border-radius:6px;margin-bottom:6px;">' +
+                '<div style="font-size:12px;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + escHtml(name) + '</div>' +
+                '</button>';
+        }).join('');
+    }
+
+    function selectSpecialWelcomeAsset(url, fileName) {
+        var hidden = document.getElementById('special_welcome_img_autocomplete_url');
+        var input = document.getElementById('special_welcome_img_input');
+        var thumb = document.getElementById('welcome-img-preview');
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        if (!hidden || !thumb) return;
+        hidden.value = url || '';
+        window.__specialWelcomeUserSelected = !!url;
+        if (input) input.value = '';
+        thumb.innerHTML = '<img src="' + url + '" alt="Welcome" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">' + escHtml(fileName || 'Selected asset') + '</span>';
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        var previewImg = document.getElementById('preview-welcome-img');
+        if (previewImg) previewImg.src = url || '';
+        if (typeof window.playSpecialWelcomePreview === 'function' && url) window.playSpecialWelcomePreview(url);
+        closeSpecialWelcomeAssetPicker();
+    }
 
     // ==================== INIT ====================
     renderSections();
@@ -2753,5 +2922,70 @@ function saveAndNext() {
             console.error(err);
         });
 }
+</script>
+
+<div id="special-welcome-asset-picker-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:220;align-items:center;justify-content:center;padding:16px;">
+    <div style="width:min(840px,95vw);max-height:85vh;overflow:auto;background:var(--bg-content);border-radius:12px;border:1px solid var(--border-color);padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+            <strong style="font-size:14px;color:var(--text-main);">Pick from My Assets</strong>
+            <button type="button" class="btn-outline" style="padding:4px 10px;font-size:12px;" onclick="closeSpecialWelcomeAssetPicker()">Close</button>
+        </div>
+        <input type="text" placeholder="Search image name..." oninput="filterSpecialWelcomeAssets(this.value)"
+            style="width:100%;margin-bottom:10px;border:1px solid var(--border-color);border-radius:8px;padding:8px 10px;background:var(--bg-body);color:var(--text-main);">
+        <div id="special-welcome-assets-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
+    </div>
+</div>
+<script>
+// Failsafe welcome preview binding (runs even if earlier script errors)
+(function () {
+    var overlay = document.getElementById('preview-welcome-overlay');
+    var imgEl = document.getElementById('preview-welcome-img');
+    var previewBtn = document.getElementById('welcome-preview-btn');
+    var welcomeInput = document.getElementById('special_welcome_img_input');
+    var hiddenAsset = document.getElementById('special_welcome_img_autocomplete_url');
+    var timeSlider = document.getElementById('welcome-time-slider');
+    if (!overlay || !imgEl || !previewBtn) return;
+
+    function getSec() {
+        var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
+        return (isNaN(val) || val <= 0) ? 2.5 : Math.min(10, Math.max(2.5, val));
+    }
+
+    function getSrc() {
+        var f = welcomeInput && welcomeInput.files && welcomeInput.files[0];
+        if (f && f.type && f.type.indexOf('image') !== -1) return URL.createObjectURL(f);
+        if (hiddenAsset && hiddenAsset.value) return hiddenAsset.value;
+        var thumbImg = document.querySelector('#welcome-img-preview img');
+        if (thumbImg && thumbImg.src) return thumbImg.src;
+        return '';
+    }
+
+    function play(src) {
+        if (!src) return;
+        var bgInput = document.getElementById('welcome_bg_color_picker');
+        if (bgInput) overlay.style.backgroundColor = bgInput.value;
+        imgEl.src = src;
+        imgEl.style.display = 'block';
+        overlay.style.display = 'flex';
+        overlay.classList.remove('hide');
+        setTimeout(function () {
+            overlay.classList.add('hide');
+            setTimeout(function () { overlay.style.display = 'none'; }, 800);
+        }, getSec() * 1000);
+    }
+
+    window.playSpecialWelcomePreview = play;
+    window.__specialWelcomePreview = function () {
+        console.log('[SPECIAL_WELCOME][late] click -> __specialWelcomePreview()');
+        var src = getSrc();
+        console.log('[SPECIAL_WELCOME][late] resolved source', src);
+        if (!src) { alert('Upload or pick an image first (max 1 MB for uploads).'); return; }
+        play(src);
+    };
+    previewBtn.onclick = function () {
+        console.log('[SPECIAL_WELCOME][late] previewBtn.onclick fired');
+        window.__specialWelcomePreview();
+    };
+})();
 </script>
 {% endblock %}

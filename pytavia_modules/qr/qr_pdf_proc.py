@@ -422,6 +422,15 @@ class qr_pdf_proc:
                 self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
             except Exception:
                 pass
+        else:
+            ac_welcome = (request.form.get("welcome_img_autocomplete_url", "")
+                          or session.pop("welcome_img_autocomplete_url", "")).strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                    self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                except Exception:
+                    pass
         if cover_tmp_key:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"

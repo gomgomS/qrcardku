@@ -423,6 +423,29 @@ class qr_ecard_proc:
                 self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
                 pass
+        else:
+            # Handle autocomplete/static welcome image selection
+            ac_welcome = (request.form.get("ecard_welcome_img_autocomplete_url", "")
+                          or session.pop("ecard_welcome_img_autocomplete_url", "")).strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                    self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_welcome and ac_welcome.startswith("/static/"):
+                import os as _os
+                ext = _os.path.splitext(ac_welcome)[1] or ".jpg"
+                local_path = _os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", _os.sep))
+                if _os.path.isfile(local_path):
+                    try:
+                        unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                        with open(local_path, "rb") as f:
+                            welcome_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/{unique_welcome_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": unique_welcome_name})
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                        self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+                    except Exception:
+                        pass
         if cover_tmp_key:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             src_key = f"ecard/_tmp/{cover_tmp_key}/{cover_tmp_name}"

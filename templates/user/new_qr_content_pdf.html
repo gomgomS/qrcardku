@@ -1134,14 +1134,18 @@
                                     <input type="file" name="pdf_welcome_img" accept="image/*" style="display: none;"
                                         id="pdf_welcome_img_input">
                                 </label>
-                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <button type="button" id="welcome-preview-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
                                         Remove
                                     </button>
+                                    <button type="button" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openAssetPicker('welcome')">
+                                        <i class="fa-solid fa-images"></i> Pick from My Assets
+                                    </button>
                                     <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
+                                    <input type="hidden" name="welcome_img_autocomplete_url" id="welcome_img_autocomplete_url" value="">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                             </div>
@@ -2326,7 +2330,7 @@
             }, sec);
         }
 
-        var initialUrl = '';
+        var initialUrl = '{{ (qrcard.get("welcome_img_url","") if qrcard else "") | safe }}';
         var currentObjectUrl = null;
         function getPreviewSrc() {
             var file = welcomeInput && welcomeInput.files && welcomeInput.files[0];
@@ -2336,6 +2340,9 @@
                 currentObjectUrl = URL.createObjectURL(file);
                 return currentObjectUrl;
             }
+            // Check if an asset was picked via the picker
+            var assetUrl = overlay && overlay.dataset && overlay.dataset.assetUrl;
+            if (assetUrl) return assetUrl;
             return initialUrl || null;
         }
         var welcomeBgPicker = document.getElementById('welcome_bg_color_picker');
@@ -2368,6 +2375,8 @@
                         }
                         if (deleteBtn) deleteBtn.style.display = 'inline-flex';
                         if (deleteFlag) deleteFlag.value = '0';
+                        var acWelcome = document.getElementById('welcome_img_autocomplete_url');
+                        if (acWelcome) acWelcome.value = '';
                         if (url) playWelcomePreview(url);
                     }
                 });
@@ -2376,6 +2385,9 @@
                 deleteBtn.addEventListener('click', function () {
                     welcomeInput.value = '';
                     initialUrl = '';
+                    var acWelcomeRm = document.getElementById('welcome_img_autocomplete_url');
+                    if (acWelcomeRm) acWelcomeRm.value = '';
+                    if (overlay && overlay.dataset) overlay.dataset.assetUrl = '';
                     if (thumb) {
                         thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                     }
@@ -3239,12 +3251,15 @@ function saveAndNext() {
 (function () {
     var _allImages = [];
     var _loaded = false;
+    var _pickerMode = 'cover'; // 'cover' | 'welcome'
 
-    window.openAssetPicker = function () {
+    window.openAssetPicker = function (mode) {
+        _pickerMode = mode || 'cover';
         var overlay = document.getElementById('asset-picker-overlay');
         overlay.style.display = 'flex';
         document.getElementById('asset-picker-search').value = '';
         if (!_loaded) loadAssets();
+        else renderGrid(_allImages);
     };
 
     window.closeAssetPicker = function () {
@@ -3312,44 +3327,60 @@ function saveAndNext() {
     };
 
     function selectAsset(url, fileName) {
-        // Set hidden autocomplete URL field
+        if (_pickerMode === 'welcome') {
+            selectWelcomeAsset(url, fileName);
+        } else {
+            selectCoverAsset(url, fileName);
+        }
+        closeAssetPicker();
+    }
+
+    function selectCoverAsset(url, fileName) {
         var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
         if (acField) acField.value = url;
-
-        // Clear any uploaded file so autocomplete_url takes priority
         var fileInput = document.getElementById('pdf_t1_header_img_input');
         if (fileInput) fileInput.value = '';
-
-        // Reset delete flag
         var delFlag = document.getElementById('pdf_t1_header_img_delete');
         if (delFlag) delFlag.value = '0';
-
-        // Update thumb in cover-img-preview
         var thumb = document.getElementById('cover-img-preview');
         if (thumb) {
             thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">' + fileName + '</span>';
         }
-
-        // Show remove button
         var removeBtn = document.getElementById('cover-img-remove-btn');
         if (removeBtn) removeBtn.style.display = 'inline-flex';
-
-        // Update template previews
         var t1Img = document.getElementById('t1-preview-header-img');
         if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
         if (typeof showT1Header === 'function') showT1Header(true);
-
         var t3Img = document.getElementById('t3-preview-circle-img');
         var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
         if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
         if (t3Ph)  t3Ph.style.display = 'none';
-
         var t4Img = document.getElementById('t4-preview-circle-img');
         var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
         if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
         if (t4Ph)  t4Ph.style.display = 'none';
+    }
 
-        closeAssetPicker();
+    function selectWelcomeAsset(url, fileName) {
+        var acField = document.getElementById('welcome_img_autocomplete_url');
+        if (acField) acField.value = url;
+        var welcomeInput = document.getElementById('pdf_welcome_img_input');
+        if (welcomeInput) welcomeInput.value = '';
+        var deleteFlag = document.getElementById('welcome_img_delete');
+        if (deleteFlag) deleteFlag.value = '0';
+        var thumb = document.getElementById('welcome-img-preview');
+        if (thumb) {
+            thumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">' + (fileName || 'Asset selected') + '</span>';
+        }
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        // Update preview overlay so the Preview button works immediately
+        var imgEl = document.getElementById('preview-welcome-img');
+        if (imgEl) imgEl.src = url;
+        // Store url as initialUrl so getPreviewSrc() can return it
+        // We do this by setting a data attribute picked up by the welcome IIFE
+        var overlay = document.getElementById('preview-welcome-overlay');
+        if (overlay) overlay.dataset.assetUrl = url;
     }
 }());
 </script>

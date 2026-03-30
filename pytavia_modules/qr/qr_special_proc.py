@@ -317,6 +317,7 @@ class qr_special_proc:
         # Handle welcome screen image upload
         import re as _re
         welcome_file = request.files.get("special_welcome_img")
+        welcome_asset_url = (request.form.get("special_welcome_img_autocomplete_url") or "").strip()
         if welcome_file and welcome_file.filename:
             safe_name = _re.sub(r"[^a-zA-Z0-9_.-]", "_", welcome_file.filename)
             welcome_fname = "welcome_" + safe_name
@@ -331,6 +332,28 @@ class qr_special_proc:
                 {"qrcard_id": new_qrcard_id},
                 {"$set": {"welcome_img_url": welcome_url}},
             )
+        elif welcome_asset_url:
+            welcome_url = ""
+            lower = welcome_asset_url.lower()
+            if lower.startswith("http://") or lower.startswith("https://"):
+                welcome_url = welcome_asset_url
+            elif welcome_asset_url.startswith("/static/"):
+                static_file_path = os.path.join(root_path, welcome_asset_url.lstrip("/"))
+                if os.path.exists(static_file_path):
+                    ext = os.path.splitext(static_file_path)[1] or ".png"
+                    filename = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                    r2_key = f"special/{new_qrcard_id}/{filename}"
+                    with open(static_file_path, "rb") as _fh:
+                        welcome_url = r2.upload(bytes_stream=_fh, key=r2_key)
+            if welcome_url:
+                self.mgdDB.db_qrcard.update_one(
+                    {"qrcard_id": new_qrcard_id},
+                    {"$set": {"welcome_img_url": welcome_url}},
+                )
+                self.mgdDB.db_qrcard_special.update_one(
+                    {"qrcard_id": new_qrcard_id},
+                    {"$set": {"welcome_img_url": welcome_url}},
+                )
 
         # Handle uploaded images for special sections
         tmp_key = session.pop("special_tmp_key", None)

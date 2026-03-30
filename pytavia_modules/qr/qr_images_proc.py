@@ -382,6 +382,15 @@ class qr_images_proc:
                 self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
             except Exception:
                 pass
+        else:
+            ac_welcome = (request.form.get("images_welcome_img_autocomplete_url", "")
+                          or session.pop("images_welcome_img_autocomplete_url", "")).strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                try:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                    self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}}, upsert=True)
+                except Exception:
+                    pass
 
         # Gallery images
         saved_gallery = []
