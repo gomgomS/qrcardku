@@ -471,6 +471,7 @@
     .qrs-color-swatch-wrap input[type="color"] { position: absolute; opacity: 0; width: 28px; height: 28px; cursor: pointer; }
     .qrs-color-swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; }
     .qrs-color-hex { font-size: 12px; color: var(--text-muted); font-family: monospace; }
+    .qr-section-disabled { pointer-events: none; opacity: 0.45; user-select: none; }
 </style>
 {% endblock %}
 
@@ -569,6 +570,22 @@
     <div class="form-column">
         <div class="page-title">Design the QR</div>
 
+        <!-- Reset toggle: shown when a saved custom QR is detected -->
+        <div id="qr-reset-prompt" style="display:none; background:var(--bg-content); border:1px solid var(--border-color); border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:2px;">Re-customize QR style</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Toggle on to reset and edit. Toggle off to keep your saved QR.</div>
+                </div>
+                <label style="position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; cursor:pointer;">
+                    <input type="checkbox" id="qr-reset-switch" onchange="handleQRReset(this.checked)" style="opacity:0; width:0; height:0; position:absolute;">
+                    <span id="qr-reset-track" style="position:absolute; inset:0; background:var(--border-color); border-radius:24px; transition:background 0.2s;"></span>
+                    <span id="qr-reset-thumb" style="position:absolute; left:3px; top:3px; width:18px; height:18px; background:white; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="qr-form-content">
                 <!-- QR Code Style Section -->
         <div class="collapse-section">
             <div class="collapse-header">
@@ -706,6 +723,7 @@
                 </div>
             </div>
         </div>
+        </div><!-- /#qr-form-content -->
     </div>
 
     <!-- Right preview section -->
@@ -765,6 +783,10 @@
 function submitDesignWithOverlay() {
     var overlay = document.getElementById('design-complete-overlay');
     if (overlay) overlay.style.display = 'flex';
+    if (window._keepSavedQR || !_qrStyling) {
+        document.getElementById('design-form').submit();
+        return;
+    }
     var svgFrame = window.qfpGetCurrentSvgFrame ? window.qfpGetCurrentSvgFrame() : null;
     if (_qrStyling) {
         _qrStyling.getRawData('png').then(function(blob) {
@@ -824,7 +846,75 @@ function submitDesignWithOverlay() {
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
 
         _qrFinalUrl = finalUrl;
-        refreshQRPreview();
+
+        window._keepSavedQR = false;
+        var _savedQrUrl = {{ (qrcard.get('qr_composite_url') or qrcard.get('qr_image_url') or '') | tojson if qrcard else '' | tojson }};
+
+        function _restoreQRStyleUI() {
+            document.querySelectorAll('#qr-dot-grid .grid-item').forEach(function(btn) {
+                var m = (btn.getAttribute('onclick') || '').match(/selectDotStyle\(this,'([^']+)'\)/);
+                if (m) btn.classList.toggle('active', m[1] === _qrStyle.dots);
+            });
+            document.querySelectorAll('#qr-corner-grid .grid-item').forEach(function(btn) {
+                var m = (btn.getAttribute('onclick') || '').match(/selectCornerStyle\(this,'([^']+)'\)/);
+                if (m) btn.classList.toggle('active', m[1] === _qrStyle.corners);
+            });
+            var dp = document.getElementById('dot-color-picker');
+            var dh = document.getElementById('dot-color-hex');
+            if (dp) { dp.value = _qrStyle.dotColor; var dsw = dp.closest('.qrs-color-swatch-wrap'); if (dsw) { var sw = dsw.querySelector('.qrs-color-swatch'); if (sw) sw.style.background = _qrStyle.dotColor; } }
+            if (dh) dh.textContent = _qrStyle.dotColor.toUpperCase();
+            var bp = document.getElementById('bg-color-picker');
+            var bh = document.getElementById('bg-color-hex');
+            if (bp) { bp.value = _qrStyle.bgColor; var bsw = bp.closest('.qrs-color-swatch-wrap'); if (bsw) { var sw2 = bsw.querySelector('.qrs-color-swatch'); if (sw2) sw2.style.background = _qrStyle.bgColor; } }
+            if (bh) bh.textContent = _qrStyle.bgColor.toUpperCase();
+        }
+
+        function _setFormEditable(editable) {
+            var formContent = document.getElementById('qr-form-content');
+            if (editable) { formContent.classList.remove('qr-section-disabled'); }
+            else { formContent.classList.add('qr-section-disabled'); }
+            var prompt = document.getElementById('qr-reset-prompt');
+            if (prompt) prompt.style.pointerEvents = 'auto';
+        }
+
+        if (_savedQrUrl) {
+            var probe = new Image();
+            probe.onload = function() {
+                document.getElementById('qrcode-img').src = _savedQrUrl;
+                document.getElementById('qr-reset-prompt').style.display = 'block';
+                window._keepSavedQR = true;
+                _setFormEditable(false);
+            };
+            probe.onerror = function() {
+                _restoreQRStyleUI();
+                refreshQRPreview();
+            };
+            probe.src = _savedQrUrl;
+        } else {
+            _restoreQRStyleUI();
+            refreshQRPreview();
+        }
+
+        window.handleQRReset = function(doReset) {
+            var track = document.getElementById('qr-reset-track');
+            var thumb = document.getElementById('qr-reset-thumb');
+            if (doReset) {
+                if (track) track.style.background = 'var(--primary)';
+                if (thumb) thumb.style.transform = 'translateX(20px)';
+                window._keepSavedQR = false;
+                _setFormEditable(true);
+                _qrStyle.dots = 'square'; _qrStyle.corners = 'square';
+                _qrStyle.dotColor = '#000000'; _qrStyle.bgColor = '#ffffff';
+                _restoreQRStyleUI();
+                refreshQRPreview();
+            } else {
+                if (track) track.style.background = 'var(--border-color)';
+                if (thumb) thumb.style.transform = 'translateX(0)';
+                window._keepSavedQR = true;
+                _setFormEditable(false);
+                if (_savedQrUrl) document.getElementById('qrcode-img').src = _savedQrUrl;
+            }
+        };
 
         // Collapse
         document.querySelectorAll('.collapse-header').forEach(header => {

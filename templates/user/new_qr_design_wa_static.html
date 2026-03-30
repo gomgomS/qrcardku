@@ -30,7 +30,8 @@
     .header-text p { font-size: 11px; color: var(--text-muted); }
     .collapse-body { padding: 0 24px 24px 24px; background-color: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 2000px; opacity: 1; border-top: 1px solid var(--border-color); }
-    .selection-grid.frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+    .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .selection-grid.frame-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: var(--bg-content); padding: 8px; color: var(--text-muted); }
     .grid-item:hover { border-color: var(--text-muted); }
     .grid-item.active { border-color: var(--primary); background-color: #2A2810; color: var(--primary); }
@@ -71,7 +72,14 @@
     .frame-option-custom { border: 2px solid var(--border-color); }
     .frame-option-svg { border: 2px solid var(--border-color); }
     .frame-option-svg.active { border-color: var(--primary); }
-    .frame-option-svg img { height:48px;width:auto;max-width:48px;object-fit:contain;border-radius:4px;display:block; }
+    .frame-option-svg img { height: 48px; width: auto; max-width: 48px; object-fit: contain; border-radius: 4px; display: block; }
+    
+    /* ── frame grid responsive overrides ── */
+    .selection-grid.frame-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; gap: 10px !important; }
+    .grid-item { min-width: 0; overflow: hidden; padding: 6px; }
+    .frame-thumb { flex-shrink: 0; }
+    .frame-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .custom-frame-thumb { width: 100%; max-width: 40px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; display: block; flex-shrink: 0; }
 
     /* Mobile bottom bar */
     .mobile-bottom-bar {
@@ -287,7 +295,7 @@
                 </div>
             </div>
         </div>
-<!-- Frame Section -->
+<!-- Frame Section (dropdown) -->
         <div class="collapse-section frame-section">
             <div class="collapse-header">
                 <div class="header-left-col">
@@ -305,7 +313,8 @@
                     <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
                     <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
                 </div>
-                <!-- SVG frame controls -->
+
+                <!-- SVG frame customization controls -->
                 <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
                     <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
@@ -326,15 +335,13 @@
                         <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
                     </div>
                 </div>
-                <div class="selection-grid frame-grid" style="margin-top: 24px;">
-                    <div class="grid-item frame-option active" data-frame="none" title="No frame"><div class="frame-thumb frame-thumb-none"></div><span class="frame-label">None</span></div>
-                    <div class="grid-item frame-option" data-frame="simple" title="Simple border"><div class="frame-thumb frame-thumb-simple"></div><span class="frame-label">Simple</span></div>
-                    <div class="grid-item frame-option" data-frame="rounded" title="Rounded"><div class="frame-thumb frame-thumb-rounded"></div><span class="frame-label">Rounded</span></div>
-                    <div class="grid-item frame-option" data-frame="double" title="Double border"><div class="frame-thumb frame-thumb-double"></div><span class="frame-label">Double</span></div>
-                    <div class="grid-item frame-option" data-frame="circle" title="Circle"><div class="frame-thumb frame-thumb-circle"></div><span class="frame-label">Circle</span></div>
-                    <div class="grid-item frame-option" data-frame="thick" title="Thick border"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
-                    <div class="grid-item frame-option" data-frame="shadow" title="Shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
+
+                <!-- Default frames (from admin) -->
+                <div class="custom-frames-section" id="default-frames-section" style="display:none;">
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
+
                 <div class="custom-frames-section">
                     <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
@@ -441,6 +448,37 @@
             var url = URL.createObjectURL(blob);
             document.getElementById('qrcode-img').src = url;
         }).catch(function(e){ console.error('QR style:', e); });
+    }
+
+    function selectDotStyle(btn, style) {
+        document.querySelectorAll('#qr-dot-grid .grid-item').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _qrStyle.dots = style;
+        document.getElementById('qr_dot_style_input').value = style;
+        refreshQRPreview();
+    }
+
+    function selectCornerStyle(btn, style) {
+        document.querySelectorAll('#qr-corner-grid .grid-item').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        _qrStyle.corners = style;
+        document.getElementById('qr_corner_style_input').value = style;
+        refreshQRPreview();
+    }
+
+    function onQRColorChange(target, value) {
+        if (target === 'dot') {
+            _qrStyle.dotColor = value;
+            document.getElementById('qr-dot-swatch').style.background = value;
+            document.getElementById('qr-dot-hex').textContent = value;
+            document.getElementById('qr_dot_color_input').value = value;
+        } else {
+            _qrStyle.bgColor = value;
+            document.getElementById('qr-bg-swatch').style.background = value;
+            document.getElementById('qr-bg-hex').textContent = value;
+            document.getElementById('qr_bg_color_input').value = value;
+        }
+        refreshQRPreview();
     }
 
     document.addEventListener('DOMContentLoaded', function () {

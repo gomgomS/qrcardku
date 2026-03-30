@@ -547,19 +547,19 @@ function onQRColorChange(target, value) {
     <div class="form-column">
         <div class="page-title">Design the QR</div>
 
-                <!-- QR Code Style Section -->
-        <div class="collapse-section">
-            <div class="collapse-header">
+        <!-- QR Code Style Section -->
+        <div class="collapse-section" id="qr-style-section">
+            <div class="collapse-header" onclick="toggleCollapse(this)">
                 <div class="header-left-col">
-                    <div class="header-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="header-icon style-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div class="header-text">
                         <h3>QR Code Style</h3>
                         <p>Customize dot shape and colors of your QR.</p>
                     </div>
                 </div>
-                <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
             </div>
-            <div class="collapse-body">
+            <div class="collapse-body show">
                 <div class="qrs-label">Dot Shape</div>
                 <div class="selection-grid qr-dot-grid" id="qr-dot-grid">
                     <div class="grid-item active" onclick="selectDotStyle(this,'square')">
@@ -676,32 +676,6 @@ function onQRColorChange(target, value) {
             </div>
         </div>
 
-        <!-- Colors Section -->
-        <div class="collapse-section">
-            <div class="collapse-header" onclick="toggleCollapse(this)">
-                <div class="header-left-col">
-                    <div class="header-icon style-icon"><i class="fa-solid fa-palette"></i></div>
-                    <div class="header-text">
-                        <h3>Colors</h3>
-                        <p>Customize QR code colors.</p>
-                    </div>
-                </div>
-                <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
-            </div>
-            <div class="collapse-body">
-                <div class="color-options-box" style="margin-top:16px;">
-                    <div class="color-section-title">QR Code Colors</div>
-                    <div class="color-row">
-                        <span>Foreground</span>
-                        <input type="color" id="qr-fg-color" value="#000000" class="color-picker-mock">
-                    </div>
-                    <div class="color-row">
-                        <span>Background</span>
-                        <input type="color" id="qr-bg-color" value="#ffffff" class="color-picker-mock">
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Preview -->
@@ -761,13 +735,18 @@ function onQRColorChange(target, value) {
             if (el && d) el.value = d;
             document.getElementById('design-form').submit();
         }
-        if (svgFrame) {
-            var qrImg = document.getElementById('qrcode-img');
-            var qrDataUrl = qrImg ? qrImg.src : null;
-            if (qrDataUrl) {
-                _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(null); });
-            } else { doSubmit(null); }
-        } else { doSubmit(null); }
+        if (_qrStyling) {
+            _qrStyling.getRawData('png').then(function(blob) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var qrDataUrl = e.target.result;
+                    if (svgFrame) {
+                        _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(qrDataUrl); });
+                    } else { doSubmit(qrDataUrl); }
+                };
+                reader.readAsDataURL(blob);
+            }).catch(function() { document.getElementById('design-form').submit(); });
+        } else { document.getElementById('design-form').submit(); }
     }
 </script>
 <style>
@@ -830,46 +809,42 @@ function onCardBgChange(value) {
             : '<i class="fa-regular fa-eye"></i> Preview';
     }
 
-    // QR generation with color support
-    var _qrFgColor = '#000000';
-    var _qrBgColor = '#ffffff';
-    var _qrRaw = "{{ qr_encode_url or url_content or '' }}";
-    var _qrFinalUrl = _qrRaw && _qrRaw.startsWith('http') ? _qrRaw : ('https://' + (_qrRaw || 'QRkartu'));
+    // ── QR Code Styling ───────────────────────────────────────────────────────
+    var _qrFinalUrl = '';
+    var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
+    var _qrStyling = null;
 
-    function generateQR() {
-        QRCode.toDataURL(_qrFinalUrl, {
-            width: 400, margin: 2,
-            color: { dark: _qrFgColor, light: _qrBgColor },
-            errorCorrectionLevel: 'H'
-        }).then(function(url) {
+    function _buildQROpts() {
+        return {
+            width: 400, height: 400, type: 'canvas',
+            data: _qrFinalUrl || 'https://QRkartu',
+            margin: 8,
+            qrOptions: { errorCorrectionLevel: 'H' },
+            dotsOptions:          { color: _qrStyle.dotColor, type: _qrStyle.dots },
+            backgroundOptions:    { color: _qrStyle.bgColor },
+            cornersSquareOptions: { type: _qrStyle.corners },
+            cornersDotOptions:    { type: _qrStyle.corners === 'dot' ? 'dot' : 'square' },
+        };
+    }
+
+    function refreshQRPreview() {
+        if (!window.QRCodeStyling) return;
+        if (!_qrStyling) {
+            _qrStyling = new QRCodeStyling(_buildQROpts());
+        } else {
+            _qrStyling.update(_buildQROpts());
+        }
+        _qrStyling.getRawData('png').then(function(blob) {
+            var url = URL.createObjectURL(blob);
             document.getElementById('qrcode-img').src = url;
-        }).catch(function(err) { console.error('QR error:', err); });
+        }).catch(function(e){ console.error('QR style:', e); });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        generateQR();
+        var qrRaw = "{{ qr_encode_url or url_content or '' }}";
+        _qrFinalUrl = qrRaw && qrRaw.startsWith('http') ? qrRaw : ('https://' + (qrRaw || 'QRkartu'));
+        refreshQRPreview();
 
-        // Frame text
-        document.getElementById('frame-text').addEventListener('input', function () {
-            document.getElementById('frame-caption-text').textContent = this.value;
-            document.getElementById('frame_text_input').value = this.value;
-        });
-        // Frame text color
-        document.getElementById('frame-text-color').addEventListener('input', function () {
-            document.getElementById('frame-caption-text').style.color = this.value;
-            document.getElementById('frame_text_color_input').value = this.value;
-        });
-        // QR colors — regenerate QR on change
-        document.getElementById('qr-fg-color').addEventListener('input', function () {
-            _qrFgColor = this.value;
-            document.getElementById('qr_fg_input').value = this.value;
-            generateQR();
-        });
-        document.getElementById('qr-bg-color').addEventListener('input', function () {
-            _qrBgColor = this.value;
-            document.getElementById('qr_bg_input').value = this.value;
-            generateQR();
-        });
         // Preset frame selection — update hidden frame_type input
         document.querySelectorAll('.frame-option').forEach(function(opt) {
             opt.addEventListener('click', function() {

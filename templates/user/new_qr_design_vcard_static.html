@@ -16,32 +16,22 @@
     .step-active .step-num { background-color: var(--primary); color: white; border-radius: 50%; }
     .btn-outline { border: 1px solid var(--border-color); background: var(--bg-content); color: var(--text-main); padding: 6px 16px; border-radius: 20px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
     .page-title { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 24px; }
-    .design-tabs { display: flex; gap: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); }
-    .design-tab { padding: 0 0 12px 0; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; position: relative; }
-    .design-tab.active { color: var(--primary); }
-    .design-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background-color: var(--primary); }
-    .save-template-box { border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; background: var(--bg-content); font-size: 13px; }
     .collapse-section { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
     .collapse-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background-color: var(--bg-content); }
     .header-left-col { display: flex; align-items: center; gap: 12px; }
     .header-icon { color: var(--primary); font-size: 18px; width: 32px; height: 32px; background: #2A2810; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .header-icon.style-icon { background: #2A2810; }
+    [data-theme="light"] .header-icon.style-icon { background: #fef9ec; }
     .header-text h3 { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
     .header-text p { font-size: 11px; color: var(--text-muted); }
     .collapse-body { padding: 0 24px 24px; background: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s, opacity 0.3s; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 2000px; opacity: 1; border-top: 1px solid var(--border-color); }
-    .selection-grid.frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+    .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .selection-grid.frame-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: var(--bg-content); padding: 8px; color: var(--text-muted); }
     .grid-item:hover { border-color: var(--text-muted); }
     .grid-item.active { border-color: var(--primary); background-color: #2A2810; color: var(--primary); }
     .frame-thumb { width: 40px; height: 40px; margin: 0 auto 4px; background: var(--bg-body); border: 1px solid var(--border-color); box-sizing: border-box; }
-    .frame-thumb-none { background: var(--bg-body); border: none; position: relative; }
-    .frame-thumb-none::after { content: ''; position: absolute; inset: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
-    .frame-thumb-simple { border: 2px solid var(--text-muted); border-radius: 2px; }
-    .frame-thumb-rounded { border: 2px solid var(--text-muted); border-radius: 12px; }
-    .frame-thumb-double { border: 3px double var(--text-muted); border-radius: 4px; }
-    .frame-thumb-circle { border: 2px solid var(--text-muted); border-radius: 50%; }
-    .frame-thumb-thick { border: 6px solid var(--text-muted); border-radius: 12px; }
-    .frame-thumb-shadow { border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
     .frame-label { font-size: 10px; color: var(--text-muted); text-align: center; display: block; line-height: 1.2; }
     .frame-text-row { margin-top: 20px; margin-bottom: 12px; }
     .frame-text-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
@@ -51,13 +41,6 @@
     .qr-preview-frame .qr-inner { width: 100%; max-width: 200px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
     .qr-preview-frame .qr-inner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
     .qr-preview-frame .frame-caption { margin-top: 12px; font-size: 14px; font-weight: 600; text-align: center; }
-    .qr-preview-frame.frame-none .qr-inner { border: none; }
-    .qr-preview-frame.frame-simple .qr-inner { border: 2px solid #111; border-radius: 2px; padding: 8px; }
-    .qr-preview-frame.frame-rounded .qr-inner { border: 2px solid #111; border-radius: 16px; padding: 8px; }
-    .qr-preview-frame.frame-double .qr-inner { border: 3px double #111; border-radius: 6px; padding: 8px; }
-    .qr-preview-frame.frame-circle .qr-inner { border: 2px solid #111; border-radius: 50%; padding: 10px; }
-    .qr-preview-frame.frame-thick .qr-inner { border: 8px solid #111; border-radius: 16px; padding: 6px; }
-    .qr-preview-frame.frame-shadow .qr-inner { border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
     .preview-container { position: sticky; top: 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; }
     .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
     .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
@@ -96,7 +79,14 @@
     .frame-option-custom { border: 2px solid var(--border-color); }
     .frame-option-svg { border: 2px solid var(--border-color); }
     .frame-option-svg.active { border-color: var(--primary); }
-    .frame-option-svg img { height:48px;width:auto;max-width:48px;object-fit:contain;border-radius:4px;display:block; }
+    .frame-option-svg img { height: 48px; width: auto; max-width: 48px; object-fit: contain; border-radius: 4px; display: block; }
+
+    /* ── frame grid responsive overrides ── */
+    .selection-grid.frame-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; gap: 10px !important; }
+    .grid-item { min-width: 0; overflow: hidden; padding: 6px; }
+    .frame-thumb { flex-shrink: 0; }
+    .frame-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .custom-frame-thumb { width: 100%; max-width: 40px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; display: block; flex-shrink: 0; }
     /* ── QR Code Style picker ── */
     .qrs-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; margin-top: 4px; }
     .qr-dot-grid, .qr-corner-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; margin-bottom: 4px; }
@@ -174,13 +164,91 @@
 <div class="new-qr-container">
     <div class="form-column">
         <div class="page-title">Design the QR</div>
-        <div class="design-tabs"><div class="design-tab active">Personalized design</div></div>
-        <div class="save-template-box"><input type="checkbox"><span>Save template when finished</span></div>
+        <!-- QR Code Style Section -->
+        <div class="collapse-section" id="qr-style-section">
+            <div class="collapse-header">
+                <div class="header-left-col">
+                    <div class="header-icon style-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="header-text">
+                        <h3>QR Code Style</h3>
+                        <p>Customize dot shape and colors of your QR.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+            </div>
+            <div class="collapse-body show">
+                <div class="qrs-label">Dot Shape</div>
+                <div class="selection-grid qr-dot-grid" id="qr-dot-grid">
+                    <div class="grid-item active" onclick="selectDotStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="0"/><rect x="13" y="1" width="10" height="10" rx="0"/><rect x="25" y="1" width="10" height="10" rx="0"/><rect x="1" y="13" width="10" height="10" rx="0"/><rect x="13" y="13" width="10" height="10" rx="0"/><rect x="25" y="13" width="10" height="10" rx="0"/><rect x="1" y="25" width="10" height="10" rx="0"/><rect x="13" y="25" width="10" height="10" rx="0"/><rect x="25" y="25" width="10" height="10" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'dots')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><circle cx="6" cy="6" r="5"/><circle cx="18" cy="6" r="5"/><circle cx="30" cy="6" r="5"/><circle cx="6" cy="18" r="5"/><circle cx="18" cy="18" r="5"/><circle cx="30" cy="18" r="5"/><circle cx="6" cy="30" r="5"/><circle cx="18" cy="30" r="5"/><circle cx="30" cy="30" r="5"/></svg>
+                        <span class="frame-label">Dots</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2.5"/><rect x="13" y="1" width="10" height="10" rx="2.5"/><rect x="25" y="1" width="10" height="10" rx="2.5"/><rect x="1" y="13" width="10" height="10" rx="2.5"/><rect x="13" y="13" width="10" height="10" rx="2.5"/><rect x="25" y="13" width="10" height="10" rx="2.5"/><rect x="1" y="25" width="10" height="10" rx="2.5"/><rect x="13" y="25" width="10" height="10" rx="2.5"/><rect x="25" y="25" width="10" height="10" rx="2.5"/></svg>
+                        <span class="frame-label">Rounded</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="5"/><rect x="13" y="1" width="10" height="10" rx="5"/><rect x="25" y="1" width="10" height="10" rx="5"/><rect x="1" y="13" width="10" height="10" rx="5"/><rect x="13" y="13" width="10" height="10" rx="5"/><rect x="25" y="13" width="10" height="10" rx="5"/><rect x="1" y="25" width="10" height="10" rx="5"/><rect x="13" y="25" width="10" height="10" rx="5"/><rect x="25" y="25" width="10" height="10" rx="5"/></svg>
+                        <span class="frame-label">Smooth</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M1,1h10v7h-3v3h-7zM13,1h10v10h-10zM25,1h10v10h-7v-3h-3zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,25h7v3h3v7h-10zM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M5,1h6v7h-3v3h-7v-6A4,4,0,0,1,5,1ZM13,1h10v10h-10zM31,1h0A4,4,0,0,1,35,5v6h-7v-3h-3v-7h6zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,31v-6h7v3h3v7h-6A4,4,0,0,1,1,31ZM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy+</span>
+                    </div>
+                </div>
+                <div class="qrs-label" style="margin-top:18px;">Corner Style</div>
+                <div class="selection-grid qr-corner-grid" id="qr-corner-grid">
+                    <div class="grid-item active" onclick="selectCornerStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><rect x="6" y="6" width="6" height="6" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="8"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="5"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Round</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'dot')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Dot</span>
+                    </div>
+                </div>
+                <div class="qrs-color-row">
+                    <div class="qrs-color-item">
+                        <label>QR Color</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-dot-color-picker').click()">
+                            <input type="color" id="qr-dot-color-picker" value="#000000" oninput="onQRColorChange('dot',this.value)">
+                            <div class="qrs-color-swatch" id="qr-dot-swatch" style="background:#000000;"></div>
+                            <span class="qrs-color-hex" id="qr-dot-hex">#000000</span>
+                        </div>
+                    </div>
+                    <div class="qrs-color-item">
+                        <label>Background</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-bg-color-picker').click()">
+                            <input type="color" id="qr-bg-color-picker" value="#ffffff" oninput="onQRColorChange('bg',this.value)">
+                            <div class="qrs-color-swatch" id="qr-bg-swatch" style="background:#ffffff;border:1px solid #ddd;"></div>
+                            <span class="qrs-color-hex" id="qr-bg-hex">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frame Section -->
         <div class="collapse-section frame-section">
             <div class="collapse-header">
                 <div class="header-left-col">
                     <div class="header-icon"><i class="fa-solid fa-border-all"></i></div>
-                    <div class="header-text"><h3>Frame</h3><p>Define the QR card outline.</p></div>
+                    <div class="header-text">
+                        <h3>Frame</h3>
+                        <p>Define the QR card outline.</p>
+                    </div>
                 </div>
                 <i class="fa-solid fa-chevron-up frame-chevron" style="color: var(--text-muted);"></i>
             </div>
@@ -190,7 +258,8 @@
                     <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
                     <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
                 </div>
-                <!-- SVG frame controls -->
+
+                <!-- SVG frame customization controls -->
                 <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
                     <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
@@ -211,15 +280,13 @@
                         <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
                     </div>
                 </div>
-                <div class="selection-grid frame-grid" style="margin-top: 24px;">
-                    <div class="grid-item frame-option active" data-frame="none"><div class="frame-thumb frame-thumb-none"></div><span class="frame-label">None</span></div>
-                    <div class="grid-item frame-option" data-frame="simple"><div class="frame-thumb frame-thumb-simple"></div><span class="frame-label">Simple</span></div>
-                    <div class="grid-item frame-option" data-frame="rounded"><div class="frame-thumb frame-thumb-rounded"></div><span class="frame-label">Rounded</span></div>
-                    <div class="grid-item frame-option" data-frame="double"><div class="frame-thumb frame-thumb-double"></div><span class="frame-label">Double</span></div>
-                    <div class="grid-item frame-option" data-frame="circle"><div class="frame-thumb frame-thumb-circle"></div><span class="frame-label">Circle</span></div>
-                    <div class="grid-item frame-option" data-frame="thick"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
-                    <div class="grid-item frame-option" data-frame="shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
+
+                <!-- Default frames (from admin) -->
+                <div class="custom-frames-section" id="default-frames-section" style="display:none;">
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
+
                 <div class="custom-frames-section">
                     <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
@@ -284,12 +351,27 @@
     var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
     var _qrStyling = null;
 
+    // Preview: small + low ECC so vCard renders fast
+    function _buildQROptsPreview() {
+        return {
+            width: 200, height: 200, type: 'canvas',
+            data: _qrFinalUrl || 'https://QRkartu',
+            margin: 4,
+            qrOptions: { errorCorrectionLevel: 'L' },
+            dotsOptions:          { color: _qrStyle.dotColor, type: _qrStyle.dots },
+            backgroundOptions:    { color: _qrStyle.bgColor },
+            cornersSquareOptions: { type: _qrStyle.corners },
+            cornersDotOptions:    { type: _qrStyle.corners === 'dot' ? 'dot' : 'square' },
+        };
+    }
+
+    // Hi-res: used only at submit time (loading overlay is shown, delay is acceptable)
     function _buildQROpts() {
         return {
             width: 400, height: 400, type: 'canvas',
             data: _qrFinalUrl || 'https://QRkartu',
             margin: 8,
-            qrOptions: { errorCorrectionLevel: 'H' },
+            qrOptions: { errorCorrectionLevel: 'M' },
             dotsOptions:          { color: _qrStyle.dotColor, type: _qrStyle.dots },
             backgroundOptions:    { color: _qrStyle.bgColor },
             cornersSquareOptions: { type: _qrStyle.corners },
@@ -300,14 +382,22 @@
     function refreshQRPreview() {
         if (!window.QRCodeStyling) return;
         if (!_qrStyling) {
-            _qrStyling = new QRCodeStyling(_buildQROpts());
+            _qrStyling = new QRCodeStyling(_buildQROptsPreview());
         } else {
-            _qrStyling.update(_buildQROpts());
+            _qrStyling.update(_buildQROptsPreview());
         }
         _qrStyling.getRawData('png').then(function(blob) {
             var url = URL.createObjectURL(blob);
-            document.getElementById('qrcode-img').src = url;
-        }).catch(function(e){ console.error('QR style:', e); });
+            var imgEl = document.getElementById('qrcode-img');
+            var loadingEl = document.getElementById('qr-loading');
+            imgEl.src = url;
+            imgEl.style.display = 'block';
+            if (loadingEl) loadingEl.style.display = 'none';
+        }).catch(function(e){
+            console.error('QR style:', e);
+            var errEl = document.getElementById('qr-error');
+            if (errEl) { errEl.textContent = 'Failed to generate QR.'; errEl.style.display = 'block'; }
+        });
     }
 
 function toggleMobilePreview() {
@@ -376,28 +466,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
-
-    // Frame selection
-    const framePreview = document.getElementById('qr-preview-frame');
-    const frameCaption = document.getElementById('frame-caption');
-    document.querySelectorAll('.frame-option').forEach(function(item) {
-        item.addEventListener('click', function() {
-            this.parentElement.querySelectorAll('.grid-item').forEach(function(s) { s.classList.remove('active'); });
-            this.classList.add('active');
-            framePreview.className = 'qr-preview-frame frame-' + (this.getAttribute('data-frame') || 'none');
-        });
-    });
-    var frameTextEl = document.getElementById('frame-text');
-    var frameColorEl = document.getElementById('frame-text-color');
-    var frameColorHex = document.getElementById('frame-color-hex');
-    if (frameTextEl) frameTextEl.addEventListener('input', function() { frameCaption.textContent = this.value || 'Scan me!'; });
-    if (frameColorEl) {
-        frameColorEl.addEventListener('input', function() {
-            frameCaption.style.color = this.value;
-            if (frameColorHex) frameColorHex.textContent = this.value;
-        });
-    }
-    if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
 
         // SVG frame helpers
         var _svgFrameBase = null;
@@ -493,18 +561,18 @@ function submitDesignWithOverlay() {
     var overlay = document.getElementById('design-complete-overlay');
     if (overlay) overlay.style.display = 'flex';
     var svgFrame = window.qfpGetCurrentSvgFrame ? window.qfpGetCurrentSvgFrame() : null;
-    if (_qrStyling) {
-        _qrStyling.getRawData('png').then(function(blob) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var qrDataUrl = e.target.result;
-                function doSubmit(d) { var el = document.getElementById('qr_image_data'); if (el) el.value = d; document.getElementById('design-form').submit(); }
-                if (svgFrame) { _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(qrDataUrl); }); }
-                else { doSubmit(qrDataUrl); }
-            };
-            reader.readAsDataURL(blob);
-        }).catch(function() { document.getElementById('design-form').submit(); });
-    } else { document.getElementById('design-form').submit(); }
+    // Generate hi-res QR at submit time (loading overlay shown, delay is fine)
+    var hiRes = new QRCodeStyling(_buildQROpts());
+    hiRes.getRawData('png').then(function(blob) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var qrDataUrl = e.target.result;
+            function doSubmit(d) { var el = document.getElementById('qr_image_data'); if (el) el.value = d; document.getElementById('design-form').submit(); }
+            if (svgFrame) { _compositeQrWithSvgFrame(qrDataUrl, svgFrame).then(doSubmit).catch(function() { doSubmit(qrDataUrl); }); }
+            else { doSubmit(qrDataUrl); }
+        };
+        reader.readAsDataURL(blob);
+    }).catch(function() { document.getElementById('design-form').submit(); });
 }
 function onCardBgChange(value) {
     var s = document.getElementById('card-bg-swatch'); var h = document.getElementById('card-bg-hex'); var inp = document.getElementById('card_bg_color_input');

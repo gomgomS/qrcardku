@@ -1693,6 +1693,81 @@ def _merge_ecard_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
     return out
 
 
+def _merge_web_static_qrcard_with_base(fk_user_id, qrcard_id, detail_doc):
+    """db_qrcard holds qr_image_url, qr_composite_url, frame_id, and style fields; db_qrcard_web_static holds URL/name detail."""
+    if not detail_doc:
+        return None
+    mgd = database.get_db_conn(config.mainDB)
+    base = mgd.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+    )
+    out = {k: v for k, v in (base or {}).items() if k != "_id"}
+    for key, value in detail_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
+def _merge_text_qrcard_with_base(fk_user_id, qrcard_id, detail_doc):
+    """Same as web-static: image/composite/frame live on db_qrcard; text payload on db_qrcard_text."""
+    if not detail_doc:
+        return None
+    mgd = database.get_db_conn(config.mainDB)
+    base = mgd.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+    )
+    out = {k: v for k, v in (base or {}).items() if k != "_id"}
+    for key, value in detail_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
+def _merge_wa_static_qrcard_with_base(fk_user_id, qrcard_id, detail_doc):
+    """db_qrcard holds qr_image_url / qr_composite_url / styles; db_qrcard_wa_static holds WA fields."""
+    if not detail_doc:
+        return None
+    mgd = database.get_db_conn(config.mainDB)
+    base = mgd.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+    )
+    out = {k: v for k, v in (base or {}).items() if k != "_id"}
+    for key, value in detail_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
+def _merge_email_static_qrcard_with_base(fk_user_id, qrcard_id, detail_doc):
+    """db_qrcard holds image/composite/styles; db_qrcard_email_static holds mail fields."""
+    if not detail_doc:
+        return None
+    mgd = database.get_db_conn(config.mainDB)
+    base = mgd.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+    )
+    out = {k: v for k, v in (base or {}).items() if k != "_id"}
+    for key, value in detail_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
+def _merge_vcard_static_qrcard_with_base(fk_user_id, qrcard_id, detail_doc):
+    """db_qrcard holds image/composite/styles; db_qrcard_vcard_static holds vCard fields."""
+    if not detail_doc:
+        return None
+    mgd = database.get_db_conn(config.mainDB)
+    base = mgd.db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+    )
+    out = {k: v for k, v in (base or {}).items() if k != "_id"}
+    for key, value in detail_doc.items():
+        if key != "_id":
+            out[key] = value
+    return out
+
+
 def _merge_images_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
     """Combine db_qrcard (authoritative base) with images-specific fields from db_qrcard_images."""
     if not qrcard:
@@ -2254,6 +2329,10 @@ def qr_update_content_web_static(qrcard_id):
     error_msg = None
     qr_name = qrcard.get("name", "")
     url_content = qrcard.get("url_content", "")
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        url_content = draft.get("url_content") or url_content
     if request.method == "POST":
         qr_name = request.form.get("qr_name", "").strip()
         url_content = request.form.get("url_content", "").strip()
@@ -2262,12 +2341,40 @@ def qr_update_content_web_static(qrcard_id):
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
         else:
-            return render_template("/user/edit_qr_design_web_static.html",
-                qrcard_id=qrcard_id, qr_name=qr_name, url_content=url_content)
+            _set_qr_draft(session, qrcard_id, url_content, qr_name, None, None)
+            return redirect(url_for("qr_update_design_web_static", qrcard_id=qrcard_id))
     return render_template("/user/edit_qr_content_web_static.html",
         qrcard_id=qrcard_id, qr_name=qr_name,
         url_content=url_content.replace("https://", "").replace("http://", "") if url_content else "",
         error_msg=error_msg)
+
+
+@app.route("/qr/update/web-static/qr-design/<qrcard_id>", methods=["GET"])
+def qr_update_design_web_static(qrcard_id):
+    """Step 3 (design) for editing web-static — separate URL so the address bar updates after Content → Next (POST-redirect-GET)."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_web_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_web_static_proc.qr_web_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_web_static_qrcard_with_base(fk_user_id, qrcard_id, qrcard)
+    draft = _get_qr_draft(session, qrcard_id)
+    qr_name = qrcard.get("name", "")
+    url_content = qrcard.get("url_content", "")
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        url_content = draft.get("url_content") or url_content
+    return render_template(
+        "/user/edit_qr_design_web_static.html",
+        qrcard_id=qrcard_id,
+        qrcard=qrcard,
+        qr_name=qr_name,
+        url_content=url_content,
+    )
+
 
 @app.route("/qr/update/save/web-static/<qrcard_id>", methods=["POST"])
 def qr_update_save_web_static(qrcard_id):
@@ -2294,6 +2401,7 @@ def qr_update_save_web_static(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
+    _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/update/text/<qrcard_id>", methods=["GET", "POST"])
@@ -2310,16 +2418,53 @@ def qr_update_content_text(qrcard_id):
     error_msg = None
     qr_name = qrcard.get("name", "")
     text_content = qrcard.get("text_content", "")
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "text_content" in draft:
+            text_content = draft["text_content"]
     if request.method == "POST":
         qr_name = request.form.get("qr_name", "").strip()
         text_content = request.form.get("text_content", "")
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
         else:
-            return render_template("/user/edit_qr_design_text.html",
-                qrcard_id=qrcard_id, qr_name=qr_name, text_content=text_content)
+            _set_qr_draft(
+                session, qrcard_id, "", qr_name, None,
+                extra_data={"text_content": text_content},
+            )
+            return redirect(url_for("qr_update_design_text", qrcard_id=qrcard_id))
     return render_template("/user/edit_qr_content_text.html",
         qrcard_id=qrcard_id, qr_name=qr_name, text_content=text_content, error_msg=error_msg)
+
+
+@app.route("/qr/update/text/qr-design/<qrcard_id>", methods=["GET"])
+def qr_update_design_text(qrcard_id):
+    """Text QR design step — own URL so the address bar updates after Content → Next."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_text_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_text_proc.qr_text_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_text_qrcard_with_base(fk_user_id, qrcard_id, qrcard)
+    draft = _get_qr_draft(session, qrcard_id)
+    qr_name = qrcard.get("name", "")
+    text_content = qrcard.get("text_content", "")
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "text_content" in draft:
+            text_content = draft["text_content"]
+    return render_template(
+        "/user/edit_qr_design_text.html",
+        qrcard_id=qrcard_id,
+        qrcard=qrcard,
+        qr_name=qr_name,
+        text_content=text_content,
+    )
+
 
 @app.route("/qr/update/save/text/<qrcard_id>", methods=["POST"])
 def qr_update_save_text(qrcard_id):
@@ -2344,6 +2489,7 @@ def qr_update_save_text(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
+    _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/wa-static")
@@ -2463,6 +2609,13 @@ def qr_update_content_wa_static(qrcard_id):
     qr_name = qrcard.get("name", "")
     wa_phone = qrcard.get("wa_phone", "")
     wa_message = qrcard.get("wa_message", "")
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "wa_phone" in draft:
+            wa_phone = draft["wa_phone"]
+        if "wa_message" in draft:
+            wa_message = draft["wa_message"]
     if request.method == "POST":
         qr_name = request.form.get("qr_name", "").strip()
         wa_phone = request.form.get("wa_phone", "").strip()
@@ -2470,12 +2623,47 @@ def qr_update_content_wa_static(qrcard_id):
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
         else:
-            return render_template("/user/edit_qr_design_wa_static.html",
-                qrcard_id=qrcard_id, qr_name=qr_name,
-                wa_phone=wa_phone, wa_message=wa_message)
+            _set_qr_draft(
+                session, qrcard_id, "", qr_name, None,
+                extra_data={"wa_phone": wa_phone, "wa_message": wa_message},
+            )
+            return redirect(url_for("qr_update_design_wa_static", qrcard_id=qrcard_id))
     return render_template("/user/edit_qr_content_wa_static.html",
         qrcard_id=qrcard_id, qr_name=qr_name,
         wa_phone=wa_phone, wa_message=wa_message, error_msg=error_msg)
+
+
+@app.route("/qr/update/wa-static/qr-design/<qrcard_id>", methods=["GET"])
+def qr_update_design_wa_static(qrcard_id):
+    """WA static design step — own URL after Content → Next (POST-redirect-GET)."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_wa_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_wa_static_proc.qr_wa_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_wa_static_qrcard_with_base(fk_user_id, qrcard_id, qrcard)
+    draft = _get_qr_draft(session, qrcard_id)
+    qr_name = qrcard.get("name", "")
+    wa_phone = qrcard.get("wa_phone", "")
+    wa_message = qrcard.get("wa_message", "")
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "wa_phone" in draft:
+            wa_phone = draft["wa_phone"]
+        if "wa_message" in draft:
+            wa_message = draft["wa_message"]
+    return render_template(
+        "/user/edit_qr_design_wa_static.html",
+        qrcard_id=qrcard_id,
+        qrcard=qrcard,
+        qr_name=qr_name,
+        wa_phone=wa_phone,
+        wa_message=wa_message,
+    )
+
 
 @app.route("/qr/update/save/wa-static/<qrcard_id>", methods=["POST"])
 def qr_update_save_wa_static(qrcard_id):
@@ -2501,6 +2689,7 @@ def qr_update_save_wa_static(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
+    _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/vcard-static")
@@ -2618,6 +2807,27 @@ def qr_update_content_vcard_static(qrcard_id):
     email = qrcard.get("vcard_email", "")
     website = qrcard.get("vcard_website", "")
     phones_json = _json.dumps(phones)
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "vcard_first_name" in draft:
+            first_name = draft["vcard_first_name"]
+        if "vcard_surname" in draft:
+            surname = draft["vcard_surname"]
+        if "vcard_company" in draft:
+            company = draft["vcard_company"]
+        if "vcard_title" in draft:
+            title = draft["vcard_title"]
+        if "vcard_email" in draft:
+            email = draft["vcard_email"]
+        if "vcard_website" in draft:
+            website = draft["vcard_website"]
+        if "vcard_phones_json" in draft:
+            phones_json = draft["vcard_phones_json"]
+            try:
+                phones = _json.loads(phones_json)
+            except Exception:
+                phones = []
     if request.method == "POST":
         def _vd(k): return request.form.get(k, "").strip()
         qr_name = _vd("qr_name") or "Untitled QR"
@@ -2629,20 +2839,86 @@ def qr_update_content_vcard_static(qrcard_id):
         website = _vd("vcard_website")
         phones_json = request.form.get("vcard_phones_json", "[]")
         phones = []
-        try: phones = _json.loads(phones_json)
-        except Exception: pass
+        try:
+            phones = _json.loads(phones_json)
+        except Exception:
+            pass
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             error_msg = "A QR card with this name already exists."
         else:
-            return render_template("/user/edit_qr_design_vcard_static.html",
-                qrcard_id=qrcard_id, qr_name=qr_name, vcard_first_name=first_name,
-                vcard_surname=surname, vcard_company=company, vcard_title=title,
-                vcard_email=email, vcard_website=website, vcard_phones_json=phones_json)
+            _set_qr_draft(
+                session, qrcard_id, "", qr_name, None,
+                extra_data={
+                    "vcard_first_name": first_name,
+                    "vcard_surname": surname,
+                    "vcard_company": company,
+                    "vcard_title": title,
+                    "vcard_email": email,
+                    "vcard_website": website,
+                    "vcard_phones_json": phones_json,
+                },
+            )
+            return redirect(url_for("qr_update_design_vcard_static", qrcard_id=qrcard_id))
     return render_template("/user/edit_qr_content_vcard_static.html",
         qrcard_id=qrcard_id, qr_name=qr_name, vcard_first_name=first_name,
         vcard_surname=surname, vcard_company=company, vcard_title=title,
         vcard_email=email, vcard_website=website,
         vcard_phones_json=phones_json, error_msg=error_msg)
+
+
+@app.route("/qr/update/vcard-static/qr-design/<qrcard_id>", methods=["GET"])
+def qr_update_design_vcard_static(qrcard_id):
+    """vCard static design step — own URL after Content → Next."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    import json as _json
+    from pytavia_modules.qr import qr_vcard_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_vcard_static_proc.qr_vcard_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_vcard_static_qrcard_with_base(fk_user_id, qrcard_id, qrcard)
+    draft = _get_qr_draft(session, qrcard_id)
+    qr_name = qrcard.get("name", "")
+    first_name = qrcard.get("vcard_first_name", "")
+    surname = qrcard.get("vcard_surname", "")
+    company = qrcard.get("vcard_company", "")
+    title = qrcard.get("vcard_title", "")
+    email = qrcard.get("vcard_email", "")
+    website = qrcard.get("vcard_website", "")
+    phones = qrcard.get("vcard_phones", [])
+    phones_json = _json.dumps(phones)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "vcard_first_name" in draft:
+            first_name = draft["vcard_first_name"]
+        if "vcard_surname" in draft:
+            surname = draft["vcard_surname"]
+        if "vcard_company" in draft:
+            company = draft["vcard_company"]
+        if "vcard_title" in draft:
+            title = draft["vcard_title"]
+        if "vcard_email" in draft:
+            email = draft["vcard_email"]
+        if "vcard_website" in draft:
+            website = draft["vcard_website"]
+        if "vcard_phones_json" in draft:
+            phones_json = draft["vcard_phones_json"]
+    return render_template(
+        "/user/edit_qr_design_vcard_static.html",
+        qrcard_id=qrcard_id,
+        qrcard=qrcard,
+        qr_name=qr_name,
+        vcard_first_name=first_name,
+        vcard_surname=surname,
+        vcard_company=company,
+        vcard_title=title,
+        vcard_email=email,
+        vcard_website=website,
+        vcard_phones_json=phones_json,
+    )
+
 
 @app.route("/qr/update/save/vcard-static/<qrcard_id>", methods=["POST"])
 def qr_update_save_vcard_static(qrcard_id):
@@ -2676,6 +2952,7 @@ def qr_update_save_vcard_static(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, session.get("fk_user_id"), qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
+    _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/email-static")
@@ -2805,6 +3082,15 @@ def qr_update_content_email_static(qrcard_id):
     email_address = qrcard.get("email_address", "")
     email_subject = qrcard.get("email_subject", "")
     email_body = qrcard.get("email_body", "")
+    draft = _get_qr_draft(session, qrcard_id)
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "email_address" in draft:
+            email_address = draft["email_address"]
+        if "email_subject" in draft:
+            email_subject = draft["email_subject"]
+        if "email_body" in draft:
+            email_body = draft["email_body"]
     if request.method == "POST":
         qr_name = request.form.get("qr_name", "").strip()
         email_address = request.form.get("email_address", "").strip()
@@ -2813,13 +3099,56 @@ def qr_update_content_email_static(qrcard_id):
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             error_msg = "A QR card with this name already exists. Please choose a unique name."
         else:
-            return render_template("/user/edit_qr_design_email_static.html",
-                qrcard_id=qrcard_id, qr_name=qr_name,
-                email_address=email_address, email_subject=email_subject, email_body=email_body)
+            _set_qr_draft(
+                session, qrcard_id, "", qr_name, None,
+                extra_data={
+                    "email_address": email_address,
+                    "email_subject": email_subject,
+                    "email_body": email_body,
+                },
+            )
+            return redirect(url_for("qr_update_design_email_static", qrcard_id=qrcard_id))
     return render_template("/user/edit_qr_content_email_static.html",
         qrcard_id=qrcard_id, qr_name=qr_name,
         email_address=email_address, email_subject=email_subject, email_body=email_body,
         error_msg=error_msg)
+
+
+@app.route("/qr/update/email-static/qr-design/<qrcard_id>", methods=["GET"])
+def qr_update_design_email_static(qrcard_id):
+    """Email static design step — own URL after Content → Next."""
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_modules.qr import qr_email_static_proc
+    fk_user_id = session.get("fk_user_id")
+    proc = qr_email_static_proc.qr_email_static_proc(app)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    if not qrcard:
+        return redirect(url_for("user_qr_list"))
+    qrcard = _merge_email_static_qrcard_with_base(fk_user_id, qrcard_id, qrcard)
+    draft = _get_qr_draft(session, qrcard_id)
+    qr_name = qrcard.get("name", "")
+    email_address = qrcard.get("email_address", "")
+    email_subject = qrcard.get("email_subject", "")
+    email_body = qrcard.get("email_body", "")
+    if draft:
+        qr_name = draft.get("qr_name") or qr_name
+        if "email_address" in draft:
+            email_address = draft["email_address"]
+        if "email_subject" in draft:
+            email_subject = draft["email_subject"]
+        if "email_body" in draft:
+            email_body = draft["email_body"]
+    return render_template(
+        "/user/edit_qr_design_email_static.html",
+        qrcard_id=qrcard_id,
+        qrcard=qrcard,
+        qr_name=qr_name,
+        email_address=email_address,
+        email_subject=email_subject,
+        email_body=email_body,
+    )
+
 
 @app.route("/qr/update/save/email-static/<qrcard_id>", methods=["POST"])
 def qr_update_save_email_static(qrcard_id):
@@ -2849,6 +3178,7 @@ def qr_update_save_email_static(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
+    _clear_qr_draft(session, qrcard_id)
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/web")
@@ -3360,17 +3690,20 @@ def qr_save_links():
 
 
 def _merge_links_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
-    """Overlay db_qrcard_links document onto qrcard."""
+    """Overlay db_qrcard_links document onto db_qrcard base (so qr_image_url etc. are included)."""
+    try:
+        base_doc = mgd_db.db_qrcard.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id})
+    except Exception:
+        base_doc = None
+    out = {k: v for k, v in (base_doc or qrcard).items() if k != "_id"}
     try:
         links_doc = mgd_db.db_qrcard_links.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id})
     except Exception:
         links_doc = None
-    if not links_doc:
-        return qrcard
-    out = dict(qrcard)
-    for key, value in links_doc.items():
-        if key != "_id":
-            out[key] = value
+    if links_doc:
+        for key, value in links_doc.items():
+            if key != "_id":
+                out[key] = value
     return out
 
 
@@ -3461,8 +3794,7 @@ def qr_update_content_links(qrcard_id):
             params["short_code"] = short_code
         proc.edit_qrcard(params)
         qrcard.update(content_update)
-        qr_encode_url = config.G_BASE_URL + "/links/" + (qrcard.get("short_code") or short_code or "")
-        return view_update_links.view_update_links(app).update_qr_design_html(qrcard=qrcard, url_content=url_content, qr_name=qr_name, qr_encode_url=qr_encode_url)
+        return redirect(url_for("qr_update_design_links", qrcard_id=qrcard_id))
     return view_update_links.view_update_links(app).update_qr_content_html(qrcard=qrcard, base_url=config.G_BASE_URL)
 
 
@@ -3477,6 +3809,15 @@ def qr_update_design_links(qrcard_id):
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_links_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
+    # Explicitly pull QR image URLs from db_qrcard in case merge missed them
+    _base = database.get_db_conn(config.mainDB).db_qrcard.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+        {"qr_composite_url": 1, "qr_image_url": 1, "qr_dot_style": 1,
+         "qr_corner_style": 1, "qr_dot_color": 1, "qr_bg_color": 1, "_id": 0}
+    ) or {}
+    for _k in ("qr_composite_url", "qr_image_url", "qr_dot_style", "qr_corner_style", "qr_dot_color", "qr_bg_color"):
+        if _base.get(_k):
+            qrcard[_k] = _base[_k]
     qr_encode_url = config.G_BASE_URL + "/links/" + qrcard["short_code"] if qrcard.get("short_code") else None
     return view_update_links.view_update_links(app).update_qr_design_html(qrcard=qrcard, qr_encode_url=qr_encode_url)
 
@@ -5395,15 +5736,25 @@ def qr_update_content_video(qrcard_id):
             database.get_db_conn(config.mainDB).db_qrcard_video.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"video_links": updated_links}}, upsert=True)
         except Exception: pass
         
-        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), video_data)
-        qrcard.update(video_data)
-        
         if not proc.is_name_unique(fk_user_id, qr_name, exclude_id=qrcard_id):
             return view_update_video.view_update_video(app).update_qr_content_html(
                 qrcard=qrcard, error_msg="A QR card with this name already exists.", base_url=config.G_BASE_URL
             )
-            
-        return view_update_video.view_update_video(app).update_qr_design_html(qrcard=qrcard, url_content=url_content, qr_name=qr_name)
+
+        if request.form.get("reset_qr_style") == "1":
+            database.get_db_conn(config.mainDB).db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": {"qr_image_url": "", "qr_composite_url": "",
+                            "qr_dot_style": "", "qr_corner_style": "",
+                            "qr_dot_color": "", "qr_bg_color": ""}},
+            )
+            qrcard.pop("qr_image_url", None)
+            qrcard.pop("qr_composite_url", None)
+
+        _set_qr_draft(session, qrcard_id, url_content, qr_name, request.form.get("short_code", "").strip(), video_data)
+        qrcard.update(video_data)
+
+        return redirect(url_for("qr_update_design_video", qrcard_id=qrcard_id))
     
     draft = _get_qr_draft(session, qrcard_id)
     if draft: qrcard.update(draft)

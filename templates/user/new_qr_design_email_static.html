@@ -30,7 +30,8 @@
     .header-text p { font-size: 11px; color: var(--text-muted); }
     .collapse-body { padding: 0 24px 24px 24px; background-color: var(--bg-content); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease-in-out; opacity: 0; }
     .collapse-body.show { padding: 24px; max-height: 2000px; opacity: 1; border-top: 1px solid var(--border-color); }
-    .selection-grid.frame-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+    .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .selection-grid.frame-grid { grid-template-columns: repeat(5, 1fr); gap: 12px; }
     .grid-item { aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; background: var(--bg-content); padding: 8px; color: var(--text-muted); }
     .grid-item:hover { border-color: var(--text-muted); }
     .grid-item.active { border-color: var(--primary); background-color: #2A2810; color: var(--primary); }
@@ -71,7 +72,14 @@
     .frame-option-custom { border: 2px solid var(--border-color); }
     .frame-option-svg { border: 2px solid var(--border-color); }
     .frame-option-svg.active { border-color: var(--primary); }
-    .frame-option-svg img { height:48px;width:auto;max-width:48px;object-fit:contain;border-radius:4px;display:block; }
+    .frame-option-svg img { height: 48px; width: auto; max-width: 48px; object-fit: contain; border-radius: 4px; display: block; }
+
+    /* ── frame grid responsive overrides ── */
+    .selection-grid.frame-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)) !important; gap: 10px !important; }
+    .grid-item { min-width: 0; overflow: hidden; padding: 6px; }
+    .frame-thumb { flex-shrink: 0; }
+    .frame-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+    .custom-frame-thumb { width: 100%; max-width: 40px; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; display: block; flex-shrink: 0; }
 
     .mobile-bottom-bar {
         display: none;
@@ -205,6 +213,83 @@
             <input type="checkbox">
             <span>Save template when finished</span>
         </div>
+        <!-- QR Code Style Section -->
+        <div class="collapse-section">
+            <div class="collapse-header">
+                <div class="header-left-col">
+                    <div class="header-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="header-text">
+                        <h3>QR Code Style</h3>
+                        <p>Customize dot shape and colors of your QR.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+            </div>
+            <div class="collapse-body">
+                <div class="qrs-label">Dot Shape</div>
+                <div class="selection-grid qr-dot-grid" id="qr-dot-grid">
+                    <div class="grid-item active" onclick="selectDotStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="0"/><rect x="13" y="1" width="10" height="10" rx="0"/><rect x="25" y="1" width="10" height="10" rx="0"/><rect x="1" y="13" width="10" height="10" rx="0"/><rect x="13" y="13" width="10" height="10" rx="0"/><rect x="25" y="13" width="10" height="10" rx="0"/><rect x="1" y="25" width="10" height="10" rx="0"/><rect x="13" y="25" width="10" height="10" rx="0"/><rect x="25" y="25" width="10" height="10" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'dots')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><circle cx="6" cy="6" r="5"/><circle cx="18" cy="6" r="5"/><circle cx="30" cy="6" r="5"/><circle cx="6" cy="18" r="5"/><circle cx="18" cy="18" r="5"/><circle cx="30" cy="18" r="5"/><circle cx="6" cy="30" r="5"/><circle cx="18" cy="30" r="5"/><circle cx="30" cy="30" r="5"/></svg>
+                        <span class="frame-label">Dots</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2.5"/><rect x="13" y="1" width="10" height="10" rx="2.5"/><rect x="25" y="1" width="10" height="10" rx="2.5"/><rect x="1" y="13" width="10" height="10" rx="2.5"/><rect x="13" y="13" width="10" height="10" rx="2.5"/><rect x="25" y="13" width="10" height="10" rx="2.5"/><rect x="1" y="25" width="10" height="10" rx="2.5"/><rect x="13" y="25" width="10" height="10" rx="2.5"/><rect x="25" y="25" width="10" height="10" rx="2.5"/></svg>
+                        <span class="frame-label">Rounded</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="5"/><rect x="13" y="1" width="10" height="10" rx="5"/><rect x="25" y="1" width="10" height="10" rx="5"/><rect x="1" y="13" width="10" height="10" rx="5"/><rect x="13" y="13" width="10" height="10" rx="5"/><rect x="25" y="13" width="10" height="10" rx="5"/><rect x="1" y="25" width="10" height="10" rx="5"/><rect x="13" y="25" width="10" height="10" rx="5"/><rect x="25" y="25" width="10" height="10" rx="5"/></svg>
+                        <span class="frame-label">Smooth</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M1,1h10v7h-3v3h-7zM13,1h10v10h-10zM25,1h10v10h-7v-3h-3zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,25h7v3h3v7h-10zM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M5,1h6v7h-3v3h-7v-6A4,4,0,0,1,5,1ZM13,1h10v10h-10zM31,1h0A4,4,0,0,1,35,5v6h-7v-3h-3v-7h6zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,31v-6h7v3h3v7h-6A4,4,0,0,1,1,31ZM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy+</span>
+                    </div>
+                </div>
+                <div class="qrs-label" style="margin-top:18px;">Corner Style</div>
+                <div class="selection-grid qr-corner-grid" id="qr-corner-grid">
+                    <div class="grid-item active" onclick="selectCornerStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><rect x="6" y="6" width="6" height="6" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="8"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="5"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Round</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'dot')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Dot</span>
+                    </div>
+                </div>
+                <div class="qrs-color-row">
+                    <div class="qrs-color-item">
+                        <label>QR Color</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-dot-color-picker').click()">
+                            <input type="color" id="qr-dot-color-picker" value="#000000" oninput="onQRColorChange('dot',this.value)">
+                            <div class="qrs-color-swatch" id="qr-dot-swatch" style="background:#000000;"></div>
+                            <span class="qrs-color-hex" id="qr-dot-hex">#000000</span>
+                        </div>
+                    </div>
+                    <div class="qrs-color-item">
+                        <label>Background</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-bg-color-picker').click()">
+                            <input type="color" id="qr-bg-color-picker" value="#ffffff" oninput="onQRColorChange('bg',this.value)">
+                            <div class="qrs-color-swatch" id="qr-bg-swatch" style="background:#ffffff;border:1px solid #ddd;"></div>
+                            <span class="qrs-color-hex" id="qr-bg-hex">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Frame Section -->
         <div class="collapse-section frame-section">
             <div class="collapse-header">
                 <div class="header-left-col">
@@ -222,7 +307,8 @@
                     <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
                     <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
                 </div>
-                <!-- SVG frame controls -->
+
+                <!-- SVG frame customization controls -->
                 <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
                     <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
@@ -243,15 +329,13 @@
                         <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
                     </div>
                 </div>
-                <div class="selection-grid frame-grid" style="margin-top: 24px;">
-                    <div class="grid-item frame-option active" data-frame="none"><div class="frame-thumb frame-thumb-none"></div><span class="frame-label">None</span></div>
-                    <div class="grid-item frame-option" data-frame="simple"><div class="frame-thumb frame-thumb-simple"></div><span class="frame-label">Simple</span></div>
-                    <div class="grid-item frame-option" data-frame="rounded"><div class="frame-thumb frame-thumb-rounded"></div><span class="frame-label">Rounded</span></div>
-                    <div class="grid-item frame-option" data-frame="double"><div class="frame-thumb frame-thumb-double"></div><span class="frame-label">Double</span></div>
-                    <div class="grid-item frame-option" data-frame="circle"><div class="frame-thumb frame-thumb-circle"></div><span class="frame-label">Circle</span></div>
-                    <div class="grid-item frame-option" data-frame="thick"><div class="frame-thumb frame-thumb-thick"></div><span class="frame-label">Thick</span></div>
-                    <div class="grid-item frame-option" data-frame="shadow"><div class="frame-thumb frame-thumb-shadow"></div><span class="frame-label">Shadow</span></div>
+
+                <!-- Default frames (from admin) -->
+                <div class="custom-frames-section" id="default-frames-section" style="display:none;">
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
+
                 <div class="custom-frames-section">
                     <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>

@@ -162,14 +162,18 @@
 {% block content %}
 <div class="new-qr-step-bar">
     <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/list') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>QR list</span>
+        </a>
         <span class="step-item step-active">
-            <span class="step-num">1</span>
-            <span>Edit content</span>
+            <span class="step-num">2</span>
+            <span>Content</span>
         </span>
-        <button type="submit" form="content-form" class="step-item step-disabled" id="step2-link" disabled
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
-            <span class="step-num">2</span>
+            <span class="step-num">3</span>
             <span>QR design</span>
         </button>
     </div>
@@ -195,7 +199,7 @@
             </div>
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qrcard.get('qr_name', '') if qrcard else '' }}" required>
+                value="{{ qr_name | default(qrcard.name if qrcard else '', true) }}" required>
 
             <!-- Appearance Section -->
             <div class="collapse-section">
@@ -704,16 +708,16 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const step2Link = document.getElementById('step2-link');
+        const step3Link = document.getElementById('step3-link');
         const contentNextBtn = document.getElementById('content-next-btn');
         const qrNameInput = document.querySelector('input[name="qr_name"]');
 
         function checkContentValid() {
             var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
             var valid = nameOk;
-            if (step2Link) {
-                if (valid) { step2Link.classList.remove('step-disabled'); step2Link.removeAttribute('aria-disabled'); step2Link.disabled = false; }
-                else { step2Link.classList.add('step-disabled'); step2Link.setAttribute('aria-disabled', 'true'); step2Link.disabled = true; }
+            if (step3Link) {
+                if (valid) { step3Link.classList.remove('step-disabled'); step3Link.removeAttribute('aria-disabled'); step3Link.disabled = false; }
+                else { step3Link.classList.add('step-disabled'); step3Link.setAttribute('aria-disabled', 'true'); step3Link.disabled = true; }
             }
             if (contentNextBtn) contentNextBtn.disabled = !valid;
         }
