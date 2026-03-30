@@ -80,6 +80,7 @@ from flask              import Response
 
 from authlib.integrations.flask_client import OAuth
 import os
+import uuid
 
 from wtforms            import ValidationError
 
@@ -1433,6 +1434,13 @@ def qr_update_design_ecard(qrcard_id):
                         qrcard[f] = cover_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
                     database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+            elif request.form.get("ecard_cover_img_autocomplete_url", "").strip():
+                cover_url = request.form.get("ecard_cover_img_autocomplete_url").strip()
+                for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                    extra_data[f] = cover_url
+                    qrcard[f] = cover_url
+                database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
             else:
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     if qrcard.get(f): extra_data[f] = qrcard[f]
@@ -1546,7 +1554,8 @@ def qr_update_content_pdf(qrcard_id):
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 _r2 = r2_mod.r2_storage_proc()
-                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
+                unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
                 for _f in _cover_img_fields:
                     ecard_data[_f] = cover_url
                     qrcard[_f] = cover_url
@@ -1557,10 +1566,24 @@ def qr_update_content_pdf(qrcard_id):
                     {"$set": {_f: cover_url for _f in _cover_img_fields}},
                 )
         else:
-            existing_cover = (qrcard.get("pdf_t1_header_img_url") or qrcard.get("pdf_t3_circle_img_url") or qrcard.get("pdf_t4_circle_img_url") or "")
-            for _f in _cover_img_fields:
-                ecard_data[_f] = existing_cover
-                qrcard[_f] = existing_cover
+            # Check if user picked an existing asset URL instead of uploading
+            _asset_cover_url = request.form.get("pdf_t1_header_img_autocomplete_url", "").strip()
+            if _asset_cover_url:
+                cover_url = _asset_cover_url
+                for _f in _cover_img_fields:
+                    ecard_data[_f] = cover_url
+                    qrcard[_f] = cover_url
+                from pytavia_core import database as _db_c, config as _cfg_c
+                _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
+                _mgd.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$set": {_f: cover_url for _f in _cover_img_fields}},
+                )
+            else:
+                existing_cover = (qrcard.get("pdf_t1_header_img_url") or qrcard.get("pdf_t3_circle_img_url") or qrcard.get("pdf_t4_circle_img_url") or "")
+                for _f in _cover_img_fields:
+                    ecard_data[_f] = existing_cover
+                    qrcard[_f] = existing_cover
         if request.form.get("back_from_design"):
             existing_draft = _get_qr_draft(session, qrcard_id) or {}
             ecard_data["pdf_display_names"] = existing_draft.get("pdf_display_names", [])
@@ -2034,6 +2057,13 @@ def qr_update_content_ecard(qrcard_id):
                         qrcard[f] = cover_url
                     database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
                     database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+            elif request.form.get("ecard_cover_img_autocomplete_url", "").strip():
+                cover_url = request.form.get("ecard_cover_img_autocomplete_url").strip()
+                for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+                    extra_data[f] = cover_url
+                    qrcard[f] = cover_url
+                database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
             else:
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     if qrcard.get(f): extra_data[f] = qrcard[f]
@@ -2162,9 +2192,10 @@ def user_new_qr_design_pdf():
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                _r2.upload_file(cover_img, f"pdf/_tmp/{tmp_key}/pdf_cover_img{ext}")
+                unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                _r2.upload_file(cover_img, f"pdf/_tmp/{tmp_key}/{unique_cover_name}")
                 session["cover_img_tmp_key"] = tmp_key
-                session["cover_img_tmp_name"] = "pdf_cover_img" + ext
+                session["cover_img_tmp_name"] = unique_cover_name
                 session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
@@ -3424,6 +3455,14 @@ def user_new_qr_design_ecard():
                 _r2.upload_file(cover_img, f"ecard/_tmp/{tmp_key}/pdf_cover_img{ext}")
                 session["cover_img_tmp_key"] = tmp_key
                 session["cover_img_tmp_name"] = "pdf_cover_img" + ext
+                session.pop("ecard_cover_img_autocomplete_url", None)
+                session.modified = True
+        else:
+            _ac_cover = request.form.get("ecard_cover_img_autocomplete_url", "").strip()
+            if _ac_cover:
+                session["ecard_cover_img_autocomplete_url"] = _ac_cover
+                session.pop("cover_img_tmp_key", None)
+                session.pop("cover_img_tmp_name", None)
                 session.modified = True
         gallery_imgs = request.files.getlist("ecard_gallery_images[]")
         gallery_tmp_list = []
@@ -3468,6 +3507,11 @@ def user_new_qr_design_ecard():
             _cover_url = _r2.public_url("ecard/_tmp/{}/{}".format(
                 session["cover_img_tmp_key"], session["cover_img_tmp_name"]
             ))
+            ecard_data["E-card_t1_header_img_url"] = _cover_url
+            ecard_data["E-card_t3_circle_img_url"] = _cover_url
+            ecard_data["E-card_t4_circle_img_url"] = _cover_url
+        elif session.get("ecard_cover_img_autocomplete_url"):
+            _cover_url = session["ecard_cover_img_autocomplete_url"]
             ecard_data["E-card_t1_header_img_url"] = _cover_url
             ecard_data["E-card_t3_circle_img_url"] = _cover_url
             ecard_data["E-card_t4_circle_img_url"] = _cover_url
@@ -6005,6 +6049,26 @@ def user_storage():
     from pytavia_modules.user import user_storage_proc as _usp
     info = _usp.user_storage_proc(app).get_storage_info(session["fk_user_id"])
     return render_template("user/storage.html", info=info)
+
+@app.route("/api/user/image_assets")
+def api_user_image_assets():
+    """Return active image assets for the logged-in user (for asset-picker UI)."""
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_ia
+    assets = _atp_ia().get_user_assets(session["fk_user_id"])
+    images = [
+        {"r2_key": a["r2_key"], "file_name": a.get("file_name", ""), "url": a.get("r2_key", "")}
+        for a in assets
+        if a.get("file_category") == "image" and a.get("r2_key")
+    ]
+    from pytavia_modules.storage.r2_storage_proc import r2_storage_proc as _r2_ia
+    base = _r2_ia().public_url("")
+    base = base.rstrip("/")
+    for img in images:
+        img["url"] = base + "/" + img["r2_key"]
+    return jsonify({"ok": True, "images": images})
+
 
 @app.route("/api/storage/garbage")
 def api_storage_garbage():

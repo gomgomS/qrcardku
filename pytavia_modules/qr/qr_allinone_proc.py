@@ -283,9 +283,10 @@ class qr_allinone_proc:
         if cover_tmp_key and cover_tmp_name:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             src_key  = f"allinone/_tmp/{cover_tmp_key}/{cover_tmp_name}"
-            dest_key = f"allinone/{new_id}/allinone_cover{ext}"
+            unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+            dest_key = f"allinone/{new_id}/{unique_cover_name}"
             try:
-                cover_url = _r2.move_file(src_key, dest_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"})
+                cover_url = _r2.move_file(src_key, dest_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}}, upsert=True)
             except Exception:
@@ -295,7 +296,8 @@ class qr_allinone_proc:
             if ac_url:
                 if ac_url.startswith("/static/"):
                     ext = os.path.splitext(ac_url)[1] or ".jpg"
-                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/allinone_cover{ext}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"})
+                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
                 if ac_url:
                     self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
@@ -467,9 +469,10 @@ class qr_allinone_proc:
                 if ext not in ALLOWED_IMG_EXT:
                     ext = ".jpg"
                 try:
+                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
                     cover_url = _r2.upload_file(
-                        cover_img, f"allinone/{new_id}/allinone_cover{ext}",
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"}
+                        cover_img, f"allinone/{new_id}/{unique_cover_name}",
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name}
                     )
                     self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}})
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": cover_url}}, upsert=True)
@@ -480,8 +483,9 @@ class qr_allinone_proc:
             if ac_url:
                 if ac_url.startswith("/static/"):
                     ext = os.path.splitext(ac_url)[1] or ".jpg"
-                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/allinone_cover{ext}", root_path,
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"})
+                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                    ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{new_id}/{unique_cover_name}", root_path,
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "allinone", "file_name": unique_cover_name})
                 if ac_url:
                     self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}})
                     self.mgdDB.db_qrcard_allinone.update_one({"qrcard_id": new_id}, {"$set": {"Allinone_cover_img_url": ac_url}}, upsert=True)
@@ -610,16 +614,18 @@ class qr_allinone_proc:
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in ALLOWED_IMG_EXT:
                         ext = ".jpg"
+                    unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
                     update_data["Allinone_cover_img_url"] = _r2.upload_file(
-                        cover_img, f"allinone/{qrcard_id}/allinone_cover{ext}",
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"}
+                        cover_img, f"allinone/{qrcard_id}/{unique_cover_name}",
+                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": unique_cover_name}
                     )
             else:
                 ac_url = (request.form.get("Allinone_profile_img_autocomplete_url") or "").strip()
                 if ac_url:
                     if ac_url.startswith("/static/"):
                         ext = os.path.splitext(ac_url)[1] or ".jpg"
-                        ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{qrcard_id}/allinone_cover{ext}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": f"allinone_cover{ext}"})
+                        unique_cover_name = f"allinone_cover_{uuid.uuid4().hex[:12]}{ext}"
+                        ac_url = self._upload_static_to_r2(_r2, ac_url, f"allinone/{qrcard_id}/{unique_cover_name}", root_path, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "allinone", "file_name": unique_cover_name})
                     if ac_url:
                         update_data["Allinone_cover_img_url"] = ac_url
 

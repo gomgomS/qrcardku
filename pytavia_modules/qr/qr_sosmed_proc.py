@@ -263,8 +263,9 @@ class qr_sosmed_proc:
 
         if cover_tmp_key and cover_tmp_name:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            unique_cover_name = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{ext}"
             try:
-                cover_url = _r2.move_file(f"sosmed/_tmp/{cover_tmp_key}/{cover_tmp_name}", f"sosmed/{new_id}/sosmed_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": f"sosmed_cover_img{ext}"})
+                cover_url = _r2.move_file(f"sosmed/_tmp/{cover_tmp_key}/{cover_tmp_name}", f"sosmed/{new_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_cover_name})
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
                 self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
             except Exception:
@@ -277,8 +278,9 @@ class qr_sosmed_proc:
                 local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
                 if os.path.isfile(local_path):
                     try:
+                        unique_cover_name = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{ext}"
                         with open(local_path, "rb") as f:
-                            cover_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/sosmed_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": f"sosmed_cover_img{ext}"})
+                            cover_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_cover_name})
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
                         self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
                     except Exception:

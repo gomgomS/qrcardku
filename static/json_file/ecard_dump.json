@@ -13,7 +13,7 @@
     "title": "Senior Business Consultant",
     "desc": "10+ years of expertise in finance & strategy",
     "btn_text": "Save Contact",
-    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.png"
   },
   "phones": [
     { "label": "Mobile", "value": "+1 (555) 123-4567" },

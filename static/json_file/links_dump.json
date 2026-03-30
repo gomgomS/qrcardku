@@ -11,7 +11,7 @@
   "basic_info": {
     "title": "My Link Hub",
     "desc": "All my important links in one place",
-    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.png"
   },
   "links": [
     { "url": "https://example.com/portfolio", "name": "My Portfolio", "desc": "Browse my latest projects" },

@@ -14,7 +14,7 @@
     "company": "qrkartu Corporation",
     "website": "https://qrkartu.com",
     "btn_text": "Download PDF",
-    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.png"
   },
   "pdfs": [
     {

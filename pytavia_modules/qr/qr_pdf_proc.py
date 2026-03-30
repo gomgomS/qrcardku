@@ -425,9 +425,10 @@ class qr_pdf_proc:
         if cover_tmp_key:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"
-            dst_key = f"pdf/{new_qrcard_id}/pdf_cover_img{ext}"
+            unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+            dst_key = f"pdf/{new_qrcard_id}/{unique_cover_name}"
             try:
-                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"pdf_cover_img{ext}"})
+                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": unique_cover_name})
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
@@ -440,13 +441,27 @@ class qr_pdf_proc:
                 pass
         else:
             ac_cover = request.form.get("pdf_t1_header_img_autocomplete_url", "").strip() or session.pop("pdf_t1_header_img_autocomplete_url", "") or ""
-            if ac_cover and ac_cover.startswith("/static/"):
+            if ac_cover and (ac_cover.startswith("http://") or ac_cover.startswith("https://")):
+                # Existing R2 asset URL — store directly, no re-upload
+                try:
+                    self.mgdDB.db_qrcard.update_one(
+                        {"qrcard_id": new_qrcard_id},
+                        {"$set": {"pdf_t1_header_img_url": ac_cover, "pdf_t3_circle_img_url": ac_cover, "pdf_t4_circle_img_url": ac_cover}},
+                    )
+                    self.mgdDB.db_qrcard_pdf.update_one(
+                        {"qrcard_id": new_qrcard_id},
+                        {"$set": {"pdf_t1_header_img_url": ac_cover, "pdf_t3_circle_img_url": ac_cover, "pdf_t4_circle_img_url": ac_cover}},
+                    )
+                except Exception:
+                    pass
+            elif ac_cover and ac_cover.startswith("/static/"):
                 ext = os.path.splitext(ac_cover)[1] or ".jpg"
                 local_path = os.path.join(root_path or config.G_HOME_PATH, ac_cover.lstrip("/").replace("/", os.sep))
                 if os.path.isfile(local_path):
                     try:
+                        unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
                         with open(local_path, "rb") as f:
-                            cover_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"pdf_cover_img{ext}"})
+                            cover_url = r2.upload_bytes(f.read(), f"pdf/{new_qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": unique_cover_name})
                         self.mgdDB.db_qrcard.update_one(
                             {"qrcard_id": new_qrcard_id},
                             {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},

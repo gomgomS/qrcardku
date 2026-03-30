@@ -426,9 +426,10 @@ class qr_ecard_proc:
         if cover_tmp_key:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
             src_key = f"ecard/_tmp/{cover_tmp_key}/{cover_tmp_name}"
-            dst_key = f"ecard/{new_qrcard_id}/pdf_cover_img{ext}"
+            unique_cover_name = f"profile_img_{uuid.uuid4().hex[:12]}{ext}"
+            dst_key = f"ecard/{new_qrcard_id}/{unique_cover_name}"
             try:
-                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"pdf_cover_img{ext}"})
+                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": unique_cover_name})
                 self.mgdDB.db_qrcard.update_one(
                     {"qrcard_id": new_qrcard_id},
                     {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
@@ -441,16 +442,26 @@ class qr_ecard_proc:
             except Exception:
                 pass
         else:
-            # Handle autocomplete static image upload
-            ac_url = request.form.get("ecard_cover_img_autocomplete_url", "")
-            if ac_url and ac_url.startswith("/static/"):
+            # Handle autocomplete image (asset picker or legacy static path)
+            ac_url = (request.form.get("ecard_cover_img_autocomplete_url", "")
+                      or session.pop("ecard_cover_img_autocomplete_url", "")).strip()
+            if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                # Existing R2 asset URL — store directly, no re-upload
+                try:
+                    img_update = {"E-card_t1_header_img_url": ac_url, "E-card_t3_circle_img_url": ac_url, "E-card_t4_circle_img_url": ac_url}
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update})
+                    self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update}, upsert=True)
+                except Exception:
+                    pass
+            elif ac_url and ac_url.startswith("/static/"):
                 import os as _os
                 ext = _os.path.splitext(ac_url)[1] or ".jpg"
                 local_path = _os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", _os.sep))
                 if _os.path.isfile(local_path):
                     try:
+                        unique_cover_name = f"profile_img_{uuid.uuid4().hex[:12]}{ext}"
                         with open(local_path, "rb") as f:
-                            cover_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/profile_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"profile_img{ext}"})
+                            cover_url = r2.upload_bytes(f.read(), f"ecard/{new_qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": unique_cover_name})
                         img_update = {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update})
                         self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update}, upsert=True)

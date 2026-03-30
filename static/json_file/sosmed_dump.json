@@ -11,7 +11,7 @@
   "basic_info": {
     "title": "Jane Doe",
     "desc": "Content Creator & Lifestyle Blogger",
-    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.jpg"
+    "cover_image": "/static/assets/autocomplete_field_helper/img/profile_img_nocopyright.png"
   },
   "items": [
     { "icon": "fa-brands fa-instagram", "name": "@janedoe", "desc": "Daily inspiration & lifestyle" },
