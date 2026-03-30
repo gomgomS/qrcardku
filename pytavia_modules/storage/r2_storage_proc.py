@@ -189,6 +189,24 @@ class r2_storage_proc:
         except ClientError:
             pass
 
+    def delete_keys_batch(self, keys: list) -> int:
+        """Delete a specific list of R2 keys using S3 batch delete (max 1000/call).
+        Returns count of successfully deleted objects."""
+        if not keys:
+            return 0
+        deleted = 0
+        for i in range(0, len(keys), 1000):
+            batch = [{"Key": k} for k in keys[i:i + 1000]]
+            try:
+                resp = self._client.delete_objects(
+                    Bucket=self._bucket,
+                    Delete={"Objects": batch, "Quiet": False},
+                )
+                deleted += len(resp.get("Deleted", []))
+            except ClientError:
+                pass
+        return deleted
+
     # ── List ────────────────────────────────────────────────────────────
 
     def list_prefix(self, prefix: str) -> list:

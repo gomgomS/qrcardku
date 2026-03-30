@@ -217,8 +217,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance, basic info, and link items</div>
+                        <div class="autocomplete-row-text" id="links-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="links-autocomplete-row-sub">Auto-fills appearance, basic info, and link items</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -1189,15 +1189,191 @@
                 }
             }
         }
+        var baselineSnapshot = null;
+        function setToggleLabel(isOn) {
+            var txt = document.getElementById('links-autocomplete-row-text');
+            var sub = document.getElementById('links-autocomplete-row-sub');
+            if (!txt || !sub) return;
+            if (isOn) {
+                txt.textContent = 'Reset Sample Data';
+                sub.textContent = 'Restores the preview back to your current content';
+            } else {
+                txt.textContent = 'Fill with Sample Data';
+                sub.textContent = 'Auto-fills appearance, basic info, and link items';
+            }
+        }
+
+        function captureLinksBaseline() {
+            var tplRadio = document.querySelector('input[name="Links_template"]:checked');
+            var template = tplRadio ? tplRadio.value : 'default';
+
+            var coverThumb = document.getElementById('links-cover-img-preview');
+            var coverRemoveBtn = document.getElementById('links-cover-img-remove-btn');
+            var delFlag = document.getElementById('links_profile_img_delete');
+            var acUrl = document.getElementById('links_cover_img_autocomplete_url');
+
+            function imgState(id) {
+                var el = document.getElementById(id);
+                if (!el) return { src: '', display: '' };
+                return { src: el.src || '', display: el.style.display || '' };
+            }
+            function styleState(id) {
+                var el = document.getElementById(id);
+                if (!el) return { display: '', borderRadius: '', marginTop: '' };
+                return { display: el.style.display || '', borderRadius: el.style.borderRadius || '', marginTop: el.style.marginTop || '' };
+            }
+
+            var listContainer = document.getElementById('links-list-container');
+            var items = [];
+            if (listContainer) {
+                listContainer.querySelectorAll('.links-item-row').forEach(function (row) {
+                    items.push({
+                        url: (row.querySelector('input[name="Links_link_url[]"]') || {}).value || '',
+                        name: (row.querySelector('input[name="Links_link_name[]"]') || {}).value || '',
+                        desc: (row.querySelector('input[name="Links_link_desc[]"]') || {}).value || ''
+                    });
+                });
+            }
+
+            return {
+                template: template,
+                colors: {
+                    primary: (document.getElementById('Links_primary_picker') || {}).value || '',
+                    secondary: (document.getElementById('Links_secondary_picker') || {}).value || '',
+                    title: (document.getElementById('Links_title_color_picker') || {}).value || '',
+                    text: (document.getElementById('Links_text_color_picker') || {}).value || ''
+                },
+                fonts: {
+                    title: (document.querySelector('select[name="Links_title_font"]') || {}).value || 'Lato',
+                    text: (document.querySelector('select[name="Links_text_font"]') || {}).value || 'Lato'
+                },
+                fields: {
+                    title: (document.querySelector('input[name="Links_title"]') || {}).value || '',
+                    desc: (document.querySelector('input[name="Links_desc"]') || {}).value || ''
+                },
+                items: items,
+                cover: {
+                    thumbHtml: coverThumb ? coverThumb.innerHTML : '',
+                    removeDisplay: coverRemoveBtn ? coverRemoveBtn.style.display : '',
+                    deleteFlag: delFlag ? delFlag.value : '0',
+                    autocompleteUrl: acUrl ? acUrl.value : '',
+                    profileImg: imgState('links-preview-profile-img'),
+                    profilePlaceholderDisplay: (document.getElementById('links-preview-profile-placeholder-icon') || {}).style ? (document.getElementById('links-preview-profile-placeholder-icon').style.display || '') : '',
+                    t1Header: (document.getElementById('links-t1-preview-header') || {}).style ? (document.getElementById('links-t1-preview-header').style.display || '') : '',
+                    t1HeaderImg: imgState('links-t1-preview-header-img'),
+                    t1CardBody: styleState('links-t1-preview-card-body'),
+                    t2Header: (document.getElementById('links-t2-preview-header') || {}).style ? (document.getElementById('links-t2-preview-header').style.display || '') : '',
+                    t2HeaderImg: imgState('links-t2-preview-header-img'),
+                    t2CardBody: styleState('links-t2-preview-card-body'),
+                    t3CirclePlaceholderDisplay: (document.getElementById('links-t3-preview-circle-placeholder') || {}).style ? (document.getElementById('links-t3-preview-circle-placeholder').style.display || '') : '',
+                    t3CircleImg: imgState('links-t3-preview-circle-img'),
+                    t4CirclePlaceholderDisplay: (document.getElementById('links-t4-preview-circle-placeholder') || {}).style ? (document.getElementById('links-t4-preview-circle-placeholder').style.display || '') : '',
+                    t4CircleImg: imgState('links-t4-preview-circle-img')
+                }
+            };
+        }
+
+        function restoreLinksBaseline(snapshot) {
+            if (!snapshot) return;
+
+            var radio = document.querySelector('input[name="Links_template"][value="' + snapshot.template + '"]');
+            if (radio) radio.checked = true;
+
+            // Restore appearance
+            if (snapshot.colors.primary) setColor('Links_primary_picker', 'Links_primary_hex', snapshot.colors.primary);
+            if (snapshot.colors.secondary) setColor('Links_secondary_picker', 'Links_secondary_hex', snapshot.colors.secondary);
+            if (snapshot.colors.title) setColor('Links_title_color_picker', 'Links_title_color_hex', snapshot.colors.title);
+            if (snapshot.colors.text) setColor('Links_text_color_picker', 'Links_text_color_hex', snapshot.colors.text);
+
+            // Restore fonts
+            var titleFont = document.querySelector('select[name="Links_title_font"]');
+            if (titleFont) { titleFont.value = snapshot.fonts.title; titleFont.dispatchEvent(new Event('change')); }
+            var textFont = document.querySelector('select[name="Links_text_font"]');
+            if (textFont) { textFont.value = snapshot.fonts.text; textFont.dispatchEvent(new Event('change')); }
+
+            // Restore title/desc
+            var titleEl = document.querySelector('input[name="Links_title"]');
+            if (titleEl) { titleEl.value = snapshot.fields.title; titleEl.dispatchEvent(new Event('input')); }
+            var descEl = document.querySelector('input[name="Links_desc"]');
+            if (descEl) { descEl.value = snapshot.fields.desc; descEl.dispatchEvent(new Event('input')); }
+
+            // Restore list rows
+            var listContainer = document.getElementById('links-list-container');
+            if (listContainer) {
+                listContainer.innerHTML = '';
+                (snapshot.items || []).forEach(function (it) {
+                    var row = document.createElement('div');
+                    row.className = 'links-item-row';
+                    row.style.cssText = 'display:flex;gap:8px;align-items:center;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;flex-wrap:wrap;';
+                    row.innerHTML =
+                        '<input type="text" name="Links_link_url[]" class="form-control" value="' + (it.url || '') + '" placeholder="https://example.com" style="flex:2;background:transparent;border:none;min-width:120px;">' +
+                        '<input type="text" name="Links_link_name[]" class="form-control" value="' + (it.name || '') + '" placeholder="Link name (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">' +
+                        '<input type="text" name="Links_link_desc[]" class="form-control" value="' + (it.desc || '') + '" placeholder="Description (optional)" style="flex:2;background:transparent;border:none;min-width:120px;">' +
+                        '<button type="button" class="links-remove-btn" style="background:transparent;border:none;color:#6b7280;cursor:pointer;padding:4px;"><i class="fa-solid fa-trash-can"></i></button>';
+                    listContainer.appendChild(row);
+                });
+            }
+
+            // Dispatch template change to rebuild preview blocks
+            if (radio) radio.dispatchEvent(new Event('change'));
+
+            // Restore cover state
+            var coverThumb = document.getElementById('links-cover-img-preview');
+            if (coverThumb) coverThumb.innerHTML = snapshot.cover.thumbHtml;
+            var coverRemoveBtn = document.getElementById('links-cover-img-remove-btn');
+            if (coverRemoveBtn) coverRemoveBtn.style.display = snapshot.cover.removeDisplay;
+            var delFlag = document.getElementById('links_profile_img_delete');
+            if (delFlag) delFlag.value = snapshot.cover.deleteFlag;
+            var acUrl = document.getElementById('links_cover_img_autocomplete_url');
+            if (acUrl) acUrl.value = snapshot.cover.autocompleteUrl;
+
+            var pImg = document.getElementById('links-preview-profile-img');
+            if (pImg) { pImg.src = snapshot.cover.profileImg.src || ''; pImg.style.display = snapshot.cover.profileImg.display || ''; }
+            var pPh = document.getElementById('links-preview-profile-placeholder-icon');
+            if (pPh) pPh.style.display = snapshot.cover.profilePlaceholderDisplay || '';
+
+            var t1Img = document.getElementById('links-t1-preview-header-img');
+            if (t1Img) { t1Img.src = snapshot.cover.t1HeaderImg.src || ''; t1Img.style.display = snapshot.cover.t1HeaderImg.display || ''; }
+            var t1Hdr = document.getElementById('links-t1-preview-header');
+            if (t1Hdr) t1Hdr.style.display = snapshot.cover.t1Header || '';
+            var t1Body = document.getElementById('links-t1-preview-card-body');
+            if (t1Body) { t1Body.style.borderRadius = snapshot.cover.t1CardBody.borderRadius || ''; t1Body.style.marginTop = snapshot.cover.t1CardBody.marginTop || ''; }
+
+            var t2Img = document.getElementById('links-t2-preview-header-img');
+            if (t2Img) { t2Img.src = snapshot.cover.t2HeaderImg.src || ''; t2Img.style.display = snapshot.cover.t2HeaderImg.display || ''; }
+            var t2Hdr = document.getElementById('links-t2-preview-header');
+            if (t2Hdr) t2Hdr.style.display = snapshot.cover.t2Header || '';
+            var t2Body = document.getElementById('links-t2-preview-card-body');
+            if (t2Body) { t2Body.style.borderRadius = snapshot.cover.t2CardBody.borderRadius || ''; t2Body.style.marginTop = snapshot.cover.t2CardBody.marginTop || ''; }
+
+            var t3Img = document.getElementById('links-t3-preview-circle-img');
+            if (t3Img) { t3Img.src = snapshot.cover.t3CircleImg.src || ''; t3Img.style.display = snapshot.cover.t3CircleImg.display || ''; }
+            var t3Ph = document.getElementById('links-t3-preview-circle-placeholder');
+            if (t3Ph) t3Ph.style.display = snapshot.cover.t3CirclePlaceholderDisplay || '';
+
+            var t4Img = document.getElementById('links-t4-preview-circle-img');
+            if (t4Img) { t4Img.src = snapshot.cover.t4CircleImg.src || ''; t4Img.style.display = snapshot.cover.t4CircleImg.display || ''; }
+            var t4Ph = document.getElementById('links-t4-preview-circle-placeholder');
+            if (t4Ph) t4Ph.style.display = snapshot.cover.t4CirclePlaceholderDisplay || '';
+
+            updateLinksPreview();
+        }
+
         var toggle = document.getElementById('links-autocomplete-toggle');
         if (toggle) {
             toggle.addEventListener('change', function() {
-                if (!this.checked) return;
-                if (_dumpCache) { applyLinksAutocomplete(_dumpCache); return; }
-                fetch('{{ url_for("static", filename="json_file/links_dump.json") }}')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) { _dumpCache = data; applyLinksAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+                if (this.checked) {
+                    baselineSnapshot = captureLinksBaseline();
+                    setToggleLabel(true);
+                    if (_dumpCache) { applyLinksAutocomplete(_dumpCache); return; }
+                    fetch('{{ url_for("static", filename="json_file/links_dump.json") }}')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) { _dumpCache = data; applyLinksAutocomplete(data); })
+                        .catch(function() { toggle.checked = false; setToggleLabel(false); alert('Could not load sample data.'); });
+                } else {
+                    setToggleLabel(false);
+                    restoreLinksBaseline(baselineSnapshot);
+                }
             });
         }
     })();

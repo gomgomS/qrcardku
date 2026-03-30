@@ -590,8 +590,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance and basic information</div>
+                        <div class="autocomplete-row-text" id="pdf-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="pdf-autocomplete-row-sub">Auto-fills appearance and basic information</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -2926,10 +2926,16 @@
                 if (t1Img) { t1Img.src = bi.cover_image; t1Img.style.display = 'block'; }
                 var t1Header = document.getElementById('t1-preview-header');
                 if (t1Header) t1Header.style.display = '';
+                var t1CardBody = document.getElementById('t1-preview-card-body');
+                if (t1CardBody) { t1CardBody.style.borderRadius = '22px 22px 0 0'; t1CardBody.style.marginTop = '-18px'; }
                 var t3Img = document.getElementById('t3-preview-circle-img');
                 if (t3Img) { t3Img.src = bi.cover_image; t3Img.style.display = 'block'; }
+                var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+                if (t3Ph) t3Ph.style.display = 'none';
                 var t4Img = document.getElementById('t4-preview-circle-img');
                 if (t4Img) { t4Img.src = bi.cover_image; t4Img.style.display = 'block'; }
+                var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+                if (t4Ph) t4Ph.style.display = 'none';
             }
 
             // PDF files
@@ -2977,15 +2983,185 @@
                 }
             }
         }
+
+        var baselineSnapshot = null;
+        function captureBaseline() {
+            var tpl = document.querySelector('input[name="pdf_template"]:checked');
+            var coverPreview = document.getElementById('cover-img-preview');
+            var removeBtn = document.getElementById('cover-img-remove-btn');
+            return {
+                template: (tpl && tpl.value) ? tpl.value : 'default',
+                colors: {
+                    primary: {
+                        picker: document.getElementById('pdf_primary_picker') ? document.getElementById('pdf_primary_picker').value : '',
+                        hex: document.getElementById('pdf_primary_hex') ? document.getElementById('pdf_primary_hex').value : ''
+                    },
+                    secondary: {
+                        picker: document.getElementById('pdf_secondary_picker') ? document.getElementById('pdf_secondary_picker').value : '',
+                        hex: document.getElementById('pdf_secondary_hex') ? document.getElementById('pdf_secondary_hex').value : ''
+                    },
+                    title: {
+                        picker: document.getElementById('pdf_title_color_picker') ? document.getElementById('pdf_title_color_picker').value : '',
+                        hex: document.getElementById('pdf_title_color_hex') ? document.getElementById('pdf_title_color_hex').value : ''
+                    },
+                    text: {
+                        picker: document.getElementById('pdf_text_color_picker') ? document.getElementById('pdf_text_color_picker').value : '',
+                        hex: document.getElementById('pdf_text_color_hex') ? document.getElementById('pdf_text_color_hex').value : ''
+                    }
+                },
+                fonts: {
+                    title: (document.querySelector('select[name="pdf_title_font"]') || {}).value || 'Lato',
+                    text: (document.querySelector('select[name="pdf_text_font"]') || {}).value || 'Lato'
+                },
+                fields: {
+                    title: (document.querySelector('input[name="pdf_title"]') || {}).value || '',
+                    desc: (document.querySelector('input[name="pdf_desc"]') || {}).value || '',
+                    company: (document.querySelector('input[name="pdf_company"]') || {}).value || '',
+                    website: (document.querySelector('input[name="pdf_website"]') || {}).value || '',
+                    btn_text: (document.querySelector('input[name="pdf_btn_text"]') || {}).value || ''
+                },
+                cover: {
+                    thumbHtml: coverPreview ? coverPreview.innerHTML : '',
+                    removeBtnDisplay: removeBtn ? removeBtn.style.display : '',
+                    autocompleteUrl: (document.getElementById('pdf_t1_header_img_autocomplete_url') || {}).value || '',
+                    deleteFlag: (document.getElementById('pdf_t1_header_img_delete') || {}).value || '',
+                    t1HeaderDisplay: (document.getElementById('t1-preview-header') || {}).style ? document.getElementById('t1-preview-header').style.display : '',
+                    t1HeaderImg: {
+                        src: (document.getElementById('t1-preview-header-img') || {}).src || '',
+                        display: (document.getElementById('t1-preview-header-img') || {}).style ? document.getElementById('t1-preview-header-img').style.display : ''
+                    },
+                    t1CardBody: {
+                        borderRadius: (document.getElementById('t1-preview-card-body') || {}).style ? document.getElementById('t1-preview-card-body').style.borderRadius : '',
+                        marginTop: (document.getElementById('t1-preview-card-body') || {}).style ? document.getElementById('t1-preview-card-body').style.marginTop : ''
+                    },
+                    t3Img: {
+                        src: (document.getElementById('t3-preview-circle-img') || {}).src || '',
+                        display: (document.getElementById('t3-preview-circle-img') || {}).style ? document.getElementById('t3-preview-circle-img').style.display : ''
+                    },
+                    t3PlaceholderDisplay: (document.getElementById('t3-preview-circle-placeholder') || {}).style ? document.getElementById('t3-preview-circle-placeholder').style.display : '',
+                    t4Img: {
+                        src: (document.getElementById('t4-preview-circle-img') || {}).src || '',
+                        display: (document.getElementById('t4-preview-circle-img') || {}).style ? document.getElementById('t4-preview-circle-img').style.display : ''
+                    },
+                    t4PlaceholderDisplay: (document.getElementById('t4-preview-circle-placeholder') || {}).style ? document.getElementById('t4-preview-circle-placeholder').style.display : ''
+                }
+            };
+        }
+
+        function restoreBaseline() {
+            if (!baselineSnapshot) return;
+
+            // Template
+            var radio = document.querySelector('input[name="pdf_template"][value="' + baselineSnapshot.template + '"]');
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+
+            // Colors
+            setColor('pdf_primary_picker', 'pdf_primary_hex', baselineSnapshot.colors.primary.picker || baselineSnapshot.colors.primary.hex);
+            setColor('pdf_secondary_picker', 'pdf_secondary_hex', baselineSnapshot.colors.secondary.picker || baselineSnapshot.colors.secondary.hex);
+            setColor('pdf_title_color_picker', 'pdf_title_color_hex', baselineSnapshot.colors.title.picker || baselineSnapshot.colors.title.hex);
+            setColor('pdf_text_color_picker', 'pdf_text_color_hex', baselineSnapshot.colors.text.picker || baselineSnapshot.colors.text.hex);
+
+            // Fonts
+            var titleFont = document.querySelector('select[name="pdf_title_font"]');
+            if (titleFont) { titleFont.value = baselineSnapshot.fonts.title; titleFont.dispatchEvent(new Event('change')); }
+            var textFont = document.querySelector('select[name="pdf_text_font"]');
+            if (textFont) { textFont.value = baselineSnapshot.fonts.text; textFont.dispatchEvent(new Event('change')); }
+
+            // Text fields
+            var titleInput = document.querySelector('input[name="pdf_title"]');
+            if (titleInput) { titleInput.value = baselineSnapshot.fields.title; titleInput.dispatchEvent(new Event('input')); }
+            var descInput = document.querySelector('input[name="pdf_desc"]');
+            if (descInput) { descInput.value = baselineSnapshot.fields.desc; descInput.dispatchEvent(new Event('input')); }
+            var companyInput = document.querySelector('input[name="pdf_company"]');
+            if (companyInput) { companyInput.value = baselineSnapshot.fields.company; companyInput.dispatchEvent(new Event('input')); }
+            var websiteInput = document.querySelector('input[name="pdf_website"]');
+            if (websiteInput) { websiteInput.value = baselineSnapshot.fields.website; websiteInput.dispatchEvent(new Event('input')); }
+            var btnInput = document.querySelector('input[name="pdf_btn_text"]');
+            if (btnInput) { btnInput.value = baselineSnapshot.fields.btn_text; btnInput.dispatchEvent(new Event('input')); }
+
+            // Cover preview area (thumb + preview positions)
+            var coverPreview = document.getElementById('cover-img-preview');
+            if (coverPreview) coverPreview.innerHTML = baselineSnapshot.cover.thumbHtml;
+            var removeBtn = document.getElementById('cover-img-remove-btn');
+            if (removeBtn) removeBtn.style.display = baselineSnapshot.cover.removeBtnDisplay;
+
+            var acCoverField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+            if (acCoverField) acCoverField.value = baselineSnapshot.cover.autocompleteUrl;
+            var delFlag = document.getElementById('pdf_t1_header_img_delete');
+            if (delFlag) delFlag.value = baselineSnapshot.cover.deleteFlag;
+
+            var t1Header = document.getElementById('t1-preview-header');
+            if (t1Header) t1Header.style.display = baselineSnapshot.cover.t1HeaderDisplay;
+
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = baselineSnapshot.cover.t1HeaderImg.src; t1Img.style.display = baselineSnapshot.cover.t1HeaderImg.display; }
+
+            var t1CardBody = document.getElementById('t1-preview-card-body');
+            if (t1CardBody) {
+                t1CardBody.style.borderRadius = baselineSnapshot.cover.t1CardBody.borderRadius;
+                t1CardBody.style.marginTop = baselineSnapshot.cover.t1CardBody.marginTop;
+            }
+
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            if (t3Img) { t3Img.src = baselineSnapshot.cover.t3Img.src; t3Img.style.display = baselineSnapshot.cover.t3Img.display; }
+            var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Ph) t3Ph.style.display = baselineSnapshot.cover.t3PlaceholderDisplay;
+
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            if (t4Img) { t4Img.src = baselineSnapshot.cover.t4Img.src; t4Img.style.display = baselineSnapshot.cover.t4Img.display; }
+            var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Ph) t4Ph.style.display = baselineSnapshot.cover.t4PlaceholderDisplay;
+        }
+
+        function setToggleLabel(isOn) {
+            var txt = document.getElementById('pdf-autocomplete-row-text');
+            var sub = document.getElementById('pdf-autocomplete-row-sub');
+            if (!txt || !sub) return;
+            if (isOn) {
+                txt.textContent = 'Reset Sample Data';
+                sub.textContent = 'Restores the preview back to default';
+            } else {
+                // Restore whatever text exists in the HTML as the "OFF" default.
+                txt.textContent = 'Fill with Sample Data';
+                sub.textContent = 'Auto-fills appearance and basic information';
+            }
+        }
+
         var toggle = document.getElementById('pdf-autocomplete-toggle');
         if (toggle) {
-            toggle.addEventListener('change', function() {
-                if (!this.checked) return;
-                if (_dumpCache) { applyPdfAutocomplete(_dumpCache); return; }
-                fetch('{{ url_for("static", filename="json_file/pdf_dump.json") }}')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) { _dumpCache = data; applyPdfAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            toggle.addEventListener('change', function () {
+                if (this.checked) {
+                    baselineSnapshot = captureBaseline();
+                    setToggleLabel(true);
+
+                    if (_dumpCache) { applyPdfAutocomplete(_dumpCache); return; }
+                    fetch('{{ url_for("static", filename="json_file/pdf_dump.json") }}')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) { _dumpCache = data; applyPdfAutocomplete(data); })
+                        .catch(function () {
+                            toggle.checked = false;
+                            alert('Could not load sample data.');
+                        });
+                    return;
+                }
+
+                // OFF: restore everything that automation changed
+                setToggleLabel(false);
+
+                // Remove sample PDF items added by automation
+                var savedPdfList = document.getElementById('saved-pdf-list');
+                if (savedPdfList) {
+                    savedPdfList.querySelectorAll('.pdf-autocomplete-item').forEach(function (el) { el.remove(); });
+                }
+
+                restoreBaseline();
+
+                // Refresh right-side preview PDF navigation/canvas
+                var pdfInput = document.querySelector('input[name="pdf_files"]');
+                if (pdfInput) pdfInput.dispatchEvent(new Event('change'));
             });
         }
     })();

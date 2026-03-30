@@ -237,11 +237,47 @@
     }
 
     .scan-qr-modal .qr-image-wrap {
+        position: relative;
         background: #ffffff;
         border-radius: 8px;
         padding: 16px;
         display: inline-block;
         margin-bottom: 20px;
+        min-width: 200px;
+        min-height: 200px;
+    }
+
+    .scan-qr-loading {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.94);
+        border-radius: 8px;
+        z-index: 10;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    .scan-qr-loading.is-visible {
+        display: flex;
+    }
+
+    .scan-qr-loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-color);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: scan-qr-spin 0.85s linear infinite;
+    }
+
+    @keyframes scan-qr-spin {
+        to { transform: rotate(360deg); }
     }
 
     #scan-qr-inner {
@@ -584,6 +620,58 @@
         }
         return confirm('Delete ' + checked.length + ' selected QR code(s)?');
     }
+
+    // ── Toast ────────────────────────────────────────────────────────────────
+    (function () {
+        var style = document.createElement('style');
+        style.textContent = [
+            '.qr-toast-wrap{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}',
+            '.qr-toast{background:#1E1F18;border:1px solid rgba(255,255,255,.1);border-left:3px solid #22c55e;border-radius:10px;padding:12px 18px;font-size:13px;color:#E8E5DC;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateY(12px);transition:opacity .3s,transform .3s;pointer-events:auto;min-width:220px;}',
+            '.qr-toast.show{opacity:1;transform:translateY(0);}',
+            '.qr-toast-icon{color:#22c55e;font-size:15px;font-weight:700;}',
+        ].join('');
+        document.head.appendChild(style);
+
+        function showToast(msg) {
+            var wrap = document.getElementById('qr-toast-wrap');
+            if (!wrap) {
+                wrap = document.createElement('div');
+                wrap.id = 'qr-toast-wrap';
+                wrap.className = 'qr-toast-wrap';
+                document.body.appendChild(wrap);
+            }
+            var t = document.createElement('div');
+            t.className = 'qr-toast';
+            t.innerHTML = '<span class="qr-toast-icon">&#10003;</span><span>' + msg + '</span>';
+            wrap.appendChild(t);
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () { t.classList.add('show'); });
+            });
+            setTimeout(function () {
+                t.classList.remove('show');
+                setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+            }, 4000);
+        }
+
+        window.showQrToast = showToast;
+
+        // Show on page load if redirected after delete
+        var params = new URLSearchParams(window.location.search);
+        var n = parseInt(params.get('deleted'), 10);
+        if (n > 0) {
+            var msg = n === 1
+                ? 'QR code deleted successfully.'
+                : n + ' QR codes deleted successfully.';
+            // Wait for DOM ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () { showToast(msg); });
+            } else {
+                showToast(msg);
+            }
+            // Clean URL without reload
+            history.replaceState(null, '', window.location.pathname);
+        }
+    }());
 </script>
 {% endblock %}
 
@@ -598,6 +686,24 @@
         var currentFrame = null;
         var currentCompositeUrl = null;
         var currentQrcardId = null;
+
+        function showScanQrLoading() {
+            var el = document.getElementById('scan-qr-loading');
+            if (el) {
+                el.classList.add('is-visible');
+                el.setAttribute('aria-busy', 'true');
+                el.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        function hideScanQrLoading() {
+            var el = document.getElementById('scan-qr-loading');
+            if (el) {
+                el.classList.remove('is-visible');
+                el.removeAttribute('aria-busy');
+                el.setAttribute('aria-hidden', 'true');
+            }
+        }
 
         // Cache frames from API (loaded once) — includes both user custom frames and admin default frames
         var framesCache = null;
@@ -620,12 +726,16 @@
             fbg.style.display = 'none';
             fbg.src = '';
             imgEl.style.cssText = '';
+            imgEl.onload = function () { hideScanQrLoading(); imgEl.onload = null; };
+            imgEl.onerror = function () { hideScanQrLoading(); imgEl.onerror = null; };
             imgEl.src = qrDataUrl;
+            if (imgEl.complete) hideScanQrLoading();
         }
 
         /* CSS overlay: frame image as background (z-index 1), QR on top at marked area (z-index 2).
            No canvas / no CORS needed for display. */
         function applyFrameOverlayCSS(qrDataUrl, frame) {
+            showScanQrLoading();
             var fi = new Image();
             fi.onload = function () {
                 var ratio = fi.naturalHeight / fi.naturalWidth;
@@ -639,6 +749,8 @@
                 fbg.src = frame.image_url;
                 fbg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;z-index:1;display:block;';
 
+                imgEl.onload = function () { hideScanQrLoading(); imgEl.onload = null; };
+                imgEl.onerror = function () { hideScanQrLoading(); imgEl.onerror = null; };
                 imgEl.src = qrDataUrl;
                 imgEl.style.cssText = 'position:absolute;' +
                     'left:'   + (frame.qr_x * 100) + '%;' +
@@ -646,8 +758,9 @@
                     'width:'  + (frame.qr_w * 100) + '%;' +
                     'height:' + (frame.qr_h * 100) + '%;' +
                     'z-index:2;display:block;object-fit:contain;';
+                if (imgEl.complete) hideScanQrLoading();
             };
-            fi.onerror = function () { showPlainQR(qrDataUrl); };
+            fi.onerror = function () { hideScanQrLoading(); showPlainQR(qrDataUrl); };
             fi.src = frame.image_url;
         }
 
@@ -768,14 +881,24 @@
                 document.getElementById('scan-qr-title').textContent = name;
                 document.getElementById('scan-qr-type-tag').innerHTML = typeLabel(qrType);
                 document.getElementById('scan-qr-status-tag').textContent = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-                document.getElementById('scan-qr-url').href = displayUrl;
-                document.getElementById('scan-qr-url').textContent = displayUrl || '—';
-                document.getElementById('scan-qr-preview-text').textContent = displayUrl || 'Link to QR url here';
+                var isStaticListQr = (qrType === 'web-static' || qrType === 'wa-static' || qrType === 'email-static' || qrType === 'vcard-static' || qrType === 'text');
+                var urlBlock = document.getElementById('scan-qr-url-block');
+                if (isStaticListQr) {
+                    if (urlBlock) urlBlock.style.display = 'none';
+                    /* Static: scan-qr-url row hidden — do not set href/text */
+                } else {
+                    if (urlBlock) urlBlock.style.display = '';
+                    document.getElementById('scan-qr-url').href = displayUrl;
+                    document.getElementById('scan-qr-url').textContent = displayUrl || '—';
+                }
                 document.getElementById('scan-qr-edit-btn').href = editUrl;
 
                 imgEl.src = '';
+                imgEl.onload = null;
+                imgEl.onerror = null;
                 currentDataUrl = null;
                 currentQrcardId = qrcardId;
+                showScanQrLoading();
                 overlay.classList.add('show');
                 overlay.setAttribute('aria-hidden', 'false');
 
@@ -813,7 +936,12 @@
                                     showPlainQR(qrDataUrl);
                                 }
                             })
-                            .catch(function (err) { console.error('QR generate error:', err); });
+                            .catch(function (err) {
+                                console.error('QR generate error:', err);
+                                hideScanQrLoading();
+                            });
+                    } else {
+                        hideScanQrLoading();
                     }
                 }
 
@@ -838,11 +966,18 @@
         function closeModal() {
             overlay.classList.remove('show');
             overlay.setAttribute('aria-hidden', 'true');
+            hideScanQrLoading();
             var inner = document.getElementById('scan-qr-inner');
             if (inner) inner.style.cssText = '';
             var fbg = document.getElementById('scan-qr-frame-bg');
             if (fbg) { fbg.style.display = 'none'; fbg.src = ''; }
-            if (imgEl) imgEl.style.cssText = '';
+            if (imgEl) {
+                imgEl.style.cssText = '';
+                imgEl.onload = null;
+                imgEl.onerror = null;
+            }
+            var urlBlock = document.getElementById('scan-qr-url-block');
+            if (urlBlock) urlBlock.style.display = '';
             currentFrame = null;
             currentCompositeUrl = null;
             currentQrcardId = null;
@@ -855,16 +990,9 @@
 
         document.getElementById('scan-qr-copy-url').addEventListener('click', function () {
             var a = document.getElementById('scan-qr-url');
-            var url = a.href;
+            var url = a && a.href;
             if (url && navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(url).then(function () { });
-            }
-        });
-
-        document.getElementById('scan-qr-copy-preview').addEventListener('click', function () {
-            var text = document.getElementById('scan-qr-preview-text').textContent;
-            if (text && navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function () { });
             }
         });
 
@@ -897,12 +1025,10 @@
     </div>
 </div>
 
-<div class="tabs">
-    <div class="tab active">All</div>
-    <div class="tab">Static</div>
-    <div class="tab">Dynamic</div>
-    <div class="tab">Favorites</div>
-    <div class="tab">Scheduled</div>
+<div class="tabs" id="qr-list-tabs" role="tablist">
+    <div class="tab active" role="tab" tabindex="0" data-filter="all" aria-selected="true">All</div>
+    <div class="tab" role="tab" tabindex="0" data-filter="static" aria-selected="false">Static</div>
+    <div class="tab" role="tab" tabindex="0" data-filter="dynamic" aria-selected="false">Dynamic</div>
 </div>
 
 <div class="table-controls" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
@@ -944,7 +1070,7 @@
         <tbody>
             {% if qr_list %}
             {% for qr in qr_list %}
-            <tr>
+            <tr class="qr-list-row" data-kind="{% if qr.qr_type in ['web-static', 'wa-static', 'email-static', 'vcard-static', 'text'] %}static{% else %}dynamic{% endif %}">
                 <td><input type="checkbox" class="qr-row-checkbox" name="qrcard_ids" value="{{ qr.qrcard_id }}"></td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -1030,6 +1156,11 @@
                 </td>
             </tr>
             {% endfor %}
+            <tr id="qr-tab-filter-empty" class="qr-tab-filter-empty" style="display: none;">
+                <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    No QR cards in this category.
+                </td>
+            </tr>
             {% else %}
             <tr>
                 <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
@@ -1042,6 +1173,44 @@
         </tbody>
     </table>
 </form>
+
+<script>
+(function () {
+    var tabs = document.querySelectorAll('#qr-list-tabs .tab');
+    var rows = document.querySelectorAll('tbody tr.qr-list-row');
+    var emptyRow = document.getElementById('qr-tab-filter-empty');
+    if (!tabs.length) return;
+
+    function applyFilter(filter) {
+        var visible = 0;
+        rows.forEach(function (row) {
+            var show = (filter === 'all') || (row.getAttribute('data-kind') === filter);
+            row.style.display = show ? '' : 'none';
+            if (show) visible += 1;
+        });
+        if (emptyRow) {
+            emptyRow.style.display = (filter !== 'all' && visible === 0) ? '' : 'none';
+        }
+    }
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var f = tab.getAttribute('data-filter') || 'all';
+            tabs.forEach(function (t) {
+                t.classList.toggle('active', t === tab);
+                t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+            });
+            applyFilter(f);
+        });
+        tab.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                tab.click();
+            }
+        });
+    });
+})();
+</script>
 
 <!-- Delete confirmation modal -->
 <div class="del-modal-overlay" id="del-modal-overlay">
@@ -1177,25 +1346,24 @@
                 <span class="tag tag-type" id="scan-qr-type-tag"></span>
                 <span class="tag tag-active" id="scan-qr-status-tag"></span>
             </div>
+            <div id="scan-qr-url-block">
             <div class="modal-link-row">
                 <i class="fa-solid fa-infinity"></i>
                 <a id="scan-qr-url" href="#" target="_blank" rel="noopener"></a>
                 <button type="button" class="copy-btn" id="scan-qr-copy-url" aria-label="Copy URL"><i
                         class="fa-regular fa-copy"></i></button>
             </div>
+            </div>
             <div class="qr-section-title">Scan the QR card</div>
             <div class="qr-image-wrap">
+                <div id="scan-qr-loading" class="scan-qr-loading" aria-live="polite" aria-hidden="true" role="status">
+                    <div class="scan-qr-loading-spinner" aria-hidden="true"></div>
+                    <span>Loading QR…</span>
+                </div>
                 <div id="scan-qr-inner">
                     <img id="scan-qr-frame-bg" src="" alt="" style="display:none;">
                     <img id="scan-qr-image" src="" alt="QR card">
                 </div>
-            </div>
-            <div class="qr-section-title">Preview</div>
-            <div class="preview-row">
-                <i class="fa-solid fa-infinity"></i>
-                <span id="scan-qr-preview-text">Link to QR url here</span>
-                <button type="button" class="copy-btn" id="scan-qr-copy-preview" aria-label="Copy"><i
-                        class="fa-regular fa-copy"></i></button>
             </div>
             <div class="modal-actions">
                 <a href="#" id="scan-qr-edit-btn" class="btn-outline"><i class="fa-solid fa-pen"></i> Edit QR</a>

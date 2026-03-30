@@ -586,6 +586,78 @@ def admin_frames_delete(frame_id):
     admin_frame_proc.admin_frame_proc(app).delete_frame(frame_id)
     return redirect(url_for("admin_frames"))
 
+
+@app.route("/admin/storage")
+def admin_storage():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_adm
+    from pytavia_core import database as _db_adm, config as _cfg_adm
+    _atp = _atp_adm()
+    assets = _atp.get_soft_deleted_assets(limit=2000)
+    total_size = sum(a.get("file_size", 0) for a in assets)
+    # Attach user email to each asset for display
+    _db_adm_conn = _db_adm.get_db_conn(_cfg_adm.mainDB)
+    user_ids = list({a["fk_user_id"] for a in assets if a.get("fk_user_id")})
+    user_map = {}
+    for u in _db_adm_conn.db_user.find({"fk_user_id": {"$in": user_ids}}, {"fk_user_id": 1, "email": 1, "_id": 0}):
+        user_map[u["fk_user_id"]] = u.get("email", u["fk_user_id"])
+    for a in assets:
+        a["user_email"] = user_map.get(a.get("fk_user_id", ""), a.get("fk_user_id", "—"))
+    from pytavia_modules.user.user_storage_proc import _fmt_size
+    return render_template(
+        "admin/storage.html",
+        assets=assets,
+        total_count=len(assets),
+        total_size_fmt=_fmt_size(total_size),
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+@app.route("/admin/storage/hard_delete", methods=["POST"])
+def admin_storage_hard_delete():
+    """Bulk hard-delete selected soft-deleted assets from Cloudflare R2."""
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    import json as _json_adm
+    data = request.get_json(force=True) or {}
+    asset_ids = data.get("asset_ids", "all")  # list of asset_id strings, or "all"
+    from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_hd
+    from pytavia_modules.storage import r2_storage_proc as _r2_mod_hd
+    _atp = _atp_hd()
+    # Fetch the target assets
+    if asset_ids == "all":
+        assets = _atp.get_soft_deleted_assets(limit=5000)
+    else:
+        if not isinstance(asset_ids, list) or not asset_ids:
+            return jsonify({"ok": False, "error": "No assets selected"}), 400
+        from pytavia_core import database as _db_hd, config as _cfg_hd
+        assets = list(_db_hd.get_db_conn(_cfg_hd.mainDB).db_qr_assets.find(
+            {"asset_id": {"$in": asset_ids}, "status": "SOFT_DELETED"},
+            {"_id": 0},
+        ))
+    if not assets:
+        return jsonify({"ok": True, "deleted": 0, "freed_bytes": 0, "freed_fmt": "0 B"})
+    # Batch delete from R2
+    r2_keys = [a["r2_key"] for a in assets if a.get("r2_key")]
+    _r2 = _r2_mod_hd.r2_storage_proc()
+    deleted_r2 = _r2.delete_keys_batch(r2_keys)
+    # Mark all as HARD_DELETED in MongoDB
+    ids_to_mark = [a["asset_id"] for a in assets if a.get("asset_id")]
+    _atp.mark_hard_deleted_batch(ids_to_mark)
+    freed_bytes = sum(a.get("file_size", 0) for a in assets)
+    from pytavia_modules.user.user_storage_proc import _fmt_size
+    return jsonify({
+        "ok": True,
+        "deleted": len(ids_to_mark),
+        "deleted_r2": deleted_r2,
+        "freed_bytes": freed_bytes,
+        "freed_fmt": _fmt_size(freed_bytes),
+    })
+
+
 @app.route("/api/frames/default")
 def api_frames_default():
     """Public API: returns all active admin default frames as JSON."""
@@ -919,9 +991,9 @@ def _set_qrcard_deleted(mgdDB, fk_user_id, qrcard_id):
     mgdDB.db_qrcard_images.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_video.update_one(q, {"$set": {"status": "DELETED"}})
     mgdDB.db_qrcard_special.update_one(q, {"$set": {"status": "DELETED"}})
-    # Mark tracked assets as deleted in db_qr_assets
+    # Soft-delete tracked assets — actual R2 deletion is deferred to admin bulk cleanup
     from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_del
-    _atp_del().untrack_qr(qrcard_id)
+    _atp_del().soft_delete_qr(qrcard_id)
     return {"qr_name": qr_name, "qr_type": qr_type}
 
 
@@ -980,15 +1052,14 @@ def qr_delete(qrcard_id):
     from pytavia_modules.user import user_activity_proc as _uap_del
     _mgd_del = _db_del.get_db_conn(_cfg_del.mainDB)
     fk_user_id = session.get("fk_user_id")
-    info    = _set_qrcard_deleted(_mgd_del, fk_user_id, qrcard_id)
-    r2_info = _delete_r2_assets_for_qr(qrcard_id, info["qr_type"])
+    info = _set_qrcard_deleted(_mgd_del, fk_user_id, qrcard_id)
     _uap_del.user_activity_proc(app).log(
         fk_user_id=fk_user_id, action="DELETE_QR",
         qrcard_id=qrcard_id, qr_name=info["qr_name"],
         qr_type=info["qr_type"], source="my_qr_codes",
-        detail={"freed_bytes": r2_info["freed_bytes"], "deleted_count": r2_info["deleted_count"]},
+        detail={"note": "soft_deleted_assets_pending_r2_cleanup"},
     )
-    return redirect(url_for("user_qr_list"))
+    return redirect(url_for("user_qr_list") + "?deleted=1")
 
 
 @app.route("/qr/delete/bulk", methods=["POST"])
@@ -1003,26 +1074,15 @@ def qr_delete_bulk():
     from pytavia_modules.user import user_activity_proc as _uap_bulk
     _mgd_bulk = _db_bulk.get_db_conn(_cfg_bulk.mainDB)
     fk_user_id = session.get("fk_user_id")
-    total_freed = 0
-    total_files = 0
     for qrcard_id in qrcard_ids:
-        info    = _set_qrcard_deleted(_mgd_bulk, fk_user_id, qrcard_id)
-        r2_info = _delete_r2_assets_for_qr(qrcard_id, info["qr_type"])
-        total_freed += r2_info["freed_bytes"]
-        total_files += r2_info["deleted_count"]
+        info = _set_qrcard_deleted(_mgd_bulk, fk_user_id, qrcard_id)
         _uap_bulk.user_activity_proc(app).log(
             fk_user_id=fk_user_id, action="DELETE_QR",
             qrcard_id=qrcard_id, qr_name=info["qr_name"],
             qr_type=info["qr_type"], source="bulk",
-            detail={
-                "freed_bytes": r2_info["freed_bytes"],
-                "deleted_count": r2_info["deleted_count"],
-                "bulk_total_qrs": len(qrcard_ids),
-                "bulk_total_freed": total_freed,
-                "bulk_total_files": total_files,
-            },
+            detail={"note": "soft_deleted_assets_pending_r2_cleanup", "bulk_total_qrs": len(qrcard_ids)},
         )
-    return redirect(url_for("user_qr_list"))
+    return redirect(url_for("user_qr_list") + "?deleted=" + str(len(qrcard_ids)))
 def _get_qr_draft(session, qrcard_id):
     return (session.get("qr_draft") or {}).get(qrcard_id)
 
@@ -4609,18 +4669,19 @@ def qr_new_special_design_draft(qrcard_id):
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     fk_user_id = session.get("fk_user_id")
+    import json as _json_sd
     from pytavia_modules.view import view_special
-    _db = database.get_db_conn(config.mainDB)
-    qrcard = _db.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}
+    _db_sd = database.get_db_conn(config.mainDB)
+    qrcard = _db_sd.db_qrcard_special.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or \
+             _db_sd.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id, "qr_type": "special"})
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     sc = qrcard.get("short_code", "")
     qr_encode_url = config.G_BASE_URL.rstrip("/") + "/special/" + sc if sc else None
     _special_sections = qrcard.get("special_sections", [])
     if isinstance(_special_sections, str):
-        import json as _json
         try:
-            _special_sections = _json.loads(_special_sections)
+            _special_sections = _json_sd.loads(_special_sections)
         except Exception:
             _special_sections = []
     return view_special.view_special(app).new_qr_design_html(
@@ -6019,17 +6080,9 @@ def api_storage_delete_qr_assets():
         if not record:
             return jsonify({"ok": False, "error": "QR not found"}), 404
 
-        # Count & size before deletion
-        from pytavia_modules.user.user_storage_proc import _QR_TYPE_PREFIX
-        _r2     = r2_mod.r2_storage_proc()
-        folder  = _QR_TYPE_PREFIX.get(qr_type, qr_type) if qr_type != "frame" else "frames"
-        prefix  = f"{folder}/{qrcard_id}/"
-        objects = _r2.list_prefix(prefix)
-        freed_bytes    = sum(o["size"] for o in objects)
-        deleted_count  = len(objects)
-
-        # Delete R2 assets
-        _r2.delete_prefix(prefix)
+        # Soft-delete tracked assets (no R2 deletion — deferred to admin bulk cleanup)
+        from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_st2
+        _atp_st2().soft_delete_qr(qrcard_id)
 
         # Mark QR as deleted in DB (main collection + index + type-specific)
         getattr(_db, collection).update_one(
@@ -6040,7 +6093,6 @@ def api_storage_delete_qr_assets():
             {"qrcard_id": qrcard_id, "fk_user_id": session["fk_user_id"]},
             {"$set": {"status": "DELETED"}}
         )
-        # Also mark the type-specific collection if different from db_qrcard
         _type_col_map = {
             "pdf": "db_qrcard_pdf",
             "web-static": "db_qrcard_web_static",
@@ -6056,7 +6108,6 @@ def api_storage_delete_qr_assets():
                 {"$set": {"status": "DELETED"}}
             )
 
-        # Log the activity
         from pytavia_modules.user import user_activity_proc as _uap_st
         _uap_st.user_activity_proc(app).log(
             fk_user_id=session["fk_user_id"],
@@ -6065,10 +6116,10 @@ def api_storage_delete_qr_assets():
             qr_name=record.get("name", ""),
             qr_type=qr_type,
             source="storage",
-            detail={"freed_bytes": freed_bytes, "deleted_count": deleted_count},
+            detail={"note": "soft_deleted_assets_pending_r2_cleanup"},
         )
 
-        return jsonify({"ok": True, "deleted_count": deleted_count, "freed_bytes": freed_bytes})
+        return jsonify({"ok": True, "deleted_count": 0, "freed_bytes": 0})
     except Exception as e:
         app.logger.debug(e)
         return jsonify({"ok": False, "error": "Server error"}), 500

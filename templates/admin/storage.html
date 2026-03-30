@@ -1,0 +1,493 @@
+{% extends "admin/base.html" %}
+{% block title %}Storage Cleanup — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .storage-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .storage-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .stat-bar {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 14px 20px;
+        min-width: 160px;
+    }
+
+    .stat-card .stat-label {
+        font-size: 11px;
+        color: #8A8878;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 4px;
+    }
+
+    .stat-card .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .stat-card .stat-value.gold { color: var(--primary); }
+
+    /* Toolbar */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .btn-hard-del {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        background: var(--danger);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .2s;
+    }
+
+    .btn-hard-del:hover { background: var(--danger-hover); }
+    .btn-hard-del:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-outline-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: transparent;
+        color: #8A8878;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all .2s;
+    }
+
+    .btn-outline-sm:hover { color: var(--text-color); border-color: rgba(255,255,255,0.3); }
+
+    .sel-count {
+        font-size: 12px;
+        color: #8A8878;
+        margin-left: 4px;
+    }
+
+    /* Table */
+    .assets-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .assets-table th {
+        text-align: left;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.04);
+        color: #8A8878;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        white-space: nowrap;
+    }
+
+    .assets-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        color: var(--text-color);
+        vertical-align: middle;
+    }
+
+    .assets-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge-cat {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .badge-cat.image  { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .badge-cat.video  { background: rgba(168,85,247,.15); color: #c084fc; }
+    .badge-cat.pdf    { background: rgba(239,68,68,.15);  color: #f87171; }
+    .badge-cat.other  { background: rgba(255,255,255,.06); color: #8A8878; }
+
+    .file-name {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: monospace;
+        font-size: 12px;
+        color: #c5bfab;
+    }
+
+    .email-cell { color: #8A8878; font-size: 12px; }
+
+    .size-cell { color: #8A8878; white-space: nowrap; }
+
+    .date-cell { color: #8A8878; font-size: 11px; white-space: nowrap; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #8A8878;
+    }
+
+    .empty-state .icon { font-size: 48px; opacity: .3; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* Progress overlay */
+    .progress-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(0,0,0,.75);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .progress-overlay.show { display: flex; }
+
+    .progress-box {
+        background: #1E1F18;
+        border: 1px solid rgba(235,168,27,.2);
+        border-radius: 14px;
+        padding: 36px 44px;
+        text-align: center;
+        min-width: 320px;
+    }
+
+    .progress-box .prog-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 6px;
+    }
+
+    .progress-box .prog-sub {
+        font-size: 12px;
+        color: #8A8878;
+        margin-bottom: 22px;
+    }
+
+    .progress-bar-wrap {
+        width: 100%;
+        height: 6px;
+        background: rgba(255,255,255,.08);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), #f59e0b);
+        border-radius: 3px;
+        width: 0%;
+        transition: width .3s;
+        animation: indeterminate 1.4s ease-in-out infinite;
+    }
+
+    @keyframes indeterminate {
+        0%   { width: 0%;   margin-left: 0; }
+        50%  { width: 70%;  margin-left: 15%; }
+        100% { width: 0%;   margin-left: 100%; }
+    }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+    }
+
+    .toast {
+        background: #1E1F18;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 13px;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.4);
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity .3s, transform .3s;
+        pointer-events: auto;
+        min-width: 260px;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    .toast.success { border-left: 3px solid #22c55e; }
+    .toast.error   { border-left: 3px solid var(--danger); }
+
+    .toast .toast-icon { font-size: 16px; }
+    .toast.success .toast-icon { color: #22c55e; }
+    .toast.error   .toast-icon { color: var(--danger); }
+
+    input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
+</style>
+
+<div class="storage-header">
+    <div class="storage-title">&#128465; Storage Cleanup</div>
+</div>
+
+<!-- Stats -->
+<div class="stat-bar">
+    <div class="stat-card">
+        <div class="stat-label">Pending Deletion</div>
+        <div class="stat-value gold" id="stat-count">{{ total_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Size</div>
+        <div class="stat-value" id="stat-size">{{ total_size_fmt }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Selected</div>
+        <div class="stat-value" id="stat-selected">0</div>
+    </div>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <button class="btn-hard-del" id="btn-hard-del-sel" onclick="hardDelete('selected')" disabled>
+        &#128465; Hard Delete Selected
+    </button>
+    <button class="btn-hard-del" id="btn-hard-del-all" onclick="hardDelete('all')" {% if total_count == 0 %}disabled{% endif %}>
+        &#128293; Hard Delete All ({{ total_count }})
+    </button>
+    <button class="btn-outline-sm" onclick="toggleSelectAll()">&#9745; Select All</button>
+    <button class="btn-outline-sm" onclick="clearSelection()">&#9744; Clear</button>
+    <span class="sel-count" id="sel-label"></span>
+</div>
+
+<!-- Table -->
+{% if assets %}
+<div style="overflow-x:auto;">
+    <table class="assets-table" id="assets-table">
+        <thead>
+            <tr>
+                <th style="width:36px;"><input type="checkbox" id="chk-all" onchange="onCheckAll(this)"></th>
+                <th>User</th>
+                <th>QR / Frame</th>
+                <th>File</th>
+                <th>Category</th>
+                <th>Size</th>
+                <th>Soft Deleted</th>
+            </tr>
+        </thead>
+        <tbody id="assets-tbody">
+            {% for a in assets %}
+            <tr data-asset-id="{{ a.asset_id }}">
+                <td><input type="checkbox" class="row-chk" value="{{ a.asset_id }}" onchange="onRowCheck()"></td>
+                <td class="email-cell">{{ a.user_email }}</td>
+                <td class="email-cell">{{ a.qrcard_id[:8] if a.qrcard_id else (a.frame_id[:8] if a.frame_id else '—') }}…</td>
+                <td><div class="file-name" title="{{ a.r2_key }}">{{ a.file_name or a.r2_key }}</div></td>
+                <td><span class="badge-cat {{ a.file_category or 'other' }}">{{ a.file_category or 'other' }}</span></td>
+                <td class="size-cell">{{ (a.file_size // 1024) }}KB</td>
+                <td class="date-cell">
+                    {% if a.soft_deleted_at %}{{ a.soft_deleted_at | int }}{% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">&#10003;</div>
+    <p>No pending deletions — R2 storage is clean.</p>
+</div>
+{% endif %}
+
+<!-- Progress overlay -->
+<div class="progress-overlay" id="progress-overlay">
+    <div class="progress-box">
+        <div class="prog-title" id="prog-title">Deleting from Cloudflare R2…</div>
+        <div class="prog-sub" id="prog-sub">Please wait, sending bulk delete request</div>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="prog-bar"></div>
+        </div>
+        <div style="font-size:12px;color:#8A8878;" id="prog-detail">Processing…</div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<input type="hidden" id="csrf-token-val" value="{{ csrf_token() }}">
+
+<script>
+    var _allAssets = {{ assets | tojson | safe }};
+
+    // ── Selection ────────────────────────────────────────────────────────────
+    function getChecked() {
+        return Array.from(document.querySelectorAll('.row-chk:checked')).map(c => c.value);
+    }
+
+    function onRowCheck() {
+        var checked = getChecked();
+        document.getElementById('stat-selected').textContent = checked.length;
+        document.getElementById('btn-hard-del-sel').disabled = checked.length === 0;
+        var all = document.querySelectorAll('.row-chk');
+        document.getElementById('chk-all').checked = checked.length === all.length && all.length > 0;
+        document.getElementById('sel-label').textContent = checked.length ? checked.length + ' selected' : '';
+    }
+
+    function onCheckAll(chk) {
+        document.querySelectorAll('.row-chk').forEach(c => { c.checked = chk.checked; });
+        onRowCheck();
+    }
+
+    function toggleSelectAll() {
+        var all = document.querySelectorAll('.row-chk');
+        var anyUnchecked = Array.from(all).some(c => !c.checked);
+        all.forEach(c => { c.checked = anyUnchecked; });
+        onRowCheck();
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.row-chk').forEach(c => { c.checked = false; });
+        document.getElementById('chk-all').checked = false;
+        onRowCheck();
+    }
+
+    // ── Progress helpers ─────────────────────────────────────────────────────
+    function showProgress(sub) {
+        document.getElementById('prog-sub').textContent = sub || 'Please wait…';
+        document.getElementById('prog-detail').textContent = 'Processing…';
+        document.getElementById('progress-overlay').classList.add('show');
+    }
+
+    function hideProgress() {
+        document.getElementById('progress-overlay').classList.remove('show');
+    }
+
+    // ── Toast ────────────────────────────────────────────────────────────────
+    function showToast(msg, type) {
+        type = type || 'success';
+        var icon = type === 'success' ? '✓' : '✕';
+        var wrap = document.getElementById('toast-wrap');
+        var t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
+        wrap.appendChild(t);
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() { t.classList.add('show'); });
+        });
+        setTimeout(function() {
+            t.classList.remove('show');
+            setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+        }, 4500);
+    }
+
+    // ── Hard delete ──────────────────────────────────────────────────────────
+    function hardDelete(mode) {
+        var ids;
+        var label;
+        if (mode === 'all') {
+            ids = 'all';
+            label = 'all pending (' + _allAssets.length + ')';
+        } else {
+            ids = getChecked();
+            if (!ids.length) { showToast('Select at least one asset.', 'error'); return; }
+            label = ids.length + ' selected';
+        }
+
+        if (!confirm('Hard delete ' + label + ' assets from Cloudflare R2?\n\nThis is permanent and cannot be undone.')) return;
+
+        showProgress('Sending bulk delete to Cloudflare R2…');
+
+        var csrf = (document.getElementById('csrf-token-val') || {}).value || '';
+
+        fetch('/admin/storage/hard_delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf,
+            },
+            body: JSON.stringify({ asset_ids: ids }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            hideProgress();
+            if (data.ok) {
+                // Remove deleted rows from table
+                var deletedSet = new Set(mode === 'all' ?
+                    _allAssets.map(function(a) { return a.asset_id; }) :
+                    ids);
+                document.querySelectorAll('#assets-tbody tr').forEach(function(row) {
+                    if (deletedSet.has(row.dataset.assetId)) {
+                        row.style.transition = 'opacity .3s';
+                        row.style.opacity = '0';
+                        setTimeout(function() { if (row.parentNode) row.parentNode.removeChild(row); }, 320);
+                    }
+                });
+                // Update stats
+                var remaining = _allAssets.filter(function(a) { return !deletedSet.has(a.asset_id); });
+                _allAssets = remaining;
+                document.getElementById('stat-count').textContent = remaining.length;
+                document.getElementById('stat-selected').textContent = '0';
+                document.getElementById('btn-hard-del-all').textContent = '\uD83D\uDD25 Hard Delete All (' + remaining.length + ')';
+                if (remaining.length === 0) document.getElementById('btn-hard-del-all').disabled = true;
+                clearSelection();
+                showToast('Deleted ' + data.deleted + ' assets (' + data.freed_fmt + ') from R2.', 'success');
+            } else {
+                showToast('Error: ' + (data.error || 'Delete failed.'), 'error');
+            }
+        })
+        .catch(function(err) {
+            hideProgress();
+            showToast('Network error. Please try again.', 'error');
+            console.error(err);
+        });
+    }
+
+    // Format soft_deleted_at timestamps
+    document.querySelectorAll('#assets-tbody td:last-child').forEach(function(td) {
+        var ts = parseFloat(td.textContent.trim());
+        if (!isNaN(ts) && ts > 0) {
+            td.textContent = new Date(ts * 1000).toLocaleString();
+        }
+    });
+</script>
+{% endblock %}

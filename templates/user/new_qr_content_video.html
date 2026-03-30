@@ -538,8 +538,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance and gallery title/description</div>
+                        <div class="autocomplete-row-text" id="video-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="video-autocomplete-row-sub">Auto-fills appearance and gallery title/description</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -1267,6 +1267,9 @@
                 grid.appendChild(item);
             });
         }
+        // Expose internal renderers for reset/restore flows in other script blocks.
+        window.renderVideoItems = renderVideoItems;
+        window.updateVideoPreviewGallery = updatePreviewGallery;
 
         window.addVideoLinkItem = function () {
             galleryVideos.push({ type: 'link', url: '', name: '', desc: '', fileIndex: null });
@@ -1492,15 +1495,124 @@
                 window.applyVideoSampleData(dump.videos);
             }
         }
+
+        var baselineSnapshot = null;
+
+        function setToggleLabel(isOn) {
+            var txt = document.getElementById('video-autocomplete-row-text');
+            var sub = document.getElementById('video-autocomplete-row-sub');
+            if (!txt || !sub) return;
+            if (isOn) {
+                txt.textContent = 'Reset Sample Data';
+                sub.textContent = 'Restores the preview back to your current content';
+            } else {
+                txt.textContent = 'Fill with Sample Data';
+                sub.textContent = 'Auto-fills appearance and gallery title/description';
+            }
+        }
+
+        function captureVideoBaseline() {
+            var tpl = document.querySelector('input[name="video_template"]:checked');
+            var vbUrls = (typeof videoBlobUrls !== 'undefined') ? videoBlobUrls : window.videoBlobUrls;
+            return {
+                template: (tpl && tpl.value) ? tpl.value : '1col',
+                colors: {
+                    primary: document.getElementById('video_primary_picker') ? document.getElementById('video_primary_picker').value : '',
+                    secondary: document.getElementById('video_secondary_picker') ? document.getElementById('video_secondary_picker').value : ''
+                },
+                fonts: {
+                    title: (document.querySelector('select[name="video_title_font"]') || {}).value || 'Lato',
+                    text: (document.querySelector('select[name="video_text_font"]') || {}).value || 'Lato'
+                },
+                fields: {
+                    title: document.getElementById('video_title') ? document.getElementById('video_title').value : '',
+                    desc: document.getElementById('video_desc') ? document.getElementById('video_desc').value : ''
+                },
+                galleryVideos: (window.galleryVideos || []).map(function(v) {
+                    return {
+                        type: v.type,
+                        url: v.url,
+                        name: v.name,
+                        desc: v.desc,
+                        fileIndex: v.fileIndex
+                    };
+                }),
+                uploadedFiles: (window.uploadedFiles || []).slice()
+            };
+        }
+
+        function restoreVideoBaseline(snapshot) {
+            if (!snapshot) return;
+
+            // Appearance + text
+            var radio = document.querySelector('input[name="video_template"][value="' + snapshot.template + '"]');
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+
+            if (snapshot.colors.primary) setColor('video_primary_picker', 'video_primary_hex', snapshot.colors.primary);
+            if (snapshot.colors.secondary) setColor('video_secondary_picker', 'video_secondary_hex', snapshot.colors.secondary);
+
+            var titleFont = document.querySelector('select[name="video_title_font"]');
+            if (titleFont) { titleFont.value = snapshot.fonts.title; titleFont.dispatchEvent(new Event('change')); }
+            var textFont = document.querySelector('select[name="video_text_font"]');
+            if (textFont) { textFont.value = snapshot.fonts.text; textFont.dispatchEvent(new Event('change')); }
+
+            var titleInput = document.getElementById('video_title');
+            if (titleInput) { titleInput.value = snapshot.fields.title; titleInput.dispatchEvent(new Event('input')); }
+            var descInput = document.getElementById('video_desc');
+            if (descInput) { descInput.value = snapshot.fields.desc; descInput.dispatchEvent(new Event('input')); }
+
+            // Restore galleryVideos/uploadedFiles
+            window.galleryVideos.length = 0;
+            window.uploadedFiles.length = 0;
+
+            snapshot.uploadedFiles.forEach(function (f) { window.uploadedFiles.push(f); });
+            snapshot.galleryVideos.forEach(function (v) { window.galleryVideos.push(v); });
+
+            // Rebuild blob URLs for upload items
+            var vbUrls = (typeof videoBlobUrls !== 'undefined') ? videoBlobUrls : window.videoBlobUrls;
+            if (!vbUrls) {
+                window.videoBlobUrls = {};
+                vbUrls = window.videoBlobUrls;
+            }
+            Object.keys(vbUrls).forEach(function (k) {
+                if (vbUrls[k]) {
+                    try { URL.revokeObjectURL(vbUrls[k]); } catch (e) { }
+                }
+                delete vbUrls[k];
+            });
+            window.uploadedFiles.forEach(function (f, idx) {
+                if (f) vbUrls[idx] = URL.createObjectURL(f);
+            });
+
+            if (typeof window.renderVideoItems === 'function') window.renderVideoItems();
+            if (typeof window.updateVideoPreviewGallery === 'function') window.updateVideoPreviewGallery();
+        }
+
         var toggle = document.getElementById('video-autocomplete-toggle');
         if (toggle) {
             toggle.addEventListener('change', function() {
-                if (!this.checked) return;
-                if (_dumpCache) { applyVideoAutocomplete(_dumpCache); return; }
-                fetch('{{ url_for("static", filename="json_file/video_dump.json") }}')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) { _dumpCache = data; applyVideoAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+                if (this.checked) {
+                    baselineSnapshot = captureVideoBaseline();
+                    setToggleLabel(true);
+
+                    if (_dumpCache) { applyVideoAutocomplete(_dumpCache); return; }
+                    fetch('{{ url_for("static", filename="json_file/video_dump.json") }}')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) { _dumpCache = data; applyVideoAutocomplete(data); })
+                        .catch(function() {
+                            toggle.checked = false;
+                            setToggleLabel(false);
+                            alert('Could not load sample data.');
+                        });
+                    return;
+                }
+
+                // OFF: restore everything the automation changed
+                setToggleLabel(false);
+                restoreVideoBaseline(baselineSnapshot);
             });
         }
     })();

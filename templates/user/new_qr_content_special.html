@@ -1,4 +1,4 @@
-﻿{% extends "user/base.html" %}
+{% extends "user/base.html" %}
 
 {% set page_title = "Complete the content of the QR" %}
 {% set active_page = "new_qr" %}
@@ -2728,6 +2728,7 @@ function saveAndNext() {
     overlay.style.display = 'flex';
     msgEl.textContent = 'Saving your content\u2026';
     subEl.textContent = 'Please wait, uploading assets to the cloud';
+    if (typeof saveEditBlockContent === 'function') saveEditBlockContent();
     if (typeof updateHiddenField === 'function') updateHiddenField();
     var form = document.getElementById('content-form');
     var fd = new FormData(form);

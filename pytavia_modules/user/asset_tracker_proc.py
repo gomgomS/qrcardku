@@ -93,6 +93,68 @@ class asset_tracker_proc:
         except Exception:
             pass
 
+    def soft_delete_qr(self, qrcard_id: str):
+        """Mark all ACTIVE assets for a QR as SOFT_DELETED (pending admin R2 cleanup)."""
+        try:
+            now = time.time()
+            self._db().db_qr_assets.update_many(
+                {"qrcard_id": qrcard_id, "status": "ACTIVE"},
+                {"$set": {"status": "SOFT_DELETED", "soft_deleted_at": now}},
+            )
+        except Exception:
+            pass
+
+    def soft_delete_key(self, r2_key: str):
+        """Mark a single ACTIVE asset as SOFT_DELETED by R2 key."""
+        try:
+            now = time.time()
+            self._db().db_qr_assets.update_many(
+                {"r2_key": r2_key, "status": "ACTIVE"},
+                {"$set": {"status": "SOFT_DELETED", "soft_deleted_at": now}},
+            )
+        except Exception:
+            pass
+
+    def get_soft_deleted_assets(self, limit: int = 2000) -> list:
+        """Return all SOFT_DELETED assets for admin review, newest first."""
+        try:
+            return list(self._db().db_qr_assets.find(
+                {"status": "SOFT_DELETED"},
+                {"_id": 0},
+            ).sort("soft_deleted_at", -1).limit(limit))
+        except Exception:
+            return []
+
+    def get_soft_deleted_count(self) -> int:
+        """Return count of SOFT_DELETED assets."""
+        try:
+            return self._db().db_qr_assets.count_documents({"status": "SOFT_DELETED"})
+        except Exception:
+            return 0
+
+    def get_soft_deleted_size(self) -> int:
+        """Return total bytes of SOFT_DELETED assets."""
+        try:
+            pipeline = [
+                {"$match": {"status": "SOFT_DELETED"}},
+                {"$group": {"_id": None, "total": {"$sum": "$file_size"}}},
+            ]
+            result = list(self._db().db_qr_assets.aggregate(pipeline))
+            return result[0]["total"] if result else 0
+        except Exception:
+            return 0
+
+    def mark_hard_deleted_batch(self, asset_ids: list):
+        """Mark specific assets as HARD_DELETED after their R2 objects have been removed."""
+        try:
+            now = time.time()
+            self._db().db_qr_assets.update_many(
+                {"asset_id": {"$in": asset_ids}},
+                {"$set": {"status": "HARD_DELETED", "hard_deleted_at": now}},
+            )
+        except Exception:
+            pass
+
     # ── Read ─────────────────────────────────────────────────────────────────
 
     def get_qr_size(self, qrcard_id: str) -> dict:

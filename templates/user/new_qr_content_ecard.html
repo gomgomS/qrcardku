@@ -595,8 +595,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance, contact info, and phone/email/website</div>
+                        <div class="autocomplete-row-text" id="ecard-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="ecard-autocomplete-row-sub">Auto-fills appearance, contact info, and phone/email/website</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -3214,15 +3214,236 @@
                 window.ecardGalleryApplyUrls(dump.gallery);
             }
         }
+
+        var baselineSnapshot = null;
+        function setToggleLabel(isOn) {
+            var txt = document.getElementById('ecard-autocomplete-row-text');
+            var sub = document.getElementById('ecard-autocomplete-row-sub');
+            if (!txt || !sub) return;
+            if (isOn) {
+                txt.textContent = 'Reset Sample Data';
+                sub.textContent = 'Restores the preview back to your current content';
+            } else {
+                txt.textContent = 'Fill with Sample Data';
+                sub.textContent = 'Auto-fills appearance, contact info, and phone/email/website';
+            }
+        }
+
+        function captureEcardContacts() {
+            var out = { phone: [], email: [], website: [] };
+
+            var phoneC = document.getElementById('ecard-phone-list');
+            if (phoneC) {
+                phoneC.querySelectorAll('.ecard-contact-row').forEach(function (row) {
+                    out.phone.push({
+                        label: (row.querySelector('input[name="E-card_phone_label[]"]') || {}).value || '',
+                        value: (row.querySelector('input[name="E-card_phone_number[]"]') || {}).value || ''
+                    });
+                });
+            }
+
+            var emailC = document.getElementById('ecard-email-list');
+            if (emailC) {
+                emailC.querySelectorAll('.ecard-contact-row').forEach(function (row) {
+                    out.email.push({
+                        label: (row.querySelector('input[name="E-card_email_label[]"]') || {}).value || '',
+                        value: (row.querySelector('input[name="E-card_email_value[]"]') || {}).value || ''
+                    });
+                });
+            }
+
+            var webC = document.getElementById('ecard-website-list');
+            if (webC) {
+                webC.querySelectorAll('.ecard-contact-row').forEach(function (row) {
+                    out.website.push({
+                        label: (row.querySelector('input[name="E-card_website_label[]"]') || {}).value || '',
+                        value: (row.querySelector('input[name="E-card_website_value[]"]') || {}).value || ''
+                    });
+                });
+            }
+
+            return out;
+        }
+
+        function captureEcardBaseline() {
+            var tplRadio = document.querySelector('input[name="E-card_template"]:checked');
+            var template = tplRadio ? tplRadio.value : 'default';
+
+            var coverThumb = document.getElementById('cover-img-preview');
+            var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
+            var delFlag = document.getElementById('E-card_profile_img_delete');
+            var acUrl = document.getElementById('ecard_cover_img_autocomplete_url');
+
+            function imgState(id) {
+                var el = document.getElementById(id);
+                if (!el) return { src: '', display: '' };
+                return { src: el.src || '', display: el.style.display || '' };
+            }
+            function cardStyleState(bodyId) {
+                var el = document.getElementById(bodyId);
+                if (!el) return { borderRadius: '', marginTop: '' };
+                return { borderRadius: el.style.borderRadius || '', marginTop: el.style.marginTop || '' };
+            }
+
+            return {
+                template: template,
+                colors: {
+                    primary: (document.getElementById('E-card_primary_picker') || {}).value || '',
+                    secondary: (document.getElementById('E-card_secondary_picker') || {}).value || '',
+                    title: (document.getElementById('E-card_title_color_picker') || {}).value || '',
+                    text: (document.getElementById('E-card_text_color_picker') || {}).value || ''
+                },
+                fonts: {
+                    title: (document.querySelector('select[name="E-card_title_font"]') || {}).value || 'Lato',
+                    text: (document.querySelector('select[name="E-card_text_font"]') || {}).value || 'Lato'
+                },
+                fields: {
+                    company: (document.querySelector('input[name="E-card_company"]') || {}).value || '',
+                    title: (document.querySelector('input[name="E-card_title"]') || {}).value || '',
+                    desc: (document.querySelector('input[name="E-card_desc"]') || {}).value || '',
+                    btn_text: (document.querySelector('input[name="E-card_btn_text"]') || {}).value || ''
+                },
+                contacts: captureEcardContacts(),
+                galleryUrls: Array.prototype.slice.call(document.querySelectorAll('#ecard-gallery-list img')).map(function (img) { return img.src; }),
+                cover: {
+                    thumbHtml: coverThumb ? coverThumb.innerHTML : '',
+                    removeDisplay: coverRemoveBtn ? coverRemoveBtn.style.display : '',
+                    deleteFlag: delFlag ? delFlag.value : '0',
+                    autocompleteUrl: acUrl ? acUrl.value : '',
+                    profileImg: imgState('preview-profile-img'),
+                    profilePlaceholderDisplay: (document.getElementById('preview-profile-placeholder-icon') || {}).style ? (document.getElementById('preview-profile-placeholder-icon').style.display || '') : '',
+                    t1Header: (document.getElementById('t1-preview-header') || {}).style ? (document.getElementById('t1-preview-header').style.display || '') : '',
+                    t1HeaderImg: imgState('t1-preview-header-img'),
+                    t1CardBody: cardStyleState('t1-preview-card-body'),
+                    t2Header: (document.getElementById('t2-preview-header') || {}).style ? (document.getElementById('t2-preview-header').style.display || '') : '',
+                    t2HeaderImg: imgState('t2-preview-header-img'),
+                    t2CardBody: cardStyleState('t2-preview-card-body'),
+                    t3CirclePlaceholderDisplay: (document.getElementById('t3-preview-circle-placeholder') || {}).style ? (document.getElementById('t3-preview-circle-placeholder').style.display || '') : '',
+                    t3CircleImg: imgState('t3-preview-circle-img'),
+                    t4CirclePlaceholderDisplay: (document.getElementById('t4-preview-circle-placeholder') || {}).style ? (document.getElementById('t4-preview-circle-placeholder').style.display || '') : '',
+                    t4CircleImg: imgState('t4-preview-circle-img')
+                }
+            };
+        }
+
+        function restoreEcardBaseline(snapshot) {
+            if (!snapshot) return;
+
+            // Set template checked; dispatch after we restore inputs
+            var radio = document.querySelector('input[name="E-card_template"][value="' + snapshot.template + '"]');
+            if (radio) radio.checked = true;
+
+            // Restore appearance
+            if (snapshot.colors.primary) setColor('E-card_primary_picker', 'E-card_primary_hex', snapshot.colors.primary);
+            if (snapshot.colors.secondary) setColor('E-card_secondary_picker', 'E-card_secondary_hex', snapshot.colors.secondary);
+            if (snapshot.colors.title) setColor('E-card_title_color_picker', 'E-card_title_color_hex', snapshot.colors.title);
+            if (snapshot.colors.text) setColor('E-card_text_color_picker', 'E-card_text_color_hex', snapshot.colors.text);
+
+            var titleFontSelect = document.querySelector('select[name="E-card_title_font"]');
+            if (titleFontSelect) { titleFontSelect.value = snapshot.fonts.title; titleFontSelect.dispatchEvent(new Event('change')); }
+            var textFontSelect = document.querySelector('select[name="E-card_text_font"]');
+            if (textFontSelect) { textFontSelect.value = snapshot.fonts.text; textFontSelect.dispatchEvent(new Event('change')); }
+
+            // Restore text fields
+            var companyEl = document.querySelector('input[name="E-card_company"]');
+            if (companyEl) { companyEl.value = snapshot.fields.company; companyEl.dispatchEvent(new Event('input')); }
+            var titleEl = document.querySelector('input[name="E-card_title"]');
+            if (titleEl) { titleEl.value = snapshot.fields.title; titleEl.dispatchEvent(new Event('input')); }
+            var descEl = document.querySelector('input[name="E-card_desc"]');
+            if (descEl) { descEl.value = snapshot.fields.desc; descEl.dispatchEvent(new Event('input')); }
+            var btnEl = document.querySelector('input[name="E-card_btn_text"]');
+            if (btnEl) { btnEl.value = snapshot.fields.btn_text; btnEl.dispatchEvent(new Event('input')); }
+
+            // Restore contacts lists
+            ['phone', 'email', 'website'].forEach(function (type) {
+                var listId = 'ecard-' + type + '-list';
+                var container = document.getElementById(listId);
+                if (!container) return;
+                container.innerHTML = '';
+                var items = snapshot.contacts[type] || [];
+                items.forEach(function (it) { addContactRow(listId, type, it.label, it.value); });
+                if (items.length === 0) addContactRow(listId, type, '', '');
+            });
+
+            // Restore gallery (preview + internal state)
+            if (typeof window.ecardGalleryApplyUrls === 'function') {
+                window.ecardGalleryApplyUrls(snapshot.galleryUrls || []);
+            }
+
+            // Dispatch template change to rebuild preview
+            if (radio) radio.dispatchEvent(new Event('change'));
+
+            // Restore cover image preview state
+            var coverThumb = document.getElementById('cover-img-preview');
+            if (coverThumb) coverThumb.innerHTML = snapshot.cover.thumbHtml;
+            var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
+            if (coverRemoveBtn) coverRemoveBtn.style.display = snapshot.cover.removeDisplay;
+            var delFlag = document.getElementById('E-card_profile_img_delete');
+            if (delFlag) delFlag.value = snapshot.cover.deleteFlag;
+            var acUrl = document.getElementById('ecard_cover_img_autocomplete_url');
+            if (acUrl) acUrl.value = snapshot.cover.autocompleteUrl;
+
+            var previewProfileImg = document.getElementById('preview-profile-img');
+            if (previewProfileImg) {
+                previewProfileImg.src = snapshot.cover.profileImg.src || '';
+                previewProfileImg.style.display = snapshot.cover.profileImg.display || '';
+            }
+            var previewPlaceholder = document.getElementById('preview-profile-placeholder-icon');
+            if (previewPlaceholder) previewPlaceholder.style.display = snapshot.cover.profilePlaceholderDisplay || '';
+
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = snapshot.cover.t1HeaderImg.src || ''; t1Img.style.display = snapshot.cover.t1HeaderImg.display || ''; }
+            var t1Hdr = document.getElementById('t1-preview-header');
+            if (t1Hdr) t1Hdr.style.display = snapshot.cover.t1Header || '';
+            var t1Body = document.getElementById('t1-preview-card-body');
+            if (t1Body) { t1Body.style.borderRadius = snapshot.cover.t1CardBody.borderRadius || ''; t1Body.style.marginTop = snapshot.cover.t1CardBody.marginTop || ''; }
+
+            var t2Img = document.getElementById('t2-preview-header-img');
+            if (t2Img) { t2Img.src = snapshot.cover.t2HeaderImg.src || ''; t2Img.style.display = snapshot.cover.t2HeaderImg.display || ''; }
+            var t2Hdr = document.getElementById('t2-preview-header');
+            if (t2Hdr) t2Hdr.style.display = snapshot.cover.t2Header || '';
+            var t2Body = document.getElementById('t2-preview-card-body');
+            if (t2Body) { t2Body.style.borderRadius = snapshot.cover.t2CardBody.borderRadius || ''; t2Body.style.marginTop = snapshot.cover.t2CardBody.marginTop || ''; }
+
+            var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Ph) t3Ph.style.display = snapshot.cover.t3CirclePlaceholderDisplay || '';
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            if (t3Img) { t3Img.src = snapshot.cover.t3CircleImg.src || ''; t3Img.style.display = snapshot.cover.t3CircleImg.display || ''; }
+
+            var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Ph) t4Ph.style.display = snapshot.cover.t4CirclePlaceholderDisplay || '';
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            if (t4Img) { t4Img.src = snapshot.cover.t4CircleImg.src || ''; t4Img.style.display = snapshot.cover.t4CircleImg.display || ''; }
+
+            // Rebuild contacts preview for the active template
+            if (snapshot.template === 'template1' && window.rebuildTemplateContactList) {
+                window.rebuildTemplateContactList('t1-preview-contact-list', 'white');
+            } else if (snapshot.template === 'template2' && window.rebuildTemplateContactList) {
+                window.rebuildTemplateContactList('t2-preview-contact-list', '#f9fafb', true);
+            } else if (snapshot.template === 'template3' && window.rebuildTemplateContactList) {
+                window.rebuildTemplateContactList('t3-preview-contact-list', 'white');
+            } else if (snapshot.template === 'template4' && window.rebuildTemplateContactList) {
+                window.rebuildTemplateContactList('t4-preview-contact-list', '#f9fafb', true);
+            } else if (typeof window.updateContactPreview === 'function') {
+                window.updateContactPreview();
+            }
+        }
+
         var toggle = document.getElementById('ecard-autocomplete-toggle');
         if (toggle) {
             toggle.addEventListener('change', function() {
-                if (!this.checked) return;
-                if (_dumpCache) { applyEcardAutocomplete(_dumpCache); return; }
-                fetch('{{ url_for("static", filename="json_file/ecard_dump.json") }}')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) { _dumpCache = data; applyEcardAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+                if (this.checked) {
+                    baselineSnapshot = captureEcardBaseline();
+                    setToggleLabel(true);
+                    if (_dumpCache) { applyEcardAutocomplete(_dumpCache); return; }
+                    fetch('{{ url_for("static", filename="json_file/ecard_dump.json") }}')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) { _dumpCache = data; applyEcardAutocomplete(data); })
+                        .catch(function() { toggle.checked = false; setToggleLabel(false); alert('Could not load sample data.'); });
+                } else {
+                    setToggleLabel(false);
+                    restoreEcardBaseline(baselineSnapshot);
+                }
             });
         }
     })();

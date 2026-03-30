@@ -652,8 +652,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance and gallery title/description</div>
+                        <div class="autocomplete-row-text" id="images-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="images-autocomplete-row-sub">Auto-fills appearance and gallery title/description</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -1655,15 +1655,213 @@
             var grid = document.getElementById('preview-gallery-grid');
             if (grid) { var preview = grid.querySelector('.gallery-autocomplete-preview[data-ac-idx="' + idx + '"]'); if (preview) preview.remove(); }
         };
+
+        var baselineSnapshot = null;
+
+        function setToggleLabel(isOn) {
+            var txt = document.getElementById('images-autocomplete-row-text');
+            var sub = document.getElementById('images-autocomplete-row-sub');
+            if (!txt || !sub) return;
+            if (isOn) {
+                txt.textContent = 'Reset Sample Data';
+                sub.textContent = 'Restores the preview back to your current content';
+            } else {
+                txt.textContent = 'Fill with Sample Data';
+                sub.textContent = 'Auto-fills appearance and gallery title/description';
+            }
+        }
+
+        function readAutocompleteItemsFromHiddenInputs() {
+            var form = document.getElementById('content-form');
+            var urls = document.querySelectorAll('input[name="images_autocomplete_urls[]"]');
+            var items = [];
+            urls.forEach(function (urlInput, domIdx) {
+                if (!urlInput) return;
+                var idx = urlInput.dataset && urlInput.dataset.acIdx !== undefined ? parseInt(urlInput.dataset.acIdx, 10) : domIdx;
+                var nameInput = document.querySelector('input[name="images_autocomplete_names[]"][data-ac-idx="' + idx + '"]');
+                var descInput = document.querySelector('input[name="images_autocomplete_descs[]"][data-ac-idx="' + idx + '"]');
+                items.push({
+                    idx: idx,
+                    url: urlInput.value || '',
+                    name: nameInput ? nameInput.value || '' : '',
+                    desc: descInput ? descInput.value || '' : ''
+                });
+            });
+            return items;
+        }
+
+        function captureBaseline() {
+            var tpl = document.querySelector('input[name="images_template"]:checked');
+            var hideToggle = document.getElementById('images_hide_labels');
+            return {
+                template: (tpl && tpl.value) ? tpl.value : '1col',
+                colors: {
+                    primary: document.getElementById('images_primary_picker') ? document.getElementById('images_primary_picker').value : '',
+                    secondary: document.getElementById('images_secondary_picker') ? document.getElementById('images_secondary_picker').value : ''
+                },
+                fonts: {
+                    title: (document.querySelector('select[name="images_title_font"]') || {}).value || 'Lato',
+                    text: (document.querySelector('select[name="images_text_font"]') || {}).value || 'Lato'
+                },
+                fields: {
+                    title: document.getElementById('images_gallery_title') ? document.getElementById('images_gallery_title').value : '',
+                    desc: document.getElementById('images_gallery_desc') ? document.getElementById('images_gallery_desc').value : ''
+                },
+                hideLabels: !!(hideToggle && hideToggle.checked),
+                autocomplete: readAutocompleteItemsFromHiddenInputs()
+            };
+        }
+
+        function clearAutocompleteState() {
+            document.querySelectorAll('.gallery-autocomplete-url-input').forEach(function (el) { el.remove(); });
+            var acList = document.getElementById('gallery-autocomplete-list');
+            if (acList) acList.innerHTML = '';
+            var grid = document.getElementById('preview-gallery-grid');
+            if (grid) { grid.querySelectorAll('.gallery-autocomplete-preview').forEach(function (el) { el.remove(); }); }
+        }
+
+        function renderAutocompleteItems(items, hideLabels) {
+            var form = document.getElementById('content-form');
+            var acList = document.getElementById('gallery-autocomplete-list');
+            var grid = document.getElementById('preview-gallery-grid');
+
+            if (!items || !items.length) return;
+
+            items.forEach(function (img) {
+                var idx = img.idx;
+                var url = img.url || '';
+                var name = img.name || '';
+                var desc = img.desc || '';
+
+                if (acList) {
+                    var div = document.createElement('div');
+                    div.className = 'gallery-form-item gallery-autocomplete-item';
+                    div.innerHTML =
+                        '<div class="gallery-form-item-img">' +
+                        '<img src="' + url + '" alt="">' +
+                        '</div>' +
+                        '<div class="gallery-form-item-fields">' +
+                        '<input type="text" placeholder="Image name" value="' + escapeHtml(name) + '" ' +
+                        'onchange="updateAutocompleteImageName(this, ' + idx + ')">' +
+                        '<textarea placeholder="Description" ' +
+                        'onchange="updateAutocompleteImageDesc(this, ' + idx + ')">' + escapeHtml(desc) + '</textarea>' +
+                        '</div>' +
+                        '<div class="gallery-form-item-remove" onclick="removeAutocompleteImage(this, ' + idx + ')">' +
+                        '<i class="fa-solid fa-trash-can"></i></div>';
+                    acList.appendChild(div);
+                }
+
+                if (form) {
+                    var urlInput = document.createElement('input');
+                    urlInput.type = 'hidden';
+                    urlInput.name = 'images_autocomplete_urls[]';
+                    urlInput.value = url;
+                    urlInput.className = 'gallery-autocomplete-url-input';
+                    urlInput.dataset.acIdx = idx;
+                    form.appendChild(urlInput);
+
+                    var nameInput = document.createElement('input');
+                    nameInput.type = 'hidden';
+                    nameInput.name = 'images_autocomplete_names[]';
+                    nameInput.value = name;
+                    nameInput.className = 'gallery-autocomplete-url-input';
+                    nameInput.dataset.acIdx = idx;
+                    form.appendChild(nameInput);
+
+                    var descInput = document.createElement('input');
+                    descInput.type = 'hidden';
+                    descInput.name = 'images_autocomplete_descs[]';
+                    descInput.value = desc;
+                    descInput.className = 'gallery-autocomplete-url-input';
+                    descInput.dataset.acIdx = idx;
+                    form.appendChild(descInput);
+                }
+
+                if (grid) {
+                    var item = document.createElement('div');
+                    item.className = 'preview-gallery-item gallery-autocomplete-preview';
+                    item.dataset.acIdx = idx;
+                    item.style.cssText = 'background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);';
+
+                    var captionHide = hideLabels ? 'display:none;' : '';
+                    item.innerHTML = '<img src="' + url + '" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;">';
+                    if (name) {
+                        item.innerHTML += '<div class="item-caption" style="padding:6px 8px;font-size:11px;font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + captionHide + '">' + escapeHtml(name) + '</div>';
+                    }
+                    grid.appendChild(item);
+                }
+            });
+
+            // Remove any "No images" placeholder (it has grid-column style)
+            if (grid) {
+                var empty = grid.querySelector('div[style*="grid-column"]');
+                if (empty) empty.remove();
+                var curTpl = document.querySelector('input[name="images_template"]:checked');
+                if (curTpl && typeof applyGridSpans === 'function') applyGridSpans(curTpl.value);
+            }
+        }
+
+        function restoreBaseline(snapshot) {
+            if (!snapshot) return;
+
+            // Restore appearance + text
+            var radio = document.querySelector('input[name="images_template"][value="' + snapshot.template + '"]');
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+
+            if (snapshot.colors.primary) setColor('images_primary_picker', 'images_primary_hex', snapshot.colors.primary);
+            if (snapshot.colors.secondary) setColor('images_secondary_picker', 'images_secondary_hex', snapshot.colors.secondary);
+
+            var titleFont = document.querySelector('select[name="images_title_font"]');
+            if (titleFont) { titleFont.value = snapshot.fonts.title; titleFont.dispatchEvent(new Event('change')); }
+            var textFont = document.querySelector('select[name="images_text_font"]');
+            if (textFont) { textFont.value = snapshot.fonts.text; textFont.dispatchEvent(new Event('change')); }
+
+            var titleInput = document.getElementById('images_gallery_title');
+            if (titleInput) { titleInput.value = snapshot.fields.title; titleInput.dispatchEvent(new Event('input')); }
+            var descInput = document.getElementById('images_gallery_desc');
+            if (descInput) { descInput.value = snapshot.fields.desc; descInput.dispatchEvent(new Event('input')); }
+
+            var hideToggle = document.getElementById('images_hide_labels');
+            if (hideToggle) { hideToggle.checked = !!snapshot.hideLabels; hideToggle.dispatchEvent(new Event('change')); }
+
+            // Restore autocomplete items + hidden inputs
+            clearAutocompleteState();
+            renderAutocompleteItems(snapshot.autocomplete || [], !!snapshot.hideLabels);
+
+            // Re-apply hide labels to captions for autocomplete previews (safe even if inline already applied)
+            if (hideToggle && hideToggle.checked) {
+                var grid = document.getElementById('preview-gallery-grid');
+                if (grid) { grid.querySelectorAll('.gallery-autocomplete-preview .item-caption').forEach(function (el) { el.style.display = 'none'; }); }
+            }
+
+            // Ensure the right preview grid (including empty-state placeholder) matches baseline
+            if (typeof updatePreviewGallery === 'function') updatePreviewGallery();
+        }
+
         var toggle = document.getElementById('images-autocomplete-toggle');
         if (toggle) {
-            toggle.addEventListener('change', function() {
-                if (!this.checked) return;
-                if (_dumpCache) { applyImagesAutocomplete(_dumpCache); return; }
-                fetch('{{ url_for("static", filename="json_file/images_dump.json") }}')
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) { _dumpCache = data; applyImagesAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+            toggle.addEventListener('change', function () {
+                if (this.checked) {
+                    baselineSnapshot = captureBaseline();
+                    setToggleLabel(true);
+                    if (_dumpCache) { applyImagesAutocomplete(_dumpCache); return; }
+                    fetch('{{ url_for("static", filename="json_file/images_dump.json") }}')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) { _dumpCache = data; applyImagesAutocomplete(data); })
+                        .catch(function() {
+                            toggle.checked = false;
+                            setToggleLabel(false);
+                            alert('Could not load sample data.');
+                        });
+                    return;
+                }
+
+                // OFF: restore everything the automation changed
+                setToggleLabel(false);
+                restoreBaseline(baselineSnapshot);
             });
         }
     })();

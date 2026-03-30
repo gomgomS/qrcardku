@@ -310,8 +310,8 @@
                 <div class="autocomplete-row-left">
                     <div class="autocomplete-row-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="autocomplete-row-text">Fill with Sample Data</div>
-                        <div class="autocomplete-row-sub">Auto-fills appearance, basic info, and all active content blocks</div>
+                        <div class="autocomplete-row-text" id="allinone-autocomplete-row-text">Fill with Sample Data</div>
+                        <div class="autocomplete-row-sub" id="allinone-autocomplete-row-sub">Auto-fills appearance, basic info, and all active content blocks</div>
                     </div>
                 </div>
                 <label class="autocomplete-toggle" title="Toggle autocomplete">
@@ -1730,6 +1730,216 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Autocomplete / Fill Sample Data ────────────────────────────────
     let _dumpCache = null;
+    let _allinoneBaseline = null;
+
+    function setAutocompleteLabel(isOn) {
+        const txt = document.getElementById('allinone-autocomplete-row-text');
+        const sub = document.getElementById('allinone-autocomplete-row-sub');
+        if (!txt || !sub) return;
+        if (isOn) {
+            txt.textContent = 'Reset Sample Data';
+            sub.textContent = 'Restores the preview back to your current content';
+        } else {
+            txt.textContent = 'Fill with Sample Data';
+            sub.textContent = 'Auto-fills appearance, basic info, and all active content blocks';
+        }
+    }
+
+    function captureSectionsState() {
+        const sections = [];
+        if (!sectionsContainer) return sections;
+        sectionsContainer.querySelectorAll('.section-card').forEach(card => {
+            const stype = card.dataset.sectionType || '';
+            const blockStyle = card.dataset.blockStyle || '1';
+            const blockColor = card.dataset.blockColor || '#10b981';
+            const items = [];
+            card.querySelectorAll('.section-item-row').forEach(row => {
+                const v1El = row.querySelector('.allinone-v1');
+                const v1SelEl = row.querySelector('.allinone-v1-select');
+                const v1FileEl = row.querySelector('.allinone-v1-file');
+                const v2El = row.querySelector('.allinone-v2');
+                const v3El = row.querySelector('.allinone-v3');
+                const subtypeEl = row.querySelector('.allinone-contact-subtype');
+                const item = {
+                    v1: v1SelEl ? (v1SelEl.value || '') : (v1El ? (v1El.value || '') : ''),
+                    v2: v2El ? (v2El.value || '') : '',
+                    v3: v3El ? (v3El.value || '') : '',
+                    v4: subtypeEl ? (subtypeEl.value || '') : '',
+                    previewUrl: row.dataset.previewUrl || '',
+                    existingUrl: row.dataset.existingUrl || '',
+                    file: (v1FileEl && v1FileEl.files && v1FileEl.files[0]) ? v1FileEl.files[0] : null
+                };
+                items.push(item);
+            });
+            sections.push({ stype, blockStyle, blockColor, items });
+        });
+        return sections;
+    }
+
+    function restoreSectionsState(sectionSnapshot) {
+        if (!sectionsContainer) return;
+        sectionsContainer.innerHTML = '';
+        (sectionSnapshot || []).forEach(sec => {
+            const seedItems = (sec.items || []).map(it => ({
+                v1: it.v1 || '',
+                v2: it.v2 || '',
+                v3: it.v3 || '',
+                v4: it.v4 || ''
+            }));
+            addSectionCard(sec.stype, seedItems, sec.blockStyle || '1', sec.blockColor || '#10b981');
+        });
+
+        // Restore file-backed previews and dataset state row-by-row
+        const cards = sectionsContainer.querySelectorAll('.section-card');
+        (sectionSnapshot || []).forEach((sec, cIdx) => {
+            const card = cards[cIdx];
+            if (!card) return;
+            const rows = card.querySelectorAll('.section-item-row');
+            (sec.items || []).forEach((snapItem, rIdx) => {
+                const row = rows[rIdx];
+                if (!row) return;
+                if (snapItem.previewUrl) row.dataset.previewUrl = snapItem.previewUrl;
+                if (snapItem.existingUrl) row.dataset.existingUrl = snapItem.existingUrl;
+
+                const fileInput = row.querySelector('.allinone-v1-file');
+                if (fileInput && snapItem.file && window.DataTransfer) {
+                    const dt = new DataTransfer();
+                    dt.items.add(snapItem.file);
+                    fileInput.files = dt.files;
+                    const label = row.querySelector('.file-label-text');
+                    if (label) label.textContent = snapItem.file.name || 'Selected file';
+                }
+
+                if (sec.stype === 'image' && snapItem.previewUrl) {
+                    const pv = row.querySelector('.allinone-img-preview');
+                    if (pv) {
+                        const img = pv.querySelector('img');
+                        if (img) img.src = snapItem.previewUrl;
+                        pv.style.display = 'block';
+                    }
+                }
+                if (sec.stype === 'video') {
+                    const urlInput = row.querySelector('.allinone-video-url');
+                    if (urlInput) urlInput.value = (snapItem.v1 || '');
+                    if (snapItem.previewUrl) {
+                        const vp = row.querySelector('.allinone-video-preview');
+                        if (vp) {
+                            const video = vp.querySelector('video');
+                            if (video) video.src = snapItem.previewUrl;
+                            vp.style.display = 'block';
+                        }
+                    }
+                }
+            });
+        });
+
+        updateEmptyMsg();
+        updateAllinonePreview();
+    }
+
+    function captureAllinoneBaseline() {
+        const getElState = function(id) {
+            const el = document.getElementById(id);
+            return el ? {
+                exists: true,
+                src: ('src' in el) ? (el.getAttribute('src') || '') : '',
+                display: (el.style && typeof el.style.display !== 'undefined') ? (el.style.display || '') : '',
+                innerHTML: typeof el.innerHTML === 'string' ? el.innerHTML : ''
+            } : { exists: false, src: '', display: '', innerHTML: '' };
+        };
+        return {
+            template: (document.querySelector('input[name="Allinone_template"]:checked') || {}).value || 'default',
+            colors: {
+                primary: (document.getElementById('Allinone_primary_picker') || {}).value || '',
+                secondary: (document.getElementById('Allinone_secondary_picker') || {}).value || '',
+                title: (document.getElementById('Allinone_title_color_picker') || {}).value || '',
+                text: (document.getElementById('Allinone_text_color_picker') || {}).value || ''
+            },
+            fonts: {
+                title: (document.querySelector('select[name="Allinone_title_font"]') || {}).value || 'Lato',
+                text: (document.querySelector('select[name="Allinone_text_font"]') || {}).value || 'Lato'
+            },
+            fields: {
+                title: (document.querySelector('input[name="Allinone_title"]') || {}).value || '',
+                description: (document.querySelector('textarea[name="Allinone_description"]') || {}).value || ''
+            },
+            profile: {
+                previewHtml: (profilePreview || {}).innerHTML || '',
+                removeDisplay: (removeBtn || {}).style ? (removeBtn.style.display || '') : '',
+                deleteFlag: (document.getElementById('allinone_profile_img_delete') || {}).value || '0',
+                autocompleteUrl: (document.getElementById('allinone_profile_img_autocomplete_url') || {}).value || '',
+                previewProfileImg: getElState('allinone-preview-profile-img'),
+                previewT1HeaderImg: getElState('allinone-t1-preview-header-img'),
+                previewT2CircleImg: getElState('allinone-t2-preview-circle-img'),
+                previewProfilePlaceholder: getElState('allinone-preview-profile-placeholder-icon'),
+                previewT2Placeholder: getElState('allinone-t2-preview-circle-placeholder'),
+                previewT1Header: getElState('allinone-t1-preview-header'),
+                previewT1Body: getElState('allinone-t1-preview-body'),
+                previewT1BodyMarginTop: ((document.getElementById('allinone-t1-preview-body') || {}).style || {}).marginTop || '',
+                previewT1BodyBorderRadius: ((document.getElementById('allinone-t1-preview-body') || {}).style || {}).borderRadius || '',
+                previewProfileCircle: getElState('allinone-preview-profile-circle'),
+                thumbT1HeaderImg: getElState('allinone-t1-thumb-header-img'),
+                thumbT1Placeholder: getElState('allinone-t1-thumb-placeholder')
+            },
+            sections: captureSectionsState()
+        };
+    }
+
+    function restoreAllinoneBaseline(snap) {
+        if (!snap) return;
+        const setElState = function(id, state) {
+            if (!state || !state.exists) return;
+            const el = document.getElementById(id);
+            if (!el) return;
+            if ('src' in el && typeof state.src === 'string') el.setAttribute('src', state.src);
+            if (el.style && typeof state.display === 'string') el.style.display = state.display;
+            if (typeof state.innerHTML === 'string' && id === 'allinone-preview-profile-circle') el.innerHTML = state.innerHTML;
+        };
+
+        const radio = document.querySelector(`input[name="Allinone_template"][value="${snap.template}"]`);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+
+        if (snap.colors.primary) setColor('Allinone_primary_picker', 'Allinone_primary_hex', snap.colors.primary);
+        if (snap.colors.secondary) setColor('Allinone_secondary_picker', 'Allinone_secondary_hex', snap.colors.secondary);
+        if (snap.colors.title) setColor('Allinone_title_color_picker', 'Allinone_title_color_hex', snap.colors.title);
+        if (snap.colors.text) setColor('Allinone_text_color_picker', 'Allinone_text_color_hex', snap.colors.text);
+
+        const tf = document.querySelector('select[name="Allinone_title_font"]');
+        const xf = document.querySelector('select[name="Allinone_text_font"]');
+        if (tf) { tf.value = snap.fonts.title; tf.dispatchEvent(new Event('change')); }
+        if (xf) { xf.value = snap.fonts.text; xf.dispatchEvent(new Event('change')); }
+
+        if (titleInput) { titleInput.value = snap.fields.title; titleInput.dispatchEvent(new Event('input')); }
+        if (descInput) { descInput.value = snap.fields.description; descInput.dispatchEvent(new Event('input')); }
+
+        if (profilePreview) profilePreview.innerHTML = snap.profile.previewHtml || '';
+        if (removeBtn) removeBtn.style.display = snap.profile.removeDisplay || '';
+        const delFlag = document.getElementById('allinone_profile_img_delete');
+        if (delFlag) delFlag.value = snap.profile.deleteFlag || '0';
+        const acUrl = document.getElementById('allinone_profile_img_autocomplete_url');
+        if (acUrl) acUrl.value = snap.profile.autocompleteUrl || '';
+        if (profileInput) profileInput.value = '';
+
+        setElState('allinone-preview-profile-circle', snap.profile.previewProfileCircle);
+        setElState('allinone-preview-profile-img', snap.profile.previewProfileImg);
+        setElState('allinone-t1-preview-header-img', snap.profile.previewT1HeaderImg);
+        setElState('allinone-t2-preview-circle-img', snap.profile.previewT2CircleImg);
+        setElState('allinone-preview-profile-placeholder-icon', snap.profile.previewProfilePlaceholder);
+        setElState('allinone-t2-preview-circle-placeholder', snap.profile.previewT2Placeholder);
+        setElState('allinone-t1-preview-header', snap.profile.previewT1Header);
+        setElState('allinone-t1-thumb-header-img', snap.profile.thumbT1HeaderImg);
+        setElState('allinone-t1-thumb-placeholder', snap.profile.thumbT1Placeholder);
+
+        const t1Body = document.getElementById('allinone-t1-preview-body');
+        if (t1Body && snap.profile.previewT1Body && snap.profile.previewT1Body.exists) {
+            t1Body.style.display = snap.profile.previewT1Body.display || '';
+            t1Body.style.marginTop = snap.profile.previewT1BodyMarginTop || '';
+            t1Body.style.borderRadius = snap.profile.previewT1BodyBorderRadius || '';
+        }
+
+        restoreSectionsState(snap.sections || []);
+        updateAllinonePreview();
+    }
 
     function setColor(pickerId, hexId, value) {
         const picker = document.getElementById(pickerId);
@@ -1852,22 +2062,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const autocompleteToggle = document.getElementById('allinone-autocomplete-toggle');
     if (autocompleteToggle) {
         autocompleteToggle.addEventListener('change', function() {
-            if (!this.checked) return;
-            if (_dumpCache) {
-                applyAutocomplete(_dumpCache);
+            if (this.checked) {
+                _allinoneBaseline = captureAllinoneBaseline();
+                setAutocompleteLabel(true);
+                if (_dumpCache) {
+                    applyAutocomplete(_dumpCache);
+                    return;
+                }
+                const url = '{{ url_for("static", filename="json_file/allinone_dump.json") }}';
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        _dumpCache = data;
+                        applyAutocomplete(data);
+                    })
+                    .catch(() => {
+                        this.checked = false;
+                        setAutocompleteLabel(false);
+                        alert('Could not load sample data.');
+                    });
                 return;
             }
-            const url = '{{ url_for("static", filename="json_file/allinone_dump.json") }}';
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    _dumpCache = data;
-                    applyAutocomplete(data);
-                })
-                .catch(() => {
-                    this.checked = false;
-                    alert('Could not load sample data.');
-                });
+            setAutocompleteLabel(false);
+            restoreAllinoneBaseline(_allinoneBaseline);
         });
     }
 });
