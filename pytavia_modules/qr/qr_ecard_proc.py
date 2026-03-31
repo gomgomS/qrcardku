@@ -221,6 +221,22 @@ class qr_ecard_proc:
                 if key.startswith("E-card_") or key in ["welcome_time", "welcome_bg_color", "welcome_img_url", "E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     update_data[key] = val
 
+            # Support asset-picker fields in edit flow (same output fields as "new")
+            cover_ac = (params.get("ecard_cover_img_autocomplete_url") or "").strip()
+            if cover_ac:
+                update_data["E-card_t1_header_img_url"] = cover_ac
+                update_data["E-card_t3_circle_img_url"] = cover_ac
+                update_data["E-card_t4_circle_img_url"] = cover_ac
+            welcome_ac = (params.get("ecard_welcome_img_autocomplete_url") or "").strip()
+            if welcome_ac:
+                update_data["welcome_img_url"] = welcome_ac
+            gallery_ac = params.get("ecard_gallery_autocomplete_url[]") or params.get("ecard_gallery_autocomplete_url") or []
+            if isinstance(gallery_ac, str):
+                gallery_ac = [gallery_ac]
+            gallery_ac = [{"url": (u or "").strip()} for u in gallery_ac if (u or "").strip()]
+            if gallery_ac:
+                update_data["ecard_gallery_files"] = gallery_ac
+
             if "scan_limit_enabled" in params:
                 update_data["scan_limit_enabled"] = bool(params.get("scan_limit_enabled"))
             if "scan_limit_value" in params:

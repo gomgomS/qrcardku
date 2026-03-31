@@ -1274,7 +1274,7 @@
                                     <input type="text" name="short_code" id="stats-short-code-input"
                                         placeholder="Letters, numbers, '-' and '_' only"
                                         value="{{ short_code | default('', true) }}"
-                                        pattern="[a-zA-Z0-9_-]{2,32}"
+                                        pattern="[A-Za-z0-9_\\-]{2,32}"
                                         title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
                                         maxlength="32">
                                 </div>
@@ -2059,6 +2059,14 @@
                         const item = pdfArray[index];
                         if (!item || !window['pdfjs-dist/build/pdf'] || !previewCanvas) return;
                         const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                        function isCrossOriginPdf(url) {
+                            try { return new URL(url, window.location.href).origin !== window.location.origin; }
+                            catch (e) { return false; }
+                        }
+                        function showFallbackPreview() {
+                            if (previewCanvas) previewCanvas.style.display = 'none';
+                            if (previewIcon) previewIcon.style.display = 'inline-block';
+                        }
 
                         function doRender(source) {
                             pdfjsLib.getDocument(source).promise.then(pdf => {
@@ -2074,11 +2082,18 @@
                                         if (container) container.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
                                     });
                                 });
-                            }).catch(err => console.error('Error rendering PDF:', err));
+                            }).catch(err => {
+                                showFallbackPreview();
+                                console.warn('Skipping PDF canvas preview (likely CORS):', err);
+                            });
                         }
 
                         if (typeof item === 'string') {
                             // Saved URL — load directly
+                            if (isCrossOriginPdf(item)) {
+                                showFallbackPreview();
+                                return;
+                            }
                             doRender(item);
                         } else {
                             // File object — read with FileReader

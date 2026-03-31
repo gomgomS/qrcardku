@@ -9,6 +9,20 @@
     href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap"
     rel="stylesheet">
 <style>
+    .btn-outline {
+        border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        color: var(--text-main);
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
     .new-qr-container {
         display: flex;
         gap: 32px;
@@ -762,14 +776,94 @@
                 </div>
             </div>
 
-            <!-- Content Section (URL Config + Stats) -->
+            <!-- Content Section -->
             <div class="collapse-section">
                 <div class="collapse-header">
                     <div class="header-left-col">
-                        <div class="header-icon hi-grey"><i class="fa-solid fa-gear"></i></div>
+                        <div class="header-icon hi-blue"><i class="fa-solid fa-film"></i></div>
                         <div class="header-text">
                             <h3>Content</h3>
-                            <p>URL configuration and settings.</p>
+                            <p>All the details about your QR.</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                </div>
+                <div class="collapse-body">
+                    <div>
+                        <div class="sub-collapse-header" style="border-top:none;">
+                            <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <div style="margin-top: 8px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                                <label style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
+                                    <div id="welcome-img-preview" style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                        {% if qrcard and qrcard.get('welcome_img_url') %}
+                                        <img src="{{ qrcard.get('welcome_img_url') }}" alt="Welcome image" style="width: 48px; height: 48px; border-radius: 6px; object-fit: cover;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Current image</span>
+                                        {% else %}
+                                        <div style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
+                                        </div>
+                                        <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                        {% endif %}
+                                    </div>
+                                    <input type="file" name="video_welcome_img" accept="image/*" style="display: none;" id="video_welcome_img_input">
+                                </label>
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                    <button type="button" id="welcome-delete-btn" class="btn-outline"
+                                        style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
+                                        Remove
+                                    </button>
+                                    <button type="button" class="btn-outline"
+                                        style="color: var(--primary); border-color: var(--primary);"
+                                        onclick="openVideoWelcomeAssetPicker()">
+                                        <i class="fa-solid fa-images"></i> Pick from My Assets
+                                    </button>
+                                    <input type="hidden" name="video_welcome_img_delete" id="video_welcome_img_delete" value="0">
+                                    <input type="hidden" name="video_welcome_img_autocomplete_url" id="video_welcome_img_autocomplete_url" value="">
+                                </div>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <label style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background color</label>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
+                                        value="{{ qrcard.get('welcome_bg_color', qrcard.get('video_primary_color', '#2F6BFD')) if qrcard else '#2F6BFD' }}"
+                                        style="width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 8px; padding: 2px; cursor: pointer; background: transparent;">
+                                    <input type="text" id="welcome_bg_color_hex" readonly
+                                        style="font-size: 13px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; width: 80px; background: var(--bg-body);">
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;">
+                                    Time (seconds) <i class="fa-regular fa-circle-question" style="color: var(--text-muted); font-size: 14px;"></i>
+                                </label>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <input type="range" name="welcome_time" min="2.5" max="10" step="0.5"
+                                        style="flex: 1; accent-color: var(--border-color);" id="welcome-time-slider"
+                                        value="{{ qrcard.get('welcome_time', '2.5') if qrcard else '2.5' }}">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+                                    <span id="welcome-time-display">2.5 seconds</span>
+                                    <span>10 seconds</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Section -->
+            <div class="collapse-section">
+                <div class="collapse-header">
+                    <div class="header-left-col">
+                        <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
+                        <div class="header-text">
+                            <h3>Stats</h3>
+                            <p>Key metrics and data to evaluate performance.</p>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
@@ -844,25 +938,28 @@
                     </div>
                     <div>
                         <div class="sub-collapse-header">
-                            <div class="toggle-label-with-icon" style="font-weight: 600;">Stats</div>
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit
+                            </div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                                Limit the number of times your QR can be scanned in total.
+                            </p>
                             <div class="toggle-row">
-                                <span class="toggle-label-with-icon"><i class="fa-solid fa-chart-simple"></i> Limit
-                                    scans</span>
+                                <div class="toggle-label-with-icon">Enable scan limit</div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="scan_limit_enabled" value="1" id="scan-limit-toggle" {%
                                         if qrcard and qrcard.get('scan_limit_enabled') %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            <div id="scan-limit-row" style="display:none;">
-                                <div class="form-group">
-                                    <label class="form-label">Max scans</label>
-                                    <input type="number" class="form-control" name="scan_limit_value" min="0"
-                                        value="{{ qrcard.get('scan_limit_value', 0) if qrcard else 0 }}">
-                                </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label class="form-label" style="font-size: 12px;">Scan Limit</label>
+                                <input type="number" name="scan_limit_value" id="scan-limit-value" class="form-control"
+                                    placeholder="e.g. 50" min="1"
+                                    value="{{ qrcard.get('scan_limit_value', '') if qrcard else '' }}">
                             </div>
                         </div>
                     </div>
@@ -1237,6 +1334,87 @@
         updatePreviewGallery();
     })();
 
+    // ── Welcome screen ─────────────────────────────────────────────────────
+    (function() {
+        var fileInput  = document.getElementById('video_welcome_img_input');
+        var deleteInput = document.getElementById('video_welcome_img_delete');
+        var previewBtn = document.getElementById('welcome-preview-btn');
+        var deleteBtn  = document.getElementById('welcome-delete-btn');
+        var imgPreview = document.getElementById('welcome-img-preview');
+        var bgPicker   = document.getElementById('welcome_bg_color_picker');
+        var bgHex      = document.getElementById('welcome_bg_color_hex');
+        var timeSlider = document.getElementById('welcome-time-slider');
+        var timeDisplay = document.getElementById('welcome-time-display');
+        var overlay    = document.getElementById('preview-welcome-overlay');
+        var overlayImg = document.getElementById('preview-welcome-img');
+
+        if (bgPicker && bgHex) {
+            bgHex.value = bgPicker.value.toUpperCase();
+            bgPicker.addEventListener('input', function() {
+                bgHex.value = this.value.toUpperCase();
+                if (overlay) overlay.style.background = this.value;
+            });
+        }
+
+        if (timeSlider && timeDisplay) {
+            timeDisplay.textContent = timeSlider.value + ' seconds';
+            timeSlider.addEventListener('input', function() {
+                timeDisplay.textContent = this.value + ' seconds';
+            });
+        }
+
+        var _currentSrc = '{{ qrcard.get("welcome_img_url", "") if qrcard else "" }}' || null;
+        var welcomeAssetInput = document.getElementById('video_welcome_img_autocomplete_url');
+
+        function playWelcomePreview() {
+            if (!overlay) return;
+            var src = _currentSrc || (welcomeAssetInput ? welcomeAssetInput.value : '');
+            if (overlayImg) { overlayImg.src = src || ''; overlayImg.style.display = src ? 'block' : 'none'; }
+            overlay.style.background = bgPicker ? bgPicker.value : '#2F6BFD';
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hide');
+            var dur = timeSlider ? parseFloat(timeSlider.value) * 1000 : 2500;
+            setTimeout(function() { overlay.classList.add('hide'); }, Math.max(dur - 800, 0));
+            setTimeout(function() { overlay.style.display = 'none'; overlay.classList.remove('hide'); }, dur);
+        }
+
+        if (previewBtn) previewBtn.addEventListener('click', playWelcomePreview);
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                var file = this.files[0];
+                if (!file) return;
+                if (deleteInput) deleteInput.value = '0';
+                if (welcomeAssetInput) welcomeAssetInput.value = '';
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    _currentSrc = e.target.result;
+                    if (imgPreview) {
+                        imgPreview.innerHTML = '<img src="' + e.target.result + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;">'
+                            + '<span style="font-size:13px;color:var(--text-muted);">' + file.name + '</span>';
+                    }
+                    if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                _currentSrc = null;
+                if (fileInput) fileInput.value = '';
+                if (deleteInput) deleteInput.value = '1';
+                if (welcomeAssetInput) welcomeAssetInput.value = '';
+                if (imgPreview) {
+                    imgPreview.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;">'
+                        + '<i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div>'
+                        + '<span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
+                }
+                deleteBtn.style.display = 'none';
+            });
+        }
+    })();
+
     var _originalShortCode = {{ (qrcard.short_code if qrcard and qrcard.get('short_code') else '') | tojson }};
 
     function startUrlEdit() {
@@ -1267,5 +1445,116 @@
         var w = document.getElementById('url-change-warning'); if (w) w.style.display = 'none';
     }
 
+</script>
+
+<!-- Welcome Asset Picker Modal -->
+<div id="video-welcome-asset-picker-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeVideoWelcomeAssetPicker()" style="background:none;border:none;cursor:pointer;color:#8A8878;font-size:18px;line-height:1;padding:2px 6px;">&times;</button>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid #2C2D25;">
+            <input type="text" id="video-welcome-asset-search" placeholder="Search by filename..." oninput="filterVideoWelcomeAssets(this.value)"
+                style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
+        </div>
+        <div id="video-welcome-asset-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;min-height:180px;">
+            <div id="video-welcome-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images...
+            </div>
+        </div>
+        <div id="video-welcome-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+            <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var allImages = [];
+    var loaded = false;
+
+    window.openVideoWelcomeAssetPicker = function () {
+        var overlay = document.getElementById('video-welcome-asset-picker-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        document.getElementById('video-welcome-asset-search').value = '';
+        if (!loaded) loadAssets();
+        else renderGrid(allImages);
+    };
+
+    window.closeVideoWelcomeAssetPicker = function () {
+        var overlay = document.getElementById('video-welcome-asset-picker-overlay');
+        if (overlay) overlay.style.display = 'none';
+    };
+
+    var overlay = document.getElementById('video-welcome-asset-picker-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === this) closeVideoWelcomeAssetPicker();
+        });
+    }
+
+    function loadAssets() {
+        fetch('/api/user/image_assets')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                loaded = true;
+                allImages = data.images || data.items || [];
+                renderGrid(allImages);
+            })
+            .catch(function () {
+                var loading = document.getElementById('video-welcome-asset-loading');
+                if (loading) loading.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:6px;"></i>Failed to load assets.';
+            });
+    }
+
+    function renderGrid(images) {
+        var grid = document.getElementById('video-welcome-asset-grid');
+        var loading = document.getElementById('video-welcome-asset-loading');
+        var empty = document.getElementById('video-welcome-asset-empty');
+        if (!grid || !empty) return;
+        if (loading) loading.style.display = 'none';
+        grid.querySelectorAll('.vw-item').forEach(function (el) { el.remove(); });
+        if (!images.length) { empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+        images.forEach(function (img) {
+            var imageUrl = img.url || img.file_url || '';
+            var fileName = img.file_name || 'image';
+            if (!imageUrl) return;
+            var item = document.createElement('div');
+            item.className = 'vw-item';
+            item.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;background:#252619;';
+            item.title = fileName;
+            item.innerHTML = '<div style="width:100%;padding-top:100%;position:relative;background:#181914;"><img src="' + imageUrl + '" alt="' + fileName + '" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></div><div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + fileName + '</div>';
+            item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
+            item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
+            item.addEventListener('click', function () { selectAsset(imageUrl, fileName); });
+            grid.appendChild(item);
+        });
+    }
+
+    window.filterVideoWelcomeAssets = function (q) {
+        q = (q || '').toLowerCase();
+        renderGrid(q ? allImages.filter(function (i) { return (i.file_name || '').toLowerCase().includes(q); }) : allImages);
+    };
+
+    function selectAsset(url, fileName) {
+        var acField = document.getElementById('video_welcome_img_autocomplete_url');
+        if (acField) acField.value = url;
+        var fileInput = document.getElementById('video_welcome_img_input');
+        if (fileInput) fileInput.value = '';
+        var delFlag = document.getElementById('video_welcome_img_delete');
+        if (delFlag) delFlag.value = '0';
+        var preview = document.getElementById('welcome-img-preview');
+        if (preview) {
+            preview.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">' + (fileName || 'Asset selected') + '</span>';
+        }
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        var overlayImg = document.getElementById('preview-welcome-img');
+        if (overlayImg) overlayImg.src = url;
+        closeVideoWelcomeAssetPicker();
+    }
+}());
 </script>
 {% endblock %}

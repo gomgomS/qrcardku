@@ -215,6 +215,13 @@ class qr_video_proc:
                 if key.startswith("video_") and not key.endswith("[]"):
                     update_data[key] = val
 
+            # Support welcome image fields from edit flow
+            if "welcome_img_url" in params and params.get("welcome_img_url") is not None:
+                update_data["welcome_img_url"] = params.get("welcome_img_url")
+            ac_welcome = (params.get("video_welcome_img_autocomplete_url") or "").strip()
+            if ac_welcome:
+                update_data["welcome_img_url"] = ac_welcome
+
             # Also handle video_links which is passed manually in save
             if "video_links" in params:
                 update_data["video_links"] = params["video_links"]

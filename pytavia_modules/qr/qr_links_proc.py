@@ -131,10 +131,16 @@ class qr_links_proc:
             fk_user_id = params.get("fk_user_id")
             qrcard_id = params.get("qrcard_id")
             update_data = {"name": params.get("name"), "url_content": params.get("url_content")}
+            cover_ac_url = (params.get("links_cover_img_autocomplete_url") or "").strip()
+            welcome_ac_url = (params.get("links_welcome_img_autocomplete_url") or "").strip()
 
             for key, val in params.items():
                 if key.startswith("Links_") or key in ["welcome_time", "welcome_bg_color", "welcome_img_url"]:
                     update_data[key] = val
+            if cover_ac_url and not update_data.get("Links_cover_img_url"):
+                update_data["Links_cover_img_url"] = cover_ac_url
+            if welcome_ac_url and not update_data.get("welcome_img_url"):
+                update_data["welcome_img_url"] = welcome_ac_url
 
             if "scan_limit_enabled" in params:
                 update_data["scan_limit_enabled"] = bool(params.get("scan_limit_enabled"))

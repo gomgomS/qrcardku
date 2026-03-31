@@ -1062,7 +1062,12 @@ function submitDesignWithOverlay() {
 <script>
     // ── QR Code Styling — globals ─────────────────────────────────────────────
     var _qrFinalUrl = '';
-    var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
+    var _qrStyle = {
+        dots:     '{{ (qrcard.get("qr_dot_style",    "square")   if qrcard else "square")   }}',
+        corners:  '{{ (qrcard.get("qr_corner_style", "square")   if qrcard else "square")   }}',
+        dotColor: '{{ (qrcard.get("qr_dot_color",    "#000000")  if qrcard else "#000000")  }}',
+        bgColor:  '{{ (qrcard.get("qr_bg_color",     "#ffffff")  if qrcard else "#ffffff")  }}'
+    };
     var _qrStyling = null;
     var _keepSavedQR = false;
 
@@ -1090,6 +1095,45 @@ function submitDesignWithOverlay() {
             var url = URL.createObjectURL(blob);
             document.getElementById('qrcode-img').src = url;
         }).catch(function(e){ console.error('QR style:', e); });
+    }
+
+    function selectDotStyle(btn, style) {
+        document.querySelectorAll('#qr-dot-grid .grid-item').forEach(function (b) { b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        _qrStyle.dots = style;
+        var dotInput = document.getElementById('qr_dot_style_input');
+        if (dotInput) dotInput.value = style;
+        refreshQRPreview();
+    }
+
+    function selectCornerStyle(btn, style) {
+        document.querySelectorAll('#qr-corner-grid .grid-item').forEach(function (b) { b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        _qrStyle.corners = style;
+        var cornerInput = document.getElementById('qr_corner_style_input');
+        if (cornerInput) cornerInput.value = style;
+        refreshQRPreview();
+    }
+
+    function onQRColorChange(target, value) {
+        if (target === 'dot') {
+            _qrStyle.dotColor = value;
+            var ds = document.getElementById('qr-dot-swatch');
+            var dh = document.getElementById('qr-dot-hex');
+            var di = document.getElementById('qr_dot_color_input');
+            if (ds) ds.style.background = value;
+            if (dh) dh.textContent = value;
+            if (di) di.value = value;
+        } else {
+            _qrStyle.bgColor = value;
+            var bs = document.getElementById('qr-bg-swatch');
+            var bh = document.getElementById('qr-bg-hex');
+            var bi = document.getElementById('qr_bg_color_input');
+            if (bs) bs.style.background = value;
+            if (bh) bh.textContent = value;
+            if (bi) bi.value = value;
+        }
+        refreshQRPreview();
     }
 
     function _restoreQRStyleUI() {

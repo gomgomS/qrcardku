@@ -247,6 +247,18 @@ class qr_pdf_proc:
                 except Exception:
                     pass
 
+            # Handle welcome image asset URL when editing (no upload in this method)
+            ac_welcome = (params.get("welcome_img_autocomplete_url") or "").strip()
+            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                update_data["welcome_img_url"] = ac_welcome
+
+            # Handle cover image asset URL when editing (no upload in this method)
+            ac_cover = (params.get("pdf_t1_header_img_autocomplete_url") or "").strip()
+            if ac_cover and (ac_cover.startswith("http://") or ac_cover.startswith("https://")):
+                update_data["pdf_t1_header_img_url"] = ac_cover
+                update_data["pdf_t3_circle_img_url"] = ac_cover
+                update_data["pdf_t4_circle_img_url"] = ac_cover
+
             doc = self.get_qrcard(fk_user_id, qrcard_id)
             if doc:
                 import re
