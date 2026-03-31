@@ -418,30 +418,30 @@ class qr_images_proc:
             except Exception:
                 pass
 
-        # Autocomplete static images (if no real uploaded files)
-        if not saved_gallery:
-            ac_urls = request.form.getlist("images_autocomplete_urls[]") or session.pop("images_autocomplete_urls", []) or []
-            ac_names = request.form.getlist("images_autocomplete_names[]") or session.pop("images_autocomplete_names", []) or []
-            ac_descs = request.form.getlist("images_autocomplete_descs[]") or session.pop("images_autocomplete_descs", []) or []
-            if ac_urls:
-                for i, ac_url in enumerate(ac_urls):
-                    if not ac_url or not ac_url.startswith("/static/"):
-                        continue
-                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
-                    if os.path.isfile(local_path):
-                        try:
-                            ext = os.path.splitext(local_path)[1].lower() or ".png"
-                            safe_name = uuid.uuid4().hex + ext
-                            with open(local_path, "rb") as f:
-                                file_url = r2.upload_bytes(f.read(), f"images/{new_qrcard_id}/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": safe_name})
-                            entry = {"url": file_url, "name": (ac_names[i] if i < len(ac_names) else ""), "desc": (ac_descs[i] if i < len(ac_descs) else "")}
-                            saved_gallery.append(entry)
-                        except Exception:
-                            pass
-        else:
-            session.pop("images_autocomplete_urls", None)
-            session.pop("images_autocomplete_names", None)
-            session.pop("images_autocomplete_descs", None)
+        # Autocomplete images (asset picker URLs or static paths) — always process alongside uploads
+        ac_urls = request.form.getlist("images_autocomplete_urls[]") or session.pop("images_autocomplete_urls", []) or []
+        ac_names = request.form.getlist("images_autocomplete_names[]") or session.pop("images_autocomplete_names", []) or []
+        ac_descs = request.form.getlist("images_autocomplete_descs[]") or session.pop("images_autocomplete_descs", []) or []
+        for i, ac_url in enumerate(ac_urls):
+            if not ac_url:
+                continue
+            if ac_url.startswith("http://") or ac_url.startswith("https://"):
+                entry = {"url": ac_url, "name": (ac_names[i] if i < len(ac_names) else ""), "desc": (ac_descs[i] if i < len(ac_descs) else "")}
+                saved_gallery.append(entry)
+                continue
+            if not ac_url.startswith("/static/"):
+                continue
+            local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                try:
+                    ext = os.path.splitext(local_path)[1].lower() or ".png"
+                    safe_name = uuid.uuid4().hex + ext
+                    with open(local_path, "rb") as f:
+                        file_url = r2.upload_bytes(f.read(), f"images/{new_qrcard_id}/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": safe_name})
+                    entry = {"url": file_url, "name": (ac_names[i] if i < len(ac_names) else ""), "desc": (ac_descs[i] if i < len(ac_descs) else "")}
+                    saved_gallery.append(entry)
+                except Exception:
+                    pass
 
         if saved_gallery:
             self.mgdDB.db_qrcard.update_one(

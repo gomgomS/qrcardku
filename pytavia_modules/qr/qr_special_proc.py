@@ -1,4 +1,5 @@
 import sys
+import re as _re
 import time
 import uuid
 import json
@@ -12,6 +13,79 @@ sys.path.append("pytavia_modules/storage")
 
 from pytavia_core import database, config  # noqa: F401
 from storage import r2_storage_proc as r2_mod
+
+# ── Input sanitization helpers ─────────────────────────────────────────────
+
+def _sanitize_text(val, max_len=200):
+    """Strip all HTML tags from plain-text fields and truncate."""
+    if not isinstance(val, str):
+        return ''
+    val = _re.sub(r'<[^>]+>', '', val).strip()
+    return val[:max_len]
+
+
+def _sanitize_html_content(html):
+    """Remove <script>, <iframe>, on* event handlers, and javascript: URLs from HTML blocks."""
+    if not isinstance(html, str):
+        return html or ''
+    # Remove script / iframe blocks entirely
+    html = _re.sub(r'<script[\s\S]*?</script>', '', html, flags=_re.IGNORECASE)
+    html = _re.sub(r'<iframe[\s\S]*?</iframe>', '', html, flags=_re.IGNORECASE)
+    html = _re.sub(r'<iframe[^>]*/?>',          '', html, flags=_re.IGNORECASE)
+    # Remove on* event handler attributes (quoted and unquoted)
+    html = _re.sub(r'\s+on\w+\s*=\s*"[^"]*"',  '', html, flags=_re.IGNORECASE)
+    html = _re.sub(r"\s+on\w+\s*=\s*'[^']*'",  '', html, flags=_re.IGNORECASE)
+    html = _re.sub(r'\s+on\w+\s*=\s*[^\s>]+',  '', html, flags=_re.IGNORECASE)
+    # Neutralise javascript: URLs in href / src / action
+    html = _re.sub(r'(href|src|action)\s*=\s*"javascript:[^"]*"', r'\1=""', html, flags=_re.IGNORECASE)
+    html = _re.sub(r"(href|src|action)\s*=\s*'javascript:[^']*'", r"\1=''", html, flags=_re.IGNORECASE)
+    return html
+
+
+def _sanitize_color(val, default='#2F6BFD'):
+    """Return val if it is a valid 6-digit hex colour string, otherwise return default."""
+    if isinstance(val, str) and _re.match(r'^#[0-9a-fA-F]{6}$', val.strip()):
+        return val.strip()
+    return default
+
+
+def _sanitize_welcome_time(val, default='2.5'):
+    """Clamp welcome_time to [2.5, 10.0] and return as string."""
+    try:
+        t = float(val)
+        t = max(2.5, min(10.0, t))
+        return str(round(t, 1))
+    except (TypeError, ValueError):
+        return default
+
+
+def _sanitize_sections(sections):
+    """Sanitize every section's data in a sections list."""
+    if not isinstance(sections, list):
+        return []
+    result = []
+    for sec in sections:
+        if not isinstance(sec, dict):
+            continue
+        stype = sec.get('type', '')
+        if stype in ('content', 'html_editor'):
+            sec['data'] = _sanitize_html_content(sec.get('data') or '')
+        elif stype == 'maps':
+            raw = sec.get('data') or {}
+            if isinstance(raw, dict):
+                try:
+                    lat = float(raw.get('latitude') or 0)
+                    lat = max(-90.0, min(90.0, lat))
+                except (TypeError, ValueError):
+                    lat = 0.0
+                try:
+                    lng = float(raw.get('longitude') or 0)
+                    lng = max(-180.0, min(180.0, lng))
+                except (TypeError, ValueError):
+                    lng = 0.0
+                sec['data'] = {'latitude': lat, 'longitude': lng}
+        result.append(sec)
+    return result
 
 SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
@@ -64,10 +138,8 @@ class qr_special_proc:
                     "message_data": {},
                 }
 
-            import re
-
             if short_code:
-                if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
+                if not _re.match(r"^[a-z0-9_-]{2,32}$", short_code):
                     return {
                         "message_action": "ADD_QRCARD_FAILED",
                         "message_desc": "Address identifier must be 2-32 characters: letters, numbers, '-' or '_'.",
@@ -195,9 +267,9 @@ class qr_special_proc:
         try:
             fk_user_id = params.get("fk_user_id")
             qrcard_id = params.get("qrcard_id")
-            name = params.get("name")
-            url_content = params.get("url_content")
-            special_sections = params.get("special_sections", [])
+            name = _sanitize_text(params.get("name") or "", max_len=120) or "Untitled QR"
+            url_content = _sanitize_text(params.get("url_content") or "", max_len=300)
+            special_sections = _sanitize_sections(params.get("special_sections") or [])
 
             update_data = {
                 "name": name,
@@ -207,9 +279,9 @@ class qr_special_proc:
 
             # Welcome screen fields
             if "welcome_bg_color" in params:
-                update_data["welcome_bg_color"] = params["welcome_bg_color"]
+                update_data["welcome_bg_color"] = _sanitize_color(params["welcome_bg_color"])
             if "welcome_time" in params:
-                update_data["welcome_time"] = params["welcome_time"]
+                update_data["welcome_time"] = _sanitize_welcome_time(params["welcome_time"])
             if "welcome_img_url" in params:
                 update_data["welcome_img_url"] = params["welcome_img_url"]
 
@@ -225,11 +297,10 @@ class qr_special_proc:
 
             doc = self.get_qrcard(fk_user_id, qrcard_id)
             if doc:
-                import re
                 new_short = (params.get("short_code") or "").strip().lower()
                 current_short = (doc.get("short_code") or "").strip().lower()
                 if new_short and new_short != current_short:
-                    if re.match(r"^[a-z0-9_-]{2,32}$", new_short) and self.is_short_code_unique(
+                    if _re.match(r"^[a-z0-9_-]{2,32}$", new_short) and self.is_short_code_unique(
                         new_short, exclude_qrcard_id=qrcard_id
                     ):
                         update_data["short_code"] = new_short
@@ -269,8 +340,8 @@ class qr_special_proc:
         if not fk_user_id:
             return {"success": False, "error_msg": "Not authenticated"}
 
-        name = request.form.get("qr_name", "Untitled QR")
-        url_content = request.form.get("url_content", "")
+        name = _sanitize_text(request.form.get("qr_name", ""), max_len=120) or "Untitled QR"
+        url_content = _sanitize_text(request.form.get("url_content", ""), max_len=300)
         short_code = (request.form.get("short_code") or "").strip().lower()
 
         # Parse special_sections from hidden JSON field
@@ -281,6 +352,7 @@ class qr_special_proc:
                 special_sections = []
         except Exception:
             special_sections = []
+        special_sections = _sanitize_sections(special_sections)
 
         params = {
             "fk_user_id": fk_user_id,
@@ -293,8 +365,8 @@ class qr_special_proc:
         raw_limit = (request.form.get("scan_limit_value") or "").strip()
         params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
 
-        params["welcome_bg_color"] = request.form.get("welcome_bg_color", "#2F6BFD")
-        params["welcome_time"] = request.form.get("welcome_time", "2.5")
+        params["welcome_bg_color"] = _sanitize_color(request.form.get("welcome_bg_color", "#2F6BFD"))
+        params["welcome_time"] = _sanitize_welcome_time(request.form.get("welcome_time", "2.5"))
         params["welcome_img_url"] = request.form.get("welcome_img_url", "")
 
         result = self.add_qrcard(params)
@@ -315,7 +387,6 @@ class qr_special_proc:
         new_qrcard_id = result["message_data"]["qrcard_id"]
 
         # Handle welcome screen image upload
-        import re as _re
         welcome_file = request.files.get("special_welcome_img")
         welcome_asset_url = (request.form.get("special_welcome_img_autocomplete_url") or "").strip()
         if welcome_file and welcome_file.filename:

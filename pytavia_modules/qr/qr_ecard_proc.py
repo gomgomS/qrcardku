@@ -546,10 +546,15 @@ class qr_ecard_proc:
                 saved_gallery.append({"url": file_url})
             except Exception:
                 pass
-        # Autocomplete static gallery images
+        # Autocomplete gallery images (asset picker URLs or static paths)
         ac_gallery_urls = request.form.getlist("ecard_gallery_autocomplete_url[]")
         for ac_url in ac_gallery_urls:
-            if not ac_url or not ac_url.startswith("/static/"):
+            if not ac_url:
+                continue
+            if ac_url.startswith("http://") or ac_url.startswith("https://"):
+                saved_gallery.append({"url": ac_url})
+                continue
+            if not ac_url.startswith("/static/"):
                 continue
             _ext = os.path.splitext(ac_url)[1] or ".jpg"
             local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))

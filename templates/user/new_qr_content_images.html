@@ -724,6 +724,11 @@
                     </div>
                     <input type="file" id="images-file-input" name="images_files" multiple
                         accept="image/jpeg,image/png,image/gif,image/webp" style="display:none;">
+                    <div style="margin-top: 12px;">
+                        <button type="button" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openImagesGalleryAssetPicker()">
+                            <i class="fa-solid fa-images"></i> Pick from My Assets
+                        </button>
+                    </div>
                     <div id="gallery-autocomplete-list"></div>
                     <div id="gallery-items-list"></div>
                 </div>
@@ -2027,6 +2032,158 @@ function saveAndNext() {
         });
 }
 
+// ── Images Gallery Asset Picker ──────────────────────────────────────────
+(function () {
+    var _galleryAssets = [];
+    var _galleryLoaded = false;
+
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.openImagesGalleryAssetPicker = function () {
+        var modal = document.getElementById('images-gallery-asset-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        document.getElementById('images-gallery-asset-search').value = '';
+        if (!_galleryLoaded) loadGalleryAssets();
+        else renderGalleryGrid(_galleryAssets);
+    };
+
+    window.closeImagesGalleryAssetPicker = function () {
+        var modal = document.getElementById('images-gallery-asset-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('images-gallery-asset-modal');
+        if (modal) modal.addEventListener('click', function (e) { if (e.target === this) closeImagesGalleryAssetPicker(); });
+    });
+
+    function loadGalleryAssets() {
+        fetch('/api/user/image_assets')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _galleryLoaded = true;
+                _galleryAssets = (data.images || []);
+                renderGalleryGrid(_galleryAssets);
+            })
+            .catch(function () {
+                var el = document.getElementById('images-gallery-asset-loading');
+                if (el) el.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:6px;"></i>Failed to load assets.';
+            });
+    }
+
+    function renderGalleryGrid(images) {
+        var grid = document.getElementById('images-gallery-asset-grid');
+        var loading = document.getElementById('images-gallery-asset-loading');
+        var empty = document.getElementById('images-gallery-asset-empty');
+        if (!grid) return;
+        if (loading) loading.style.display = 'none';
+        grid.querySelectorAll('.igap-item').forEach(function (el) { el.remove(); });
+        if (!images.length) { if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        images.forEach(function (img) {
+            var item = document.createElement('div');
+            item.className = 'igap-item';
+            item.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;background:#252619;';
+            item.title = img.file_name;
+            item.innerHTML =
+                '<div style="width:100%;padding-top:100%;position:relative;background:#181914;">' +
+                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
+                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                '</div>' +
+                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
+            item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
+            item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
+            item.addEventListener('click', function () { selectGalleryAsset(img.url, img.file_name); });
+            grid.appendChild(item);
+        });
+    }
+
+    window.filterImgGalleryAssets = function () {
+        var q = (document.getElementById('images-gallery-asset-search').value || '').toLowerCase();
+        var filtered = q ? _galleryAssets.filter(function (i) { return i.file_name.toLowerCase().indexOf(q) !== -1; }) : _galleryAssets;
+        renderGalleryGrid(filtered);
+    };
+
+    function selectGalleryAsset(url, fileName) {
+        // Compute a unique idx (max existing + 1)
+        var allUrls = document.querySelectorAll('input[name="images_autocomplete_urls[]"]');
+        var maxIdx = -1;
+        allUrls.forEach(function (el) {
+            var v = parseInt(el.dataset.acIdx || '0', 10);
+            if (v > maxIdx) maxIdx = v;
+        });
+        var idx = maxIdx + 1;
+
+        var hideToggle = document.getElementById('images_hide_labels');
+        var hideLabels = !!(hideToggle && hideToggle.checked);
+
+        // Add visual item to gallery list
+        var acList = document.getElementById('gallery-autocomplete-list');
+        if (acList) {
+            var div = document.createElement('div');
+            div.className = 'gallery-form-item gallery-autocomplete-item';
+            div.innerHTML =
+                '<div class="gallery-form-item-img"><img src="' + url + '" alt=""></div>' +
+                '<div class="gallery-form-item-fields">' +
+                '<input type="text" placeholder="Image name" value="' + escHtml(fileName || '') + '" ' +
+                'onchange="updateAutocompleteImageName(this, ' + idx + ')">' +
+                '<textarea placeholder="Description" ' +
+                'onchange="updateAutocompleteImageDesc(this, ' + idx + ')"></textarea>' +
+                '</div>' +
+                '<div class="gallery-form-item-remove" onclick="removeAutocompleteImage(this, ' + idx + ')">' +
+                '<i class="fa-solid fa-trash-can"></i></div>';
+            acList.appendChild(div);
+        }
+
+        // Add hidden form inputs
+        var form = document.getElementById('content-form');
+        if (form) {
+            var urlInput = document.createElement('input');
+            urlInput.type = 'hidden'; urlInput.name = 'images_autocomplete_urls[]';
+            urlInput.value = url; urlInput.className = 'gallery-autocomplete-url-input';
+            urlInput.dataset.acIdx = idx; form.appendChild(urlInput);
+
+            var nameInput = document.createElement('input');
+            nameInput.type = 'hidden'; nameInput.name = 'images_autocomplete_names[]';
+            nameInput.value = fileName || ''; nameInput.className = 'gallery-autocomplete-url-input';
+            nameInput.dataset.acIdx = idx; form.appendChild(nameInput);
+
+            var descInput = document.createElement('input');
+            descInput.type = 'hidden'; descInput.name = 'images_autocomplete_descs[]';
+            descInput.value = ''; descInput.className = 'gallery-autocomplete-url-input';
+            descInput.dataset.acIdx = idx; form.appendChild(descInput);
+        }
+
+        // Add to preview grid
+        var previewGrid = document.getElementById('preview-gallery-grid');
+        if (previewGrid) {
+            var item = document.createElement('div');
+            item.className = 'preview-gallery-item gallery-autocomplete-preview';
+            item.dataset.acIdx = idx;
+            item.style.cssText = 'background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);';
+            var captionHide = hideLabels ? 'display:none;' : '';
+            item.innerHTML = '<img src="' + url + '" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;display:block;">';
+            if (fileName) {
+                item.innerHTML += '<div class="item-caption" style="padding:6px 8px;font-size:11px;font-weight:600;color:#1f2937;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' + captionHide + '">' + escHtml(fileName) + '</div>';
+            }
+            previewGrid.appendChild(item);
+            var emptyEl = previewGrid.querySelector('div[style*="grid-column"]');
+            if (emptyEl) emptyEl.remove();
+            if (typeof applyGridSpans === 'function') {
+                var curTpl = document.querySelector('input[name="images_template"]:checked');
+                if (curTpl) applyGridSpans(curTpl.value);
+            }
+        }
+
+        closeImagesGalleryAssetPicker();
+    }
+}());
+
 // ── Images Welcome Asset Picker ───────────────────────────────────────────
 (function () {
     var _imgAssets = [];
@@ -2118,6 +2275,28 @@ function saveAndNext() {
     }
 }());
 </script>
+
+<!-- Images Gallery Asset Picker Modal -->
+<div id="images-gallery-asset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeImagesGalleryAssetPicker()" style="background:none;border:none;cursor:pointer;color:#8A8878;font-size:18px;line-height:1;padding:2px 6px;">&times;</button>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid #2C2D25;">
+            <input type="text" id="images-gallery-asset-search" placeholder="Search by filename…" oninput="filterImgGalleryAssets()"
+                style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
+        </div>
+        <div id="images-gallery-asset-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;min-height:180px;">
+            <div id="images-gallery-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+            </div>
+        </div>
+        <div id="images-gallery-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+            <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+        </div>
+    </div>
+</div>
 
 <!-- Images Welcome Asset Picker Modal -->
 <div id="images-welcome-asset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">

@@ -335,8 +335,9 @@
         gap: 6px;
         padding: 8px 16px;
         border-radius: 6px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-content);
+        border: 1px solid #EBA81B;
+        background: #EBA81B;
+        color: #1a1a0e;
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s;
@@ -344,8 +345,16 @@
     }
 
     .btn-add-block:hover {
-        border-color: var(--primary);
-        color: var(--primary);
+        background: #d4941a;
+        border-color: #d4941a;
+        color: #1a1a0e;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(235, 168, 27, 0.35);
+    }
+
+    .btn-add-block:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
 
     .btn-add-block.btn-primary {
@@ -848,6 +857,112 @@
         background: rgba(47, 107, 253, 0.1);
     }
 
+    /* HTML Editor toolbar */
+    .html-editor-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin: 6px 0 4px;
+        gap: 8px;
+    }
+
+    .html-editor-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .img-size-control {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .img-size-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        font-size: 11px;
+        cursor: pointer;
+        color: var(--text-main);
+        font-weight: 500;
+        transition: border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+    }
+
+    .img-size-toggle:hover {
+        border-color: #EBA81B;
+        color: #EBA81B;
+    }
+
+    .img-size-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 5px);
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        width: 210px;
+        z-index: 60;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .img-size-presets {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+
+    .img-size-presets button {
+        flex: 1;
+        padding: 4px 0;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-body);
+        font-size: 10px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.15s;
+    }
+
+    .img-size-presets button:hover {
+        border-color: #EBA81B;
+        color: #EBA81B;
+        background: rgba(235,168,27,0.08);
+    }
+
+    .img-size-slider-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .img-size-slider-row input[type=range] {
+        flex: 1;
+        accent-color: #EBA81B;
+        height: 4px;
+    }
+
+    .img-size-slider-row span {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-main);
+        min-width: 36px;
+        text-align: right;
+    }
+
     .tag-editor-panel {
         display: none;
         margin-top: 12px;
@@ -908,6 +1023,39 @@
         cursor: pointer;
     }
 
+    .btn-fit-parent {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid #EBA81B;
+        background: #EBA81B;
+        color: #1a1a0e;
+        transition: background 0.15s, transform 0.1s;
+        margin-top: 8px;
+    }
+
+    .btn-fit-parent:hover {
+        background: #d4941a;
+        border-color: #d4941a;
+        transform: translateY(-1px);
+    }
+
+    .btn-fit-parent:active {
+        transform: translateY(0);
+    }
+
+    .tag-fit-hint {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin: 4px 0 0;
+        line-height: 1.4;
+    }
+
     /* Image Inserter Modal styles */
     .img-inserter-overlay {
         position: fixed;
@@ -952,17 +1100,33 @@
     }
 
     .img-tab {
-        padding: 8px 4px;
-        font-size: 13px;
+        padding: 6px 14px;
+        font-size: 12px;
         font-weight: 500;
-        color: var(--text-muted);
+        color: var(--text-main);
         cursor: pointer;
-        border-bottom: 2px solid transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: var(--bg-content);
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
     }
 
+    .img-tab:hover,
     .img-tab.active {
-        color: #2F6BFD;
-        border-bottom-color: #2F6BFD;
+        background: #EBA81B;
+        color: #1a1a0e;
+        border-color: #EBA81B;
+        font-weight: 600;
+    }
+
+    .img-tab:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(235, 168, 27, 0.35);
+    }
+
+    .img-tab:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
 
     .img-tab-content {
@@ -988,16 +1152,29 @@
         background: var(--bg-sidebar);
     }
 
-    .btn-insert-img {
+    .img-inserter-modal .btn-insert-img {
         width: 100%;
         padding: 10px;
-        background: #2F6BFD;
-        color: white;
+        background: #EBA81B;
+        color: #1a1a0e;
         border: none;
-        border-radius: 6px;
-        font-weight: 500;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
-        margin-top: 16px;
+        margin-top: 12px;
+        transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+    }
+
+    .img-inserter-modal .btn-insert-img:hover {
+        background: #d4941a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(235, 168, 27, 0.4);
+    }
+
+    .img-inserter-modal .btn-insert-img:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
     /* Mobile */
     .mobile-bottom-bar {
@@ -1643,30 +1820,28 @@
                     </button>
                 </div>
                 <textarea class="html-code-editor" id="htmlCodeEditor_${block.id}" placeholder="<div>Your HTML here...</div>">${escHtml(block.data || '')}</textarea>
-                <div style="font-size:11px; color:#0369a1; margin:6px 0 2px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
-                    <div><i class="fa-solid fa-mouse-pointer"></i> Click any element below to edit its content</div>
-                    <div class="dropdown">
-                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" style="font-size:11px; padding:2px 8px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="imageSizeBtn_${block.id}">
-                            <i class="fa-solid fa-expand-arrows-alt"></i> Image Size: <span id="imageSizeValue_${block.id}">300px</span>
+                <div class="html-editor-toolbar">
+                    <span class="html-editor-hint">
+                        <i class="fa-solid fa-mouse-pointer"></i> Click element to edit
+                    </span>
+                    <div class="img-size-control">
+                        <button type="button" class="img-size-toggle" onclick="toggleImgSizePanel('${block.id}')">
+                            <i class="fa-regular fa-image"></i> Size: <span id="imageSizeValue_${block.id}">300px</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:8px;"></i>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: 250px;" onclick="event.stopPropagation()">
-                            <h6 class="dropdown-header px-0" style="font-size:12px;">Preview Image Size</h6>
-                            <div class="px-2">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <small class="text-muted" style="font-size:10px;">10px</small>
-                                    <small class="text-muted" style="font-size:10px;">800px</small>
-                                </div>
-                                <input type="range" class="custom-range w-100" min="10" max="800" step="10" value="300" id="imageSizeSlider_${block.id}" 
+                        <div class="img-size-panel" id="imgSizePanel_${block.id}" style="display:none;">
+                            <div class="img-size-presets">
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 100)">100px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 200)">200px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 300)">300px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 500)">500px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 800)">800px</button>
+                            </div>
+                            <div class="img-size-slider-row">
+                                <input type="range" min="10" max="800" step="10" value="300"
+                                       id="imageSizeSlider_${block.id}"
                                        oninput="updatePreviewImageSize('${block.id}', this.value)">
-                                <div class="text-center mt-2">
-                                    <span class="badge badge-primary" id="imageSizeDisplay_${block.id}">300px</span>
-                                </div>
-                                <div class="d-flex justify-content-between mt-3 gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 100)">100px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 300)">300px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 500)">500px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 800)">800px</button>
-                                </div>
+                                <span id="imageSizeDisplay_${block.id}">300px</span>
                             </div>
                         </div>
                     </div>
@@ -1675,7 +1850,7 @@
                 <div class="tag-editor-panel" id="tagEditor_${block.id}">
                     <div class="tag-editor-header">
                         <span id="tagName_${block.id}"></span>
-                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')" style="padding:2px 6px; font-size:10px;">âœ•</button>
+                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')" style="padding:2px 8px; font-size:11px;"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <div id="tagContentGroup_${block.id}">
                         <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Text content:</label>
@@ -1684,6 +1859,10 @@
                     <div id="tagImageGroup_${block.id}" style="display:none;">
                         <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Image src:</label>
                         <input type="text" id="tagImageSrc_${block.id}" class="form-control" style="font-size:12px; padding:6px;" placeholder="https://...">
+                        <button type="button" class="btn-fit-parent" onclick="fitImgToParent('${block.id}')">
+                            <i class="fa-solid fa-crop-simple"></i> Fit to Parent Shape
+                        </button>
+                        <p class="tag-fit-hint">Makes the image fill its parent tag and inherit its shape — oval, circle, or square.</p>
                     </div>
                     <div class="tag-editor-actions">
                         <button type="button" class="btn-save-tag" onclick="saveTagContent('${block.id}')"><i class="fa-solid fa-check"></i> Save</button>
@@ -1974,6 +2153,59 @@
         setupPreviewDropZone(blockId, preview);
     }
 
+    // ==================== FIT IMAGE TO PARENT ====================
+    function fitImgToParent(blockId) {
+        const preview  = document.getElementById(`htmlPreview_${blockId}`);
+        const textarea = document.getElementById(`htmlCodeEditor_${blockId}`);
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        if (!preview || !textarea) return;
+
+        const selectedImg = preview.querySelector('[data-editable-tag].selected');
+        if (!selectedImg || selectedImg.tagName.toLowerCase() !== 'img') {
+            alert('Select an image element first by clicking it in the preview.');
+            return;
+        }
+
+        const path = selectedImg.getAttribute('data-editable-tag');
+        const block = editBlocks.find(b => b.id === blockId);
+        if (!block || !path) return;
+
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = textarea.value;
+
+            const pathParts = path.split('-').map(Number);
+            let targetEl = tempDiv;
+            for (let i = 0; i < pathParts.length; i++) {
+                const ch = Array.from(targetEl.children);
+                if (pathParts[i] < ch.length) targetEl = ch[pathParts[i]];
+                else { targetEl = null; break; }
+            }
+            if (!targetEl || targetEl === tempDiv || targetEl.tagName.toLowerCase() !== 'img') return;
+
+            targetEl.style.width        = '100%';
+            targetEl.style.height       = '100%';
+            targetEl.style.objectFit    = 'cover';
+            targetEl.style.display      = 'block';
+            targetEl.style.borderRadius = 'inherit';
+
+            const parent = targetEl.parentElement;
+            if (parent && parent !== tempDiv) {
+                parent.style.overflow = 'hidden';
+            }
+
+            textarea.value = tempDiv.innerHTML;
+            block.data = tempDiv.innerHTML;
+        } catch (e) { console.error('fitImgToParent:', e); return; }
+
+        delete preview.dataset.dropInit;
+        preview.innerHTML = textarea.value || '<em style="color:#999;">Preview will appear here</em>';
+        makeElementsEditable(preview, blockId);
+        setupImageResize(blockId, preview);
+        setupPreviewDropZone(blockId, preview);
+        if (tagEditor) tagEditor.classList.remove('active');
+    }
+
     // ==================== IMAGE INSERTER ====================
     function openImgInserter(blockId) {
         currentImgBlockId = blockId;
@@ -2165,6 +2397,19 @@
             updatePreviewImageSize(blockId, sizeValue);
         }
     }
+
+    function toggleImgSizePanel(blockId) {
+        const panel = document.getElementById(`imgSizePanel_${blockId}`);
+        if (!panel) return;
+        const isOpen = panel.style.display !== 'none';
+        document.querySelectorAll('.img-size-panel').forEach(p => { p.style.display = 'none'; });
+        if (!isOpen) panel.style.display = 'block';
+    }
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.img-size-control')) {
+            document.querySelectorAll('.img-size-panel').forEach(p => { p.style.display = 'none'; });
+        }
+    });
 
     function extractImageSizeFromElement(imgElement) {
         if (!imgElement) return null;

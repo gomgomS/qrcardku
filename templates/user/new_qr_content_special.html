@@ -475,8 +475,9 @@
         gap: 6px;
         padding: 8px 16px;
         border-radius: 6px;
-        border: 1px solid var(--border-color);
-        background: var(--bg-content);
+        border: 1px solid #EBA81B;
+        background: #EBA81B;
+        color: #1a1a0e;
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s;
@@ -484,8 +485,16 @@
     }
 
     .btn-add-block:hover {
-        border-color: var(--primary);
-        color: var(--primary);
+        background: #d4941a;
+        border-color: #d4941a;
+        color: #1a1a0e;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(235, 168, 27, 0.35);
+    }
+
+    .btn-add-block:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
 
     .btn-add-block.btn-primary {
@@ -831,6 +840,112 @@
     }
 
     /* Tag Editor */
+    /* HTML Editor toolbar */
+    .html-editor-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 6px 10px;
+        margin: 6px 0 4px;
+        gap: 8px;
+    }
+
+    .html-editor-hint {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .img-size-control {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .img-size-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        font-size: 11px;
+        cursor: pointer;
+        color: var(--text-main);
+        font-weight: 500;
+        transition: border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+    }
+
+    .img-size-toggle:hover {
+        border-color: #EBA81B;
+        color: #EBA81B;
+    }
+
+    .img-size-panel {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 5px);
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        width: 210px;
+        z-index: 60;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+    .img-size-presets {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 10px;
+    }
+
+    .img-size-presets button {
+        flex: 1;
+        padding: 4px 0;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-body);
+        font-size: 10px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: all 0.15s;
+    }
+
+    .img-size-presets button:hover {
+        border-color: #EBA81B;
+        color: #EBA81B;
+        background: rgba(235,168,27,0.08);
+    }
+
+    .img-size-slider-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .img-size-slider-row input[type=range] {
+        flex: 1;
+        accent-color: #EBA81B;
+        height: 4px;
+    }
+
+    .img-size-slider-row span {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-main);
+        min-width: 36px;
+        text-align: right;
+    }
+
     .tag-editor-panel {
         display: none;
         background: #0f1825;
@@ -885,6 +1000,39 @@
         background: #fee2e2;
         color: #b91c1c;
         border-color: #fca5a5;
+    }
+
+    .tag-editor-panel .btn-fit-parent {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid #EBA81B;
+        background: #EBA81B;
+        color: #1a1a0e;
+        transition: background 0.15s, transform 0.1s;
+        margin-top: 8px;
+    }
+
+    .tag-editor-panel .btn-fit-parent:hover {
+        background: #d4941a;
+        border-color: #d4941a;
+        transform: translateY(-1px);
+    }
+
+    .tag-editor-panel .btn-fit-parent:active {
+        transform: translateY(0);
+    }
+
+    .tag-fit-hint {
+        font-size: 10px;
+        color: var(--text-muted);
+        margin: 4px 0 0;
+        line-height: 1.4;
     }
 
     /* Editable elements in preview */
@@ -949,12 +1097,27 @@
         cursor: pointer;
         border: 1px solid var(--border-color);
         background: var(--bg-content);
+        transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+        font-weight: 500;
+        color: var(--text-main);
     }
 
+    .img-inserter-modal .img-tab:hover,
     .img-inserter-modal .img-tab.active {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
+        background: #EBA81B;
+        color: #1a1a0e;
+        border-color: #EBA81B;
+        font-weight: 600;
+    }
+
+    .img-inserter-modal .img-tab:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(235, 168, 27, 0.35);
+    }
+
+    .img-inserter-modal .img-tab:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
 
     .img-inserter-modal .img-tab-content {
@@ -979,17 +1142,29 @@
         border-color: var(--primary);
     }
 
-    .btn-insert-img {
+    .img-inserter-modal .btn-insert-img {
         width: 100%;
         padding: 10px;
-        background: var(--primary);
-        color: white;
+        background: #EBA81B;
+        color: #1a1a0e;
         border: none;
         border-radius: 8px;
         font-size: 14px;
         cursor: pointer;
         margin-top: 12px;
         font-weight: 600;
+        transition: background 0.18s ease, transform 0.12s ease, box-shadow 0.18s ease;
+    }
+
+    .img-inserter-modal .btn-insert-img:hover {
+        background: #d4941a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(235, 168, 27, 0.4);
+    }
+
+    .img-inserter-modal .btn-insert-img:active {
+        transform: translateY(0);
+        box-shadow: none;
     }
 
     /* Mobile */
@@ -1106,8 +1281,12 @@
             </div>
             {% endif %}
 
+            <div id="fe-validation-error"
+                style="display:none;background:#fee2e2;color:#b91c1c;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> <span id="fe-validation-error-msg"></span>
+            </div>
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qr_name | default('', true) }}" required>
+                value="{{ qr_name | default('', true) }}" required maxlength="120">
 
             <div class="design-tabs">
                 <div class="design-tab active" data-tab="content">Content</div>
@@ -1301,7 +1480,7 @@
                     <div class="form-group">
                         <label class="form-label">URL Content (fallback)</label>
                         <input type="text" name="url_content" class="form-control" placeholder="QRkartu"
-                            value="{{ url_content | default('QRkartu', true) }}">
+                            value="{{ url_content | default('QRkartu', true) }}" maxlength="300">
                     </div>
 
                     <div class="toggle-row">
@@ -1453,6 +1632,8 @@
                     class="fa-solid fa-upload"></i> Upload</button>
             <button type="button" class="img-tab" data-img-tab="url" onclick="switchImgTab('url')"><i
                     class="fa-solid fa-link"></i> From URL</button>
+            <button type="button" class="img-tab" data-img-tab="assets" onclick="switchImgTab('assets')"><i
+                    class="fa-solid fa-images"></i> My Assets</button>
         </div>
         <div class="img-tab-content active" id="imgTabUpload">
             <div class="img-drop-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()">
@@ -1478,6 +1659,20 @@
             <button type="button"
                 style="margin-top:8px; padding:6px 12px; background:var(--bg-content); border:1px solid var(--border-color); border-radius:6px; font-size:12px; cursor:pointer;"
                 onclick="previewImgUrl()">Preview</button>
+        </div>
+        <div class="img-tab-content" id="imgTabAssets">
+            <input type="text" id="imgAssetSearch" class="form-control" placeholder="Search by filename…"
+                oninput="filterImgAssets(this.value)"
+                style="font-size:12px; margin-bottom:8px;">
+            <div id="imgAssetGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:8px; max-height:200px; overflow-y:auto;">
+                <div id="imgAssetLoading" style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:24px 0; font-size:12px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:4px;"></i> Loading…
+                </div>
+            </div>
+            <div id="imgAssetSelectedPreview" style="display:none; margin-top:10px; text-align:center;">
+                <img id="imgAssetSelectedImg" src="" style="max-width:100%; max-height:120px; border-radius:6px; border:2px solid var(--primary);">
+                <p id="imgAssetSelectedName" style="font-size:11px; color:var(--text-muted); margin:4px 0 0;"></p>
+            </div>
         </div>
         <button type="button" class="btn-insert-img" onclick="insertImgConfirm()"><i class="fa-solid fa-check"></i>
             Insert Image</button>
@@ -1507,6 +1702,7 @@
     let editQuillInstances = {};
     let currentImgBlockId = null;  // for image inserter
     let pendingImgDataUrl = null;  // for upload preview
+    let pendingImgAssetUrl = null; // for asset picker tab
     // Image resize state
     let resizingImage = null;
     let resizingBlockId = null;
@@ -1743,30 +1939,28 @@
                     </button>
                 </div>
                 <textarea class="html-code-editor" id="htmlCodeEditor_${block.id}" placeholder="<div>Your HTML here...</div>">${escHtml(block.data || '')}</textarea>
-                <div style="font-size:11px; color:#0369a1; margin:6px 0 2px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
-                    <div><i class="fa-solid fa-mouse-pointer"></i> Click any element below to edit its content</div>
-                    <div class="dropdown">
-                        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" style="font-size:11px; padding:2px 8px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="imageSizeBtn_${block.id}">
-                            <i class="fa-solid fa-expand-arrows-alt"></i> Image Size: <span id="imageSizeValue_${block.id}">300px</span>
+                <div class="html-editor-toolbar">
+                    <span class="html-editor-hint">
+                        <i class="fa-solid fa-mouse-pointer"></i> Click element to edit
+                    </span>
+                    <div class="img-size-control">
+                        <button type="button" class="img-size-toggle" onclick="toggleImgSizePanel('${block.id}')">
+                            <i class="fa-regular fa-image"></i> Size: <span id="imageSizeValue_${block.id}">300px</span>
+                            <i class="fa-solid fa-chevron-down" style="font-size:8px;"></i>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: 250px;" onclick="event.stopPropagation()">
-                            <h6 class="dropdown-header px-0" style="font-size:12px;">Preview Image Size</h6>
-                            <div class="px-2">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <small class="text-muted" style="font-size:10px;">10px</small>
-                                    <small class="text-muted" style="font-size:10px;">800px</small>
-                                </div>
-                                <input type="range" class="custom-range w-100" min="10" max="800" step="10" value="300" id="imageSizeSlider_${block.id}" 
+                        <div class="img-size-panel" id="imgSizePanel_${block.id}" style="display:none;">
+                            <div class="img-size-presets">
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 100)">100px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 200)">200px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 300)">300px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 500)">500px</button>
+                                <button type="button" onclick="setPreviewImageSize('${block.id}', 800)">800px</button>
+                            </div>
+                            <div class="img-size-slider-row">
+                                <input type="range" min="10" max="800" step="10" value="300"
+                                       id="imageSizeSlider_${block.id}"
                                        oninput="updatePreviewImageSize('${block.id}', this.value)">
-                                <div class="text-center mt-2">
-                                    <span class="badge badge-primary" id="imageSizeDisplay_${block.id}">300px</span>
-                                </div>
-                                <div class="d-flex justify-content-between mt-3 gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 100)">100px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 300)">300px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 500)">500px</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:10px;" onclick="setPreviewImageSize('${block.id}', 800)">800px</button>
-                                </div>
+                                <span id="imageSizeDisplay_${block.id}">300px</span>
                             </div>
                         </div>
                     </div>
@@ -1775,7 +1969,7 @@
                 <div class="tag-editor-panel" id="tagEditor_${block.id}">
                     <div class="tag-editor-header">
                         <span id="tagName_${block.id}"></span>
-                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')" style="padding:2px 6px; font-size:10px;">âœ•</button>
+                        <button type="button" class="btn-close-tag" onclick="closeTagEditor('${block.id}')" style="padding:2px 8px; font-size:11px;"><i class="fa-solid fa-xmark"></i></button>
                     </div>
                     <div id="tagContentGroup_${block.id}">
                         <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Text content:</label>
@@ -1784,6 +1978,10 @@
                     <div id="tagImageGroup_${block.id}" style="display:none;">
                         <label style="font-size:11px; font-weight:500; display:block; margin-bottom:4px;">Image src:</label>
                         <input type="text" id="tagImageSrc_${block.id}" class="form-control" style="font-size:12px; padding:6px;" placeholder="https://...">
+                        <button type="button" class="btn-fit-parent" onclick="fitImgToParent('${block.id}')">
+                            <i class="fa-solid fa-crop-simple"></i> Fit to Parent Shape
+                        </button>
+                        <p class="tag-fit-hint">Makes the image fill its parent tag and inherit its shape — oval, circle, or square.</p>
                     </div>
                     <div class="tag-editor-actions">
                         <button type="button" class="btn-save-tag" onclick="saveTagContent('${block.id}')"><i class="fa-solid fa-check"></i> Save</button>
@@ -2074,14 +2272,73 @@
         setupPreviewDropZone(blockId, preview);
     }
 
+    // ==================== FIT IMAGE TO PARENT ====================
+    function fitImgToParent(blockId) {
+        const preview  = document.getElementById(`htmlPreview_${blockId}`);
+        const textarea = document.getElementById(`htmlCodeEditor_${blockId}`);
+        const tagEditor = document.getElementById(`tagEditor_${blockId}`);
+        if (!preview || !textarea) return;
+
+        const selectedImg = preview.querySelector('[data-editable-tag].selected');
+        if (!selectedImg || selectedImg.tagName.toLowerCase() !== 'img') {
+            alert('Select an image element first by clicking it in the preview.');
+            return;
+        }
+
+        const path = selectedImg.getAttribute('data-editable-tag');
+        const block = editBlocks.find(b => b.id === blockId);
+        if (!block || !path) return;
+
+        try {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = textarea.value;
+
+            // Navigate to the img element by its path
+            const pathParts = path.split('-').map(Number);
+            let targetEl = tempDiv;
+            for (let i = 0; i < pathParts.length; i++) {
+                const ch = Array.from(targetEl.children);
+                if (pathParts[i] < ch.length) targetEl = ch[pathParts[i]];
+                else { targetEl = null; break; }
+            }
+            if (!targetEl || targetEl === tempDiv || targetEl.tagName.toLowerCase() !== 'img') return;
+
+            // Apply fill + shape-inherit styles to the image
+            targetEl.style.width        = '100%';
+            targetEl.style.height       = '100%';
+            targetEl.style.objectFit    = 'cover';
+            targetEl.style.display      = 'block';
+            targetEl.style.borderRadius = 'inherit';
+
+            // Ensure parent clips overflow so the image is masked to parent's shape
+            const parent = targetEl.parentElement;
+            if (parent && parent !== tempDiv) {
+                parent.style.overflow = 'hidden';
+            }
+
+            textarea.value = tempDiv.innerHTML;
+            block.data = tempDiv.innerHTML;
+        } catch (e) { console.error('fitImgToParent:', e); return; }
+
+        // Refresh preview with full re-init
+        delete preview.dataset.dropInit;
+        preview.innerHTML = textarea.value || '<em style="color:#999;">Preview will appear here</em>';
+        makeElementsEditable(preview, blockId);
+        setupImageResize(blockId, preview);
+        setupPreviewDropZone(blockId, preview);
+        if (tagEditor) tagEditor.classList.remove('active');
+    }
+
     // ==================== IMAGE INSERTER ====================
     function openImgInserter(blockId) {
         currentImgBlockId = blockId;
         pendingImgDataUrl = null;
+        pendingImgAssetUrl = null;
         document.getElementById('imgFileInput').value = '';
         document.getElementById('imgUploadPreview').style.display = 'none';
         document.getElementById('imgUrlInput').value = '';
         document.getElementById('imgUrlPreview').style.display = 'none';
+        document.getElementById('imgAssetSelectedPreview').style.display = 'none';
         switchImgTab('upload');
         document.getElementById('imgInserterOverlay').classList.add('show');
     }
@@ -2090,13 +2347,16 @@
         document.getElementById('imgInserterOverlay').classList.remove('show');
         currentImgBlockId = null;
         pendingImgDataUrl = null;
+        pendingImgAssetUrl = null;
     }
 
     function switchImgTab(tab) {
         document.querySelectorAll('.img-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.img-tab-content').forEach(t => t.classList.remove('active'));
         document.querySelector(`[data-img-tab="${tab}"]`).classList.add('active');
-        document.getElementById(tab === 'upload' ? 'imgTabUpload' : 'imgTabUrl').classList.add('active');
+        const tabIds = { upload: 'imgTabUpload', url: 'imgTabUrl', assets: 'imgTabAssets' };
+        document.getElementById(tabIds[tab] || 'imgTabUpload').classList.add('active');
+        if (tab === 'assets') loadImgAssets();
     }
 
     function handleImgFileSelect(inp) {
@@ -2147,12 +2407,74 @@
         document.getElementById('imgUrlPreview').style.display = 'block';
     }
 
+    // ── Image Inserter – My Assets tab ─────────────────────────────────
+    let _imgAssets = [];
+    let _imgAssetsLoaded = false;
+
+    function loadImgAssets() {
+        if (_imgAssetsLoaded) { renderImgAssetGrid(_imgAssets); return; }
+        const grid = document.getElementById('imgAssetGrid');
+        if (grid) grid.innerHTML = '<div id="imgAssetLoading" style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:24px 0;font-size:12px;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:4px;"></i> Loading…</div>';
+        fetch('/api/user/image_assets')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                _imgAssetsLoaded = true;
+                _imgAssets = (data.images || []).map(function(a) {
+                    return { url: a.url || '', file_name: a.file_name || 'Image' };
+                }).filter(function(a) { return !!a.url; });
+                const q = document.getElementById('imgAssetSearch');
+                renderImgAssetGrid(q ? _imgAssets.filter(function(a) { return a.file_name.toLowerCase().indexOf((q.value || '').toLowerCase()) !== -1; }) : _imgAssets);
+            })
+            .catch(function() {
+                const grid = document.getElementById('imgAssetGrid');
+                if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#dc2626;padding:20px;font-size:12px;"><i class="fa-solid fa-circle-exclamation"></i> Failed to load assets.</div>';
+            });
+    }
+
+    function filterImgAssets(q) {
+        if (!_imgAssetsLoaded) return;
+        const filtered = q ? _imgAssets.filter(function(a) { return a.file_name.toLowerCase().indexOf(q.toLowerCase()) !== -1; }) : _imgAssets;
+        renderImgAssetGrid(filtered);
+    }
+
+    function renderImgAssetGrid(images) {
+        const grid = document.getElementById('imgAssetGrid');
+        if (!grid) return;
+        if (!images.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No images found.</div>'; return; }
+        grid.innerHTML = images.map(function(img) {
+            const url = img.url.replace(/'/g, "\\'");
+            const name = img.file_name.replace(/'/g, "\\'");
+            return '<button type="button" onclick="selectImgAsset(\'' + url + '\',\'' + name + '\')" '
+                + 'style="border:2px solid transparent;border-radius:8px;padding:0;overflow:hidden;cursor:pointer;background:var(--bg-body);transition:border-color .15s;" '
+                + 'onmouseover="this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.borderColor=\'transparent\'">'
+                + '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" style="width:100%;height:72px;object-fit:cover;display:block;">'
+                + '<div style="padding:3px 5px;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>'
+                + '</button>';
+        }).join('');
+    }
+
+    function selectImgAsset(url, fileName) {
+        pendingImgAssetUrl = url;
+        const preview = document.getElementById('imgAssetSelectedPreview');
+        const img = document.getElementById('imgAssetSelectedImg');
+        const name = document.getElementById('imgAssetSelectedName');
+        if (img) img.src = url;
+        if (name) name.textContent = fileName || '';
+        if (preview) preview.style.display = 'block';
+        // Highlight selected item
+        document.querySelectorAll('#imgAssetGrid button').forEach(function(btn) {
+            btn.style.borderColor = (btn.querySelector('img') && btn.querySelector('img').src === url) ? 'var(--primary)' : 'transparent';
+        });
+    }
+
     function insertImgConfirm() {
         let imgSrc = '';
         const activeTab = document.querySelector('.img-tab.active');
         const tabType = activeTab ? activeTab.getAttribute('data-img-tab') : 'upload';
         if (tabType === 'upload') {
             imgSrc = pendingImgDataUrl || '';
+        } else if (tabType === 'assets') {
+            imgSrc = pendingImgAssetUrl || '';
         } else {
             imgSrc = document.getElementById('imgUrlInput').value.trim();
         }
@@ -2265,6 +2587,21 @@
             updatePreviewImageSize(blockId, sizeValue);
         }
     }
+
+    function toggleImgSizePanel(blockId) {
+        const panel = document.getElementById(`imgSizePanel_${blockId}`);
+        if (!panel) return;
+        const isOpen = panel.style.display !== 'none';
+        // Close all open panels first
+        document.querySelectorAll('.img-size-panel').forEach(p => { p.style.display = 'none'; });
+        if (!isOpen) panel.style.display = 'block';
+    }
+    // Close size panel when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.img-size-control')) {
+            document.querySelectorAll('.img-size-panel').forEach(p => { p.style.display = 'none'; });
+        }
+    });
 
     function extractImageSizeFromElement(imgElement) {
         if (!imgElement) return null;
@@ -2697,6 +3034,7 @@
     // ==================== FORM SUBMIT ====================
     document.getElementById('content-form').addEventListener('submit', function (e) {
         saveEditBlockContent();
+        if (!_feValidateAndSanitize()) { e.preventDefault(); e.stopPropagation(); return false; }
         updateHiddenField();
         var val = document.getElementById('specialSectionsData').value;
         console.log('[DEBUG] Form submitting. sections count:', sections.length, 'hidden field length:', val.length);
@@ -2711,6 +3049,66 @@
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    // ==================== INPUT SANITIZATION (FE) ====================
+    function _feSanitizeHtml(html) {
+        if (typeof html !== 'string') return html || '';
+        html = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+        html = html.replace(/<iframe[\s\S]*?<\/iframe>/gi, '');
+        html = html.replace(/<iframe[^>]*\/?>/gi, '');
+        html = html.replace(/\s+on\w+\s*=\s*"[^"]*"/gi, '');
+        html = html.replace(/\s+on\w+\s*=\s*'[^']*'/gi, '');
+        html = html.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, '');
+        html = html.replace(/(href|src|action)\s*=\s*"javascript:[^"]*"/gi, '$1=""');
+        html = html.replace(/(href|src|action)\s*=\s*'javascript:[^']*'/gi, "$1=''");
+        return html;
+    }
+
+    function _feShowValidationError(msg) {
+        var el = document.getElementById('fe-validation-error');
+        var msgEl = document.getElementById('fe-validation-error-msg');
+        if (el && msgEl) { msgEl.textContent = msg; el.style.display = 'block'; el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+
+    function _feHideValidationError() {
+        var el = document.getElementById('fe-validation-error');
+        if (el) el.style.display = 'none';
+    }
+
+    function _feValidateAndSanitize() {
+        var nameEl  = document.querySelector('input[name="qr_name"]');
+        var urlEl   = document.querySelector('input[name="url_content"]');
+        var dangerous = /<script|javascript\s*:/i;
+        var onEvt   = /\bon\w+\s*=/i;
+
+        if (nameEl) {
+            var n = nameEl.value;
+            if (dangerous.test(n) || onEvt.test(n)) {
+                _feShowValidationError('QR Name contains unsafe content. Please remove scripts or HTML.');
+                nameEl.focus();
+                return false;
+            }
+            if (n.length > 120) { nameEl.value = n.substring(0, 120); }
+        }
+        if (urlEl) {
+            var u = urlEl.value;
+            if (dangerous.test(u) || onEvt.test(u)) {
+                _feShowValidationError('URL Content contains unsafe content. Please remove scripts or HTML.');
+                urlEl.focus();
+                return false;
+            }
+        }
+
+        // Silently sanitize html_editor / content blocks before JSON serialisation
+        sections.forEach(function(sec) {
+            if ((sec.type === 'html_editor' || sec.type === 'content') && typeof sec.data === 'string') {
+                sec.data = _feSanitizeHtml(sec.data);
+            }
+        });
+
+        _feHideValidationError();
+        return true;
     }
 
     // ==================== WELCOME SCREEN ====================
@@ -2891,13 +3289,14 @@
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 <script>
 function saveAndNext() {
+    if (typeof saveEditBlockContent === 'function') saveEditBlockContent();
+    if (typeof _feValidateAndSanitize === 'function' && !_feValidateAndSanitize()) return;
     var overlay = document.getElementById('save-next-overlay');
     var msgEl = document.getElementById('save-overlay-msg');
     var subEl = document.getElementById('save-overlay-sub');
     overlay.style.display = 'flex';
     msgEl.textContent = 'Saving your content\u2026';
     subEl.textContent = 'Please wait, uploading assets to the cloud';
-    if (typeof saveEditBlockContent === 'function') saveEditBlockContent();
     if (typeof updateHiddenField === 'function') updateHiddenField();
     var form = document.getElementById('content-form');
     var fd = new FormData(form);
