@@ -116,11 +116,38 @@ class qr_sosmed_proc:
             self.webapp.logger.debug(err)
             return {"message_action": "ADD_QRCARD_FAILED", "message_desc": "An internal error occurred.", "message_data": {}}
 
+    # Stored on db_qrcard when user saves design; db_qrcard_sosmed copy can be stale.
+    _QR_BASE_KEYS = (
+        "qr_image_url",
+        "qr_composite_url",
+        "frame_id",
+        "qr_dot_style",
+        "qr_corner_style",
+        "qr_dot_color",
+        "qr_bg_color",
+        "card_bg_color",
+    )
+
+    def _overlay_qr_fields_from_db_qrcard(self, out, fk_user_id, qrcard_id):
+        proj = {"_id": 0}
+        for k in self._QR_BASE_KEYS:
+            proj[k] = 1
+        base = self.mgdDB.db_qrcard.find_one(
+            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"},
+            proj,
+        )
+        if not base:
+            return
+        for k, v in base.items():
+            out[k] = v
+
     def get_qrcard(self, fk_user_id, qrcard_id):
         try:
             doc = self.mgdDB.db_qrcard_sosmed.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"})
             if doc:
-                return doc
+                out = dict(doc)
+                self._overlay_qr_fields_from_db_qrcard(out, fk_user_id, qrcard_id)
+                return out
             return self.mgdDB.db_qrcard.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "status": "ACTIVE"})
         except Exception:
             self.webapp.logger.debug(traceback.format_exc())
@@ -131,10 +158,16 @@ class qr_sosmed_proc:
             fk_user_id = params.get("fk_user_id")
             qrcard_id = params.get("qrcard_id")
             update_data = {"name": params.get("name"), "url_content": params.get("url_content")}
+            cover_ac_url = (params.get("sosmed_cover_img_autocomplete_url") or "").strip()
+            welcome_ac_url = (params.get("sosmed_welcome_img_autocomplete_url") or "").strip()
 
             for key, val in params.items():
                 if key.startswith("Sosmed_") or key in ["welcome_time", "welcome_bg_color", "welcome_img_url"]:
                     update_data[key] = val
+            if cover_ac_url and not update_data.get("Sosmed_cover_img_url"):
+                update_data["Sosmed_cover_img_url"] = cover_ac_url
+            if welcome_ac_url and not update_data.get("welcome_img_url"):
+                update_data["welcome_img_url"] = welcome_ac_url
 
             if "scan_limit_enabled" in params:
                 update_data["scan_limit_enabled"] = bool(params.get("scan_limit_enabled"))

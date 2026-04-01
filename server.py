@@ -1381,7 +1381,7 @@ def qr_update_design_ecard(qrcard_id):
                 else:
                     extra_data[key] = val_list[0] if val_list else ""
                     
-        import os
+        import os, uuid as _uuid
         _r2 = r2_mod.r2_storage_proc()
 
         if request.form.get("E-card_welcome_img_delete") == "1":
@@ -4062,6 +4062,24 @@ def qr_update_content_links(qrcard_id):
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$unset": _unset_fields}
             )
+            _mgd.db_qrcard_sosmed.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _unset_fields}
+            )
+        if request.form.get("reset_qr_style") == "1":
+            _unset_fields = {
+                "qr_composite_url": "",
+                "qr_image_url": "",
+                "qr_dot_style": "",
+                "qr_corner_style": "",
+                "qr_dot_color": "",
+                "qr_bg_color": "",
+                "card_bg_color": "",
+            }
+            _mgd.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _unset_fields}
+            )
             _mgd.db_qrcard_links.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
                 {"$unset": _unset_fields}
@@ -4358,17 +4376,39 @@ def qr_save_sosmed():
 
 
 def _merge_sosmed_into_qrcard(mgd_db, fk_user_id, qrcard_id, qrcard):
-    """Overlay db_qrcard_sosmed document onto qrcard."""
+    """Overlay db_qrcard_sosmed onto qrcard; QR image / frame / style always from db_qrcard."""
     try:
         sosmed_doc = mgd_db.db_qrcard_sosmed.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id})
     except Exception:
         sosmed_doc = None
     if not sosmed_doc:
-        return qrcard
-    out = dict(qrcard)
-    for key, value in sosmed_doc.items():
-        if key != "_id":
-            out[key] = value
+        out = dict(qrcard)
+    else:
+        out = dict(qrcard)
+        for key, value in sosmed_doc.items():
+            if key != "_id":
+                out[key] = value
+    _qr_base_proj = {
+        "_id": 0,
+        "qr_image_url": 1,
+        "qr_composite_url": 1,
+        "frame_id": 1,
+        "qr_dot_style": 1,
+        "qr_corner_style": 1,
+        "qr_dot_color": 1,
+        "qr_bg_color": 1,
+        "card_bg_color": 1,
+    }
+    try:
+        base = mgd_db.db_qrcard.find_one(
+            {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id, "status": "ACTIVE"},
+            _qr_base_proj,
+        )
+    except Exception:
+        base = None
+    if base:
+        for k, v in base.items():
+            out[k] = v
     return out
 
 
@@ -4425,6 +4465,23 @@ def qr_update_content_sosmed(qrcard_id):
             if request.form.get(key):
                 content_update[key] = request.form.get(key)
         _mgd = database.get_db_conn(config.mainDB)
+        if request.form.get("reset_qr_style") == "1":
+            _qr_style_unset = {
+                "qr_image_url": "",
+                "qr_composite_url": "",
+                "qr_dot_style": "",
+                "qr_corner_style": "",
+                "qr_dot_color": "",
+                "qr_bg_color": "",
+            }
+            _mgd.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _qr_style_unset},
+            )
+            _mgd.db_qrcard_sosmed.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _qr_style_unset},
+            )
         if request.form.get("welcome_img_delete") == "1":
             _mgd.db_qrcard_sosmed.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
             content_update["welcome_img_url"] = ""
@@ -4440,6 +4497,26 @@ def qr_update_content_sosmed(qrcard_id):
                 content_update["Sosmed_cover_img_url"] = _r2.upload_file(cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
         if request.form.get("Sosmed_profile_img_delete") == "1":
             content_update["Sosmed_cover_img_url"] = ""
+        cover_asset_url = (request.form.get("sosmed_cover_img_autocomplete_url") or "").strip()
+        if cover_asset_url:
+            if cover_asset_url.startswith("http://") or cover_asset_url.startswith("https://"):
+                content_update["Sosmed_cover_img_url"] = cover_asset_url
+            elif cover_asset_url.startswith("/static/"):
+                local_path = os.path.join(app.root_path, cover_asset_url.lstrip("/").replace("/", os.sep))
+                if os.path.isfile(local_path):
+                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        ext = ".jpg"
+                    unique_cover = f"sosmed_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
+                    try:
+                        with open(local_path, "rb") as f:
+                            content_update["Sosmed_cover_img_url"] = _r2.upload_bytes(
+                                f.read(),
+                                f"sosmed/{qrcard_id}/{unique_cover}",
+                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_cover}
+                            )
+                    except Exception:
+                        pass
         welcome_img = request.files.get("Sosmed_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -4449,13 +4526,33 @@ def qr_update_content_sosmed(qrcard_id):
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
+        welcome_asset_url = (request.form.get("sosmed_welcome_img_autocomplete_url") or "").strip()
+        if welcome_asset_url:
+            if welcome_asset_url.startswith("http://") or welcome_asset_url.startswith("https://"):
+                content_update["welcome_img_url"] = welcome_asset_url
+            elif welcome_asset_url.startswith("/static/"):
+                local_path = os.path.join(app.root_path, welcome_asset_url.lstrip("/").replace("/", os.sep))
+                if os.path.isfile(local_path):
+                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        ext = ".jpg"
+                    unique_welcome = f"welcome_{_uuid.uuid4().hex[:12]}{ext}"
+                    try:
+                        with open(local_path, "rb") as f:
+                            content_update["welcome_img_url"] = _r2.upload_bytes(
+                                f.read(),
+                                f"sosmed/{qrcard_id}/{unique_welcome}",
+                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_welcome}
+                            )
+                    except Exception:
+                        pass
         params = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, **content_update}
         if short_code:
             params["short_code"] = short_code
         proc.edit_qrcard(params)
-        qrcard.update(content_update)
-        qr_encode_url = config.G_BASE_URL + "/sosmed/" + (qrcard.get("short_code") or short_code or "")
-        return view_update_sosmed.view_update_sosmed(app).update_qr_design_html(qrcard=qrcard, url_content=url_content, qr_name=qr_name, qr_encode_url=qr_encode_url)
+        # PRG: redirect so the browser URL shows the design step (/qr/update/sosmed/qr-design/...)
+        # instead of staying on the content POST URL (/qr/update/sosmed/...).
+        return redirect(url_for("qr_update_design_sosmed", qrcard_id=qrcard_id))
     return view_update_sosmed.view_update_sosmed(app).update_qr_content_html(qrcard=qrcard, base_url=config.G_BASE_URL)
 
 

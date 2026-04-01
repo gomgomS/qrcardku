@@ -162,14 +162,18 @@
 {% block content %}
 <div class="new-qr-step-bar">
     <div class="new-qr-steps">
+        <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
+            <span class="step-num"><i class="fa-solid fa-check"></i></span>
+            <span>Type of QR card</span>
+        </a>
         <span class="step-item step-active">
-            <span class="step-num">1</span>
-            <span>Edit content</span>
+            <span class="step-num">2</span>
+            <span>Content</span>
         </span>
-        <button type="submit" form="content-form" class="step-item step-disabled" id="step2-link" disabled
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
-            <span class="step-num">2</span>
+            <span class="step-num">3</span>
             <span>QR design</span>
         </button>
     </div>
@@ -195,7 +199,7 @@
             </div>
             {% endif %}
             <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qrcard.get('qr_name', '') if qrcard else '' }}" required>
+                value="{{ qr_name | default(qrcard.get('name', '') if qrcard else '', true) }}" required>
 
             <!-- Appearance Section -->
             <div class="collapse-section">
@@ -423,11 +427,15 @@
                                         <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
                                         <input type="file" name="Sosmed_profile_img" accept="image/*" style="display: none;" id="sosmed_profile_img_input">
                                     </label>
-                                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <button type="button" id="sosmed-cover-img-remove-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not sosmed_cover_url %}display: none;{% endif %}">
                                             <i class="fa-solid fa-xmark"></i> Remove
                                         </button>
+                                        <button type="button" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openSosmedAssetPicker()">
+                                            <i class="fa-solid fa-images"></i> Pick from My Assets
+                                        </button>
                                         <input type="hidden" name="Sosmed_profile_img_delete" id="sosmed_profile_img_delete" value="0">
+                                        <input type="hidden" name="sosmed_cover_img_autocomplete_url" id="sosmed_cover_img_autocomplete_url" value="">
                                     </div>
                                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
                                 </div>
@@ -569,10 +577,14 @@
                                     </div>
                                     <input type="file" name="Sosmed_welcome_img" accept="image/*" style="display: none;" id="sosmed_welcome_img_input">
                                 </label>
-                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">Remove</button>
+                                    <button type="button" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openSosmedWelcomeAssetPicker()">
+                                        <i class="fa-solid fa-images"></i> Pick from My Assets
+                                    </button>
                                     <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
+                                    <input type="hidden" name="sosmed_welcome_img_autocomplete_url" id="sosmed_welcome_img_autocomplete_url" value="">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                             </div>
@@ -634,7 +646,7 @@
                                     <span id="url-static-text" style="font-size:13px; color:var(--primary); word-break:break-all; font-family:monospace;">
                                         {{ base_url | default('https://QRkartu') }}/sosmed/{{ short_code | default(qrcard.short_code if qrcard else '', true) }}
                                     </span>
-                                    <button type="button" onclick="startUrlEdit()" style="flex-shrink:0; padding:5px 12px; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer; white-space:nowrap;">
+                                    <button type="button" onclick="startUrlEdit()" class="btn-outline" style="flex-shrink:0; padding:5px 12px; font-size:12px; white-space:nowrap;">
                                         <i class="fa-solid fa-pen"></i> Change
                                     </button>
                                 </div>
@@ -667,6 +679,7 @@
                                             placeholder="Letters, numbers, '-' and '_' only"
                                             value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
                                             pattern="[a-zA-Z0-9_-]{2,32}"
+                                            title="Letters, numbers, '-' and '_' only, no spaces or other symbols (2–32 characters)"
                                             maxlength="32">
                                     </div>
                                     <p id="stats-url-preview" style="font-size:11px; color:var(--primary); margin-top:6px; word-break:break-all;"></p>
@@ -750,6 +763,36 @@
     </div>
 </div>
 
+<!-- Welcome Asset Picker Modal -->
+<div id="sosmed-welcome-asset-picker-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeSosmedWelcomeAssetPicker()" style="border:none;background:transparent;color:#A8A79A;font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid #2C2D25;">
+            <input id="sosmed-welcome-asset-search" type="text" placeholder="Search image..." oninput="filterSosmedWelcomeAssets()" style="width:100%;background:#2A2B22;border:1px solid #3A3B30;border-radius:10px;padding:10px 12px;color:#E8E5DC;outline:none;">
+        </div>
+        <div id="sosmed-welcome-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;overflow:auto;"></div>
+        <div id="sosmed-welcome-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+    </div>
+</div>
+
+<!-- Cover Asset Picker Modal -->
+<div id="sosmed-asset-picker-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeSosmedAssetPicker()" style="border:none;background:transparent;color:#A8A79A;font-size:20px;cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:14px 16px;border-bottom:1px solid #2C2D25;">
+            <input id="sosmed-asset-search" type="text" placeholder="Search image..." oninput="filterSosmedAssets()" style="width:100%;background:#2A2B22;border:1px solid #3A3B30;border-radius:10px;padding:10px 12px;color:#E8E5DC;outline:none;">
+        </div>
+        <div id="sosmed-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;overflow:auto;"></div>
+        <div id="sosmed-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -766,16 +809,16 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const step2Link = document.getElementById('step2-link');
+        const step3Link = document.getElementById('step3-link');
         const contentNextBtn = document.getElementById('content-next-btn');
         const qrNameInput = document.querySelector('input[name="qr_name"]');
 
         function checkContentValid() {
             var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
             var valid = nameOk;
-            if (step2Link) {
-                if (valid) { step2Link.classList.remove('step-disabled'); step2Link.removeAttribute('aria-disabled'); step2Link.disabled = false; }
-                else { step2Link.classList.add('step-disabled'); step2Link.setAttribute('aria-disabled', 'true'); step2Link.disabled = true; }
+            if (step3Link) {
+                if (valid) { step3Link.classList.remove('step-disabled'); step3Link.removeAttribute('aria-disabled'); step3Link.disabled = false; }
+                else { step3Link.classList.add('step-disabled'); step3Link.setAttribute('aria-disabled', 'true'); step3Link.disabled = true; }
             }
             if (contentNextBtn) contentNextBtn.disabled = !valid;
         }
@@ -1018,6 +1061,7 @@
             var wOverlay = document.getElementById('preview-welcome-overlay');
             var wImgEl = document.getElementById('preview-welcome-img');
             var wInput = document.getElementById('sosmed_welcome_img_input');
+            var welcomeAssetInput = document.getElementById('sosmed_welcome_img_autocomplete_url');
             var _currentSrc = {{ (qrcard.get('welcome_img_url') or '') | tojson }};
             function getWelcomeTimeSec() {
                 var val = timeSlider ? parseFloat(timeSlider.value) : 2.5;
@@ -1025,8 +1069,9 @@
             }
             function playWelcomePreview(src) {
                 if (!wOverlay) return;
+                var effectiveSrc = (welcomeAssetInput && welcomeAssetInput.value) || src || '';
                 if (welcomeBgPicker) wOverlay.style.backgroundColor = welcomeBgPicker.value;
-                if (wImgEl) { wImgEl.src = src || ''; wImgEl.style.display = src ? 'block' : 'none'; }
+                if (wImgEl) { wImgEl.src = effectiveSrc || ''; wImgEl.style.display = effectiveSrc ? 'block' : 'none'; }
                 wOverlay.style.display = 'flex';
                 wOverlay.classList.remove('hide');
                 setTimeout(function () {
@@ -1052,6 +1097,7 @@
                         var reader = new FileReader();
                         reader.onload = function (e) {
                             _currentSrc = e.target.result;
+                            if (welcomeAssetInput) welcomeAssetInput.value = '';
                             if (wThumb) wThumb.innerHTML = '<img src="' + _currentSrc + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
                             if (wDeleteBtn) wDeleteBtn.style.display = 'inline-flex';
                             if (wDeleteFlag) wDeleteFlag.value = '0';
@@ -1065,6 +1111,7 @@
                 wDeleteBtn.addEventListener('click', function () {
                     if (wInput) wInput.value = '';
                     _currentSrc = null;
+                    if (welcomeAssetInput) welcomeAssetInput.value = '';
                     if (wThumb) wThumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Image</span>';
                     if (wDeleteFlag) wDeleteFlag.value = '1';
                     this.style.display = 'none';
@@ -1072,7 +1119,8 @@
             }
             if (wPreviewBtn) {
                 wPreviewBtn.addEventListener('click', function () {
-                    playWelcomePreview(_currentSrc);
+                    var src = (welcomeAssetInput && welcomeAssetInput.value) || _currentSrc || '';
+                    playWelcomePreview(src);
                 });
             }
         })();
@@ -1081,6 +1129,7 @@
         const profileInput = document.getElementById('sosmed_profile_img_input');
         const profilePreview = document.getElementById('sosmed-cover-img-preview');
         const removeBtn = document.getElementById('sosmed-cover-img-remove-btn');
+        const coverAssetInput = document.getElementById('sosmed_cover_img_autocomplete_url');
         let cropperInstance = null;
         let croppedBlob = null;
 
@@ -1149,6 +1198,8 @@
                     const croppedFile = new File([blob], 'sosmed_cover.jpg', { type: 'image/jpeg' });
                     dataTransfer.items.add(croppedFile);
                     profileInput.files = dataTransfer.files;
+                    if (coverAssetInput) coverAssetInput.value = '';
+                    document.getElementById('sosmed_profile_img_delete').value = '0';
                     checkContentValid();
                 }, 'image/jpeg', 0.9);
                 if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
@@ -1175,6 +1226,7 @@
                 }
                 this.style.display = 'none';
                 document.getElementById('sosmed_profile_img_delete').value = '1';
+                if (coverAssetInput) coverAssetInput.value = '';
                 const previewImg = document.getElementById('sosmed-preview-profile-img');
                 const previewPlaceholder = document.getElementById('sosmed-preview-profile-placeholder-icon');
                 if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
@@ -1182,6 +1234,143 @@
                 checkContentValid();
             });
         }
+
+        // Shared assets list for Sosmed pickers
+        var _sosmedAssets = [];
+        var _sosmedAssetsLoaded = false;
+        function renderSosmedAssetGrid(gridId, emptyId, items, onSelect) {
+            var grid = document.getElementById(gridId);
+            var empty = document.getElementById(emptyId);
+            if (!grid || !empty) return;
+            grid.innerHTML = '';
+            if (!items || !items.length) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            items.forEach(function (img) {
+                var item = document.createElement('button');
+                item.type = 'button';
+                item.style.cssText = 'border:1px solid transparent;background:#2A2B22;border-radius:10px;padding:6px;cursor:pointer;text-align:left;';
+                item.innerHTML = '<img src="' + img.url + '" alt="' + (img.file_name || 'asset') + '" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;">'
+                    + '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (img.file_name || 'asset') + '</div>';
+                item.addEventListener('click', function () { onSelect(img.url); });
+                grid.appendChild(item);
+            });
+        }
+        function fetchSosmedAssetsIfNeeded() {
+            if (_sosmedAssetsLoaded) return Promise.resolve();
+            return fetch('/api/user/image_assets')
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    var items = (data && (data.images || data.items)) || [];
+                    _sosmedAssets = items.map(function (a) {
+                        return { url: a.url || a.file_url || '', file_name: a.file_name || 'asset' };
+                    }).filter(function (a) { return !!a.url; });
+                    _sosmedAssetsLoaded = true;
+                })
+                .catch(function () {
+                    _sosmedAssets = [];
+                    _sosmedAssetsLoaded = true;
+                });
+        }
+        function applySosmedCoverFromAsset(url) {
+            if (!url) return;
+            if (coverAssetInput) coverAssetInput.value = url;
+            if (profileInput) profileInput.value = '';
+            document.getElementById('sosmed_profile_img_delete').value = '0';
+            if (profilePreview) profilePreview.innerHTML = '<img src="' + url + '" alt="Cover image" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Selected from assets</span>';
+            if (removeBtn) removeBtn.style.display = 'inline-flex';
+            var previewImg = document.getElementById('sosmed-preview-profile-img');
+            var previewPlaceholder = document.getElementById('sosmed-preview-profile-placeholder-icon');
+            if (previewImg) { previewImg.src = url; previewImg.style.display = 'block'; }
+            if (previewPlaceholder) previewPlaceholder.style.display = 'none';
+            ['sosmed-t3-preview-circle-img','sosmed-t4-preview-circle-img','sosmed-t1-preview-header-img','sosmed-t2-preview-header-img'].forEach(function (id) {
+                var el = document.getElementById(id); if (el) { el.src = url; el.style.display = 'block'; }
+            });
+            ['sosmed-t3-preview-circle-placeholder','sosmed-t4-preview-circle-placeholder'].forEach(function (id) {
+                var el = document.getElementById(id); if (el) el.style.display = 'none';
+            });
+            var t1Hdr = document.getElementById('sosmed-t1-preview-header');
+            var t1Body = document.getElementById('sosmed-t1-preview-card-body');
+            if (t1Hdr) t1Hdr.style.display = 'block';
+            if (t1Body) { t1Body.style.borderRadius = '22px 22px 0 0'; t1Body.style.marginTop = '-18px'; }
+            var t2Hdr = document.getElementById('sosmed-t2-preview-header');
+            var t2Body = document.getElementById('sosmed-t2-preview-card-body');
+            if (t2Hdr) t2Hdr.style.display = 'block';
+            if (t2Body) { t2Body.style.borderRadius = '22px 22px 0 0'; t2Body.style.marginTop = '-18px'; }
+        }
+        function applySosmedWelcomeFromAsset(url) {
+            if (!url) return;
+            var welcomeAssetInput = document.getElementById('sosmed_welcome_img_autocomplete_url');
+            var wInput = document.getElementById('sosmed_welcome_img_input');
+            var wThumb = document.getElementById('welcome-img-preview');
+            var wDeleteBtn = document.getElementById('welcome-delete-btn');
+            var wDeleteFlag = document.getElementById('welcome_img_delete');
+            var wPreviewBtn = document.getElementById('welcome-preview-btn');
+            if (welcomeAssetInput) welcomeAssetInput.value = url;
+            if (wInput) wInput.value = '';
+            if (wThumb) wThumb.innerHTML = '<img src="' + url + '" alt="Welcome image" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:#6b7280;">Selected from assets</span>';
+            if (wDeleteBtn) wDeleteBtn.style.display = 'inline-flex';
+            if (wDeleteFlag) wDeleteFlag.value = '0';
+            if (wPreviewBtn) wPreviewBtn.click();
+        }
+        function getFilteredSosmedAssets(searchId) {
+            var q = ((document.getElementById(searchId) || {}).value || '').toLowerCase().trim();
+            return q ? _sosmedAssets.filter(function (i) { return (i.file_name || '').toLowerCase().includes(q); }) : _sosmedAssets;
+        }
+        window.openSosmedAssetPicker = function () {
+            var overlay = document.getElementById('sosmed-asset-picker-overlay');
+            if (!overlay) return;
+            overlay.style.display = 'flex';
+            var search = document.getElementById('sosmed-asset-search');
+            if (search) search.value = '';
+            fetchSosmedAssetsIfNeeded().then(function () {
+                renderSosmedAssetGrid('sosmed-asset-grid', 'sosmed-asset-empty', _sosmedAssets, function (url) {
+                    applySosmedCoverFromAsset(url);
+                    closeSosmedAssetPicker();
+                });
+            });
+        };
+        window.closeSosmedAssetPicker = function () {
+            var overlay = document.getElementById('sosmed-asset-picker-overlay');
+            if (overlay) overlay.style.display = 'none';
+        };
+        window.filterSosmedAssets = function () {
+            var items = getFilteredSosmedAssets('sosmed-asset-search');
+            renderSosmedAssetGrid('sosmed-asset-grid', 'sosmed-asset-empty', items, function (url) {
+                applySosmedCoverFromAsset(url);
+                closeSosmedAssetPicker();
+            });
+        };
+        window.openSosmedWelcomeAssetPicker = function () {
+            var overlay = document.getElementById('sosmed-welcome-asset-picker-overlay');
+            if (!overlay) return;
+            overlay.style.display = 'flex';
+            var search = document.getElementById('sosmed-welcome-asset-search');
+            if (search) search.value = '';
+            fetchSosmedAssetsIfNeeded().then(function () {
+                renderSosmedAssetGrid('sosmed-welcome-asset-grid', 'sosmed-welcome-asset-empty', _sosmedAssets, function (url) {
+                    applySosmedWelcomeFromAsset(url);
+                    closeSosmedWelcomeAssetPicker();
+                });
+            });
+        };
+        window.closeSosmedWelcomeAssetPicker = function () {
+            var overlay = document.getElementById('sosmed-welcome-asset-picker-overlay');
+            if (overlay) overlay.style.display = 'none';
+        };
+        window.filterSosmedWelcomeAssets = function () {
+            var items = getFilteredSosmedAssets('sosmed-welcome-asset-search');
+            renderSosmedAssetGrid('sosmed-welcome-asset-grid', 'sosmed-welcome-asset-empty', items, function (url) {
+                applySosmedWelcomeFromAsset(url);
+                closeSosmedWelcomeAssetPicker();
+            });
+        };
+        var sosmedCoverOverlay = document.getElementById('sosmed-asset-picker-overlay');
+        if (sosmedCoverOverlay) sosmedCoverOverlay.addEventListener('click', function (e) { if (e.target === this) closeSosmedAssetPicker(); });
+        var sosmedWelcomeOverlay = document.getElementById('sosmed-welcome-asset-picker-overlay');
+        if (sosmedWelcomeOverlay) sosmedWelcomeOverlay.addEventListener('click', function (e) { if (e.target === this) closeSosmedWelcomeAssetPicker(); });
 
         // Template switching preview
         document.querySelectorAll('input[name="Sosmed_template"]').forEach(radio => {
@@ -1205,25 +1394,36 @@
         if (primaryPicker && primaryHex) { primaryPicker.value = _initSosmedPrimary; primaryHex.value = _initSosmedPrimary.toUpperCase(); }
         if (secondaryPicker && secondaryHex) { secondaryPicker.value = _initSosmedSecondary; secondaryHex.value = _initSosmedSecondary.toUpperCase(); }
         applySosmedPrimaryColor(_initSosmedPrimary);
+    });
 
     var _originalShortCode = {{ (qrcard.short_code if qrcard and qrcard.get('short_code') else '') | tojson }};
 
     function startUrlEdit() {
-        document.getElementById('url-change-warning').style.display = 'block';
+        var el = document.getElementById('url-change-warning');
+        if (el) el.style.display = 'block';
     }
 
     function confirmUrlEdit() {
-        document.getElementById('url-change-warning').style.display = 'none';
-        document.getElementById('url-static-display').style.display = 'none';
-        document.getElementById('url-input-group').style.display = 'block';
-        document.getElementById('reset-qr-style-flag').value = '1';
+        var w = document.getElementById('url-change-warning');
+        if (w) w.style.display = 'none';
+        var sd = document.getElementById('url-static-display');
+        if (sd) sd.style.display = 'none';
+        var ug = document.getElementById('url-input-group');
+        if (ug) ug.style.display = 'block';
+        var flag = document.getElementById('reset-qr-style-flag');
+        if (flag) flag.value = '1';
         var inp = document.getElementById('stats-short-code-input');
         if (inp) inp.focus();
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (previewEl && prefixEl && inp) {
+            previewEl.textContent = inp.value ? prefixEl.textContent.trim() + inp.value : '';
+        }
     }
 
     function cancelUrlEdit() {
-        document.getElementById('url-change-warning').style.display = 'none';
+        var el = document.getElementById('url-change-warning');
+        if (el) el.style.display = 'none';
     }
-    });
 </script>
 {% endblock %}

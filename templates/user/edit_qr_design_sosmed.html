@@ -55,8 +55,9 @@
     .frame-text-color-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
     .frame-text-color-row input[type="color"] { width: 36px; height: 36px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; padding: 2px; }
     .qr-preview-frame { width: 100%; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #ffffff; position: relative; }
-    .qr-preview-frame .qr-inner { width: 100%; max-width: 200px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .qr-preview-frame .qr-inner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    /* Solid backing so transparent QR / anti-aliasing does not show dark page behind (matches web preview behavior). */
+    .qr-preview-frame .qr-inner { width: 100%; max-width: 200px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background-color: #ffffff; }
+    .qr-preview-frame .qr-inner img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; border: 0; outline: none; vertical-align: middle; background-color: #ffffff; }
     .qr-preview-frame .frame-caption { margin-top: 12px; font-size: 14px; font-weight: 600; text-align: center; }
     .qr-preview-frame.frame-none .qr-inner { border: none; }
     .qr-preview-frame.frame-simple .qr-inner { border: 2px solid #111; border-radius: 2px; padding: 8px; }
@@ -73,7 +74,7 @@
     .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
     .preview-type-badge { display: flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; }
     .qr-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px; min-height: 280px; }
-    #qrcode-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    #qrcode-img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; border: 0; outline: none; vertical-align: middle; background-color: #ffffff; }
     .preview-disclaimer { font-size: 11px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; }
     .custom-frames-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); }
     .custom-frames-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
@@ -117,6 +118,10 @@
     .qrs-color-swatch-wrap input[type="color"] { position: absolute; opacity: 0; width: 28px; height: 28px; cursor: pointer; }
     .qrs-color-swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; }
     .qrs-color-hex { font-size: 12px; color: var(--text-muted); font-family: monospace; }
+    .selection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .header-icon.style-icon { background: #2A2810; }
+    [data-theme="light"] .header-icon.style-icon { background: #fefce8; }
+    .qr-section-disabled { pointer-events: none; opacity: 0.45; user-select: none; }
 </style>
 {% endblock %}
 
@@ -204,13 +209,29 @@
     <input type="hidden" name="qr_corner_style" id="qr_corner_style_input" value="square">
     <input type="hidden" name="qr_dot_color"    id="qr_dot_color_input"    value="#000000">
     <input type="hidden" name="qr_bg_color"     id="qr_bg_color_input"     value="#ffffff">
-    <input type="hidden" name="card_bg_color"   id="card_bg_color_input"   value="#ffffff">
+    <input type="hidden" name="card_bg_color"   id="card_bg_color_input"   value="{{ (qrcard.get('card_bg_color', '#ffffff') if qrcard else '#ffffff') }}">
     <input type="hidden" name="qr_image_data"   id="qr_image_data" value="">
 </form>
 
 <div class="new-qr-container">
     <div class="form-column">
         <div class="page-title">Design the QR</div>
+
+        <div id="qr-reset-prompt" style="display:none; background:var(--bg-content); border:1px solid var(--border-color); border-radius:8px; padding:14px 16px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                <div>
+                    <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:2px;">Re-customize QR style</div>
+                    <div style="font-size:11px; color:var(--text-muted);">Toggle on to reset and edit. Toggle off to keep your saved QR.</div>
+                </div>
+                <label style="position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; cursor:pointer;">
+                    <input type="checkbox" id="qr-reset-switch" onchange="handleQRReset(this.checked)" style="opacity:0; width:0; height:0; position:absolute;">
+                    <span id="qr-reset-track" style="position:absolute; inset:0; background:var(--border-color); border-radius:24px; transition:background 0.2s;"></span>
+                    <span id="qr-reset-thumb" style="position:absolute; left:3px; top:3px; width:18px; height:18px; background:white; border-radius:50%; transition:transform 0.2s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="qr-form-content">
         <div class="design-tabs">
             <div class="design-tab active">Personalized design</div>
             <div class="design-tab">Templates</div>
@@ -218,6 +239,80 @@
         <div class="save-template-box">
             <input type="checkbox">
             <span>Save template when finished</span>
+        </div>
+        <div class="collapse-section" id="qr-style-section">
+            <div class="collapse-header">
+                <div class="header-left-col">
+                    <div class="header-icon style-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="header-text">
+                        <h3>QR Code Style</h3>
+                        <p>Customize dot shape and colors of your QR.</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
+            </div>
+            <div class="collapse-body show">
+                <div class="qrs-label">Dot Shape</div>
+                <div class="selection-grid qr-dot-grid" id="qr-dot-grid">
+                    <div class="grid-item active" onclick="selectDotStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="0"/><rect x="13" y="1" width="10" height="10" rx="0"/><rect x="25" y="1" width="10" height="10" rx="0"/><rect x="1" y="13" width="10" height="10" rx="0"/><rect x="13" y="13" width="10" height="10" rx="0"/><rect x="25" y="13" width="10" height="10" rx="0"/><rect x="1" y="25" width="10" height="10" rx="0"/><rect x="13" y="25" width="10" height="10" rx="0"/><rect x="25" y="25" width="10" height="10" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'dots')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><circle cx="6" cy="6" r="5"/><circle cx="18" cy="6" r="5"/><circle cx="30" cy="6" r="5"/><circle cx="6" cy="18" r="5"/><circle cx="18" cy="18" r="5"/><circle cx="30" cy="18" r="5"/><circle cx="6" cy="30" r="5"/><circle cx="18" cy="30" r="5"/><circle cx="30" cy="30" r="5"/></svg>
+                        <span class="frame-label">Dots</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2.5"/><rect x="13" y="1" width="10" height="10" rx="2.5"/><rect x="25" y="1" width="10" height="10" rx="2.5"/><rect x="1" y="13" width="10" height="10" rx="2.5"/><rect x="13" y="13" width="10" height="10" rx="2.5"/><rect x="25" y="13" width="10" height="10" rx="2.5"/><rect x="1" y="25" width="10" height="10" rx="2.5"/><rect x="13" y="25" width="10" height="10" rx="2.5"/><rect x="25" y="25" width="10" height="10" rx="2.5"/></svg>
+                        <span class="frame-label">Rounded</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="5"/><rect x="13" y="1" width="10" height="10" rx="5"/><rect x="25" y="1" width="10" height="10" rx="5"/><rect x="1" y="13" width="10" height="10" rx="5"/><rect x="13" y="13" width="10" height="10" rx="5"/><rect x="25" y="13" width="10" height="10" rx="5"/><rect x="1" y="25" width="10" height="10" rx="5"/><rect x="13" y="25" width="10" height="10" rx="5"/><rect x="25" y="25" width="10" height="10" rx="5"/></svg>
+                        <span class="frame-label">Smooth</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M1,1h10v7h-3v3h-7zM13,1h10v10h-10zM25,1h10v10h-7v-3h-3zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,25h7v3h3v7h-10zM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy</span>
+                    </div>
+                    <div class="grid-item" onclick="selectDotStyle(this,'classy-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><path d="M5,1h6v7h-3v3h-7v-6A4,4,0,0,1,5,1ZM13,1h10v10h-10zM31,1h0A4,4,0,0,1,35,5v6h-7v-3h-3v-7h6zM1,13h10v10h-10zM13,13h10v10h-10zM25,13h10v10h-10zM1,31v-6h7v3h3v7h-6A4,4,0,0,1,1,31ZM13,25h10v10h-10zM25,25h10v10h-10z"/></svg>
+                        <span class="frame-label">Classy+</span>
+                    </div>
+                </div>
+                <div class="qrs-label" style="margin-top:18px;">Corner Style</div>
+                <div class="selection-grid qr-corner-grid" id="qr-corner-grid">
+                    <div class="grid-item active" onclick="selectCornerStyle(this,'square')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><rect x="6" y="6" width="6" height="6" rx="0"/></svg>
+                        <span class="frame-label">Square</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'extra-rounded')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="8"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="5"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Round</span>
+                    </div>
+                    <div class="grid-item" onclick="selectCornerStyle(this,'dot')">
+                        <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><circle cx="9" cy="9" r="3"/></svg>
+                        <span class="frame-label">Dot</span>
+                    </div>
+                </div>
+                <div class="qrs-color-row">
+                    <div class="qrs-color-item">
+                        <label>QR Color</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-dot-color-picker').click()">
+                            <input type="color" id="qr-dot-color-picker" value="#000000" oninput="onQRColorChange('dot',this.value)">
+                            <div class="qrs-color-swatch" id="qr-dot-swatch" style="background:#000000;"></div>
+                            <span class="qrs-color-hex" id="qr-dot-hex">#000000</span>
+                        </div>
+                    </div>
+                    <div class="qrs-color-item">
+                        <label>Background</label>
+                        <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-bg-color-picker').click()">
+                            <input type="color" id="qr-bg-color-picker" value="#ffffff" oninput="onQRColorChange('bg',this.value)">
+                            <div class="qrs-color-swatch" id="qr-bg-swatch" style="background:#ffffff;border:1px solid #ddd;"></div>
+                            <span class="qrs-color-hex" id="qr-bg-hex">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="collapse-section frame-section">
             <div class="collapse-header">
@@ -247,9 +342,9 @@
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
                         <label for="card-bg-color-picker">Background</label>
                         <div class="qrs-color-swatch-wrap" onclick="document.getElementById('card-bg-color-picker').click()" style="position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
-                            <input type="color" id="card-bg-color-picker" value="#ffffff" style="position:absolute;opacity:0;width:28px;height:28px;cursor:pointer;" oninput="onCardBgChange(this.value)">
-                            <div id="card-bg-swatch" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border-color);background:#ffffff;flex-shrink:0;"></div>
-                            <span id="card-bg-hex" style="font-size:12px;color:var(--text-muted);font-family:monospace;">#ffffff</span>
+                            <input type="color" id="card-bg-color-picker" value="{{ (qrcard.get('card_bg_color', '#ffffff') if qrcard else '#ffffff') }}" style="position:absolute;opacity:0;width:28px;height:28px;cursor:pointer;" oninput="onCardBgChange(this.value)">
+                            <div id="card-bg-swatch" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border-color);background:{{ (qrcard.get('card_bg_color', '#ffffff') if qrcard else '#ffffff') }};flex-shrink:0;"></div>
+                            <span id="card-bg-hex" style="font-size:12px;color:var(--text-muted);font-family:monospace;">{{ (qrcard.get('card_bg_color', '#ffffff') if qrcard else '#ffffff') }}</span>
                         </div>
                     </div>
                     <div class="frame-text-row">
@@ -280,6 +375,7 @@
                 </div>
             </div>
         </div>
+        </div><!-- /#qr-form-content -->
     </div>
 
     <div class="preview-column" id="preview-column">
@@ -340,6 +436,12 @@
 function submitDesignWithOverlay() {
     var overlay = document.getElementById('design-complete-overlay');
     if (overlay) overlay.style.display = 'flex';
+    if (typeof _keepSavedQR !== 'undefined' && _keepSavedQR) {
+        var qi = document.getElementById('qr_image_data');
+        if (qi) qi.value = '';
+        document.getElementById('design-form').submit();
+        return;
+    }
     var svgFrame = window.qfpGetCurrentSvgFrame ? window.qfpGetCurrentSvgFrame() : null;
     if (_qrStyling) {
         _qrStyling.getRawData('png').then(function(blob) {
@@ -364,8 +466,15 @@ function submitDesignWithOverlay() {
 <script>
     // ── QR Code Styling — globals ─────────────────────────────────────────────
     var _qrFinalUrl = '';
-    var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
+    var _qrStyle = {
+        dots: '{{ (qrcard.get("qr_dot_style", "square") if qrcard else "square") }}',
+        corners: '{{ (qrcard.get("qr_corner_style", "square") if qrcard else "square") }}',
+        dotColor: '{{ (qrcard.get("qr_dot_color", "#000000") if qrcard else "#000000") }}',
+        bgColor: '{{ (qrcard.get("qr_bg_color", "#ffffff") if qrcard else "#ffffff") }}'
+    };
     var _qrStyling = null;
+    var _keepSavedQR = false;
+    var _savedQrUrl = '';
 
     function _buildQROpts() {
         return {
@@ -393,12 +502,108 @@ function submitDesignWithOverlay() {
         }).catch(function(e){ console.error('QR style:', e); });
     }
 
+    function _restoreQRStyleUI() {
+        document.querySelectorAll('#qr-dot-grid .grid-item').forEach(function(btn) {
+            var m = (btn.getAttribute('onclick') || '').match(/selectDotStyle\(this,'([^']+)'\)/);
+            if (m) btn.classList.toggle('active', m[1] === _qrStyle.dots);
+        });
+        document.querySelectorAll('#qr-corner-grid .grid-item').forEach(function(btn) {
+            var m = (btn.getAttribute('onclick') || '').match(/selectCornerStyle\(this,'([^']+)'\)/);
+            if (m) btn.classList.toggle('active', m[1] === _qrStyle.corners);
+        });
+        var dotPicker = document.getElementById('qr-dot-color-picker');
+        if (dotPicker) {
+            dotPicker.value = _qrStyle.dotColor;
+            var ds = document.getElementById('qr-dot-swatch'); if (ds) ds.style.background = _qrStyle.dotColor;
+            var dh = document.getElementById('qr-dot-hex'); if (dh) dh.textContent = _qrStyle.dotColor;
+            var di = document.getElementById('qr_dot_color_input'); if (di) di.value = _qrStyle.dotColor;
+        }
+        var bgPicker = document.getElementById('qr-bg-color-picker');
+        if (bgPicker) {
+            bgPicker.value = _qrStyle.bgColor;
+            var bs = document.getElementById('qr-bg-swatch'); if (bs) bs.style.background = _qrStyle.bgColor;
+            var bh = document.getElementById('qr-bg-hex'); if (bh) bh.textContent = _qrStyle.bgColor;
+            var bi = document.getElementById('qr_bg_color_input'); if (bi) bi.value = _qrStyle.bgColor;
+        }
+        var dsi = document.getElementById('qr_dot_style_input'); if (dsi) dsi.value = _qrStyle.dots;
+        var csi = document.getElementById('qr_corner_style_input'); if (csi) csi.value = _qrStyle.corners;
+        var cardBgColor = '{{ (qrcard.get("card_bg_color", "#ffffff") if qrcard else "#ffffff") }}';
+        var cardBgPicker = document.getElementById('card-bg-color-picker');
+        if (cardBgPicker) {
+            cardBgPicker.value = cardBgColor;
+            var cbs = document.getElementById('card-bg-swatch'); if (cbs) cbs.style.background = cardBgColor;
+            var cbh = document.getElementById('card-bg-hex'); if (cbh) cbh.textContent = cardBgColor;
+            var cbi = document.getElementById('card_bg_color_input'); if (cbi) cbi.value = cardBgColor;
+            var qrCard = document.querySelector('.qr-card'); if (qrCard) qrCard.style.background = cardBgColor;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const qrEncodeUrl = "{{ qr_encode_url or '' }}";
         const urlContent = "{{ url_content if url_content else 'https://QRkartu' }}";
         const finalUrl = qrEncodeUrl ? qrEncodeUrl : (urlContent.startsWith('http') ? urlContent : 'https://' + urlContent);
         _qrFinalUrl = finalUrl;
-        refreshQRPreview();
+
+        _savedQrUrl = {{ ((qrcard.get('qr_composite_url') or qrcard.get('qr_image_url') or '') if qrcard else '') | tojson }};
+
+        function _setFormEditable(editable) {
+            var formContent = document.getElementById('qr-form-content');
+            if (!formContent) return;
+            if (editable) formContent.classList.remove('qr-section-disabled');
+            else formContent.classList.add('qr-section-disabled');
+            var prompt = document.getElementById('qr-reset-prompt');
+            if (prompt) prompt.style.pointerEvents = 'auto';
+        }
+
+        if (_savedQrUrl) {
+            var probe = new Image();
+            probe.onload = function() {
+                document.getElementById('qrcode-img').src = _savedQrUrl;
+                var rp = document.getElementById('qr-reset-prompt');
+                if (rp) rp.style.display = 'block';
+                _keepSavedQR = true;
+                _setFormEditable(false);
+            };
+            probe.onerror = function() {
+                _restoreQRStyleUI();
+                refreshQRPreview();
+            };
+            probe.src = _savedQrUrl;
+        } else {
+            _restoreQRStyleUI();
+            refreshQRPreview();
+        }
+
+        window.handleQRReset = function(doReset) {
+            var track = document.getElementById('qr-reset-track');
+            var thumb = document.getElementById('qr-reset-thumb');
+            var sw = document.getElementById('qr-reset-switch');
+            if (doReset) {
+                if (track) track.style.background = 'var(--primary)';
+                if (thumb) thumb.style.transform = 'translateX(20px)';
+                _keepSavedQR = false;
+                _setFormEditable(true);
+                _qrStyle.dots = 'square';
+                _qrStyle.corners = 'square';
+                _qrStyle.dotColor = '#000000';
+                _qrStyle.bgColor = '#ffffff';
+                var cbp = document.getElementById('card-bg-color-picker');
+                if (cbp) { cbp.value = '#ffffff'; onCardBgChange('#ffffff'); }
+                _restoreQRStyleUI();
+                refreshQRPreview();
+            } else {
+                if (track) track.style.background = 'var(--border-color)';
+                if (thumb) thumb.style.transform = 'translateX(0)';
+                if (sw) sw.checked = false;
+                _keepSavedQR = true;
+                _setFormEditable(false);
+                if (_savedQrUrl) {
+                    var img = document.getElementById('qrcode-img');
+                    if (img) img.src = _savedQrUrl;
+                }
+            }
+        };
+
         document.querySelectorAll('.collapse-header').forEach(header => {
             header.addEventListener('click', function () {
                 const body = this.nextElementSibling;
@@ -446,9 +651,16 @@ function submitDesignWithOverlay() {
             window.qfpUpdateSvgFrame(Object.assign({}, _svgFrameBase, { svg: _applyFrameCustomizations(_svgFrameBase.svg) }));
         }
         window._qfpRefreshSvgPreview = _refreshSvgPreview;
-        var _initBgPicker = document.getElementById('card-bg-color-picker');
+        var _initCardBg = '{{ (qrcard.get("card_bg_color", "#ffffff") if qrcard else "#ffffff") }}';
         var _qrCard2 = document.querySelector('.qr-card');
-        if (_qrCard2 && _initBgPicker) _qrCard2.style.background = _initBgPicker.value;
+        if (_qrCard2) _qrCard2.style.background = _initCardBg;
+        var _initBgPicker = document.getElementById('card-bg-color-picker');
+        if (_initBgPicker) {
+            _initBgPicker.value = _initCardBg;
+            var _cbs0 = document.getElementById('card-bg-swatch'); if (_cbs0) _cbs0.style.background = _initCardBg;
+            var _cbh0 = document.getElementById('card-bg-hex'); if (_cbh0) _cbh0.textContent = _initCardBg;
+            var _cbi0 = document.getElementById('card_bg_color_input'); if (_cbi0) _cbi0.value = _initCardBg;
+        }
         if (svgFrameColorEl) svgFrameColorEl.addEventListener('input', function() { if (svgFrameColorHex) svgFrameColorHex.textContent = this.value; _refreshSvgPreview(); });
         if (svgFrameTextEl) svgFrameTextEl.addEventListener('input', _refreshSvgPreview);
         var _origQfpSelectFrame = window.qfpSelectFrame;
@@ -520,8 +732,6 @@ function onQRColorChange(target, value) {
     }
     refreshQRPreview();
 }
-</script>
-
 </script>
 <script>
 function _compositeQrWithSvgFrame(qrDataUrl, frame) {
