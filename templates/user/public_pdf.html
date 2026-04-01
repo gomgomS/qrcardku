@@ -44,8 +44,13 @@
         }
         /* ── Welcome overlay ── */
         .welcome-overlay {
-            position: absolute;
-            inset: 0;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
             z-index: 100;
             background: {{ qrcard.get('welcome_bg_color') or primary }};
             display: flex;

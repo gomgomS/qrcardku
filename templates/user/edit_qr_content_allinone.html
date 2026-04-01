@@ -661,11 +661,11 @@
                     <div class="phone-type-badge"><i class="fa-solid fa-layer-group"></i> All-in-One</div>
                 </div>
                 <div class="phone-mockup">
+                    <!-- Welcome screen overlay — positioned relative to phone-mockup so it stays centered and doesn't scroll -->
+                    <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                        <img id="preview-welcome-img" src="" alt="Welcome">
+                    </div>
                     <div class="mockup-inner" style="padding:0;background-color:var(--bg-content);display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
-                        <!-- Welcome screen overlay -->
-                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
-                            <img id="preview-welcome-img" src="" alt="Welcome">
-                        </div>
                         {% set allinone_mode = 'preview' %}
                         {% include 'user/template_allinone_general.html' %}
                     </div>

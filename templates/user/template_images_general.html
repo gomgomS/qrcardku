@@ -45,7 +45,7 @@ PUBLIC MODE
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111827; min-height: 100vh; display: flex; align-items: stretch; justify-content: center; }
     .phone-wrapper { position: relative; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
-    .welcome-overlay { position: absolute; inset: 0; z-index: 100; background: {{ _welcome_bg }}; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: auto; }
+    .welcome-overlay { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; z-index: 100; background: {{ _welcome_bg }}; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.8s ease; pointer-events: auto; }
     .welcome-overlay.hide { opacity: 0; pointer-events: none; }
     .welcome-overlay img { max-width: 200px; max-height: 280px; object-fit: contain; display: block; }
     .gallery-wrapper { min-height: 100vh; display: flex; flex-direction: column; background: #ffffff; }

@@ -1332,13 +1332,13 @@
                 </div>
 
                 <div class="phone-mockup">
+                    <!-- Welcome screen overlay — positioned relative to phone-mockup so it stays centered and doesn't scroll -->
+                    <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                        <img id="preview-welcome-img" src="" alt="Welcome">
+                    </div>
                     <div class="mockup-inner"
                         style="padding:0;background-color:var(--bg-content);display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
                         {% set preview_primary = qrcard.get('pdf_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' %}
-                        <!-- Welcome screen overlay: shown first, then smooth fade to PDF preview -->
-                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
-                            <img id="preview-welcome-img" src="" alt="Welcome">
-                        </div>
 
                         <!-- Template 1 Preview (hidden by default, shown when template1 selected) -->
                         <div id="preview-template1" style="display: none; position: absolute; inset: 0; z-index: 10; flex-direction: column; background: var(--bg-sidebar); overflow-y: auto; overflow-x: hidden;">

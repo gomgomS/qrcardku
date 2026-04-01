@@ -658,10 +658,10 @@
                     <i class="fa-solid fa-pen" style="color: var(--primary); cursor: pointer;"></i>
                 </div>
                 <div class="phone-mockup">
+                    <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display:none;">
+                        <img id="preview-welcome-img" src="" alt="Welcome">
+                    </div>
                     <div class="mockup-inner" style="padding:0;background-color:#ffffff;display:flex;flex-direction:column;position:relative;overflow-y:auto;overflow-x:hidden;">
-                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display:none;">
-                            <img id="preview-welcome-img" src="" alt="Welcome">
-                        </div>
                         {% set links_mode = 'preview' %}
                         {% include 'user/template_links_general.html' %}
                     </div>

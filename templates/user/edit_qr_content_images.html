@@ -1062,11 +1062,11 @@
                     <div class="phone-type-badge"><i class="fa-regular fa-images"></i> Images</div>
                 </div>
                 <div class="phone-mockup">
+                    <!-- Welcome screen overlay — positioned relative to phone-mockup so it stays centered and doesn't scroll -->
+                    <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
+                        <img id="preview-welcome-img" src="" alt="Welcome">
+                    </div>
                     <div class="mockup-inner" style="position:relative;">
-                        <!-- Welcome screen overlay -->
-                        <div id="preview-welcome-overlay" class="preview-welcome-overlay" style="display: none;">
-                            <img id="preview-welcome-img" src="" alt="Welcome">
-                        </div>
                         {% set images_mode = 'preview' %}
                         {% include 'user/template_images_general.html' %}
                     </div>

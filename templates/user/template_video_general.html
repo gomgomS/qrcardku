@@ -58,8 +58,10 @@ PUBLIC MODE
         min-height: 100vh;
     }
     .welcome-overlay {
-        position: absolute;
-        inset: 0;
+        position: fixed;
+        top: 0; bottom: 0;
+        left: 50%; transform: translateX(-50%);
+        width: 100%; max-width: 480px;
         z-index: 100;
         background: {{ _welcome_bg }};
         display: flex;

@@ -59,7 +59,8 @@
 
     /* Welcome overlay */
     .welcome-overlay {
-        position: absolute; inset: 0; z-index: 100;
+        position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%);
+        width: 100%; max-width: 480px; z-index: 100;
         background: {{ _welcome_bg }};
         display: flex; align-items: center; justify-content: center;
         opacity: 1; transition: opacity 0.8s ease; pointer-events: auto;
