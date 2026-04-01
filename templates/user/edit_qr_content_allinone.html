@@ -47,7 +47,7 @@
     input:checked+.slider:before { transform: translateX(16px); }
     .url-prefix-group { display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--bg-body); }
     .url-prefix { padding: 10px 14px; color: var(--text-muted); font-size: 14px; border-right: 1px solid var(--border-color); white-space: nowrap; }
-    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: #ffffff; }
+    .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: var(--bg-content); color: var(--text-main); }
     .url-prefix-group input:focus { outline: none; }
     .toggle-label-with-icon { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); font-weight: 500; }
     .template-select-area, .preview-column {
@@ -105,7 +105,7 @@
     .allinone-quill-wrap .ql-container { border-radius: 0 0 6px 6px; border-color: var(--border-color); font-size: 13px; min-height: 100px; background: #ffffff; color: #111827; }
     .allinone-quill-wrap .ql-editor { min-height: 100px; color: #111827; }
     .section-card-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
-    .section-card-count { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 1px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); }
+    .section-card-count { font-size: 11px; color: var(--text-muted); background: var(--bg-body); padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border-color); }
     .section-card-actions { display: flex; align-items: center; gap: 4px; }
     .drag-handle { background: transparent; border: none; color: #c4c4c4; cursor: grab; padding: 5px 6px; font-size: 13px; border-radius: 5px; line-height: 1; touch-action: none; flex-shrink: 0; }
     .drag-handle:hover { color: var(--text-muted); background: rgba(0,0,0,0.04); }
@@ -125,26 +125,26 @@
     .section-item-delete { background: transparent; border: none; color: #3A3B30; cursor: pointer; padding: 4px 5px; font-size: 13px; flex-shrink: 0; margin-top: 1px; border-radius: 4px; transition: all 0.15s; }
     .section-item-delete:hover { color: #ef4444; background: #fee2e2; }
     .add-section-item-btn { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--primary); background: var(--bg-content); border: 1px dashed var(--primary); border-radius: 6px; padding: 7px 14px; cursor: pointer; width: 100%; transition: background 0.15s; box-sizing: border-box; }
-    .add-section-item-btn:hover { background: #2A2810; }
+    .add-section-item-btn:hover { background: #fef9ec; }
     .file-upload-label { display: flex; align-items: center; gap: 8px; border: 1px dashed var(--border-color); border-radius: 6px; padding: 8px 12px; cursor: pointer; background: var(--bg-content); transition: border-color 0.15s; }
     .file-upload-label:hover { border-color: var(--primary); }
     .inline-row { display: flex; gap: 8px; }
     .inline-row .form-control { flex: 1; min-width: 0; }
     .add-block-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
     .add-block-btn { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; font-weight: 500; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: var(--text-main); transition: all 0.15s; }
-    .add-block-btn:hover { border-color: var(--primary); color: var(--primary); background: #2A2810; }
+    .add-block-btn:hover { border-color: var(--primary); color: var(--primary); background: #fef9ec; }
     /* Block style picker */
     .block-style-picker { display: flex; gap: 5px; margin-bottom: 10px; }
     .block-style-opt { cursor: pointer; border: 2px solid var(--border-color); border-radius: 7px; padding: 5px 4px 4px; font-size: 9px; font-weight: 500; color: var(--text-muted); background: #ffffff; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; flex: 1; }
     .block-style-opt:hover { border-color: #EBA81B; color: #EBA81B; }
-    .block-style-opt.selected { border-color: var(--primary); color: var(--primary); background: #2A2810; }
+    .block-style-opt.selected { border-color: var(--primary); color: var(--primary); background: #fef9ec; }
     .bsp-thumb { width: 100%; height: 20px; border-radius: 3px; overflow: hidden; display: flex; align-items: center; }
     .bsp-1 { background: #f9fafb; padding: 0 4px; gap: 3px; }
     .bsp-2 { background: #ffffff; border: 1px solid var(--border-color); padding: 0 4px; gap: 3px; }
     .bsp-3 { justify-content: center; }
     .bsp-4 { background: #f9fafb; justify-content: center; flex-direction: column; gap: 2px; padding: 2px; }
     /* Block color picker */
-    .block-color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+    .block-color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
     .block-color-row label { font-size: 11px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
     .block-color-input { width: 28px; height: 28px; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px; cursor: pointer; background: transparent; flex-shrink: 0; }
     .block-color-hex { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 5px; padding: 4px 7px; width: 72px; background: var(--bg-body); }
@@ -174,7 +174,7 @@
         flex-shrink: 0;
         text-decoration: none;
     }
-    .mobile-bar-arrow:hover { background: #252619; }
+    .mobile-bar-arrow:hover { background: var(--bg-body); }
     .mobile-bar-arrow.primary { background: var(--primary); border-color: var(--primary); color: white; }
     .mobile-bar-arrow.primary:hover { background: var(--primary-hover); }
     .mobile-bar-preview-btn {
@@ -214,6 +214,8 @@
             transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
         }
         .preview-column.mobile-open { transform: translateY(0); }
+        .phone-container { position: static; }
+        .phone-mockup { height: calc(100vh - 60px - 120px); max-height: 560px; }
         .mobile-bottom-bar { display: flex; }
     }
 
@@ -232,6 +234,23 @@
 [data-theme="light"] .hi-purple { background: #f5f3ff; }
 [data-theme="light"] .hi-blue   { background: #f0f9ff; }
 [data-theme="light"] .hi-grey   { background: #f3f4f6; }
+
+/* Shared user asset picker styles (same visual sizing as PDF modal) */
+.user-asset-picker-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.7); align-items: center; justify-content: center; }
+.user-asset-picker-dialog { background: #1E1F18; border: 1px solid #3A3B30; border-radius: 14px; width: min(92vw, 640px); max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+.user-asset-picker-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #2C2D25; }
+.user-asset-picker-title { font-size: 15px; font-weight: 700; color: #E8E5DC; display: flex; align-items: center; gap: 8px; }
+.user-asset-picker-close { background: none; border: none; cursor: pointer; color: #8A8878; font-size: 18px; line-height: 1; padding: 2px 6px; }
+.user-asset-picker-toolbar { padding: 12px 20px; border-bottom: 1px solid #2C2D25; }
+.user-asset-picker-search { width: 100%; padding: 8px 12px; background: #252619; border: 1px solid #3A3B30; border-radius: 8px; color: #E8E5DC; font-size: 13px; box-sizing: border-box; outline: none; }
+.user-asset-picker-grid { flex: 1; overflow-y: auto; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; min-height: 0; }
+.user-asset-picker-loading { grid-column: 1 / -1; text-align: center; color: #8A8878; padding: 40px 0; font-size: 13px; }
+.user-asset-picker-empty { text-align: center; color: #8A8878; padding: 40px 0; font-size: 13px; }
+.user-asset-picker-item { cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; transition: border-color .2s; background: #252619; }
+.user-asset-picker-item:hover { border-color: var(--primary); }
+.user-asset-picker-thumb { width: 100%; aspect-ratio: 1/1; background: #181914; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.user-asset-picker-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.user-asset-picker-name { padding: 5px 6px; font-size: 10px; color: #8A8878; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 {% endblock %}
 
@@ -412,7 +431,9 @@
                 <div class="collapse-body">
                     <div style="background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); padding: 16px;">
                         <div id="allinone-cover-img-section" style="margin-bottom: 16px;">
-                            <label class="form-label" style="font-size: 12px;">Cover image</label>
+                            <label class="form-label" style="font-size: 12px;">Cover image
+                                <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(Optional)</span>
+                            </label>
                             <label style="display: flex; align-items: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px 16px; cursor: pointer; background: var(--bg-body); gap: 10px;">
                                 <div id="allinone-cover-img-preview" style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                                     {% set cover_url = qrcard.get('Allinone_cover_img_url','') if qrcard else '' %}
@@ -427,12 +448,17 @@
                                 <i class="fa-solid fa-cloud-arrow-up" style="color: var(--text-muted); font-size: 16px; flex-shrink: 0;"></i>
                                 <input type="file" name="Allinone_profile_img" accept="image/*" style="display: none;" id="allinone_profile_img_input">
                             </label>
-                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <button type="button" id="allinone-cover-img-remove-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not cover_url %}display: none;{% endif %}">
                                     <i class="fa-solid fa-xmark"></i> Remove
                                 </button>
+                                <button type="button" id="allinone-cover-pick-asset-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openAllinoneAssetPicker()">
+                                    <i class="fa-solid fa-images"></i> Pick from My Assets
+                                </button>
                                 <input type="hidden" name="Allinone_profile_img_delete" id="allinone_profile_img_delete" value="0">
+                                <input type="hidden" name="Allinone_profile_img_autocomplete_url" id="allinone_profile_img_autocomplete_url" value="">
                             </div>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;"><i class="fa-regular fa-circle-info"></i> Max 2 MB. Square image works best.</p>
                         </div>
                         <div class="form-group">
                             <label class="form-label" style="font-size: 12px;">Title</label>
@@ -507,13 +533,17 @@
                                     </div>
                                     <input type="file" name="Allinone_welcome_img" accept="image/*" style="display: none;" id="allinone_welcome_img_input">
                                 </label>
-                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <button type="button" id="welcome-preview-btn" class="btn-outline" style="padding: 4px 12px; font-size: 12px;">Preview</button>
                                     <button type="button" id="welcome-delete-btn" class="btn-outline"
                                         style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">
                                         Remove
                                     </button>
+                                    <button type="button" class="btn-outline" style="padding: 4px 12px; font-size: 12px; color: var(--primary); border-color: var(--primary);" onclick="openAllinoneWelcomeAssetPicker()">
+                                        <i class="fa-solid fa-images"></i> Pick from My Assets
+                                    </button>
                                     <input type="hidden" name="Allinone_welcome_img_delete" id="allinone_welcome_img_delete" value="0">
+                                    <input type="hidden" name="Allinone_welcome_img_autocomplete_url" id="allinone_welcome_img_autocomplete_url" value="">
                                 </div>
                                 <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
                             </div>
@@ -561,17 +591,14 @@
                         <div class="sub-collapse-body">
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="font-size: 12px;">URL</label>
-                                                                <!-- Static display (shown by default) -->
                                 <div id="url-static-display" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-body);">
-                                    <span style="font-size:13px; color:var(--primary); word-break:break-all; font-family:monospace;">
-                                        {{ base_url | default('https://QRkartu') }}/allinone/{{ short_code | default(qrcard.short_code if qrcard else '', true) }}
+                                    <span id="url-static-display-text" style="font-size:13px; color:var(--primary); word-break:break-all; font-family:monospace;">
+                                        {{ base_url | default('https://QRkartu') }}/allinone/{{ qrcard.short_code if qrcard and qrcard.get('short_code') else '' }}
                                     </span>
-                                    <button type="button" onclick="startUrlEdit()" style="flex-shrink:0; padding:5px 12px; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer; white-space:nowrap;">
+                                    <button type="button" class="btn-outline" onclick="startUrlEdit()" style="flex-shrink:0; padding:5px 12px; font-size:12px; white-space:nowrap;">
                                         <i class="fa-solid fa-pen"></i> Change
                                     </button>
                                 </div>
-
-                                <!-- Warning shown after clicking Change -->
                                 <div id="url-change-warning" style="display:none; margin-top:10px; padding:12px; border-radius:6px; border:1px solid #f59e0b; background:#fffbeb;">
                                     <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:10px;">
                                         <i class="fa-solid fa-triangle-exclamation" style="color:#d97706; margin-top:2px; flex-shrink:0;"></i>
@@ -590,15 +617,20 @@
                                         </button>
                                     </div>
                                 </div>
-
-                                <!-- Input (hidden until confirmed) -->
                                 <div id="url-input-group" style="display:none; margin-top:8px;">
                                     <div class="url-prefix-group">
-                                    <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://QRkartu') }}/allinone/</div>
+                                        <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://QRkartu') }}/allinone/</div>
+                                        <input type="text" name="short_code" id="stats-short-code-input"
+                                            placeholder="Letters, numbers, '-' and '_' only"
+                                            value="{{ qrcard.short_code if qrcard and qrcard.get('short_code') else '' }}"
+                                            pattern="[a-zA-Z0-9_\-]{2,32}"
+                                            title="Letters, numbers, '-' and '_' only (2–32 characters)"
+                                            maxlength="32">
+                                    </div>
                                     <p id="stats-url-preview" style="font-size: 11px; color: var(--primary); margin-top: 6px; word-break: break-all;"></p>
+                                    <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Letters, numbers, hyphen and underscore only (2–32 characters).</p>
                                 </div>
                                 <input type="hidden" name="reset_qr_style" id="reset-qr-style-flag" value="0">
-
                             </div>
                         </div>
                     </div>
@@ -681,6 +713,52 @@
         </div>
     </div>
 </div>
+
+<!-- Allinone cover / welcome asset pickers (same flow as new all-in-one) -->
+<div id="allinone-asset-picker-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeAllinoneAssetPicker()" style="background:none;border:none;cursor:pointer;color:#8A8878;font-size:18px;line-height:1;padding:2px 6px;">&times;</button>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid #2C2D25;">
+            <input type="text" id="allinone-asset-search" placeholder="Search by filename…" oninput="filterAoAssets()"
+                style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="allinone-asset-grid" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;">
+                <div id="allinone-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+                </div>
+            </div>
+            <div id="allinone-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            </div>
+        </div>
+    </div>
+</div>
+<div id="allinone-welcome-asset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+    <div style="background:#1E1F18;border:1px solid #3A3B30;border-radius:14px;width:min(92vw,640px);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #2C2D25;">
+            <div style="font-size:15px;font-weight:700;color:#E8E5DC;"><i class="fa-solid fa-images" style="color:var(--primary);margin-right:8px;"></i>Pick from My Assets</div>
+            <button type="button" onclick="closeAllinoneWelcomeAssetPicker()" style="background:none;border:none;cursor:pointer;color:#8A8878;font-size:18px;line-height:1;padding:2px 6px;">&times;</button>
+        </div>
+        <div style="padding:12px 20px;border-bottom:1px solid #2C2D25;">
+            <input type="text" id="allinone-welcome-asset-search" placeholder="Search by filename…" oninput="filterAllinoneWelcomeAssets()"
+                style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="allinone-welcome-asset-grid" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;">
+                <div id="allinone-welcome-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+                </div>
+            </div>
+            <div id="allinone-welcome-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -718,7 +796,45 @@ function initQuillEditor(editorEl, mirrorEl, initialHtml, onChangeCallback) {
     });
 }
 
+function startUrlEdit() {
+    var w = document.getElementById('url-change-warning');
+    if (w) w.style.display = 'block';
+}
+
+function confirmUrlEdit() {
+    var w = document.getElementById('url-change-warning');
+    var sd = document.getElementById('url-static-display');
+    var ig = document.getElementById('url-input-group');
+    var flag = document.getElementById('reset-qr-style-flag');
+    if (w) w.style.display = 'none';
+    if (sd) sd.style.display = 'none';
+    if (ig) ig.style.display = 'block';
+    if (flag) flag.value = '1';
+    var inp = document.getElementById('stats-short-code-input');
+    if (inp) {
+        inp.focus();
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (previewEl && prefixEl) previewEl.textContent = inp.value ? prefixEl.textContent.trim() + inp.value : '';
+    }
+}
+
+function cancelUrlEdit() {
+    var w = document.getElementById('url-change-warning');
+    if (w) w.style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.phone-mockup').forEach(function (mockupEl) {
+        var innerEl = mockupEl.querySelector('.mockup-inner');
+        if (!innerEl) return;
+        mockupEl.addEventListener('wheel', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            innerEl.scrollTop += e.deltaY;
+        }, { passive: false });
+    });
+
     // Init Quill for all pre-rendered text blocks
     document.querySelectorAll('.allinone-quill-editor[id]').forEach(function(editorEl) {
         const mirrorId = editorEl.id.replace('quill-edit-', 'quill-mirror-edit-');
@@ -749,6 +865,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function stripInvalidChars(v) { return (v||'').replace(/[^a-zA-Z0-9_-]/g,''); }
         function updateUrlPreview() { var c = shortInput.value.trim(); previewEl.textContent = c ? (prefixEl?prefixEl.textContent.trim():(baseUrl+'/allinone/'))+c : ''; }
         shortInput.addEventListener('input', function () { var f = stripInvalidChars(shortInput.value); if (f!==shortInput.value) shortInput.value=f; updateUrlPreview(); });
+        shortInput.addEventListener('paste', function () { setTimeout(function () { shortInput.value = stripInvalidChars(shortInput.value); updateUrlPreview(); }, 0); });
         updateUrlPreview();
     })();
 
@@ -1430,6 +1547,8 @@ document.addEventListener('DOMContentLoaded', function () {
         profileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            var acProf = document.getElementById('allinone_profile_img_autocomplete_url');
+            if (acProf) acProf.value = '';
             const reader = new FileReader();
             reader.onload = function(evt) {
                 openCropModal(evt.target.result, 1, function(url, blob) {
@@ -1490,6 +1609,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (removeBtn) {
         removeBtn.addEventListener('click', function() {
+            var acProf = document.getElementById('allinone_profile_img_autocomplete_url');
+            if (acProf) acProf.value = '';
             if (profilePreview) {
                 profilePreview.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
             }
@@ -1560,6 +1681,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var overlay = document.getElementById('preview-welcome-overlay');
         var imgEl = document.getElementById('preview-welcome-img');
         var welcomeInput = document.getElementById('allinone_welcome_img_input');
+        var welcomeAc = document.getElementById('allinone_welcome_img_autocomplete_url');
         var timeSlider = document.getElementById('welcome-time-slider');
         var timeDisplay = document.getElementById('welcome-time-display');
         if (timeSlider && timeDisplay) {
@@ -1588,11 +1710,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 setTimeout(function () { overlay.style.display = 'none'; }, 800);
             }, sec);
         }
-        var _currentSrc = '{% if qrcard and qrcard.get("welcome_img_url") %}{{ qrcard.get("welcome_img_url") }}{% endif %}' || null;
-        if (_currentSrc) {
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function () { playWelcomePreview(_currentSrc); });
-            } else { playWelcomePreview(_currentSrc); }
+        var _serverWelcome = {{ (qrcard.get('welcome_img_url') if qrcard and qrcard.get('welcome_img_url') else '') | tojson }};
+        var _currentSrc = _serverWelcome || null;
+        if (_serverWelcome && overlay) overlay.dataset.assetUrl = _serverWelcome;
+        if (_currentSrc) playWelcomePreview(_currentSrc);
+        function getWelcomeEffectiveSrc() {
+            if (welcomeAc && welcomeAc.value.trim()) return welcomeAc.value.trim();
+            if (overlay && overlay.dataset.assetUrl) return overlay.dataset.assetUrl;
+            return _currentSrc || '';
         }
         if (overlay && imgEl) {
             var thumb = document.getElementById('welcome-img-preview');
@@ -1602,6 +1727,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 welcomeInput.addEventListener('change', function () {
                     var file = this.files && this.files[0];
                     if (!file) return;
+                    if (welcomeAc) welcomeAc.value = '';
+                    if (overlay) delete overlay.dataset.assetUrl;
                     if (file.size > 1024 * 1024) {
                         alert('Image must be 1 MB or smaller.');
                         this.value = '';
@@ -1623,6 +1750,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', function () {
                     if (welcomeInput) welcomeInput.value = '';
+                    if (welcomeAc) welcomeAc.value = '';
+                    if (overlay) delete overlay.dataset.assetUrl;
                     _currentSrc = null;
                     if (thumb) thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fa-regular fa-image" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Image</span>';
                     if (deleteFlag) deleteFlag.value = '1';
@@ -1632,8 +1761,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var previewBtn = document.getElementById('welcome-preview-btn');
             if (previewBtn) {
                 previewBtn.addEventListener('click', function () {
-                    if (_currentSrc) playWelcomePreview(_currentSrc);
-                    else alert('Upload an image first (max 1 MB).');
+                    var s = getWelcomeEffectiveSrc();
+                    if (s) playWelcomePreview(s);
+                    else alert('Upload an image or pick from My Assets (max 1 MB for uploads).');
                 });
             }
         }
@@ -1649,5 +1779,204 @@ function submitWithOverlay() {
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     form.submit();
 }
+</script>
+<script>
+(function () {
+    var _awAssets = [];
+    var _awLoaded = false;
+
+    window.openAllinoneWelcomeAssetPicker = function () {
+        var modal = document.getElementById('allinone-welcome-asset-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        var s = document.getElementById('allinone-welcome-asset-search');
+        if (s) s.value = '';
+        if (!_awLoaded) loadAwAssets();
+        else renderAwGrid(_awAssets);
+    };
+
+    window.closeAllinoneWelcomeAssetPicker = function () {
+        var modal = document.getElementById('allinone-welcome-asset-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('allinone-welcome-asset-modal');
+        if (modal) modal.addEventListener('click', function (e) { if (e.target === this) closeAllinoneWelcomeAssetPicker(); });
+    });
+
+    function loadAwAssets() {
+        fetch('/api/user/image_assets')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _awLoaded = true;
+                _awAssets = (data.images || []);
+                renderAwGrid(_awAssets);
+            })
+            .catch(function () {
+                var el = document.getElementById('allinone-welcome-asset-loading');
+                if (el) el.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:6px;"></i>Failed to load assets.';
+            });
+    }
+
+    function renderAwGrid(images) {
+        var grid = document.getElementById('allinone-welcome-asset-grid');
+        var loading = document.getElementById('allinone-welcome-asset-loading');
+        var empty = document.getElementById('allinone-welcome-asset-empty');
+        if (!grid) return;
+        if (loading) loading.style.display = 'none';
+        grid.querySelectorAll('.awap-item').forEach(function (el) { el.remove(); });
+        if (!images.length) { if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        images.forEach(function (img) {
+            var item = document.createElement('div');
+            item.className = 'awap-item';
+            item.classList.add('user-asset-picker-item');
+            item.title = img.file_name;
+            item.innerHTML =
+                '<div class="user-asset-picker-thumb">' +
+                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                        'class="user-asset-picker-thumb-img" ' +
+                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                '</div>' +
+                '<div class="user-asset-picker-name">' + img.file_name + '</div>';
+            item.addEventListener('click', function () { selectAllinoneWelcomeAsset(img.url, img.file_name); });
+            grid.appendChild(item);
+        });
+    }
+
+    window.filterAllinoneWelcomeAssets = function () {
+        var q = (document.getElementById('allinone-welcome-asset-search').value || '').toLowerCase();
+        var filtered = q ? _awAssets.filter(function (i) { return i.file_name.toLowerCase().indexOf(q) !== -1; }) : _awAssets;
+        renderAwGrid(filtered);
+    };
+
+    window.selectAllinoneWelcomeAsset = function (url, fileName) {
+        var acField = document.getElementById('allinone_welcome_img_autocomplete_url');
+        if (acField) acField.value = url;
+        var welcomeInput = document.getElementById('allinone_welcome_img_input');
+        if (welcomeInput) welcomeInput.value = '';
+        var deleteFlag = document.getElementById('allinone_welcome_img_delete');
+        if (deleteFlag) deleteFlag.value = '0';
+        var thumb = document.getElementById('welcome-img-preview');
+        if (thumb) thumb.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:6px;object-fit:cover;"><span style="font-size:13px;color:var(--text-muted);">' + (fileName || 'Asset selected') + '</span>';
+        var deleteBtn = document.getElementById('welcome-delete-btn');
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        var overlay = document.getElementById('preview-welcome-overlay');
+        if (overlay) overlay.dataset.assetUrl = url;
+        var imgEl = document.getElementById('preview-welcome-img');
+        if (imgEl) imgEl.src = url;
+        closeAllinoneWelcomeAssetPicker();
+    };
+}());
+
+(function () {
+    var _aoAssets = [];
+    var _aoLoaded = false;
+
+    window.openAllinoneAssetPicker = function () {
+        var overlay = document.getElementById('allinone-asset-picker-modal');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        var s = document.getElementById('allinone-asset-search');
+        if (s) s.value = '';
+        if (!_aoLoaded) loadAoAssets();
+        else renderAoGrid(_aoAssets);
+    };
+
+    window.closeAllinoneAssetPicker = function () {
+        var overlay = document.getElementById('allinone-asset-picker-modal');
+        if (overlay) overlay.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var overlay = document.getElementById('allinone-asset-picker-modal');
+        if (overlay) overlay.addEventListener('click', function (e) { if (e.target === this) closeAllinoneAssetPicker(); });
+    });
+
+    function loadAoAssets() {
+        fetch('/api/user/image_assets')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _aoLoaded = true;
+                _aoAssets = (data.images || []);
+                renderAoGrid(_aoAssets);
+            })
+            .catch(function () {
+                var el = document.getElementById('allinone-asset-loading');
+                if (el) el.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="color:#ef4444;margin-right:6px;"></i>Failed to load assets.';
+            });
+    }
+
+    function renderAoGrid(images) {
+        var grid = document.getElementById('allinone-asset-grid');
+        var loading = document.getElementById('allinone-asset-loading');
+        var empty = document.getElementById('allinone-asset-empty');
+        if (!grid) return;
+        if (loading) loading.style.display = 'none';
+        grid.querySelectorAll('.aoap-item').forEach(function (el) { el.remove(); });
+        if (!images.length) { if (empty) empty.style.display = 'block'; return; }
+        if (empty) empty.style.display = 'none';
+        images.forEach(function (img) {
+            var item = document.createElement('div');
+            item.className = 'aoap-item';
+            item.classList.add('user-asset-picker-item');
+            item.title = img.file_name;
+            item.innerHTML =
+                '<div class="user-asset-picker-thumb">' +
+                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                        'class="user-asset-picker-thumb-img" ' +
+                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                '</div>' +
+                '<div class="user-asset-picker-name">' + img.file_name + '</div>';
+            item.addEventListener('click', function () { selectAllinoneAsset(img.url, img.file_name); });
+            grid.appendChild(item);
+        });
+    }
+
+    window.filterAoAssets = function () {
+        var q = (document.getElementById('allinone-asset-search').value || '').toLowerCase();
+        var filtered = q ? _aoAssets.filter(function (i) { return i.file_name.toLowerCase().indexOf(q) !== -1; }) : _aoAssets;
+        renderAoGrid(filtered);
+    };
+
+    window.selectAllinoneAsset = function (url, fileName) {
+        var acField = document.getElementById('allinone_profile_img_autocomplete_url');
+        if (acField) acField.value = url;
+        var profileInput = document.getElementById('allinone_profile_img_input');
+        if (profileInput) profileInput.value = '';
+        var del = document.getElementById('allinone_profile_img_delete');
+        if (del) del.value = '0';
+
+        var profilePreview = document.getElementById('allinone-cover-img-preview');
+        if (profilePreview) {
+            profilePreview.innerHTML = '<img src="' + url + '" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:var(--text-muted);margin-left:10px;">' + (fileName || 'Asset selected') + '</span>';
+        }
+        var removeBtn = document.getElementById('allinone-cover-img-remove-btn');
+        if (removeBtn) removeBtn.style.display = 'inline-flex';
+
+        ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function (id) {
+            var el = document.getElementById(id); if (el) { el.src = url; el.style.display = ''; }
+        });
+        var t1Hdr = document.getElementById('allinone-t1-preview-header');
+        if (t1Hdr) t1Hdr.style.display = '';
+        var t1Body = document.getElementById('allinone-t1-preview-body');
+        if (t1Body) { t1Body.style.marginTop = ''; t1Body.style.borderRadius = ''; }
+        var t1ThumbImg = document.getElementById('allinone-t1-thumb-header-img');
+        if (t1ThumbImg) { t1ThumbImg.src = url; t1ThumbImg.style.display = 'block'; }
+        var t1ThumbPh = document.getElementById('allinone-t1-thumb-placeholder');
+        if (t1ThumbPh) t1ThumbPh.style.display = 'none';
+        ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function (id) {
+            var el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+        var ph = document.getElementById('allinone-preview-profile-img');
+        if (!ph) {
+            var circle = document.getElementById('allinone-preview-profile-circle');
+            if (circle) { var im = document.createElement('img'); im.id = 'allinone-preview-profile-img'; im.src = url; im.alt = ''; im.style.cssText = 'width:100%;height:100%;object-fit:cover;'; circle.innerHTML = ''; circle.appendChild(im); }
+        }
+
+        closeAllinoneAssetPicker();
+    };
+}());
 </script>
 {% endblock %}

@@ -1438,13 +1438,15 @@ function saveAndNext() {
             <input type="text" id="links-welcome-asset-search" placeholder="Search by filename…" oninput="filterLinksWelcomeAssets(this.value)"
                 style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
         </div>
-        <div id="links-welcome-asset-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;min-height:180px;">
-            <div id="links-welcome-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
-                <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="links-welcome-asset-grid" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;">
+                <div id="links-welcome-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+                </div>
             </div>
-        </div>
-        <div id="links-welcome-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
-            <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            <div id="links-welcome-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            </div>
         </div>
     </div>
 </div>
@@ -1500,10 +1502,10 @@ function saveAndNext() {
             item.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;background:#252619;';
             item.title = img.file_name;
             item.innerHTML =
-                '<div style="width:100%;padding-top:100%;position:relative;background:#181914;">' +
+                '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;">' +
                     '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
-                        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
-                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                        'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
+                        'onerror="this.parentNode.innerHTML=\'<i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i>\'">' +
                 '</div>' +
                 '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
             item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
@@ -1554,13 +1556,15 @@ function saveAndNext() {
             <input type="text" id="links-asset-search" placeholder="Search by filename…" oninput="filterLinksAssets(this.value)"
                 style="width:100%;padding:8px 12px;background:#252619;border:1px solid #3A3B30;border-radius:8px;color:#E8E5DC;font-size:13px;box-sizing:border-box;outline:none;">
         </div>
-        <div id="links-asset-grid" style="flex:1;overflow-y:auto;padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;min-height:180px;">
-            <div id="links-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
-                <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="links-asset-grid" style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;">
+                <div id="links-asset-loading" style="grid-column:1/-1;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>Loading your images…
+                </div>
             </div>
-        </div>
-        <div id="links-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
-            <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            <div id="links-asset-empty" style="display:none;text-align:center;color:#8A8878;padding:40px 0;font-size:13px;">
+                <i class="fa-regular fa-image" style="font-size:32px;display:block;margin-bottom:10px;opacity:.4;"></i>No images found in your assets.
+            </div>
         </div>
     </div>
 </div>
@@ -1613,10 +1617,10 @@ function saveAndNext() {
             item.style.cssText = 'cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid transparent;transition:border-color .2s;background:#252619;';
             item.title = img.file_name;
             item.innerHTML =
-                '<div style="width:100%;padding-top:100%;position:relative;background:#181914;">' +
+                '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;">' +
                     '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
-                        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
-                        'onerror="this.parentNode.innerHTML=\'<div style=&quot;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;&quot;><i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i></div>\'">' +
+                        'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
+                        'onerror="this.parentNode.innerHTML=\'<i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i>\'">' +
                 '</div>' +
                 '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
             item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });

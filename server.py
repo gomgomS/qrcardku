@@ -5136,6 +5136,24 @@ def qr_update_content_allinone(qrcard_id):
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_allinone_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
+        _mgd_aio = database.get_db_conn(config.mainDB)
+        if request.form.get("reset_qr_style") == "1":
+            _qr_unset_aio = {
+                "qr_image_url": "",
+                "qr_composite_url": "",
+                "qr_dot_style": "",
+                "qr_corner_style": "",
+                "qr_dot_color": "",
+                "qr_bg_color": "",
+            }
+            _mgd_aio.db_qrcard.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _qr_unset_aio},
+            )
+            _mgd_aio.db_qrcard_allinone.update_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                {"$unset": _qr_unset_aio},
+            )
         result = proc.update_allinone_content(request, session, app.root_path, qrcard_id)
         if result.get("status") != "ok":
             return view_update_allinone.view_update_allinone(app).update_qr_content_html(

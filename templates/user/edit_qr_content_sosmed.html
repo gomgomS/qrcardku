@@ -773,8 +773,10 @@
         <div style="padding:14px 16px;border-bottom:1px solid #2C2D25;">
             <input id="sosmed-welcome-asset-search" type="text" placeholder="Search image..." oninput="filterSosmedWelcomeAssets()" style="width:100%;background:#2A2B22;border:1px solid #3A3B30;border-radius:10px;padding:10px 12px;color:#E8E5DC;outline:none;">
         </div>
-        <div id="sosmed-welcome-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;overflow:auto;"></div>
-        <div id="sosmed-welcome-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="sosmed-welcome-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;"></div>
+            <div id="sosmed-welcome-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+        </div>
     </div>
 </div>
 
@@ -788,8 +790,10 @@
         <div style="padding:14px 16px;border-bottom:1px solid #2C2D25;">
             <input id="sosmed-asset-search" type="text" placeholder="Search image..." oninput="filterSosmedAssets()" style="width:100%;background:#2A2B22;border:1px solid #3A3B30;border-radius:10px;padding:10px 12px;color:#E8E5DC;outline:none;">
         </div>
-        <div id="sosmed-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;overflow:auto;"></div>
-        <div id="sosmed-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+        <div style="flex:1;min-height:0;overflow-y:auto;">
+            <div id="sosmed-asset-grid" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;"></div>
+            <div id="sosmed-asset-empty" style="display:none;padding:22px;color:#A8A79A;text-align:center;">No matching image assets.</div>
+        </div>
     </div>
 </div>
 
@@ -1252,7 +1256,7 @@
                 var item = document.createElement('button');
                 item.type = 'button';
                 item.style.cssText = 'border:1px solid transparent;background:#2A2B22;border-radius:10px;padding:6px;cursor:pointer;text-align:left;';
-                item.innerHTML = '<img src="' + img.url + '" alt="' + (img.file_name || 'asset') + '" style="width:100%;height:88px;object-fit:cover;border-radius:8px;display:block;">'
+                item.innerHTML = '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:8px;"><img src="' + img.url + '" alt="' + (img.file_name || 'asset') + '" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;"></div>'
                     + '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (img.file_name || 'asset') + '</div>';
                 item.addEventListener('click', function () { onSelect(img.url); });
                 grid.appendChild(item);
