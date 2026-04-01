@@ -728,6 +728,10 @@
         </button>
     </div>
     <div id="garbage-list"></div>
+    <div id="garbage-pagination-bar" class="pagination-bar" style="display:none;">
+        <div class="pagination-info" id="garbage-pagination-info"></div>
+        <div class="pagination-btns" id="garbage-pagination-btns"></div>
+    </div>
 </div>
 
 </div><!-- /panel-garbage -->
@@ -794,6 +798,30 @@
 
     var TOTAL_BYTES = {{ info.total_bytes }};
     var LIMIT_BYTES = {{ info.limit_bytes }};
+
+    function updateUsageBar(freedBytes) {
+        TOTAL_BYTES = Math.max(0, TOTAL_BYTES - freedBytes);
+        var pct = LIMIT_BYTES > 0 ? Math.min(100, (TOTAL_BYTES / LIMIT_BYTES) * 100) : 0;
+
+        // bar fill
+        var fill = document.querySelector('.usage-bar-fill');
+        if (fill) {
+            fill.style.width = pct + '%';
+            fill.className = 'usage-bar-fill' + (pct >= 90 ? ' danger' : pct >= 70 ? ' warn' : '');
+        }
+
+        // used text
+        var usedEl = document.querySelector('.usage-used');
+        if (usedEl) usedEl.textContent = fmtBytes(TOTAL_BYTES);
+
+        // "Used: X" stat
+        var stats = document.querySelectorAll('.usage-stat span');
+        if (stats.length > 0) stats[0].textContent = 'Used: ' + fmtBytes(TOTAL_BYTES);
+
+        // "Free: X" stat
+        var freeBytes = Math.max(0, LIMIT_BYTES - TOTAL_BYTES);
+        if (stats.length > 1) stats[1].textContent = 'Free: ' + fmtBytes(freeBytes);
+    }
 
     var _activeCat   = 'all';
     var _activeQr    = 'all';
@@ -988,6 +1016,7 @@
                 document.getElementById('del-modal-overlay').classList.remove('open');
                 _currentPage = 1;
                 renderPage();
+                updateUsageBar(res.freed_bytes || 0);
                 showToast('Deleted "' + _pendingQrName + '" successfully');
             } else {
                 alert('Error: ' + (res.error || 'Could not delete. Please try again.'));
@@ -1014,6 +1043,69 @@
 
     // ── Garbage collection ────────────────────────────────────────────────
     var _garbageFiles = [];
+    var _gcPage    = 1;
+    var _gcPerPage = 10;
+
+    function renderGarbagePage() {
+        var total      = _garbageFiles.length;
+        var totalPages = Math.max(1, Math.ceil(total / _gcPerPage));
+        if (_gcPage > totalPages) _gcPage = totalPages;
+
+        var start = (_gcPage - 1) * _gcPerPage;
+        var end   = start + _gcPerPage;
+        var slice = _garbageFiles.slice(start, end);
+
+        var html = '';
+        slice.forEach(function(f) {
+            html += '<div class="garbage-row">'
+                + '<div class="file-icon ' + f.category + '">' + iconForCat(f.category) + '</div>'
+                + '<div class="file-info">'
+                +   '<div class="file-name" title="' + f.fname + '">' + f.fname + '</div>'
+                +   '<div class="file-meta"><span class="orphan-badge"><i class="fa-solid fa-unlink"></i> Not used</span></div>'
+                + '</div>'
+                + '<div class="file-size">' + f.size_fmt + '</div>'
+                + '</div>';
+        });
+        document.getElementById('garbage-list').innerHTML = html;
+
+        var bar  = document.getElementById('garbage-pagination-bar');
+        var info = document.getElementById('garbage-pagination-info');
+        var btns = document.getElementById('garbage-pagination-btns');
+
+        bar.style.display = totalPages > 1 ? 'flex' : 'none';
+        if (totalPages <= 1) return;
+
+        var showFrom = total ? start + 1 : 0;
+        var showTo   = Math.min(end, total);
+        info.textContent = 'Showing ' + showFrom + '–' + showTo + ' of ' + total + ' file' + (total !== 1 ? 's' : '');
+
+        btns.innerHTML = '';
+        function makeGcBtn(label, page, isActive, isDisabled) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'page-btn' + (isActive ? ' active' : '');
+            b.disabled = isDisabled;
+            b.innerHTML = label;
+            if (!isDisabled) b.addEventListener('click', function() { _gcPage = page; renderGarbagePage(); });
+            return b;
+        }
+        btns.appendChild(makeGcBtn('<i class="fa-solid fa-chevron-left"></i>', _gcPage - 1, false, _gcPage === 1));
+        var pages = [];
+        for (var p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || (p >= _gcPage - 1 && p <= _gcPage + 1)) pages.push(p);
+        }
+        var prev = 0;
+        pages.forEach(function(p) {
+            if (prev && p - prev > 1) {
+                var el = document.createElement('button');
+                el.type = 'button'; el.className = 'page-btn'; el.disabled = true; el.textContent = '…';
+                btns.appendChild(el);
+            }
+            btns.appendChild(makeGcBtn(p, p, p === _gcPage, false));
+            prev = p;
+        });
+        btns.appendChild(makeGcBtn('<i class="fa-solid fa-chevron-right"></i>', _gcPage + 1, false, _gcPage === totalPages));
+    }
 
     function iconForCat(cat) {
         if (cat === 'image') return '<i class="fa-regular fa-image"></i>';
@@ -1049,18 +1141,8 @@
                 summary.textContent = _garbageFiles.length + ' unused file' + (_garbageFiles.length !== 1 ? 's' : '') + ' — ' + data.total_fmt + ' can be freed';
                 btn.style.display   = '';
 
-                var html = '';
-                _garbageFiles.forEach(function(f) {
-                    html += '<div class="garbage-row">'
-                        + '<div class="file-icon ' + f.category + '">' + iconForCat(f.category) + '</div>'
-                        + '<div class="file-info">'
-                        +   '<div class="file-name" title="' + f.fname + '">' + f.fname + '</div>'
-                        +   '<div class="file-meta"><span class="orphan-badge"><i class="fa-solid fa-unlink"></i> Not used</span></div>'
-                        + '</div>'
-                        + '<div class="file-size">' + f.size_fmt + '</div>'
-                        + '</div>';
-                });
-                list.innerHTML = html;
+                _gcPage = 1;
+                renderGarbagePage();
             })
             .catch(function() {
                 document.getElementById('garbage-summary').textContent = 'Could not check for unused files.';
@@ -1091,7 +1173,9 @@
             closeGcModal();
             btn.disabled = false;
             if (data.ok) {
+                updateUsageBar(data.freed_bytes || 0);
                 showToast('Cleaned up ' + data.deleted + ' file' + (data.deleted !== 1 ? 's' : '') + ', freed ' + data.freed_fmt);
+                _gcPage = 1;
                 loadGarbage();
             } else {
                 alert('Cleanup failed: ' + (data.error || 'Unknown error'));

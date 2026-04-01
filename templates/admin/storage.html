@@ -265,6 +265,34 @@
     .toast.error   .toast-icon { color: var(--danger); }
 
     input[type="checkbox"] { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; }
+
+    /* Pagination */
+    .pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 4px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .pagination-info { font-size: 12px; color: #8A8878; }
+    .pagination-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .page-btn {
+        min-width: 34px; height: 34px;
+        padding: 0 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: transparent;
+        color: var(--text-color);
+        font-size: 13px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .page-btn:hover:not(.active):not(.disabled) { border-color: var(--primary); color: var(--primary); background: rgba(235,168,27,.08); }
+    .page-btn.active { background: var(--primary); color: #111209; border-color: var(--primary); font-weight: 700; }
+    .page-btn.disabled { opacity: 0.3; pointer-events: none; cursor: default; }
 </style>
 
 <div class="storage-header">
@@ -293,7 +321,7 @@
         &#128465; Hard Delete Selected
     </button>
     <button class="btn-hard-del" id="btn-hard-del-all" onclick="hardDelete('all')" {% if total_count == 0 %}disabled{% endif %}>
-        &#128293; Hard Delete All ({{ total_count }})
+        &#128293; Hard Delete All ({{ total_count }} total)
     </button>
     <button class="btn-outline-sm" onclick="toggleSelectAll()">&#9745; Select All</button>
     <button class="btn-outline-sm" onclick="clearSelection()">&#9744; Clear</button>
@@ -332,6 +360,37 @@
         </tbody>
     </table>
 </div>
+    {% if total_pages > 1 %}
+    <div class="pagination-bar">
+        <div class="pagination-info">
+            Showing {{ (page - 1) * per_page + 1 }}–{{ [(page * per_page), total_count] | min }} of {{ total_count }} assets
+        </div>
+        <div class="pagination-btns">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}" class="page-btn"><i class="fa-solid fa-chevron-left"></i></a>
+            {% else %}
+            <span class="page-btn disabled"><i class="fa-solid fa-chevron-left"></i></span>
+            {% endif %}
+
+            {% set ns = namespace(prev=0) %}
+            {% for p in range(1, total_pages + 1) %}
+                {% if p == 1 or p == total_pages or (p >= page - 1 and p <= page + 1) %}
+                    {% if ns.prev and p - ns.prev > 1 %}
+                    <span class="page-btn disabled">…</span>
+                    {% endif %}
+                    <a href="?page={{ p }}" class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+                    {% set ns.prev = p %}
+                {% endif %}
+            {% endfor %}
+
+            {% if page < total_pages %}
+            <a href="?page={{ page + 1 }}" class="page-btn"><i class="fa-solid fa-chevron-right"></i></a>
+            {% else %}
+            <span class="page-btn disabled"><i class="fa-solid fa-chevron-right"></i></span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 {% else %}
 <div class="empty-state">
     <div class="icon">&#10003;</div>
@@ -358,6 +417,8 @@
 
 <script>
     var _allAssets = {{ assets | tojson | safe }};
+    var _currentPage = {{ page }};
+    var _totalCount  = {{ total_count }};
 
     // ── Selection ────────────────────────────────────────────────────────────
     function getChecked() {
@@ -426,7 +487,7 @@
         var label;
         if (mode === 'all') {
             ids = 'all';
-            label = 'all pending (' + _allAssets.length + ')';
+            label = 'all pending (' + _totalCount + ')';
         } else {
             ids = getChecked();
             if (!ids.length) { showToast('Select at least one asset.', 'error'); return; }
@@ -451,26 +512,16 @@
         .then(function(data) {
             hideProgress();
             if (data.ok) {
-                // Remove deleted rows from table
-                var deletedSet = new Set(mode === 'all' ?
-                    _allAssets.map(function(a) { return a.asset_id; }) :
-                    ids);
-                document.querySelectorAll('#assets-tbody tr').forEach(function(row) {
-                    if (deletedSet.has(row.dataset.assetId)) {
-                        row.style.transition = 'opacity .3s';
-                        row.style.opacity = '0';
-                        setTimeout(function() { if (row.parentNode) row.parentNode.removeChild(row); }, 320);
-                    }
-                });
-                // Update stats
-                var remaining = _allAssets.filter(function(a) { return !deletedSet.has(a.asset_id); });
-                _allAssets = remaining;
-                document.getElementById('stat-count').textContent = remaining.length;
-                document.getElementById('stat-selected').textContent = '0';
-                document.getElementById('btn-hard-del-all').textContent = '\uD83D\uDD25 Hard Delete All (' + remaining.length + ')';
-                if (remaining.length === 0) document.getElementById('btn-hard-del-all').disabled = true;
-                clearSelection();
                 showToast('Deleted ' + data.deleted + ' assets (' + data.freed_fmt + ') from R2.', 'success');
+                // Reload after short delay so toast is visible
+                setTimeout(function() {
+                    if (mode === 'all') {
+                        window.location.href = '?page=1';
+                    } else {
+                        // Stay on current page; if it's now empty the BE will clamp
+                        window.location.href = '?page=' + _currentPage;
+                    }
+                }, 1200);
             } else {
                 showToast('Error: ' + (data.error || 'Delete failed.'), 'error');
             }

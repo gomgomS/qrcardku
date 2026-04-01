@@ -594,10 +594,24 @@ def admin_storage():
         return redirect(url_for("admin_login_view"))
     from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_adm
     from pytavia_core import database as _db_adm, config as _cfg_adm
+    import math
+
+    _per_page = 50
+    try:
+        _page = max(1, int(request.args.get("page", 1)))
+    except (ValueError, TypeError):
+        _page = 1
+
     _atp = _atp_adm()
-    assets = _atp.get_soft_deleted_assets(limit=2000)
-    total_size = sum(a.get("file_size", 0) for a in assets)
-    # Attach user email to each asset for display
+    total_count = _atp.get_soft_deleted_count()
+    total_pages = max(1, math.ceil(total_count / _per_page))
+    if _page > total_pages:
+        _page = total_pages
+
+    offset = (_page - 1) * _per_page
+    assets = _atp.get_soft_deleted_assets(limit=_per_page, offset=offset)
+
+    # Attach user email
     _db_adm_conn = _db_adm.get_db_conn(_cfg_adm.mainDB)
     user_ids = list({a["fk_user_id"] for a in assets if a.get("fk_user_id")})
     user_map = {}
@@ -605,12 +619,17 @@ def admin_storage():
         user_map[u["fk_user_id"]] = u.get("email", u["fk_user_id"])
     for a in assets:
         a["user_email"] = user_map.get(a.get("fk_user_id", ""), a.get("fk_user_id", "—"))
+
+    total_size = sum(a.get("file_size", 0) for a in assets)
     from pytavia_modules.user.user_storage_proc import _fmt_size
     return render_template(
         "admin/storage.html",
         assets=assets,
-        total_count=len(assets),
+        total_count=total_count,
         total_size_fmt=_fmt_size(total_size),
+        page=_page,
+        per_page=_per_page,
+        total_pages=total_pages,
         admin_name=session.get("admin_name", ""),
         admin_email=session.get("admin_email", ""),
         admin_role=session.get("admin_role", ""),
@@ -6557,7 +6576,6 @@ def api_storage_cleanup_garbage():
         return jsonify({"ok": False, "error": "Not logged in"}), 401
     try:
         from pytavia_modules.user import user_storage_proc as _usp
-        from pytavia_modules.storage import r2_storage_proc as _r2_mod
         from pytavia_modules.user import asset_tracker_proc as _atp
         from pytavia_core import database as _db_mod, config as _cfg
 
@@ -6566,7 +6584,6 @@ def api_storage_cleanup_garbage():
         if not garbage:
             return jsonify({"ok": True, "deleted": 0, "freed_bytes": 0, "freed_fmt": "0 B"})
 
-        _r2 = _r2_mod.r2_storage_proc()
         tracker = _atp.asset_tracker_proc(app)
         freed_bytes = 0
         deleted = 0
@@ -6574,11 +6591,7 @@ def api_storage_cleanup_garbage():
             key = f.get("r2_key", "")
             if not key:
                 continue
-            try:
-                _r2.delete_file(key)
-            except Exception:
-                pass
-            tracker.untrack_key(key)
+            tracker.soft_delete_key(key)
             freed_bytes += f.get("size", 0)
             deleted += 1
 
@@ -6612,9 +6625,15 @@ def api_storage_delete_qr_assets():
         if not record:
             return jsonify({"ok": False, "error": "QR not found"}), 404
 
-        # Soft-delete tracked assets (no R2 deletion — deferred to admin bulk cleanup)
+        # Calculate freed bytes before soft-deleting
         from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_st2
-        _atp_st2().soft_delete_qr(qrcard_id)
+        _tracker_st2 = _atp_st2()
+        qr_size_info = _tracker_st2.get_qr_size(qrcard_id)
+        freed_bytes  = qr_size_info.get("bytes", 0)
+        freed_count  = qr_size_info.get("files", 0)
+
+        # Soft-delete tracked assets (no R2 deletion — deferred to admin bulk cleanup)
+        _tracker_st2.soft_delete_qr(qrcard_id)
 
         # Mark QR as deleted in DB (main collection + index + type-specific)
         getattr(_db, collection).update_one(
@@ -6651,7 +6670,8 @@ def api_storage_delete_qr_assets():
             detail={"note": "soft_deleted_assets_pending_r2_cleanup"},
         )
 
-        return jsonify({"ok": True, "deleted_count": 0, "freed_bytes": 0})
+        from pytavia_modules.user.user_storage_proc import _fmt_size as _fmt_sz
+        return jsonify({"ok": True, "deleted_count": freed_count, "freed_bytes": freed_bytes, "freed_fmt": _fmt_sz(freed_bytes)})
     except Exception as e:
         app.logger.debug(e)
         return jsonify({"ok": False, "error": "Server error"}), 500
@@ -6728,6 +6748,34 @@ def user_frames_delete(frame_id):
     fk_user_id = session["fk_user_id"]
     qr_frame_proc.qr_frame_proc(app).delete_frame(fk_user_id, frame_id)
     return redirect(url_for("user_templates"))
+
+
+@app.route("/user/plans")
+def user_plans():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    import time
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    fk_user_id = session["fk_user_id"]
+    now = time.time()
+    subscriptions = list(_db.db_user_subscription.find(
+        {"fk_user_id": fk_user_id},
+        {"_id": 0}
+    ).sort("expires_at", -1))
+    # Auto-mark expired
+    for s in subscriptions:
+        if s.get("status") == "ACTIVE" and s.get("expires_at", 0) < now:
+            _db.db_user_subscription.update_one(
+                {"subscription_id": s["subscription_id"]},
+                {"$set": {"status": "EXPIRED"}}
+            )
+            s["status"] = "EXPIRED"
+    return render_template("user/plans.html",
+        active_page="plans",
+        subscriptions=subscriptions,
+        now=now,
+    )
 
 
 @app.route("/user/settings")
