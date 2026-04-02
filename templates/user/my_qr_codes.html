@@ -1045,12 +1045,31 @@
     </div>
 </div>
 
-<div class="card" style="margin-bottom: 24px; background-color: #2A2810; border-color: #fde047; padding: 12px 16px;">
+{% if sub_info and sub_info.has_active %}
+<div class="card" style="margin-bottom: 24px; background-color: #2A2810; border-color: #fde047; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
     <span style="color: #ca8a04; font-size: 13px;">
-        <i class="fa-solid fa-circle-info"></i> You are using QRkartu's free trial. 2 days remaining
+        <i class="fa-solid fa-circle-info"></i>
+        {% if sub_info.is_trial %}
+            You are using QRkartu's free trial.
+        {% else %}
+            Active plan: <strong>{{ sub_info.plan_name }}</strong>.
+        {% endif %}
+        {% if sub_info.days_remaining > 0 %}
+            {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} remaining.
+        {% else %}
+            Expires today!
+        {% endif %}
     </span>
-    <button class="btn-primary" style="float: right; padding: 4px 12px; font-size: 12px;">Update</button>
+    <a href="/user/plans" class="btn-primary" style="padding: 4px 12px; font-size: 12px; text-decoration: none;">Upgrade</a>
 </div>
+{% else %}
+<div class="card" style="margin-bottom: 24px; background-color: #2d1a1a; border-color: #dc2626; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+    <span style="color: #fca5a5; font-size: 13px;">
+        <i class="fa-solid fa-ban"></i> You don't have an active subscription. QR creation is disabled.
+    </span>
+    <a href="/user/plans" class="btn-primary" style="padding: 4px 12px; font-size: 12px; background-color: #dc2626; text-decoration: none;">Subscribe</a>
+</div>
+{% endif %}
 
 <form id="bulk-delete-form" method="POST" action="/qr/delete/bulk" style="margin: 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

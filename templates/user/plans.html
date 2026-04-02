@@ -94,6 +94,15 @@
     .empty-subs { padding: 40px 20px; text-align: center; color: var(--text-muted); }
     .empty-subs i { font-size: 36px; opacity: .3; margin-bottom: 12px; display: block; }
     .empty-subs p { font-size: 13px; }
+
+    .countdown-badge {
+        display: inline-block; margin-left: 5px;
+        font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+        white-space: nowrap; vertical-align: middle;
+    }
+    .countdown-badge.urgent  { background: rgba(239,68,68,.15);  color: #f87171; }
+    .countdown-badge.warning { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .countdown-badge.ok      { background: rgba(34,197,94,.12);  color: #4ade80; }
 </style>
 {% endblock %}
 
@@ -187,7 +196,12 @@
             <td>{{ s.max_storage_mb }} MB</td>
             <td>IDR {{ "{:,.0f}".format(s.price_paid_idr).replace(',', '.') }}</td>
             <td class="ts-cell" data-ts="{{ s.started_at }}">—</td>
-            <td class="ts-cell" data-ts="{{ s.expires_at }}">—</td>
+            <td>
+                <span class="ts-cell" data-ts="{{ s.expires_at }}">—</span>
+                {% if s.status == 'ACTIVE' %}
+                <span class="countdown-badge" data-expires="{{ s.expires_at }}"></span>
+                {% endif %}
+            </td>
             <td>
                 <span class="status-badge {{ s.status | lower }}">
                     {% if s.status == 'ACTIVE' %}<i class="fa-solid fa-circle" style="font-size:7px;"></i>{% endif %}
@@ -222,12 +236,37 @@
 
 {% block extra_js %}
 <script>
-    document.querySelectorAll('.ts-cell').forEach(function(td) {
-        var ts = parseFloat(td.dataset.ts);
+    document.querySelectorAll('.ts-cell').forEach(function(el) {
+        var ts = parseFloat(el.dataset.ts);
         if (ts && ts > 0) {
-            td.textContent = new Date(ts * 1000).toLocaleDateString('id-ID', {
+            el.textContent = new Date(ts * 1000).toLocaleDateString('id-ID', {
                 day: '2-digit', month: 'short', year: 'numeric'
             });
+        }
+    });
+
+    document.querySelectorAll('.countdown-badge').forEach(function(el) {
+        var expires = parseFloat(el.dataset.expires);
+        if (!expires) return;
+        var now = Math.floor(Date.now() / 1000);
+        var diff = expires - now;
+        var days = Math.floor(diff / 86400);
+        var hours = Math.floor((diff % 86400) / 3600);
+        if (diff <= 0) {
+            el.textContent = 'Expired';
+            el.className = 'countdown-badge urgent';
+        } else if (days === 0) {
+            el.textContent = hours + 'h left';
+            el.className = 'countdown-badge urgent';
+        } else if (days <= 7) {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge urgent';
+        } else if (days <= 30) {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge warning';
+        } else {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge ok';
         }
     });
 

@@ -1,0 +1,609 @@
+{% extends "admin/base.html" %}
+{% block title %}User Detail — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .back-link {
+        display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px;
+        color: #8A8878; font-size: 13px; text-decoration: none; transition: color 0.18s;
+    }
+    .back-link:hover { color: var(--primary); }
+
+    .user-hero {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px; padding: 24px 28px;
+        display: flex; align-items: center; gap: 20px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .hero-avatar {
+        width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+        background: rgba(235,168,27,0.15); color: var(--primary);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; font-weight: 800;
+    }
+    .hero-info { flex: 1; min-width: 0; }
+    .hero-name { font-size: 20px; font-weight: 700; color: var(--text-color); }
+    .hero-meta { font-size: 12px; color: #8A8878; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .hero-meta span { display: flex; align-items: center; gap: 5px; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+    .stat-card {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px; padding: 18px 20px;
+    }
+    .stat-label { font-size: 11px; color: #8A8878; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+    .stat-value { font-size: 24px; font-weight: 800; color: var(--text-color); }
+    .stat-value.green  { color: #22c55e; }
+    .stat-value.red    { color: #f87171; }
+    .stat-value.blue   { color: #60a5fa; }
+    .stat-value.yellow { color: var(--primary); }
+
+    .section-title {
+        font-size: 15px; font-weight: 700; color: var(--text-color);
+        margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title i { color: var(--primary); }
+
+    .table-wrap {
+        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px; overflow-x: auto; margin-bottom: 32px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--text-color); }
+    thead th {
+        padding: 12px 16px; font-size: 11px; font-weight: 600; color: #8A8878;
+        text-transform: uppercase; letter-spacing: .4px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0,0,0,0.08); white-space: nowrap;
+    }
+    tbody td { padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .plan-badge {
+        font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px;
+        text-transform: uppercase; letter-spacing: .3px; display: inline-block;
+    }
+    .plan-badge.single    { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .plan-badge.team      { background: rgba(168,85,247,.15); color: #c084fc; }
+    .plan-badge.corporate { background: rgba(235,168,27,.15); color: var(--primary); }
+
+    .status-badge {
+        font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .status-badge.active    { background: rgba(34,197,94,.15);  color: #22c55e; }
+    .status-badge.expired   { background: rgba(239,68,68,.12);  color: #f87171; }
+    .status-badge.pending   { background: rgba(234,179,8,.12);  color: #eab308; }
+    .status-badge.cancelled { background: rgba(255,255,255,.08); color: #a1a1aa; }
+
+    .qr-type-chip {
+        font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 8px;
+        background: rgba(255,255,255,0.07); color: #8A8878; text-transform: uppercase;
+    }
+    .scan-num { font-weight: 700; color: #60a5fa; }
+
+    .empty-row td { text-align: center; color: #8A8878; padding: 32px !important; }
+
+    .btn-send-email {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 9px 20px; background: rgba(235,168,27,0.1);
+        border: 1px solid rgba(235,168,27,0.3); border-radius: 9px;
+        color: var(--primary); font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: background .18s; flex-shrink: 0;
+    }
+    .btn-send-email:hover { background: rgba(235,168,27,0.2); }
+
+    /* Send Email Modal */
+    .em-backdrop {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000;
+        display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .em-box {
+        background: #181914; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+        width: 100%; max-width: 680px; max-height: 92vh; display: flex; flex-direction: column;
+        overflow: hidden;
+    }
+    .em-head {
+        padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.08);
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .em-title { font-size: 16px; font-weight: 700; color: var(--text-color); }
+    .em-close { background: none; border: none; color: #8A8878; font-size: 20px; cursor: pointer; line-height: 1; }
+    .em-close:hover { color: var(--text-color); }
+    .em-body { padding: 22px 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+    .em-foot { padding: 14px 24px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+
+    /* Steps */
+    .step-row { display: flex; gap: 8px; }
+    .step-type-btn {
+        flex: 1; padding: 14px; border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px; background: rgba(255,255,255,0.03);
+        color: var(--text-color); font-size: 13px; font-weight: 600; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        transition: all .18s;
+    }
+    .step-type-btn i { font-size: 20px; color: #8A8878; transition: color .18s; }
+    .step-type-btn:hover, .step-type-btn.selected {
+        border-color: var(--primary); background: rgba(235,168,27,0.08);
+    }
+    .step-type-btn.selected i { color: var(--primary); }
+    .step-type-btn .type-name { font-size: 14px; font-weight: 700; }
+    .step-type-btn .type-desc { font-size: 11px; color: #8A8878; text-align: center; }
+
+    .em-field-label { font-size: 11px; font-weight: 600; color: #8A8878; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; }
+    .em-input {
+        width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; padding: 10px 12px; color: var(--text-color); font-size: 13px;
+        box-sizing: border-box; font-family: inherit; transition: border-color .2s;
+    }
+    .em-input:focus { outline: none; border-color: var(--primary); background: rgba(235,168,27,0.04); }
+    textarea.em-input { resize: vertical; font-family: 'Courier New', monospace; font-size: 12px; }
+
+    .em-select-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .tab-bar2 { display: flex; gap: 4px; margin-bottom: 6px; }
+    .tab-btn2 { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #8A8878; transition: all .18s; }
+    .tab-btn2.active { background: rgba(235,168,27,0.1); border-color: rgba(235,168,27,0.25); color: var(--primary); }
+
+    .preview-iframe { width: 100%; min-height: 200px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: #fff; }
+
+    .em-status { font-size: 12px; margin-right: auto; display: flex; align-items: center; gap: 6px; }
+    .em-status.ok  { color: #22c55e; }
+    .em-status.err { color: #f87171; }
+    .em-status.sending { color: var(--primary); }
+
+    .btn-send {
+        padding: 9px 24px; background: var(--primary); color: #111209; border: none;
+        border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity .2s;
+        display: flex; align-items: center; gap: 7px;
+    }
+    .btn-send:hover { opacity: .9; }
+    .btn-send:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-cancel-sm { padding: 9px 16px; background: transparent; color: #8A8878; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-cancel-sm:hover { color: var(--text-color); }
+
+    .countdown-badge {
+        display: inline-block; margin-left: 6px;
+        font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+        white-space: nowrap; vertical-align: middle;
+    }
+    .countdown-badge.urgent  { background: rgba(239,68,68,.15);  color: #f87171; }
+    .countdown-badge.warning { background: rgba(245,158,11,.15); color: #fbbf24; }
+    .countdown-badge.ok      { background: rgba(34,197,94,.12);  color: #4ade80; }
+</style>
+
+<a href="/admin/active-users" class="back-link">
+    <i class="fa-solid fa-arrow-left"></i> Back to Active Users
+</a>
+
+<!-- Subscription data for JS -->
+<script>
+var _USER_SUBS = {{ subs | tojson }};
+var _USER_FID  = "{{ user.fk_user_id }}";
+var _NOW_TS    = {{ now }};
+</script>
+
+<!-- User hero -->
+<div class="user-hero">
+    <div class="hero-avatar">{{ (user.name or user.username or '?')[0] | upper }}</div>
+    <div class="hero-info">
+        <div class="hero-name">{{ user.name or user.username or '—' }}</div>
+        <div class="hero-meta">
+            <span><i class="fa-solid fa-at" style="font-size:11px;"></i> {{ user.username or '—' }}</span>
+            <span><i class="fa-solid fa-envelope" style="font-size:11px;"></i> {{ user.email or '—' }}</span>
+            {% if first_purchase > 0 %}
+            <span><i class="fa-solid fa-calendar" style="font-size:11px;"></i> First purchase: <span class="ts-cell" data-ts="{{ first_purchase }}">—</span></span>
+            {% endif %}
+        </div>
+    </div>
+    <button class="btn-send-email" onclick="openEmailModal()">
+        <i class="fa-solid fa-paper-plane"></i> Send Email
+    </button>
+</div>
+
+<!-- Stats cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value yellow" style="font-size:18px;">Rp {{ "{:,.0f}".format(total_spent).replace(',', '.') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Packages</div>
+        <div class="stat-value green">{{ active_pkgs }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Expired Packages</div>
+        <div class="stat-value red">{{ expired_pkgs }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Packages</div>
+        <div class="stat-value">{{ total_pkgs }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active QR Codes</div>
+        <div class="stat-value blue">{{ active_qr_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Scans</div>
+        <div class="stat-value">{{ total_scans }}</div>
+    </div>
+</div>
+
+<!-- Subscription history -->
+<div class="section-title">
+    <i class="fa-solid fa-receipt"></i> Subscription History
+</div>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Plan</th>
+                <th>Price Paid</th>
+                <th>QR Slots</th>
+                <th>Storage</th>
+                <th>Started</th>
+                <th>Expires</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subs %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="plan-badge {{ s.plan_id }}">{{ s.plan_id }}</span>
+                        {{ s.plan_name }}
+                    </div>
+                </td>
+                <td>Rp {{ "{:,.0f}".format(s.price_paid_idr or 0).replace(',', '.') }}</td>
+                <td>{{ s.max_qr }}</td>
+                <td>{{ s.max_storage_mb }} MB</td>
+                <td class="ts-cell" data-ts="{{ s.started_at or s.timestamp }}">—</td>
+                <td>
+                    <span class="ts-cell" data-ts="{{ s.expires_at }}">—</span>
+                    {% if s.status == 'ACTIVE' and s.expires_at > now %}
+                    <span class="countdown-badge" data-expires="{{ s.expires_at }}"></span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% set eff_status = s.status %}
+                    {% if s.status == 'ACTIVE' and s.expires_at <= now %}{% set eff_status = 'EXPIRED' %}{% endif %}
+                    <span class="status-badge {{ eff_status | lower }}">
+                        {% if eff_status == 'ACTIVE' %}<i class="fa-solid fa-circle" style="font-size:6px;"></i>{% endif %}
+                        {{ eff_status }}
+                    </span>
+                </td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="7">No subscriptions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- QR Codes -->
+<div class="section-title">
+    <i class="fa-solid fa-qrcode"></i> Active QR Codes
+</div>
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Short Code</th>
+                <th>Total Scans</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for q in qr_list %}
+            <tr>
+                <td style="font-weight:600;">{{ q.name or '—' }}</td>
+                <td><span class="qr-type-chip">{{ q.qr_type }}</span></td>
+                <td style="font-family:monospace; font-size:12px; color:#8A8878;">
+                    {{ q.short_code or '—' }}
+                </td>
+                <td><span class="scan-num">{{ q.scan_count }}</span></td>
+                <td class="ts-cell" data-ts="{{ q.timestamp }}">—</td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="5">No active QR codes.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ── Send Email Modal ────────────────────────────────────────────── -->
+<div class="em-backdrop" id="em-modal" style="display:none;">
+  <div class="em-box">
+    <div class="em-head">
+      <div class="em-title"><i class="fa-solid fa-paper-plane" style="color:var(--primary);margin-right:8px;"></i>Send Email to {{ user.name or user.username }}</div>
+      <button class="em-close" onclick="closeEmailModal()">&#10005;</button>
+    </div>
+    <div class="em-body" id="em-body">
+
+      <!-- Step 1: Type selector -->
+      <div id="em-step1">
+        <div class="em-field-label" style="margin-bottom:12px;">Choose email type</div>
+        <div class="step-row">
+          <button class="step-type-btn" id="type-btn-reminder" onclick="selectEmailType('reminder')">
+            <i class="fa-solid fa-bell"></i>
+            <div class="type-name">Reminder</div>
+            <div class="type-desc">Use a saved template to remind about a package expiry</div>
+          </button>
+          <button class="step-type-btn" id="type-btn-custom" onclick="selectEmailType('custom')">
+            <i class="fa-solid fa-pen-nib"></i>
+            <div class="type-name">Custom</div>
+            <div class="type-desc">Write a free-form email with your own subject and body</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2 Reminder: package + template picker -->
+      <div id="em-step2-reminder" style="display:none;">
+        <div class="em-select-row">
+          <div>
+            <div class="em-field-label">Package</div>
+            <select class="em-input" id="em-pkg-select" onchange="onPkgOrTplChange()">
+              <option value="">— select package —</option>
+            </select>
+          </div>
+          <div>
+            <div class="em-field-label">Template</div>
+            <select class="em-input" id="em-tpl-select" onchange="onPkgOrTplChange()">
+              <option value="">— loading templates —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 Custom: blank subject/body -->
+      <div id="em-step2-custom" style="display:none;">
+        <!-- subject/body rendered in em-compose below -->
+      </div>
+
+      <!-- Compose area (shared) -->
+      <div id="em-compose" style="display:none;">
+        <div>
+          <div class="em-field-label">Subject</div>
+          <input class="em-input" id="em-subject" placeholder="Email subject">
+        </div>
+        <div>
+          <div class="em-field-label">Body HTML</div>
+          <div class="tab-bar2">
+            <button class="tab-btn2 active" onclick="switchEmailTab('code',this)">Code</button>
+            <button class="tab-btn2" onclick="switchEmailTab('preview',this)">Preview</button>
+          </div>
+          <div id="em-tab-code">
+            <textarea class="em-input" id="em-body-html" rows="14" placeholder="HTML email body…"></textarea>
+          </div>
+          <div id="em-tab-preview" style="display:none;">
+            <iframe class="preview-iframe" id="em-preview-frame" sandbox="allow-same-origin"></iframe>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="em-foot">
+      <div class="em-status" id="em-send-status"></div>
+      <button class="btn-cancel-sm" onclick="closeEmailModal()">Cancel</button>
+      <button class="btn-send" id="em-send-btn" onclick="sendEmail()" style="display:none;">
+        <i class="fa-solid fa-paper-plane"></i> Send
+      </button>
+    </div>
+  </div>
+</div>
+<input type="hidden" id="csrf-detail-val" value="{{ csrf_token() }}">
+<!-- ── End Send Email Modal ────────────────────────────────────────── -->
+
+<script>
+    document.querySelectorAll('.ts-cell').forEach(function(el) {
+        var ts = parseFloat(el.dataset.ts);
+        if (ts && ts > 0) {
+            el.textContent = new Date(ts * 1000).toLocaleDateString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric'
+            });
+        }
+    });
+
+    document.querySelectorAll('.countdown-badge').forEach(function(el) {
+        var expires = parseFloat(el.dataset.expires);
+        if (!expires) return;
+        var now = Math.floor(Date.now() / 1000);
+        var diff = expires - now;
+        var days = Math.floor(diff / 86400);
+        var hours = Math.floor((diff % 86400) / 3600);
+        if (diff <= 0) {
+            el.textContent = 'Expired';
+            el.className = 'countdown-badge urgent';
+        } else if (days === 0) {
+            el.textContent = hours + 'h left';
+            el.className = 'countdown-badge urgent';
+        } else if (days <= 7) {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge urgent';
+        } else if (days <= 30) {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge warning';
+        } else {
+            el.textContent = days + 'd left';
+            el.className = 'countdown-badge ok';
+        }
+    });
+
+    // ── Send Email Modal ─────────────────────────────────────────────
+    var _emailType = null;
+    var _tplData   = [];
+
+    function openEmailModal() {
+        _emailType = null;
+        document.getElementById('em-step1').style.display = 'block';
+        document.getElementById('em-step2-reminder').style.display = 'none';
+        document.getElementById('em-step2-custom').style.display = 'none';
+        document.getElementById('em-compose').style.display = 'none';
+        document.getElementById('em-send-btn').style.display = 'none';
+        document.getElementById('em-send-status').textContent = '';
+        document.querySelectorAll('.step-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+        document.getElementById('em-modal').style.display = 'flex';
+    }
+
+    function closeEmailModal() { document.getElementById('em-modal').style.display = 'none'; }
+
+    function selectEmailType(type) {
+        _emailType = type;
+        document.querySelectorAll('.step-type-btn').forEach(function(b){ b.classList.remove('selected'); });
+        document.getElementById('type-btn-' + type).classList.add('selected');
+
+        document.getElementById('em-step2-reminder').style.display = 'none';
+        document.getElementById('em-step2-custom').style.display = 'none';
+        document.getElementById('em-compose').style.display = 'none';
+        document.getElementById('em-send-btn').style.display = 'none';
+        document.getElementById('em-send-status').textContent = '';
+
+        if (type === 'custom') {
+            _currentBodyType = 'html';
+            document.getElementById('em-subject').value = '';
+            document.getElementById('em-body-html').value = '';
+            document.getElementById('em-body-html').placeholder = 'HTML email body…';
+            document.getElementById('em-body-html').style.fontFamily = "'Courier New',monospace";
+            document.getElementById('em-compose').style.display = 'block';
+            document.getElementById('em-send-btn').style.display = 'flex';
+            document.getElementById('em-step2-custom').style.display = 'block';
+            switchEmailTab('code', document.querySelector('.tab-btn2'));
+
+        } else if (type === 'reminder') {
+            document.getElementById('em-step2-reminder').style.display = 'block';
+            // Populate package dropdown — only ACTIVE subs with expires_at > now
+            var pkgSel = document.getElementById('em-pkg-select');
+            pkgSel.innerHTML = '<option value="">— select package —</option>';
+            _USER_SUBS.forEach(function(s) {
+                if (s.status === 'ACTIVE' && s.expires_at > _NOW_TS) {
+                    var daysLeft = Math.max(0, Math.floor((s.expires_at - _NOW_TS) / 86400));
+                    var opt = document.createElement('option');
+                    opt.value = s.subscription_id;
+                    opt.textContent = s.plan_name + ' (' + daysLeft + 'd left)';
+                    opt.dataset.sub = JSON.stringify(s);
+                    pkgSel.appendChild(opt);
+                }
+            });
+            // Load reminder templates
+            fetch('/api/admin/email-templates?type=reminder')
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    _tplData = d.templates || [];
+                    var tplSel = document.getElementById('em-tpl-select');
+                    tplSel.innerHTML = '<option value="">— select template —</option>';
+                    _tplData.forEach(function(t){
+                        var opt = document.createElement('option');
+                        opt.value = t.template_id;
+                        opt.textContent = t.name;
+                        tplSel.appendChild(opt);
+                    });
+                });
+        }
+    }
+
+    var _currentBodyType = 'html';
+
+    function onPkgOrTplChange() {
+        var pkgId = document.getElementById('em-pkg-select').value;
+        var tplId = document.getElementById('em-tpl-select').value;
+        if (!pkgId || !tplId) {
+            document.getElementById('em-compose').style.display = 'none';
+            document.getElementById('em-send-btn').style.display = 'none';
+            return;
+        }
+        var pkgOpt = document.querySelector('#em-pkg-select option[value="' + pkgId + '"]');
+        var sub = pkgOpt ? JSON.parse(pkgOpt.dataset.sub) : {};
+        var tpl = _tplData.find(function(t){ return t.template_id === tplId; }) || {};
+        _currentBodyType = tpl.body_type || 'html';
+
+        var daysLeft = Math.max(0, Math.floor((sub.expires_at - _NOW_TS) / 86400));
+        var expiresDate = sub.expires_at ? new Date(sub.expires_at * 1000).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) : '—';
+
+        function replace(s) {
+            if (!s) return '';
+            return s
+                .replace(/\{\{user_name\}\}/g, '{{ user.name or user.username or "" }}')
+                .replace(/\{\{user_email\}\}/g, '{{ user.email or "" }}')
+                .replace(/\{\{plan_name\}\}/g, sub.plan_name || '')
+                .replace(/\{\{expires_date\}\}/g, expiresDate)
+                .replace(/\{\{days_left\}\}/g, daysLeft)
+                .replace(/\{\{price_paid\}\}/g, 'Rp ' + (sub.price_paid_idr || 0).toLocaleString('id-ID'));
+        }
+
+        document.getElementById('em-subject').value   = replace(tpl.subject || '');
+        document.getElementById('em-body-html').value = replace(tpl.body_html || '');
+
+        // Adjust compose area for body type
+        var isText = _currentBodyType === 'text';
+        document.getElementById('em-body-html').placeholder = isText
+            ? 'Plain text email body…'
+            : 'HTML email body…';
+        document.getElementById('em-body-html').style.fontFamily = isText ? 'inherit' : "'Courier New',monospace";
+        // show/hide preview tab button based on type
+        var previewTabBtn = document.querySelector('.tab-btn2:last-child');
+        if (previewTabBtn) previewTabBtn.style.display = isText ? 'none' : '';
+
+        document.getElementById('em-compose').style.display = 'block';
+        document.getElementById('em-send-btn').style.display = 'flex';
+        switchEmailTab('code', document.querySelector('.tab-btn2'));
+    }
+
+    function switchEmailTab(tab, btn) {
+        document.querySelectorAll('.tab-btn2').forEach(function(b){ b.classList.remove('active'); });
+        if (btn) btn.classList.add('active');
+        if (tab === 'preview') {
+            document.getElementById('em-preview-frame').srcdoc = document.getElementById('em-body-html').value;
+            document.getElementById('em-tab-code').style.display = 'none';
+            document.getElementById('em-tab-preview').style.display = 'block';
+        } else {
+            document.getElementById('em-tab-code').style.display = 'block';
+            document.getElementById('em-tab-preview').style.display = 'none';
+        }
+    }
+
+    function sendEmail() {
+        var subject  = document.getElementById('em-subject').value.trim();
+        var bodyHtml = document.getElementById('em-body-html').value.trim();
+        var statusEl = document.getElementById('em-send-status');
+        var sendBtn  = document.getElementById('em-send-btn');
+        if (!subject || !bodyHtml) {
+            statusEl.className = 'em-status err';
+            statusEl.textContent = 'Subject and body cannot be empty.';
+            return;
+        }
+        sendBtn.disabled = true;
+        statusEl.className = 'em-status sending';
+        statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
+        fetch('/admin/active-users/' + _USER_FID + '/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.getElementById('csrf-detail-val').value },
+            body: JSON.stringify({ subject: subject, body: bodyHtml, body_type: _currentBodyType })
+        }).then(function(r){ return r.json(); }).then(function(d){
+            sendBtn.disabled = false;
+            if (d.ok) {
+                statusEl.className = 'em-status ok';
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + (d.message || 'Email sent!');
+                setTimeout(function(){ closeEmailModal(); }, 2000);
+            } else {
+                statusEl.className = 'em-status err';
+                statusEl.textContent = d.error || 'Send failed.';
+            }
+        }).catch(function(){
+            sendBtn.disabled = false;
+            statusEl.className = 'em-status err';
+            statusEl.textContent = 'Network error.';
+        });
+    }
+
+    document.getElementById('em-modal').addEventListener('click', function(e){
+        if (e.target === this) closeEmailModal();
+    });
+</script>
+{% endblock %}

@@ -116,10 +116,25 @@
 {% endblock %}
 
 {% block content %}
+{% if sub_info and sub_info.has_active %}
 <div class="stats-top-banner">
-    <span><i class="fa-solid fa-circle-info"></i> You are using QRkartu's free trial. 2 days remaining</span>
-    <button class="btn-primary" style="padding: 6px 16px; font-size: 13px;">Update</button>
+    <span>
+        <i class="fa-solid fa-circle-info"></i>
+        {% if sub_info.is_trial %}You are using QRkartu's free trial.{% else %}Active plan: <strong>{{ sub_info.plan_name }}</strong>.{% endif %}
+        {% if sub_info.days_remaining > 0 %}
+            {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} remaining.
+        {% else %}
+            Expires today!
+        {% endif %}
+    </span>
+    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none;">Upgrade</a>
 </div>
+{% else %}
+<div class="stats-top-banner" style="background-color: #2d1a1a; border-color: #dc2626; color: #fca5a5;">
+    <span><i class="fa-solid fa-ban"></i> You don't have an active subscription. Some features may be limited.</span>
+    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; background-color: #dc2626; text-decoration: none;">Subscribe</a>
+</div>
+{% endif %}
 
 <div class="stats-header">
     <div class="page-title" style="margin: 0;">Stats</div>

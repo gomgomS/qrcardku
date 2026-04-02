@@ -59,8 +59,8 @@ class auth_proc:
                 response["message_desc"]   = "Passwords do not match"
                 return response
 
-            # Check if user exists
-            existing_user = self.mgdDB.db_user.find_one({ "username": username })
+            # Check if user exists (excluding deleted accounts to allow re-registration)
+            existing_user = self.mgdDB.db_user.find_one({ "username": username, "is_deleted": {"$ne": True} })
             if existing_user:
                 response["message_action"] = "REGISTER_FAILED"
                 response["message_desc"]   = "Username already exists"
@@ -138,6 +138,9 @@ class auth_proc:
                 { "pkey": user_rec["pkey"] },
                 { "$set": { "status": "ACTIVE", "verification_token": "" } }
             )
+            
+            self._ensure_free_trial(user_rec["pkey"])
+            
             response["message_desc"] = "Account verified successfully. You are now logged in."
             response["message_data"] = {
                 "fk_user_id": user_rec["pkey"],
@@ -213,7 +216,8 @@ class auth_proc:
             "message_data"   : {}
         }
         try:
-            user_rec = self.mgdDB.db_user.find_one({ "email": email })
+            # Only send reset link to active accounts
+            user_rec = self.mgdDB.db_user.find_one({ "email": email, "is_deleted": {"$ne": True} })
             if user_rec:
                 reset_token = idgen._get_api_call_id()
                 self.mgdDB.db_user.update_one(
@@ -302,10 +306,14 @@ class auth_proc:
                 "id" : username, "password" : password
             })
 
-            user_auth = self.mgdDB.db_user_auth.find_one({
+            # Fetch auth, prioritizing active accounts so tombstoned duplicates are ignored if a new one exists
+            user_auth_cursor = self.mgdDB.db_user_auth.find({
                 "username": username,
                 "password": hashed_password
-            })
+            }).sort([("is_deleted", 1), ("_id", -1)]).limit(1)
+            
+            auth_list = list(user_auth_cursor)
+            user_auth = auth_list[0] if auth_list else None
 
             if not user_auth:
                 response["message_action"] = "LOGIN_FAILED"
@@ -350,6 +358,8 @@ class auth_proc:
                 return response
             
             if user_rec:
+                self._ensure_free_trial(user_rec["pkey"])
+                
                 response["message_data"] = {
                     "fk_user_id" : user_rec["pkey"],
                     "username"   : user_rec["username"],
@@ -446,8 +456,8 @@ class auth_proc:
             if not name and provider == 'linkedin':
                 name = user_info.get("localizedFirstName", "") + " " + user_info.get("localizedLastName", "")
 
-            # Check if user already exists by email
-            user_rec = self.mgdDB.db_user.find_one({ "email": email })
+            # Check if user already exists by email (excluding deleted ones)
+            user_rec = self.mgdDB.db_user.find_one({ "email": email, "is_deleted": {"$ne": True} })
             
             if not user_rec:
                 # User doesn't exist, we must register them automatically
@@ -480,6 +490,14 @@ class auth_proc:
                 response["message_action"] = "LOGIN_FAILED"
                 response["message_desc"]   = "Account is inactive"
                 return response
+            
+            admin_auth = self.mgdDB.db_admin_auth.find_one({"email": email})
+            if admin_auth:
+                response["message_action"] = "LOGIN_FAILED"
+                response["message_desc"]   = "Social login does not map to administrative accounts."
+                return response
+                
+            self._ensure_free_trial(user_rec["pkey"])
 
             response["message_data"] = {
                 "fk_user_id" : user_rec["pkey"],
@@ -493,4 +511,28 @@ class auth_proc:
             response["message_desc"]   = str(e)
 
         return response
+
+    def _ensure_free_trial(self, fk_user_id):
+        """Generates a 1 QR / 30 MB / 10 Day Free Trial if no subscriptions exist."""
+        sub = self.mgdDB.db_user_subscription.find_one({"fk_user_id": fk_user_id, "is_deleted": {"$ne": True}})
+        if not sub:
+            import time
+            import uuid
+            now = int(time.time())
+            expires = now + (10 * 24 * 3600)  # 10 days
+            new_sub = database.get_record("db_user_subscription")
+            new_sub["subscription_id"] = uuid.uuid4().hex
+            new_sub["fk_user_id"] = fk_user_id
+            new_sub["plan_id"] = "free_trial"
+            new_sub["plan_name"] = "FREE TRIAL"
+            new_sub["price_paid_idr"] = 0
+            new_sub["max_qr"] = 1
+            new_sub["max_storage_mb"] = 30
+            new_sub["period_days"] = 10
+            new_sub["started_at"] = now
+            new_sub["expires_at"] = expires
+            new_sub["status"] = "ACTIVE"
+            new_sub["created_at"] = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now))
+            new_sub["timestamp"] = now
+            self.mgdDB.db_user_subscription.insert_one(new_sub)
 

@@ -204,10 +204,146 @@
     @media (max-width: 400px) {
         .qr-grid { grid-template-columns: 1fr; }
     }
+
+    /* Preview panel image */
+    .preview-frame {
+        position: relative;
+        display: inline-block;
+        margin: 20px auto;
+    }
+    .preview-frame img {
+        display: block;
+        width: 220px;
+        height: auto;
+        border-radius: 10px;
+        object-fit: contain;
+        transition: opacity 0.25s ease;
+    }
+    .preview-frame img.fading { opacity: 0; }
+    /* Corner decorations */
+    .corner {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: var(--primary);
+        border-style: solid;
+    }
+    .corner-tl { top: -6px; left: -6px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .corner-tr { top: -6px; right: -6px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+    .corner-bl { bottom: -6px; left: -6px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+    .corner-br { bottom: -6px; right: -6px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    .preview-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 12px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    /* No-subscription overlay */
+    .no-sub-gate {
+        position: relative;
+    }
+    .no-sub-gate-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(24,25,20,0.82);
+        backdrop-filter: blur(2px);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+    .no-sub-gate-overlay .gate-msg {
+        text-align: center;
+        padding: 32px;
+    }
+    .no-sub-gate-overlay .gate-msg i {
+        font-size: 40px;
+        color: #dc2626;
+        margin-bottom: 12px;
+    }
+    .no-sub-gate-overlay .gate-msg h3 {
+        color: #fca5a5;
+        margin-bottom: 8px;
+    }
+    .no-sub-gate-overlay .gate-msg p {
+        color: #8A8878;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    /* QR Quota bar */
+    .quota-bar-wrap {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .quota-bar-wrap.quota-full { border-color: #dc2626; background: #2d1a1a; }
+    .quota-bar-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .quota-bar-label strong { color: var(--text-main); }
+    .quota-bar-track {
+        flex: 1; min-width: 80px; height: 6px;
+        background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden;
+    }
+    .quota-bar-fill { height: 100%; border-radius: 99px; background: #22c55e; transition: width 0.4s; }
+    .quota-bar-fill.warn { background: #f59e0b; }
+    .quota-bar-fill.full { background: #dc2626; }
+    .quota-full-msg { font-size: 12px; color: #fca5a5; display: flex; align-items: center; gap: 6px; }
+    .quota-full-msg a { color: var(--primary); text-decoration: underline; }
 </style>
 {% endblock %}
 
 {% block content %}
+{% if not sub_info or not sub_info.has_active %}
+<div class="card" style="margin-bottom: 24px; background-color: #2d1a1a; border-color: #dc2626; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;">
+    <span style="color: #fca5a5; font-size: 14px;">
+        <i class="fa-solid fa-ban"></i>
+        You don't have an active subscription. You need a plan to create QR codes.
+    </span>
+    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none;">View Plans</a>
+</div>
+{% elif qr_quota %}
+{% set _used = qr_quota.used_qr %}
+{% set _total = qr_quota.total_max_qr %}
+{% set _pct = ((_used / _total) * 100) | int if _total > 0 else 100 %}
+<div class="quota-bar-wrap {% if qr_quota.exceeded %}quota-full{% endif %}">
+    <i class="fa-solid fa-qrcode" style="color: var(--primary); font-size: 14px; flex-shrink: 0;"></i>
+    <div class="quota-bar-label">
+        QR Slots: <strong>{{ _used }} / {{ _total }}</strong> used
+    </div>
+    <div class="quota-bar-track">
+        <div class="quota-bar-fill {% if _pct >= 100 %}full{% elif _pct >= 80 %}warn{% endif %}"
+             style="width: {{ 100 if _pct > 100 else _pct }}%;"></div>
+    </div>
+    {% if qr_quota.exceeded %}
+    <div class="quota-full-msg">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        Slot limit reached. <a href="/user/plans">Buy more</a> to create new QR codes.
+    </div>
+    {% else %}
+    <div class="quota-bar-label" style="white-space:nowrap;">
+        <strong style="color: #22c55e;">{{ qr_quota.remaining_qr }}</strong> slot{{ 's' if qr_quota.remaining_qr != 1 else '' }} remaining
+    </div>
+    {% endif %}
+</div>
+{% if error_msg %}
+<div class="card" style="margin-bottom: 16px; background-color: #2d1a1a; border-color: #dc2626; padding: 12px 16px; color: #fca5a5; font-size: 13px;">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+</div>
+{% endif %}
+{% endif %}
+
+{% set _gate_no_sub = not sub_info or not sub_info.has_active %}
+{% set _gate_quota = qr_quota and qr_quota.exceeded %}
+
 <div class="new-qr-step-bar">
     <div class="new-qr-steps">
         <span class="step-item step-active">
@@ -225,14 +361,41 @@
     </div>
     <div class="new-qr-step-nav">
         <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        {% if _gate_no_sub or _gate_quota %}
+        <span class="btn-next" style="opacity:0.4; cursor:not-allowed; pointer-events:none;">Next <i class="fa-solid fa-arrow-right"></i></span>
+        {% else %}
         <a href="/qr/new/web" class="btn-next">Next <i class="fa-solid fa-arrow-right"></i></a>
+        {% endif %}
     </div>
 </div>
 
 <div class="page-title" style="margin-bottom: 24px;">Select a QR type</div>
 
 <div class="new-qr-container">
-    <div class="qr-types">
+    <div class="qr-types {% if _gate_no_sub or _gate_quota %}no-sub-gate{% endif %}" style="position:relative;">
+
+        {% if _gate_no_sub %}
+        <div class="no-sub-gate-overlay">
+            <div class="gate-msg">
+                <i class="fa-solid fa-lock"></i>
+                <h3>No Active Subscription</h3>
+                <p>You need an active plan to create QR codes.</p>
+                <a href="/user/plans" class="btn-primary" style="text-decoration:none;">View Plans</a>
+            </div>
+        </div>
+        {% elif _gate_quota %}
+        <div class="no-sub-gate-overlay">
+            <div class="gate-msg">
+                <i class="fa-solid fa-circle-xmark" style="color: #dc2626;"></i>
+                <h3 style="color: #fca5a5;">QR Slot Limit Reached</h3>
+                <p>You've used all {{ qr_quota.total_max_qr }} QR slot{{ 's' if qr_quota.total_max_qr != 1 else '' }} in your plan. Delete an existing QR or upgrade your plan to create more.</p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <a href="/qr/list" class="btn-outline" style="text-decoration:none;">My QR Codes</a>
+                    <a href="/user/plans" class="btn-primary" style="text-decoration:none;">Upgrade Plan</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Dynamic QR Section -->
         <div class="qr-section-header" id="dynamic-header" onclick="toggleSection('dynamic')">
@@ -244,55 +407,55 @@
         <div class="qr-section-body" id="dynamic-body">
             <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; padding-left: 26px;">Update content in real time, without changing your code</p>
             <div class="qr-grid">
-                <a href="/qr/new/web" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/web" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/web_contoh.png" data-label="Website" data-desc="Redirect anyone who scans to any URL — product pages, landing pages, or online stores. You can update the destination link anytime without reprinting.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-globe"></i></div>
                         <div class="qr-info"><h4>Website</h4><p>Open a URL</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/pdf" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/pdf" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/pdf_contoh.png" data-label="PDF" data-desc="Share a PDF document instantly — menus, brochures, catalogs, or manuals. No app needed on the scanner's side, just a browser.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-file-pdf"></i></div>
                         <div class="qr-info"><h4>PDF</h4><p>Show a PDF</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/images" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/images" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/img_contoh.png" data-label="Images" data-desc="Display a photo gallery when scanned. Great for portfolios, event photos, product shots, or real estate listings.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-images"></i></div>
                         <div class="qr-info"><h4>Images</h4><p>Show an image gallery</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/ecard" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/ecard" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/ecard_contoh.png" data-label="E-card" data-desc="A digital business card — share your name, job title, phone, email, and social links. Scanners can save your contact directly to their phone.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-id-badge"></i></div>
                         <div class="qr-info"><h4>E-card</h4><p>Share contact details</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/video" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/video" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/vid_contoh.png" data-label="Video" data-desc="Play a video directly on scan — product demos, tutorials, testimonials, or promo clips. No login or app required for the viewer.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-play"></i></div>
                         <div class="qr-info"><h4>Video</h4><p>Show a video</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/links" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/links" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/links_contoh.png" data-label="Links" data-desc="Bundle multiple links into a single clean page — like a mini link-in-bio. Perfect for creators, teams, or campaigns with many destinations.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-list-ul"></i></div>
                         <div class="qr-info"><h4>Links</h4><p>Group links</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/sosmed" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/sosmed" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/sosmed_contoh.png" data-label="Sosmed" data-desc="Show all your social media profiles in one place. One scan gets visitors to your Instagram, TikTok, YouTube, and more — all at once.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-thumbs-up"></i></div>
                         <div class="qr-info"><h4>Sosmed</h4><p>Share your social profiles</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/allinone" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/allinone" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/allinone_contoh.png" data-label="All in One" data-desc="Combine text, links, images, video, and contact info into one rich landing page. The most flexible option for telling your full story.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="qr-info"><h4>All in One</h4><p>Combine multiple content types</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/special" style="text-decoration: none; color: inherit;">
+                <a href="/qr/new/special" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/special_contoh.png" data-label="Special" data-desc="Build a fully custom HTML page from scratch. Total creative freedom — ideal for unique promotions, interactive content, or branded experiences.">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                         <div class="qr-info"><h4>Special</h4><p>Build custom HTML pages</p></div>
@@ -353,15 +516,20 @@
     </div>
 
     <div class="qr-preview">
-        <h3 style="color: var(--text-muted); font-weight: 500;">Example</h3>
-        <div class="phone-mockup">
-            <div class="mockup-grid">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div style="background: transparent;"></div>
-            </div>
+        <h3 style="color: var(--text-muted); font-weight: 500; margin-bottom: 4px;">Example</h3>
+        <p id="preview-hint" style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Hover a type to preview</p>
+        <div class="preview-frame" id="preview-frame" style="display:none;">
+            <span class="corner corner-tl"></span>
+            <span class="corner corner-tr"></span>
+            <span class="corner corner-bl"></span>
+            <span class="corner corner-br"></span>
+            <img id="preview-img" src="" alt="QR Example">
         </div>
+        <div id="preview-placeholder" style="width:220px;height:220px;margin:20px auto;border-radius:10px;background:rgba(255,255,255,0.04);border:1px dashed var(--border-color);display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-qrcode" style="font-size:48px;color:rgba(235,168,27,0.15);"></i>
+        </div>
+        <div class="preview-label" id="preview-label"></div>
+        <p id="preview-desc" style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 10px; padding: 0 4px; display:none;"></p>
     </div>
 </div>
 
@@ -391,5 +559,49 @@
             }
         }
     }
+
+    // QR type preview on hover
+    (function () {
+        var previewFrame = document.getElementById('preview-frame');
+        var previewPlaceholder = document.getElementById('preview-placeholder');
+        var previewImg = document.getElementById('preview-img');
+        var previewLabel = document.getElementById('preview-label');
+        var previewDesc = document.getElementById('preview-desc');
+        var previewHint = document.getElementById('preview-hint');
+        var fadeTimer = null;
+
+        document.querySelectorAll('a[data-preview]').forEach(function (el) {
+            el.addEventListener('mouseenter', function () {
+                var src = el.getAttribute('data-preview');
+                var label = el.getAttribute('data-label') || '';
+                var desc = el.getAttribute('data-desc') || '';
+
+                if (fadeTimer) clearTimeout(fadeTimer);
+
+                if (previewImg.src !== window.location.origin + src) {
+                    previewImg.classList.add('fading');
+                    fadeTimer = setTimeout(function () {
+                        previewImg.src = src;
+                        previewImg.onload = function () {
+                            previewImg.classList.remove('fading');
+                        };
+                    }, 150);
+                } else {
+                    previewImg.classList.remove('fading');
+                }
+
+                previewLabel.textContent = label;
+                previewDesc.textContent = desc;
+                previewDesc.style.display = desc ? 'block' : 'none';
+                previewFrame.style.display = 'inline-block';
+                previewPlaceholder.style.display = 'none';
+                previewHint.style.display = 'none';
+            });
+
+            el.addEventListener('mouseleave', function () {
+                // keep the last image shown, don't revert
+            });
+        });
+    })();
 </script>
 {% endblock %}

@@ -14,7 +14,7 @@ class brevo_email_proc:
         self.sender_email = getattr(config, "EMAIL_ADMIN", "halo@qrkartu.com")
         self.sender_name = "QRkartu"
 
-    def _send_email(self, to_email, to_name, subject, html_content):
+    def _send_email(self, to_email, to_name, subject, html_content=None, text_content=None):
         if not to_name:
             to_name = to_email.split('@')[0] if to_email else "User"
 
@@ -33,8 +33,11 @@ class brevo_email_proc:
             "sender": {"name": self.sender_name, "email": self.sender_email},
             "to": [{"email": to_email, "name": to_name}],
             "subject": subject,
-            "htmlContent": html_content
         }
+        if text_content and not html_content:
+            data["textContent"] = text_content
+        else:
+            data["htmlContent"] = html_content or ""
 
         try:
             response = requests.post(self.api_url, headers=headers, json=data, timeout=10)

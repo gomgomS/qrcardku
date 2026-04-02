@@ -826,6 +826,19 @@ db = {
         "timestamp"         : 0,
     },
 
+    # Email templates — managed by admin, used for manual/automated email sends
+    "db_email_template": {
+        "template_id"   : "",       # UUID hex
+        "name"          : "",       # display name e.g. "Package Expiry Reminder"
+        "type"          : "",       # "reminder" | "custom" | "announcement"
+        "subject"       : "",       # email subject (may contain {{variables}})
+        "body_html"     : "",       # full HTML email body (may contain {{variables}})
+        "variables"     : [],       # list of variable names used e.g. ["user_name", "days_left"]
+        "status"        : "ACTIVE", # ACTIVE | INACTIVE
+        "created_at"    : "",
+        "timestamp"     : 0,
+    },
+
     # User activity log (QR create / delete events)
     "db_user_activity_log": {
         "log_id"                    : "",       # generated UUID

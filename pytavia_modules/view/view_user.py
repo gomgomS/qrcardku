@@ -8,12 +8,13 @@ class view_user:
     def __init__(self, app=None):
         self.webapp = app
 
-    def new_qr_html(self, msg=None, error_msg=None):
+    def new_qr_html(self, msg=None, error_msg=None, qr_quota=None):
         try:
             return render_template(
                 "/user/new_qr.html",
-                msg=msg, 
-                error_msg=error_msg
+                msg=msg,
+                error_msg=error_msg,
+                qr_quota=qr_quota,
             )
         except:
             print(traceback.format_exc())

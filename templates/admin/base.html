@@ -393,6 +393,11 @@
                 </a>
             </li>
             <li>
+                <a href="/admin/active-users" class="{% if '/admin/active-users' in request.path %}active{% endif %}">
+                    &#128100; Active Users
+                </a>
+            </li>
+            <li>
                 <a href="/admin/frames" class="{% if request.path == '/admin/frames' %}active{% endif %}">
                     &#9638; Default Frames
                 </a>
@@ -410,6 +415,11 @@
             <li>
                 <a href="/admin/transactions" class="{% if request.path == '/admin/transactions' %}active{% endif %}">
                     &#128181; Transactions
+                </a>
+            </li>
+            <li>
+                <a href="/admin/email-templates" class="{% if request.path == '/admin/email-templates' %}active{% endif %}">
+                    &#9993; Email Templates
                 </a>
             </li>
         </ul>

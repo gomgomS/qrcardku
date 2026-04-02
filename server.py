@@ -336,6 +336,77 @@ def _save_qr_composite(app, fk_user_id, qrcard_id, qr_encode_url, frame_id):
         app.logger.debug(traceback.format_exc())
 
 
+def _get_sub_info(fk_user_id):
+    """Returns subscription summary dict for a user. Used by context_processor and routes."""
+    import time as _t
+    try:
+        from pytavia_core import database as _db_sub, config as _cfg_sub
+        _db = _db_sub.get_db_conn(_cfg_sub.mainDB)
+        now = int(_t.time())
+        sub = _db.db_user_subscription.find_one(
+            {"fk_user_id": fk_user_id, "status": "ACTIVE", "is_deleted": {"$ne": True}, "expires_at": {"$gt": now}},
+            sort=[("expires_at", -1)]
+        )
+        if not sub:
+            return {"has_active": False, "days_remaining": 0, "plan_name": "", "max_qr": 0, "max_storage_mb": 0}
+        expires_at = sub.get("expires_at", 0)
+        days_remaining = max(0, int((expires_at - now) / 86400))
+        return {
+            "has_active": True,
+            "days_remaining": days_remaining,
+            "plan_name": sub.get("plan_name", ""),
+            "max_qr": sub.get("max_qr", 0),
+            "max_storage_mb": sub.get("max_storage_mb", 0),
+            "is_trial": sub.get("plan_id") == "free_trial",
+        }
+    except Exception:
+        return {"has_active": False, "days_remaining": 0, "plan_name": "", "max_qr": 0, "max_storage_mb": 0}
+
+def _get_user_qr_quota(fk_user_id):
+    """Return accumulated QR quota across ALL active subscriptions + current usage."""
+    import time as _t
+    try:
+        _db = database.get_db_conn(config.mainDB)
+        now = int(_t.time())
+        subs = list(_db.db_user_subscription.find(
+            {"fk_user_id": fk_user_id, "status": "ACTIVE", "is_deleted": {"$ne": True}, "expires_at": {"$gt": now}}
+        ))
+        total_max_qr = sum(s.get("max_qr", 0) for s in subs)
+        used_qr = _db.db_qr_index.count_documents(
+            {"fk_user_id": fk_user_id, "status": {"$nin": ["DELETED", "SOFT_DELETED"]}}
+        )
+        remaining = max(0, total_max_qr - used_qr)
+        return {
+            "total_max_qr": total_max_qr,
+            "used_qr": used_qr,
+            "remaining_qr": remaining,
+            "has_active": len(subs) > 0,
+            "exceeded": used_qr >= total_max_qr if total_max_qr > 0 else True,
+        }
+    except Exception:
+        return {"total_max_qr": 0, "used_qr": 0, "remaining_qr": 0, "has_active": False, "exceeded": True}
+
+@app.before_request
+def _check_qr_quota_on_save():
+    """Block QR creation if user has exceeded their accumulated quota."""
+    from flask import request as _req
+    if _req.method == "POST" and _req.path.startswith("/qr/save/"):
+        if "fk_user_id" not in session:
+            return
+        quota = _get_user_qr_quota(session["fk_user_id"])
+        if quota["exceeded"]:
+            used = quota["used_qr"]
+            total = quota["total_max_qr"]
+            return redirect(url_for("user_new_qr",
+                quota_error=f"QR slot quota exceeded ({used}/{total}). Please upgrade your plan."))
+
+@app.context_processor
+def inject_user_sub_info():
+    """Inject subscription info into every template for the sidebar & banners."""
+    if "fk_user_id" in session:
+        return {"sub_info": _get_sub_info(session["fk_user_id"])}
+    return {"sub_info": {"has_active": False, "days_remaining": 0, "plan_name": "", "max_qr": 0, "max_storage_mb": 0, "is_trial": False}}
+
 @app.route("/")
 def index():
     return view_landing.view_landing().html()
@@ -349,6 +420,11 @@ def admin_redirect():
 @app.route("/login", methods=["GET"])
 def login_view():
     return view_login.view_login().html()
+
+@app.route("/auth/logout")
+def auth_logout():
+    session.clear()
+    return redirect(url_for("login_view"))
 
 @app.route('/auth/login/<provider>')
 def auth_social_login(provider):
@@ -776,6 +852,358 @@ def admin_subscriptions_activate(sub_id):
 
 
 
+@app.route("/admin/active-users")
+def admin_active_users():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    import time as _t
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    now = int(_t.time())
+
+    # Find user_ids that have at least one currently-active subscription
+    active_subs = list(_db.db_user_subscription.find(
+        {"status": "ACTIVE", "is_deleted": {"$ne": True}, "expires_at": {"$gt": now}},
+        {"fk_user_id": 1}
+    ))
+    active_user_ids = list({s["fk_user_id"] for s in active_subs if s.get("fk_user_id")})
+
+    if not active_user_ids:
+        return render_template("admin/active_users.html", users=[], **{
+            "admin_name": session.get("admin_name", ""),
+            "admin_email": session.get("admin_email", ""),
+            "admin_role": session.get("admin_role", ""),
+        })
+
+    # Fetch user records
+    users_raw = {
+        u["fk_user_id"]: u
+        for u in _db.db_user.find(
+            {"fk_user_id": {"$in": active_user_ids}, "is_deleted": {"$ne": True}},
+            {"_id": 0, "fk_user_id": 1, "username": 1, "name": 1, "email": 1, "status": 1, "timestamp": 1}
+        )
+    }
+
+    # Aggregate subscription data per user
+    all_subs = list(_db.db_user_subscription.find(
+        {"fk_user_id": {"$in": active_user_ids}},
+        {"_id": 0, "fk_user_id": 1, "status": 1, "price_paid_idr": 1, "expires_at": 1, "started_at": 1, "timestamp": 1}
+    ))
+
+    # Aggregate QR index data per user
+    qr_index_pipeline = [
+        {"$match": {"fk_user_id": {"$in": active_user_ids}, "status": {"$nin": ["DELETED", "SOFT_DELETED"]}}},
+        {"$group": {"_id": "$fk_user_id", "qr_count": {"$sum": 1}}}
+    ]
+    qr_counts = {r["_id"]: r["qr_count"] for r in _db.db_qr_index.aggregate(qr_index_pipeline)}
+
+    # Aggregate total scans per user from db_qrcard
+    scan_pipeline = [
+        {"$match": {"fk_user_id": {"$in": active_user_ids}}},
+        {"$group": {"_id": "$fk_user_id", "total_scans": {"$sum": "$stats.scan_count"}}}
+    ]
+    scan_counts = {r["_id"]: r["total_scans"] for r in _db.db_qrcard.aggregate(scan_pipeline)}
+
+    # Build per-user summary
+    sub_map = {}
+    for s in all_subs:
+        uid = s["fk_user_id"]
+        if uid not in sub_map:
+            sub_map[uid] = {"total_pkgs": 0, "active_pkgs": 0, "expired_pkgs": 0,
+                            "total_spent": 0, "first_purchase": 0}
+        sub_map[uid]["total_pkgs"] += 1
+        sub_map[uid]["total_spent"] += s.get("price_paid_idr", 0)
+        ts = s.get("timestamp") or s.get("started_at") or 0
+        if sub_map[uid]["first_purchase"] == 0 or (ts and ts < sub_map[uid]["first_purchase"]):
+            sub_map[uid]["first_purchase"] = ts
+        if s.get("status") == "ACTIVE" and s.get("expires_at", 0) > now:
+            sub_map[uid]["active_pkgs"] += 1
+        elif s.get("status") in ("EXPIRED",) or (s.get("status") == "ACTIVE" and s.get("expires_at", 0) <= now):
+            sub_map[uid]["expired_pkgs"] += 1
+
+    users_out = []
+    for uid in active_user_ids:
+        u = users_raw.get(uid)
+        if not u:
+            continue
+        sm = sub_map.get(uid, {})
+        users_out.append({
+            "fk_user_id": uid,
+            "username": u.get("username", "—"),
+            "name": u.get("name", ""),
+            "email": u.get("email", ""),
+            "status": u.get("status", ""),
+            "total_pkgs": sm.get("total_pkgs", 0),
+            "active_pkgs": sm.get("active_pkgs", 0),
+            "expired_pkgs": sm.get("expired_pkgs", 0),
+            "total_spent": sm.get("total_spent", 0),
+            "first_purchase": sm.get("first_purchase", 0),
+            "qr_count": qr_counts.get(uid, 0),
+            "total_scans": scan_counts.get(uid, 0),
+        })
+
+    users_out.sort(key=lambda x: x["total_spent"], reverse=True)
+
+    return render_template("admin/active_users.html",
+        users=users_out,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+@app.route("/admin/active-users/<fk_user_id>")
+def admin_active_user_detail(fk_user_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    import time as _t
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    now = int(_t.time())
+
+    user = _db.db_user.find_one({"fk_user_id": fk_user_id}, {"_id": 0})
+    if not user:
+        return redirect(url_for("admin_active_users"))
+
+    # All subscriptions for this user
+    subs = list(_db.db_user_subscription.find(
+        {"fk_user_id": fk_user_id},
+        {"_id": 0}
+    ).sort("timestamp", -1))
+
+    # Subscription summary stats
+    total_spent = sum(s.get("price_paid_idr", 0) for s in subs)
+    active_pkgs = sum(1 for s in subs if s.get("status") == "ACTIVE" and s.get("expires_at", 0) > now)
+    expired_pkgs = sum(1 for s in subs if s.get("status") == "EXPIRED" or
+                       (s.get("status") == "ACTIVE" and s.get("expires_at", 0) <= now))
+    first_purchase = min((s.get("timestamp") or s.get("started_at") or 0 for s in subs), default=0)
+
+    # QR codes
+    qr_list = list(_db.db_qr_index.find(
+        {"fk_user_id": fk_user_id, "status": {"$nin": ["DELETED", "SOFT_DELETED"]}},
+        {"_id": 0}
+    ).sort("timestamp", -1))
+
+    qr_ids = [q["qrcard_id"] for q in qr_list]
+    scan_map = {}
+    if qr_ids:
+        for card in _db.db_qrcard.find(
+            {"qrcard_id": {"$in": qr_ids}},
+            {"_id": 0, "qrcard_id": 1, "stats": 1}
+        ):
+            scan_map[card["qrcard_id"]] = (card.get("stats") or {}).get("scan_count", 0)
+
+    for q in qr_list:
+        q["scan_count"] = scan_map.get(q["qrcard_id"], 0)
+
+    total_scans = sum(q["scan_count"] for q in qr_list)
+
+    return render_template("admin/active_user_detail.html",
+        user=user,
+        subs=subs,
+        qr_list=qr_list,
+        total_spent=total_spent,
+        active_pkgs=active_pkgs,
+        expired_pkgs=expired_pkgs,
+        total_pkgs=len(subs),
+        first_purchase=first_purchase,
+        total_scans=total_scans,
+        active_qr_count=len(qr_list),
+        now=now,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+# ── Email Templates ──────────────────────────────────────────────────────────
+
+_DEFAULT_EMAIL_TEMPLATES = [
+    {
+        "name": "Package Expiry Reminder",
+        "type": "reminder",
+        "subject": "Your {{plan_name}} Package Expires in {{days_left}} Days — QRkartu",
+        "variables": ["user_name", "plan_name", "expires_date", "days_left", "price_paid"],
+        "body_html": """<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Package Expiry Reminder</title></head>
+<body style="margin:0;padding:0;background:#111209;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#111209;padding:40px 0;">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#181914;border-radius:16px;overflow:hidden;border:1px solid #2C2D25;">
+      <!-- Header -->
+      <tr><td style="background:linear-gradient(135deg,#111209,#1a1b14);padding:32px;text-align:center;border-bottom:1px solid rgba(235,168,27,0.15);">
+        <div style="font-size:26px;font-weight:800;color:#EBA81B;letter-spacing:1px;">QRkartu</div>
+        <div style="font-size:12px;color:#8A8878;margin-top:4px;letter-spacing:2px;text-transform:uppercase;">Package Reminder</div>
+      </td></tr>
+      <!-- Body -->
+      <tr><td style="padding:36px 40px;">
+        <p style="color:#8A8878;font-size:15px;margin:0 0 24px;">Hi <strong style="color:#E8E5DC;">{{user_name}}</strong>,</p>
+        <p style="color:#E8E5DC;font-size:15px;line-height:1.7;margin:0 0 28px;">
+          Your <strong style="color:#EBA81B;">{{plan_name}}</strong> package is expiring soon.<br>
+          Don't let your QR codes go offline — renew now to keep everything running.
+        </p>
+        <!-- Package box -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(235,168,27,0.06);border:1px solid rgba(235,168,27,0.2);border-radius:12px;margin-bottom:28px;">
+          <tr><td style="padding:24px 28px;">
+            <div style="font-size:12px;color:#8A8878;text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;">Package Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="color:#8A8878;font-size:13px;padding:5px 0;">Plan</td>
+                <td style="color:#E8E5DC;font-size:13px;font-weight:600;text-align:right;">{{plan_name}}</td>
+              </tr>
+              <tr>
+                <td style="color:#8A8878;font-size:13px;padding:5px 0;">Expires on</td>
+                <td style="color:#E8E5DC;font-size:13px;font-weight:600;text-align:right;">{{expires_date}}</td>
+              </tr>
+              <tr>
+                <td style="color:#8A8878;font-size:13px;padding:5px 0;">Days remaining</td>
+                <td style="color:#EBA81B;font-size:15px;font-weight:800;text-align:right;">{{days_left}} days</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0 32px;">
+          <a href="https://qrkartu.com/user/plans" style="display:inline-block;padding:14px 40px;background:#EBA81B;color:#111209;font-size:15px;font-weight:700;text-decoration:none;border-radius:30px;">
+            Renew My Package
+          </a>
+        </td></tr></table>
+        <p style="color:#8A8878;font-size:13px;line-height:1.6;margin:0;">
+          If you have any questions, reply to this email and we'll be happy to help.
+        </p>
+      </td></tr>
+      <!-- Footer -->
+      <tr><td style="padding:20px 40px;border-top:1px solid #2C2D25;text-align:center;">
+        <p style="color:#5a5a4a;font-size:11px;margin:0;">
+          © QRkartu · You're receiving this because you have an active subscription.<br>
+          <a href="https://qrkartu.com" style="color:#8A8878;text-decoration:none;">qrkartu.com</a>
+        </p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>""",
+    },
+]
+
+def _seed_email_templates(db):
+    """Seed default email templates if collection is empty."""
+    import time as _t
+    import uuid
+    if db.db_email_template.count_documents({}) == 0:
+        for tpl in _DEFAULT_EMAIL_TEMPLATES:
+            doc = dict(tpl)
+            doc["template_id"] = uuid.uuid4().hex
+            doc["status"] = "ACTIVE"
+            doc["created_at"] = str(int(_t.time()))
+            doc["timestamp"] = int(_t.time())
+            db.db_email_template.insert_one(doc)
+
+@app.route("/admin/email-templates")
+def admin_email_templates():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    _seed_email_templates(_db)
+    templates = list(_db.db_email_template.find({}, {"_id": 0}).sort("timestamp", 1))
+    return render_template("admin/email_templates.html",
+        templates=templates,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+@app.route("/admin/email-templates/save", methods=["POST"])
+def admin_email_templates_save():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+    import time as _t, uuid
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    data = request.get_json() or {}
+    template_id = data.get("template_id", "").strip()
+    name       = data.get("name", "").strip()
+    ttype      = data.get("type", "reminder").strip()
+    body_type  = data.get("body_type", "html").strip()   # "html" or "text"
+    subject    = data.get("subject", "").strip()
+    body_html  = data.get("body_html", "").strip()
+    status     = data.get("status", "ACTIVE")
+    variables  = data.get("variables", [])
+    if not name or not subject or not body_html:
+        return jsonify({"ok": False, "error": "name, subject and body_html are required"})
+    now = int(_t.time())
+    if template_id:
+        _db.db_email_template.update_one(
+            {"template_id": template_id},
+            {"$set": {"name": name, "type": ttype, "body_type": body_type, "subject": subject,
+                      "body_html": body_html, "variables": variables, "status": status}}
+        )
+    else:
+        _db.db_email_template.insert_one({
+            "template_id": uuid.uuid4().hex,
+            "name": name, "type": ttype, "body_type": body_type, "subject": subject,
+            "body_html": body_html, "variables": variables,
+            "status": status, "created_at": str(now), "timestamp": now,
+        })
+    return jsonify({"ok": True})
+
+@app.route("/admin/email-templates/delete", methods=["POST"])
+def admin_email_templates_delete():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    data = request.get_json() or {}
+    template_id = data.get("template_id", "")
+    if template_id:
+        _db.db_email_template.delete_one({"template_id": template_id})
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/email-templates")
+def api_admin_email_templates():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    ttype = request.args.get("type", "")
+    q = {"status": "ACTIVE"}
+    if ttype:
+        q["type"] = ttype
+    templates = list(_db.db_email_template.find(q, {"_id": 0}).sort("timestamp", 1))
+    return jsonify({"ok": True, "templates": templates})
+
+@app.route("/admin/active-users/<fk_user_id>/send-email", methods=["POST"])
+def admin_send_email_to_user(fk_user_id):
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 403
+    import time as _t
+    from pytavia_core import database as _db_p, config as _cfg_p
+    from pytavia_modules.auth.brevo import brevo_email_proc as _bep
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    data = request.get_json() or {}
+    subject   = data.get("subject", "").strip()
+    body      = data.get("body", "").strip()
+    body_type = data.get("body_type", "html")  # "html" or "text"
+    if not subject or not body:
+        return jsonify({"ok": False, "error": "Subject and body are required"})
+    user = _db.db_user.find_one({"fk_user_id": fk_user_id}, {"_id": 0})
+    if not user or not user.get("email"):
+        return jsonify({"ok": False, "error": "User or email not found"})
+    to_email = user["email"]
+    to_name  = user.get("name") or user.get("username") or to_email
+    mailer = _bep.brevo_email_proc(app)
+    if body_type == "text":
+        ok = mailer._send_email(to_email, to_name, subject, text_content=body)
+    else:
+        ok = mailer._send_email(to_email, to_name, subject, html_content=body)
+    if ok:
+        return jsonify({"ok": True, "message": f"Email sent to {to_email}"})
+    return jsonify({"ok": False, "error": "Failed to send email. Check Brevo API key and logs."})
+
+
 @app.route("/admin/storage")
 def admin_storage():
     if "fk_admin_id" not in session:
@@ -1200,11 +1628,6 @@ def api_qr_composite_url(qrcard_id):
     except Exception:
         return jsonify({"url": ""}), 500
 
-@app.route("/auth/logout")
-def auth_logout():
-    session.clear()
-    return redirect(url_for("login_view"))
-
 @app.route("/user/dashboard")
 def user_dashboard():
     # Redirect base dashboard load to "New QR" view as default
@@ -1310,7 +1733,10 @@ def qr_special_redirect(short_code):
 def user_new_qr():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
-    return view_user.view_user(app).new_qr_html()
+    from flask import request as _req_new
+    quota = _get_user_qr_quota(session["fk_user_id"])
+    quota_error = _req_new.args.get("quota_error")
+    return view_user.view_user(app).new_qr_html(qr_quota=quota, error_msg=quota_error)
 
 def _set_qrcard_deleted(mgdDB, fk_user_id, qrcard_id):
     """Mark one qrcard as DELETED in db_qrcard, db_qr_index, and type-specific collections.

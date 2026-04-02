@@ -577,14 +577,32 @@
                 <a href="#" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px;">
                     Help center
                 </a>
+                <a href="/auth/logout" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px; color: #dc2626;"
+                    onclick="return confirm('Are you sure you want to logout?');">
+                    <i class="fa-solid fa-right-from-bracket" style="color: #dc2626;"></i> Logout
+                </a>
             </div>
         </nav>
 
         <div class="sidebar-footer">
+            {% if sub_info and sub_info.has_active %}
             <div class="upgrade-btn">
-                <span><i class="fa-regular fa-clock"></i> 2 days remaining</span>
-                <a href="#" class="btn">Upgrade</a>
+                <span>
+                    <i class="fa-regular fa-clock"></i>
+                    {% if sub_info.days_remaining > 0 %}
+                        {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} remaining
+                    {% else %}
+                        Expires today
+                    {% endif %}
+                </span>
+                <a href="/user/plans" class="btn">Upgrade</a>
             </div>
+            {% else %}
+            <div class="upgrade-btn" style="background-color: #2d1a1a; border: 1px solid #7f1d1d; color: #fca5a5;">
+                <span><i class="fa-solid fa-ban"></i> No subscription</span>
+                <a href="/user/plans" class="btn" style="background-color: #dc2626;">Subscribe</a>
+            </div>
+            {% endif %}
         </div>
     </aside>
 
@@ -612,18 +630,11 @@
             </div>
 
             <div class="header-right">
-                <i class="fa-solid fa-camera header-icon"></i>
-                <i class="fa-solid fa-bell header-icon"></i>
-
                 <div class="user-profile">
-                    <div class="user-info">
-                        <div class="name">{{ session.get('username') or 'User Name' }}</div>
-                        <div class="role">Admin</div>
-                    </div>
                     <div class="avatar">
                         <i class="fa-solid fa-user"></i>
                     </div>
-                    <i class="fa-solid fa-chevron-down" style="color: var(--text-muted); font-size: 12px;"></i>
+                    <span style="font-size: 13px; color: var(--text-muted);">{{ session.get('username') or 'User' }}</span>
                 </div>
             </div>
         </header>

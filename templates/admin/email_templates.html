@@ -1,0 +1,411 @@
+{% extends "admin/base.html" %}
+{% block title %}Email Templates — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .et-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px; }
+    .et-title  { font-size:22px; font-weight:700; color:var(--text-color); }
+
+    /* Type sections */
+    .type-section { margin-bottom:36px; }
+    .type-label {
+        font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+        color:#8A8878; margin-bottom:14px; display:flex; align-items:center; gap:8px;
+    }
+    .type-badge {
+        font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;
+    }
+    .type-badge.reminder     { background:rgba(235,168,27,.15); color:var(--primary); }
+    .type-badge.custom       { background:rgba(59,130,246,.15); color:#60a5fa; }
+    .type-badge.announcement { background:rgba(168,85,247,.15); color:#c084fc; }
+
+    /* Template cards */
+    .tpl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    .tpl-card {
+        background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+        border-radius:12px; overflow:hidden; display:flex; flex-direction:column;
+        transition:border-color .2s;
+    }
+    .tpl-card:hover { border-color:rgba(235,168,27,0.3); }
+    .tpl-card-head { padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .tpl-card-name { font-weight:700; font-size:14px; color:var(--text-color); }
+    .tpl-card-body { padding:14px 18px; flex:1; }
+    .tpl-subject   { font-size:12px; color:#8A8878; margin-bottom:8px; line-height:1.5; }
+    .tpl-vars      { display:flex; flex-wrap:wrap; gap:4px; margin-top:10px; }
+    .tpl-var-chip  { font-size:10px; background:rgba(255,255,255,0.06); color:#8A8878; padding:2px 7px; border-radius:6px; font-family:monospace; }
+    .tpl-card-foot { padding:12px 18px; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:8px; }
+
+    .btn-edit {
+        flex:1; padding:7px 0; background:transparent; border:1px solid rgba(235,168,27,0.3);
+        color:var(--primary); border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:background .18s;
+    }
+    .btn-edit:hover { background:rgba(235,168,27,0.1); }
+    .btn-del {
+        padding:7px 14px; background:transparent; border:1px solid rgba(239,68,68,0.3);
+        color:#f87171; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:background .18s;
+    }
+    .btn-del:hover { background:rgba(239,68,68,0.1); }
+
+    /* New template card */
+    .tpl-card.new-card {
+        border-style:dashed; border-color:rgba(255,255,255,0.12);
+        align-items:center; justify-content:center; min-height:140px; cursor:pointer;
+        color:#8A8878; font-size:14px; font-weight:600; gap:8px;
+        transition:border-color .2s, color .2s;
+    }
+    .tpl-card.new-card:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* Modal */
+    .modal-backdrop {
+        position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000;
+        display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    .modal-box {
+        background:#181914; border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+        width:100%; max-width:760px; max-height:90vh; display:flex; flex-direction:column;
+        overflow:hidden;
+    }
+    .modal-head {
+        padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.08);
+        display:flex; align-items:center; justify-content:space-between;
+    }
+    .modal-title { font-size:16px; font-weight:700; color:var(--text-color); }
+    .modal-close { background:none; border:none; color:#8A8878; font-size:20px; cursor:pointer; line-height:1; }
+    .modal-close:hover { color:var(--text-color); }
+    .modal-body { padding:24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px; }
+    .modal-foot { padding:16px 24px; border-top:1px solid rgba(255,255,255,0.08); display:flex; justify-content:flex-end; gap:10px; }
+
+    .field-label { font-size:11px; font-weight:600; color:#8A8878; text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+    .field-input {
+        width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+        border-radius:8px; padding:10px 12px; color:var(--text-color); font-size:13px;
+        box-sizing:border-box; font-family:inherit; transition:border-color .2s;
+    }
+    .field-input:focus { outline:none; border-color:var(--primary); background:rgba(235,168,27,0.04); }
+    .field-input.mono  { font-family:'Courier New',monospace; font-size:12px; }
+    textarea.field-input { resize:vertical; }
+
+    .tab-bar { display:flex; gap:4px; margin-bottom:8px; }
+    .tab-btn {
+        padding:6px 14px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;
+        border:1px solid rgba(255,255,255,0.1); background:transparent; color:#8A8878; transition:all .18s;
+    }
+    .tab-btn.active { background:rgba(235,168,27,0.12); border-color:rgba(235,168,27,0.3); color:var(--primary); }
+
+    .preview-frame {
+        width:100%; min-height:280px; border:1px solid rgba(255,255,255,0.08);
+        border-radius:8px; background:#fff; overflow:auto;
+    }
+
+    .btn-primary-sm {
+        padding:9px 22px; background:var(--primary); color:#111209; border:none;
+        border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:opacity .2s;
+    }
+    .btn-primary-sm:hover { opacity:.9; }
+    .btn-secondary-sm {
+        padding:9px 18px; background:transparent; color:#8A8878; border:1px solid rgba(255,255,255,0.12);
+        border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s;
+    }
+    .btn-secondary-sm:hover { color:var(--text-color); border-color:rgba(255,255,255,0.25); }
+
+    .save-status { font-size:12px; color:#8A8878; display:flex; align-items:center; gap:6px; margin-right:auto; }
+    .save-status.ok { color:#22c55e; }
+    .save-status.err { color:#f87171; }
+
+    .body-type-btn {
+        padding:6px 16px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;
+        border:1px solid rgba(255,255,255,0.1); background:transparent; color:#8A8878;
+        display:inline-flex; align-items:center; gap:6px; transition:all .18s;
+    }
+    .body-type-btn.active { background:rgba(235,168,27,0.12); border-color:rgba(235,168,27,0.3); color:var(--primary); }
+    .body-type-tag {
+        font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; margin-left:2px; vertical-align:middle;
+    }
+    .body-type-tag.html { background:rgba(59,130,246,.2); color:#60a5fa; }
+    .body-type-tag.text { background:rgba(34,197,94,.15); color:#4ade80; }
+
+    /* Toast */
+    .toast-wrap { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+    .toast { background:#1E1F18; border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:12px 18px; font-size:13px; color:var(--text-color); display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,.4); opacity:0; transform:translateY(10px); transition:opacity .3s,transform .3s; pointer-events:auto; }
+    .toast.show { opacity:1; transform:translateY(0); }
+    .toast.success { border-left:3px solid #22c55e; }
+    .toast.error   { border-left:3px solid #ef4444; }
+</style>
+
+<div class="et-header">
+    <div>
+        <div class="et-title">&#9993; Email Templates</div>
+        <div style="font-size:13px;color:#8A8878;margin-top:4px;">Reusable email templates for manual sends and automated reminders.</div>
+    </div>
+</div>
+
+{% set types = [('reminder','Reminder'),('custom','Custom'),('announcement','Announcement')] %}
+{% for tkey, tlabel in types %}
+{% set type_tpls = templates | selectattr('type','eq',tkey) | list %}
+{% if type_tpls or tkey == 'reminder' %}
+<div class="type-section">
+    <div class="type-label">
+        <span class="type-badge {{ tkey }}">{{ tlabel }}</span>
+        {{ type_tpls | length }} template{{ 's' if type_tpls | length != 1 else '' }}
+    </div>
+    <div class="tpl-grid">
+        {% for t in type_tpls %}
+        <div class="tpl-card">
+            <div class="tpl-card-head">
+                <div class="tpl-card-name">{{ t.name }}</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="body-type-tag {{ t.body_type or 'html' }}">{{ (t.body_type or 'html') | upper }}</span>
+                    <span style="font-size:10px;padding:2px 8px;border-radius:20px;{% if t.status=='ACTIVE' %}background:rgba(34,197,94,.12);color:#4ade80;{% else %}background:rgba(255,255,255,.06);color:#8A8878;{% endif %}font-weight:700;">{{ t.status }}</span>
+                </div>
+            </div>
+            <div class="tpl-card-body">
+                <div class="tpl-subject">&#9993; {{ t.subject[:80] }}{% if t.subject|length > 80 %}…{% endif %}</div>
+                {% if t.variables %}
+                <div class="tpl-vars">
+                    {% for v in t.variables %}<span class="tpl-var-chip">{{"{{"}}{{ v }}{{"}}"}}</span>{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="tpl-card-foot">
+                <button class="btn-edit" onclick="openEditModal('{{ t.template_id }}')">
+                    <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="btn-del" onclick="deleteTemplate('{{ t.template_id }}','{{ t.name | e }}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+        <!-- New card for this type -->
+        <div class="tpl-card new-card" onclick="openNewModal('{{ tkey }}')">
+            <i class="fa-solid fa-plus" style="font-size:18px;"></i>
+            <span>New {{ tlabel }} Template</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Modal -->
+<div class="modal-backdrop" id="tpl-modal" style="display:none;">
+    <div class="modal-box">
+        <div class="modal-head">
+            <div class="modal-title" id="modal-title">New Template</div>
+            <button class="modal-close" onclick="closeModal()">&#10005;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="f-template-id">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div>
+                    <div class="field-label">Template Name</div>
+                    <input class="field-input" id="f-name" placeholder="e.g. Package Expiry Reminder">
+                </div>
+                <div>
+                    <div class="field-label">Type</div>
+                    <select class="field-input" id="f-type">
+                        <option value="reminder">Reminder</option>
+                        <option value="custom">Custom</option>
+                        <option value="announcement">Announcement</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <div class="field-label">Email Subject</div>
+                <input class="field-input" id="f-subject" placeholder="e.g. Your {{plan_name}} expires in {{days_left}} days">
+            </div>
+            <div>
+                <div class="field-label">Variables <span style="font-weight:400;color:#5a5a4a;">(comma-separated, no braces)</span></div>
+                <input class="field-input" id="f-variables" placeholder="user_name, plan_name, expires_date, days_left, price_paid">
+            </div>
+            <div>
+                <div class="field-label">Body Type</div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="body-type-btn active" id="btype-html" onclick="setBodyType('html')">
+                        <i class="fa-solid fa-code"></i> HTML
+                    </button>
+                    <button type="button" class="body-type-btn" id="btype-text" onclick="setBodyType('text')">
+                        <i class="fa-solid fa-align-left"></i> Plain Text
+                    </button>
+                </div>
+                <input type="hidden" id="f-body-type" value="html">
+            </div>
+            <div>
+                <div class="field-label" id="body-field-label">Body HTML</div>
+                <div class="tab-bar" id="tab-bar-html">
+                    <button class="tab-btn active" onclick="switchTab('code',this)">HTML Code</button>
+                    <button class="tab-btn" onclick="switchTab('preview',this)">Preview</button>
+                </div>
+                <div id="tab-code">
+                    <textarea class="field-input mono" id="f-body" rows="16"
+                        placeholder="Paste or write your HTML email body here. Use {{variable_name}} for dynamic values."></textarea>
+                </div>
+                <div id="tab-preview" style="display:none;">
+                    <iframe class="preview-frame" id="preview-frame" sandbox="allow-same-origin"></iframe>
+                </div>
+                <!-- Plain text preview -->
+                <div id="tab-text-preview" style="display:none;
+                    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+                    border-radius:8px; padding:16px; font-size:13px; color:var(--text-color);
+                    white-space:pre-wrap; font-family:'Courier New',monospace; line-height:1.7; min-height:80px;">
+                </div>
+            </div>
+            <div>
+                <div class="field-label">Status</div>
+                <select class="field-input" id="f-status">
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <div class="save-status" id="modal-status"></div>
+            <button class="btn-secondary-sm" onclick="closeModal()">Cancel</button>
+            <button class="btn-primary-sm" onclick="saveTemplate()">
+                <i class="fa-solid fa-floppy-disk"></i> Save Template
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<input type="hidden" id="csrf-val" value="{{ csrf_token() }}">
+
+<script>
+var _TEMPLATES = {{ templates | tojson }};
+
+function showToast(msg, type) {
+    var wrap = document.getElementById('toast-wrap');
+    var t = document.createElement('div');
+    t.className = 'toast ' + (type || 'success');
+    t.innerHTML = '<span>' + (type === 'error' ? '&#10007;' : '&#10003;') + '</span><span>' + msg + '</span>';
+    wrap.appendChild(t);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add('show'); }); });
+    setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 350); }, 3500);
+}
+
+function setBodyType(bt) {
+    document.getElementById('f-body-type').value = bt;
+    document.querySelectorAll('.body-type-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('btype-' + bt).classList.add('active');
+    var isHtml = bt === 'html';
+    document.getElementById('body-field-label').textContent = isHtml ? 'Body HTML' : 'Body Text';
+    document.getElementById('tab-bar-html').style.display = isHtml ? 'flex' : 'none';
+    // In text mode always show code textarea, hide html preview
+    if (!isHtml) {
+        document.getElementById('tab-code').style.display = 'block';
+        document.getElementById('tab-preview').style.display = 'none';
+        document.getElementById('tab-text-preview').style.display = 'none';
+        document.getElementById('f-body').placeholder = 'Write your plain-text email here.\nUse {{variable_name}} for dynamic values.\n\nExample:\nHi {{user_name}},\n\nYour {{plan_name}} package expires in {{days_left}} days on {{expires_date}}.';
+        document.getElementById('f-body').style.fontFamily = 'inherit';
+    } else {
+        document.getElementById('f-body').placeholder = 'Paste or write your HTML email body here. Use {{variable_name}} for dynamic values.';
+        document.getElementById('f-body').style.fontFamily = "'Courier New', monospace";
+    }
+}
+
+function openNewModal(type) {
+    document.getElementById('f-template-id').value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-type').value = type || 'reminder';
+    document.getElementById('f-subject').value = '';
+    document.getElementById('f-variables').value = '';
+    document.getElementById('f-body').value = '';
+    document.getElementById('f-status').value = 'ACTIVE';
+    document.getElementById('modal-title').textContent = 'New Template';
+    document.getElementById('modal-status').textContent = '';
+    setBodyType('html');
+    switchTab('code', document.querySelector('.tab-btn'));
+    document.getElementById('tpl-modal').style.display = 'flex';
+}
+
+function openEditModal(templateId) {
+    var t = _TEMPLATES.find(function(x){ return x.template_id === templateId; });
+    if (!t) return;
+    document.getElementById('f-template-id').value = t.template_id || '';
+    document.getElementById('f-name').value = t.name || '';
+    document.getElementById('f-type').value = t.type || 'reminder';
+    document.getElementById('f-subject').value = t.subject || '';
+    document.getElementById('f-variables').value = (t.variables || []).join(', ');
+    document.getElementById('f-body').value = t.body_html || '';
+    document.getElementById('f-status').value = t.status || 'ACTIVE';
+    document.getElementById('modal-title').textContent = 'Edit Template';
+    document.getElementById('modal-status').textContent = '';
+    setBodyType(t.body_type || 'html');
+    switchTab('code', document.querySelector('.tab-btn'));
+    document.getElementById('tpl-modal').style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('tpl-modal').style.display = 'none'; }
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    if (tab === 'preview') {
+        var frame = document.getElementById('preview-frame');
+        var html = document.getElementById('f-body').value;
+        frame.srcdoc = html;
+        document.getElementById('tab-code').style.display = 'none';
+        document.getElementById('tab-preview').style.display = 'block';
+    } else {
+        document.getElementById('tab-code').style.display = 'block';
+        document.getElementById('tab-preview').style.display = 'none';
+    }
+}
+
+function saveTemplate() {
+    var statusEl = document.getElementById('modal-status');
+    var vars = document.getElementById('f-variables').value
+        .split(',').map(function(v){ return v.trim(); }).filter(Boolean);
+    var payload = {
+        template_id: document.getElementById('f-template-id').value,
+        name:        document.getElementById('f-name').value.trim(),
+        type:        document.getElementById('f-type').value,
+        body_type:   document.getElementById('f-body-type').value,
+        subject:     document.getElementById('f-subject').value.trim(),
+        body_html:   document.getElementById('f-body').value.trim(),
+        variables:   vars,
+        status:      document.getElementById('f-status').value,
+    };
+    if (!payload.name || !payload.subject || !payload.body_html) {
+        statusEl.className = 'save-status err';
+        statusEl.textContent = 'Name, subject and body are required.';
+        return;
+    }
+    statusEl.className = 'save-status';
+    statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+    fetch('/admin/email-templates/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.getElementById('csrf-val').value },
+        body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok) {
+            showToast('Template saved.', 'success');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            statusEl.className = 'save-status err';
+            statusEl.textContent = d.error || 'Save failed.';
+        }
+    }).catch(function(){
+        statusEl.className = 'save-status err';
+        statusEl.textContent = 'Network error.';
+    });
+}
+
+function deleteTemplate(id, name) {
+    if (!confirm('Delete template "' + name + '"? This cannot be undone.')) return;
+    fetch('/admin/email-templates/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.getElementById('csrf-val').value },
+        body: JSON.stringify({ template_id: id })
+    }).then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok) { showToast('Template deleted.', 'success'); setTimeout(function(){ location.reload(); }, 700); }
+        else showToast(d.error || 'Delete failed.', 'error');
+    });
+}
+
+// Close modal on backdrop click
+document.getElementById('tpl-modal').addEventListener('click', function(e){
+    if (e.target === this) closeModal();
+});
+</script>
+{% endblock %}
