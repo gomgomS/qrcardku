@@ -402,6 +402,16 @@
                     &#128465; Storage Cleanup
                 </a>
             </li>
+            <li>
+                <a href="/admin/plans" class="{% if request.path == '/admin/plans' %}active{% endif %}">
+                    &#128179; Plans Config
+                </a>
+            </li>
+            <li>
+                <a href="/admin/transactions" class="{% if request.path == '/admin/transactions' %}active{% endif %}">
+                    &#128181; Transactions
+                </a>
+            </li>
         </ul>
         <div class="sidebar-footer">
             {% if admin_name or admin_email %}

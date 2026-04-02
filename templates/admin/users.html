@@ -40,10 +40,15 @@
                     <td>{{ user.email or '—' }}</td>
                     <td>{{ user.name or '—' }}</td>
                     <td>
-                        {% if user.status == 'UNVERIFIED' %}
+                        {% if user.is_deleted %}
+                        <span style="color:#9ca3af;font-size:12px;font-weight:600;">🗑 Deleted</span>
+                        {% elif user.status == 'UNVERIFIED' %}
                         <span style="color:#b91c1c;font-size:12px;font-weight:600;">Unverified</span>
                         {% else %}
                         <span style="color:#065f46;font-size:12px;font-weight:600;">Active</span>
+                        {% endif %}
+                        {% if user.deleted_at %}
+                        <div style="font-size:10px;color:#9ca3af;margin-top:2px;">{{ user.deleted_at }}</div>
                         {% endif %}
                     </td>
                     <td style="text-align:center;">

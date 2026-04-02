@@ -176,6 +176,7 @@
     <div class="st-tab" onclick="showTab('api')">API key</div>
     <div class="st-tab" onclick="showTab('notifications')">Notifications</div>
     <div class="st-tab" onclick="showTab('appearance')">Appearance</div>
+    <div class="st-tab" style="margin-left: auto; color: #f87171;" onclick="showTab('danger')">Delete Account</div>
 </div>
 
 <div class="modified-date">
@@ -250,6 +251,61 @@
         </div>
     </div>
 </div>
+</div>
+
+<!-- Danger Zone tab -->
+<div id="tab-danger" class="tab-pane" style="display:none;">
+<div class="settings-section" style="border-color: rgba(239,68,68,0.3);">
+    <div class="section-info">
+        <h3 style="color: #f87171;"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+        <p>Permanently deactivate your account. This will hide your profile and all your QR codes from the platform. This action cannot be undone easily.</p>
+    </div>
+    <div class="form-content">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.7;">
+            Deleting your account will:
+        </p>
+        <ul style="font-size: 13px; color: var(--text-muted); margin-bottom: 28px; padding-left: 20px; line-height: 2;">
+            <li>Deactivate your login immediately</li>
+            <li>Soft-delete all your QR codes and assets</li>
+            <li>Cancel all pending subscriptions</li>
+        </ul>
+        <button type="button"
+            onclick="document.getElementById('deleteConfirmModal').style.display='flex'"
+            style="background: transparent; border: 1px solid #f87171; color: #f87171; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s;"
+            onmouseover="this.style.background='rgba(239,68,68,0.1)'"
+            onmouseout="this.style.background='transparent'">
+            <i class="fa-solid fa-trash"></i> Delete My Account
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="deleteConfirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background: var(--bg-content); border: 1px solid rgba(239,68,68,0.4); border-radius: 12px; padding: 36px; max-width: 420px; width: 90%; text-align: center;">
+        <div style="font-size: 40px; margin-bottom: 16px;">⚠️</div>
+        <h3 style="color: #f87171; margin-bottom: 12px;">Are you absolutely sure?</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">
+            This will immediately deactivate your account and all associated QR codes.<br>
+            Type <strong style="color: var(--text-main);">DELETE</strong> to confirm.
+        </p>
+        <input type="text" id="deleteConfirmInput" placeholder="Type DELETE here"
+            style="width:100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; margin-bottom: 20px; text-align: center; background: var(--bg-body); color: var(--text-main);"
+            oninput="document.getElementById('confirmDeleteBtn').disabled = this.value !== 'DELETE'">
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button"
+                onclick="document.getElementById('deleteConfirmModal').style.display='none'; document.getElementById('deleteConfirmInput').value=''; document.getElementById('confirmDeleteBtn').disabled=true;"
+                style="padding: 10px 24px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px;">Cancel</button>
+            <form action="/user/account/delete" method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button id="confirmDeleteBtn" type="submit" disabled
+                    style="padding: 10px 24px; border-radius: 6px; border: none; background: #ef4444; color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; opacity: 0.5; transition: 0.2s;"
+                    onmouseover="if(!this.disabled) this.style.background='#dc2626'"
+                    onmouseout="if(!this.disabled) this.style.background='#ef4444'"
+                    :disabled="deleteConfirmInput !== 'DELETE'">Confirm Delete</button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>

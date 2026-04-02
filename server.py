@@ -588,6 +588,194 @@ def admin_frames_delete(frame_id):
     return redirect(url_for("admin_frames"))
 
 
+# ── Plan definitions ──────────────────────────────────────────────────────────
+
+_PLAN_DEFAULTS = [
+    {
+        "plan_id": "single",
+        "name": "Single",
+        "price_idr": 20000,
+        "period_days": 30,
+        "max_qr": 1,
+        "max_storage_mb": 30,
+        "description": "Perfect for individuals who need one dynamic QR.",
+        "features": ["1 QR card slot", "30 MB storage", "All QR types", "Scan analytics"],
+        "status": "ACTIVE",
+    },
+    {
+        "plan_id": "team",
+        "name": "Team",
+        "price_idr": 120000,
+        "period_days": 30,
+        "max_qr": 10,
+        "max_storage_mb": 250,
+        "description": "Great for small teams managing multiple QR cards.",
+        "features": ["10 QR card slots", "250 MB storage", "All QR types", "Scan analytics", "Priority support"],
+        "status": "ACTIVE",
+    },
+    {
+        "plan_id": "corporate",
+        "name": "Corporate",
+        "price_idr": 420000,
+        "period_days": 30,
+        "max_qr": 40,
+        "max_storage_mb": 500,
+        "description": "For large organizations with high-volume QR needs.",
+        "features": ["40 QR card slots", "500 MB storage", "All QR types", "Scan analytics", "Priority support", "Dedicated account manager"],
+        "status": "ACTIVE",
+    },
+]
+
+def _get_plans_from_db(db):
+    """Return all 3 plans from DB, seeding defaults if missing."""
+    plans = {p["plan_id"]: p for p in db.db_plan_definition.find({}, {"_id": 0})}
+    import time
+    result = []
+    for d in _PLAN_DEFAULTS:
+        if d["plan_id"] not in plans:
+            db.db_plan_definition.insert_one(dict(d, created_at=time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), timestamp=time.time()))
+            result.append(dict(d))
+        else:
+            result.append(plans[d["plan_id"]])
+    return result
+@app.route("/admin/transactions")
+def admin_transactions():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+        
+    from pytavia_core import database as _db_c, config as _cfg_c
+    import time
+    
+    _db = _db_c.get_db_conn(_cfg_c.mainDB)
+    now = time.time()
+    
+    # System-wide auto cleanup before pulling stats
+    _db.db_user_subscription.update_many(
+        {"status": "ACTIVE", "expires_at": {"$lt": now, "$gt": 0}},
+        {"$set": {"status": "EXPIRED"}}
+    )
+    _db.db_user_subscription.update_many(
+        {"status": "PENDING", "timestamp": {"$lt": now - 3600}},
+        {"$set": {"status": "FAILED"}}
+    )
+    
+    transactions = list(_db.db_user_subscription.find({}, {"_id": 0}).sort("timestamp", -1))
+    
+    # Map Users — db_user uses 'pkey' as the user ID key (for fallback on old records)
+    users = list(_db.db_user.find({}, {"_id": 0, "pkey": 1, "email": 1, "name": 1}))
+    user_map = {u["pkey"]: {"email": u.get("email", ""), "name": u.get("name", "")} for u in users if "pkey" in u}
+    
+    for t in transactions:
+        # Prefer embedded fields (stored at checkout), fallback to live lookup
+        if t.get("user_email"):
+            t["user_name"] = t.get("user_name") or "—"
+        else:
+            u_info = user_map.get(t.get("fk_user_id"), {"email": "(not found)", "name": "Unknown User"})
+            t["user_email"] = u_info["email"]
+            t["user_name"] = u_info["name"]
+        
+    return render_template("admin/transactions.html",
+        transactions=transactions,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+        now=now
+    )
+
+
+@app.route("/admin/plans")
+def admin_plans():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    plans = _get_plans_from_db(_db)
+    return render_template("admin/plans.html",
+        plans=plans,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+@app.route("/admin/plans/save", methods=["POST"])
+def admin_plans_save():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    from pytavia_core import database as _db_p, config as _cfg_p
+    import time
+    data = request.get_json(force=True) or {}
+    plan_id = str(data.get("plan_id", "")).strip()
+    if plan_id not in ("single", "team", "corporate"):
+        return jsonify({"ok": False, "error": "Invalid plan_id"}), 400
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+
+    features_raw = data.get("features", [])
+    if isinstance(features_raw, str):
+        features_raw = [f.strip() for f in features_raw.splitlines() if f.strip()]
+
+    update = {
+        "name":            str(data.get("name", "")).strip(),
+        "price_idr":       max(0, int(data.get("price_idr", 0))),
+        "period_days":     max(1, int(data.get("period_days", 30))),
+        "max_qr":          max(0, int(data.get("max_qr", 0))),
+        "max_storage_mb":  max(0, int(data.get("max_storage_mb", 0))),
+        "description":     str(data.get("description", "")).strip(),
+        "features":        features_raw,
+        "status":          "ACTIVE" if data.get("status") == "ACTIVE" else "INACTIVE",
+        "updated_at":      time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+    }
+    _db.db_plan_definition.update_one(
+        {"plan_id": plan_id},
+        {"$set": update},
+        upsert=True,
+    )
+    return jsonify({"ok": True})
+
+
+@app.route("/admin/subscriptions")
+def admin_subscriptions():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_core import database as _db_p, config as _cfg_p
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    
+    subs = list(_db.db_user_subscription.find({}, {"_id": 0}).sort("timestamp", -1))
+    
+    return render_template("admin/subscriptions.html",
+        subscriptions=subs,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+@app.route("/admin/subscriptions/activate/<sub_id>", methods=["POST"])
+def admin_subscriptions_activate(sub_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_core import database as _db_p, config as _cfg_p
+    import time
+    _db = _db_p.get_db_conn(_cfg_p.mainDB)
+    
+    sub_record = _db.db_user_subscription.find_one({"subscription_id": sub_id})
+    if sub_record and sub_record.get("status") == "PENDING":
+        now_ts = int(time.time())
+        period_days = sub_record.get("period_days", 30)
+        expires_at = now_ts + (period_days * 86400)
+        
+        _db.db_user_subscription.update_one(
+            {"subscription_id": sub_id},
+            {"$set": {
+                "status": "ACTIVE",
+                "started_at": now_ts,
+                "expires_at": expires_at
+            }}
+        )
+    return redirect(url_for("admin_subscriptions"))
+
+
+
 @app.route("/admin/storage")
 def admin_storage():
     if "fk_admin_id" not in session:
@@ -621,12 +809,14 @@ def admin_storage():
         a["user_email"] = user_map.get(a.get("fk_user_id", ""), a.get("fk_user_id", "—"))
 
     total_size = sum(a.get("file_size", 0) for a in assets)
+    whole_total_size = _atp.get_soft_deleted_size()
     from pytavia_modules.user.user_storage_proc import _fmt_size
     return render_template(
         "admin/storage.html",
         assets=assets,
         total_count=total_count,
         total_size_fmt=_fmt_size(total_size),
+        whole_total_size_fmt=_fmt_size(whole_total_size),
         page=_page,
         per_page=_per_page,
         total_pages=total_pages,
@@ -663,7 +853,10 @@ def admin_storage_hard_delete():
     # Batch delete from R2
     r2_keys = [a["r2_key"] for a in assets if a.get("r2_key")]
     _r2 = _r2_mod_hd.r2_storage_proc()
-    deleted_r2 = _r2.delete_keys_batch(r2_keys)
+    delete_result = _r2.delete_keys_batch(r2_keys)
+    deleted_r2 = delete_result.get("deleted", 0)
+    r2_responses = delete_result.get("results", [])
+    
     # Mark all as HARD_DELETED in MongoDB
     ids_to_mark = [a["asset_id"] for a in assets if a.get("asset_id")]
     _atp.mark_hard_deleted_batch(ids_to_mark)
@@ -673,9 +866,131 @@ def admin_storage_hard_delete():
         "ok": True,
         "deleted": len(ids_to_mark),
         "deleted_r2": deleted_r2,
+        "r2_responses": r2_responses,
         "freed_bytes": freed_bytes,
         "freed_fmt": _fmt_size(freed_bytes),
     })
+
+
+_SCAN_JOBS = {}
+
+@app.route("/admin/storage/scan_orphans/start", methods=["POST"])
+def admin_storage_scan_orphans_start():
+    """Starts a background thread to scan Cloudflare R2 and compare against MongoDB."""
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+
+    import uuid
+    import threading
+    job_id = str(uuid.uuid4())
+    _SCAN_JOBS[job_id] = {
+        "status": "running", 
+        "step": "Connecting to Cloudflare R2...",
+        "current": 0, 
+        "total": 0, 
+        "orphans": 0,
+        "error": None
+    }
+
+    def background_scan(j_id):
+        try:
+            from pytavia_modules.storage import r2_storage_proc
+            from pytavia_core import database, config
+            import time
+
+            _r2 = r2_storage_proc.r2_storage_proc()
+            _db = database.get_db_conn(config.mainDB)
+
+            _SCAN_JOBS[j_id]["step"] = "Fetching all files from R2 bucket..."
+            all_r2_files = _r2.list_prefix("")
+            r2_map = {obj["key"]: obj["size"] for obj in all_r2_files}
+            
+            _SCAN_JOBS[j_id]["step"] = "Downloading tracked MongoDB assets..."
+            db_assets = list(_db.db_qr_assets.find({}, {"r2_key": 1, "status": 1, "fk_user_id": 1}))
+            db_map = {doc.get("r2_key"): doc for doc in db_assets if doc.get("r2_key")}
+
+            _SCAN_JOBS[j_id]["step"] = "Mapping user activity statuses..."
+            deleted_users_cursor = _db.db_user.find({"is_deleted": True}, {"fk_user_id": 1})
+            deleted_users = {u.get("fk_user_id") for u in deleted_users_cursor if u.get("fk_user_id")}
+            
+            active_users_cursor = _db.db_user.find({"is_deleted": {"$ne": True}}, {"fk_user_id": 1})
+            active_users = {u.get("fk_user_id") for u in active_users_cursor if u.get("fk_user_id")}
+
+            total_files = len(r2_map)
+            _SCAN_JOBS[j_id]["total"] = total_files
+            _SCAN_JOBS[j_id]["step"] = "Diffing files and injecting orphans..."
+
+            orphans_detected = 0
+            current_idx = 0
+            now = time.time()
+            
+            for r2_key, r2_size in r2_map.items():
+                current_idx += 1
+                if current_idx % 20 == 0:
+                    _SCAN_JOBS[j_id]["current"] = current_idx
+                    _SCAN_JOBS[j_id]["orphans"] = orphans_detected
+
+                if r2_key.startswith("public/") or r2_key.startswith("static/"):
+                    continue
+                    
+                db_entry = db_map.get(r2_key)
+                is_orphan = False
+                
+                if not db_entry:
+                    is_orphan = True
+                    owner_id = "UNKNOWN"
+                else:
+                    owner_id = db_entry.get("fk_user_id", "")
+                    if (owner_id in deleted_users) or (owner_id not in active_users and owner_id != "UNKNOWN" and owner_id != ""):
+                        if db_entry.get("status") != "SOFT_DELETED":
+                            is_orphan = True
+
+                if is_orphan:
+                    orphans_detected += 1
+                    if not db_entry:
+                        from pytavia_modules.user.asset_tracker_proc import _file_category
+                        _db.db_qr_assets.insert_one({
+                            "asset_id"      : str(uuid.uuid4().hex),
+                            "fk_user_id"    : owner_id,
+                            "qrcard_id"     : "",
+                            "frame_id"      : "",
+                            "qr_type"       : "orphan",
+                            "r2_key"        : r2_key,
+                            "file_name"     : r2_key.split("/")[-1],
+                            "file_size"     : int(r2_size),
+                            "file_category" : _file_category(r2_key),
+                            "status"        : "SOFT_DELETED",
+                            "soft_deleted_at": now,
+                            "created_at"    : time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(now)),
+                            "timestamp"     : now,
+                        })
+                    else:
+                        _db.db_qr_assets.update_one(
+                            {"_id": db_entry["_id"]},
+                            {"$set": {"status": "SOFT_DELETED", "soft_deleted_at": now}}
+                        )
+
+            _SCAN_JOBS[j_id]["current"] = current_idx
+            _SCAN_JOBS[j_id]["orphans"] = orphans_detected
+            _SCAN_JOBS[j_id]["status"] = "completed"
+
+        except Exception as e:
+            import traceback
+            app.logger.debug(traceback.format_exc())
+            _SCAN_JOBS[j_id]["status"] = "error"
+            _SCAN_JOBS[j_id]["error"] = str(e)
+
+    threading.Thread(target=background_scan, args=(job_id,)).start()
+    return jsonify({"ok": True, "job_id": job_id})
+
+@app.route("/admin/storage/scan_orphans/progress/<job_id>", methods=["GET"])
+def admin_storage_scan_orphans_progress(job_id):
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    job = _SCAN_JOBS.get(job_id)
+    if not job:
+        return jsonify({"ok": False, "error": "Job not found"}), 404
+    return jsonify({"ok": True, "job": job})
 
 
 @app.route("/api/frames/default")
@@ -6750,6 +7065,192 @@ def user_frames_delete(frame_id):
     return redirect(url_for("user_templates"))
 
 
+@app.route("/user/plans/checkout", methods=["GET", "POST"])
+def user_plans_checkout():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    import time
+    from pytavia_stdlib import idgen
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    fk_user_id = session["fk_user_id"]
+    
+    if request.method == "POST":
+        plan_id = request.form.get("plan_id", "")
+        payment_method = request.form.get("payment_method", "")
+        plan_doc = _db.db_plan_definition.find_one({"plan_id": plan_id})
+        
+        if not plan_doc or not payment_method:
+            return redirect(url_for("user_plans"))
+        
+        user_doc = _db.db_user.find_one({"pkey": fk_user_id})
+        user_email = user_doc.get("email", "user@qrkartu.com") if user_doc else "user@qrkartu.com"
+        
+        sub_id = idgen._get_api_call_id()
+        now_ts = int(time.time())
+        amount_idr = int(plan_doc.get("price_idr", 0))
+        
+        # --- Duitku API Integration ---
+        import requests
+        import hashlib
+        import json
+        
+        merchant_code = getattr(_cfg_plans, "G_DUITKU_MERCHANT_CODE", "")
+        api_key = getattr(_cfg_plans, "G_DUITKU_MERCHANT_KEY", "")
+        
+        base_api = getattr(_cfg_plans, "G_DUIKU_INQUIRY_URL", "https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry")
+        
+        # md5(merchantCode + merchantOrderId + paymentAmount + apiKey)
+        sig_str = f"{merchant_code}{sub_id}{amount_idr}{api_key}"
+        signature = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
+        
+        payload = {
+            "merchantCode": merchant_code,
+            "paymentAmount": amount_idr,
+            "merchantOrderId": sub_id,
+            "productDetails": f"Subscription {plan_doc.get('name', plan_id)}",
+            "email": user_email,
+            "paymentMethod": payment_method,
+            "returnUrl": getattr(_cfg_plans, "G_BASE_URL", "http://127.0.0.1:5008") + "/user/plans/success",
+            "callbackUrl": getattr(_cfg_plans, "G_DUIKU_CALLBACK_URL", ""),
+            "expiryPeriod": 60,
+            "signature": signature
+        }
+        
+        payment_url = None
+        duitku_ref = "REF-" + sub_id[:8].upper()
+        
+        try:
+            headers = {"Content-Type": "application/json"}
+            resp = requests.post(base_api, json=payload, headers=headers)
+            resp_data = resp.json()
+            if resp_data.get("statusCode") == "00":
+                payment_url = resp_data.get("paymentUrl")
+                duitku_ref = resp_data.get("reference", duitku_ref)
+            else:
+                return f"<b>Duitku API Error:</b> {resp_data.get('statusMessage', str(resp_data))}<br><br><b>Hint:</b> Make sure your 'DUITKU_MERCHANT_CODE' in config.py is correct!", 400
+        except Exception as e:
+            return f"<b>Exception contacting Duitku:</b> {str(e)}", 500
+            
+        date_str = time.strftime("%Y%m%d", time.gmtime())
+        today_start_str = time.strftime("%Y-%m-%d", time.gmtime())
+        daily_count = _db.db_user_subscription.count_documents({"created_at": {"$regex": f"^{today_start_str}"}})
+        invoice_number = f"INV-{date_str}-{daily_count + 1:03d}"
+        
+        doc = {
+            "subscription_id": sub_id,
+            "fk_user_id": fk_user_id,
+            "user_email": user_email,
+            "user_name": user_doc.get("name", "") if user_doc else "",
+            "plan_id": plan_id,
+            "plan_name": plan_doc.get("name", ""),
+            "price_paid_idr": amount_idr,
+            "max_qr": plan_doc.get("max_qr", 0),
+            "max_storage_mb": plan_doc.get("max_storage_mb", 0),
+            "period_days": plan_doc.get("period_days", 30),
+            "started_at": 0,
+            "expires_at": 0,
+            "payment_ref": duitku_ref,
+            "payment_method": payment_method,
+            "payment_url": payment_url,
+            "notes": "",
+            "status": "PENDING",
+            "invoice_number": invoice_number,
+            "payment_due_timestamp": now_ts + 3600,
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            "timestamp": now_ts
+        }
+        _db.db_user_subscription.insert_one(doc)
+        session["last_pending_sub"] = sub_id
+        
+        if payment_url:
+            return redirect(payment_url)
+            
+        return redirect(url_for("user_plans_success"))
+        
+    plan_id = request.args.get("plan", "")
+    plan_doc = _db.db_plan_definition.find_one({"plan_id": plan_id, "status": "ACTIVE"})
+    
+    if not plan_doc:
+        return redirect(url_for("user_plans"))
+        
+    payment_methods_data = []
+    try:
+        import json
+        import os
+        json_path = os.path.join(app.root_path, "static", "json_file", "payment-methods.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                payment_methods_data = json.load(f)
+    except Exception as e:
+        app.logger.error(f"Error loading payment methods JSON: {e}")
+        
+    return render_template("user/checkout.html", plan=plan_doc, payment_categories=payment_methods_data)
+
+
+@app.route("/user/plans/success")
+def user_plans_success():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+        
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    sub_id = session.get("last_pending_sub")
+    
+    subscription = None
+    if sub_id:
+        subscription = _db.db_user_subscription.find_one({"subscription_id": sub_id, "fk_user_id": session["fk_user_id"]})
+        
+    return render_template("user/payment_success.html", subscription=subscription)
+
+
+@app.route("/user/plans/failed")
+def user_plans_failed():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    return render_template("user/payment_failed.html")
+
+
+@app.route("/api/v1/payment/callback", methods=["POST"])
+@csrf.exempt
+def duitku_callback():
+    from pytavia_core import database as _db_c, config as _cfg_c
+    import hashlib
+    import time
+    
+    merchant_code = str(request.form.get("merchantCode", ""))
+    amount = str(request.form.get("amount", ""))
+    order_id = str(request.form.get("merchantOrderId", ""))
+    signature = str(request.form.get("signature", ""))
+    result_code = str(request.form.get("resultCode", ""))
+    
+    cfg_merchant = getattr(_cfg_c, "G_DUITKU_MERCHANT_CODE", "")
+    cfg_api_key = getattr(_cfg_c, "G_DUITKU_MERCHANT_KEY", "")
+    
+    sig_str = f"{cfg_merchant}{amount}{order_id}{cfg_api_key}"
+    calc_sig = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
+    
+    if signature == calc_sig:
+        if result_code == "00":
+            _db = _db_c.get_db_conn(_cfg_c.mainDB)
+            sub = _db.db_user_subscription.find_one({"subscription_id": order_id})
+            if sub and sub.get("status") == "PENDING":
+                now_ts = int(time.time())
+                period_days = sub.get("period_days", 30)
+                expires_at = now_ts + (period_days * 86400)
+                
+                _db.db_user_subscription.update_one(
+                    {"subscription_id": order_id},
+                    {"$set": {
+                        "status": "ACTIVE",
+                        "started_at": now_ts,
+                        "expires_at": expires_at
+                    }}
+                )
+    
+    return "SUCCESS", 200
+
+
 @app.route("/user/plans")
 def user_plans():
     if "fk_user_id" not in session:
@@ -6759,11 +7260,65 @@ def user_plans():
     _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
     fk_user_id = session["fk_user_id"]
     now = time.time()
+    # Optimize auto-cleanups via fast Mongo bulk operations
+    _db.db_user_subscription.update_many(
+        {"fk_user_id": fk_user_id, "status": "ACTIVE", "expires_at": {"$lt": now, "$gt": 0}},
+        {"$set": {"status": "EXPIRED"}}
+    )
+    _db.db_user_subscription.update_many(
+        {"fk_user_id": fk_user_id, "status": "PENDING", "timestamp": {"$lt": now - 3600}},
+        {"$set": {"status": "FAILED"}}
+    )
+
+    # Strictly limit payload sent to the FE
     subscriptions = list(_db.db_user_subscription.find(
         {"fk_user_id": fk_user_id},
         {"_id": 0}
-    ).sort("expires_at", -1))
-    # Auto-mark expired
+    ).sort("timestamp", -1).limit(5))
+    plans = _get_plans_from_db(_db)
+    return render_template("user/plans.html",
+        active_page="plans",
+        subscriptions=subscriptions,
+        plans=plans,
+        now=now,
+    )
+
+
+@app.route("/user/plans/cancel", methods=["POST"])
+def user_plans_cancel():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+        
+    sub_id = request.form.get("subscription_id")
+    if not sub_id:
+        return redirect(url_for("user_plans"))
+        
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    
+    _db.db_user_subscription.update_one(
+        {"fk_user_id": session["fk_user_id"], "subscription_id": sub_id, "status": "PENDING"},
+        {"$set": {"status": "CANCELLED"}}
+    )
+    
+    return redirect(url_for("user_plans"))
+
+
+@app.route("/user/transactions")
+def user_transactions():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    import time
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    fk_user_id = session["fk_user_id"]
+    now = time.time()
+    
+    subscriptions = list(_db.db_user_subscription.find(
+        {"fk_user_id": fk_user_id},
+        {"_id": 0}
+    ).sort("timestamp", -1))
+    
     for s in subscriptions:
         if s.get("status") == "ACTIVE" and s.get("expires_at", 0) < now:
             _db.db_user_subscription.update_one(
@@ -6771,11 +7326,37 @@ def user_plans():
                 {"$set": {"status": "EXPIRED"}}
             )
             s["status"] = "EXPIRED"
-    return render_template("user/plans.html",
-        active_page="plans",
-        subscriptions=subscriptions,
-        now=now,
+        elif s.get("status") == "PENDING":
+            created_ts = s.get("timestamp", 0)
+            if now - created_ts > 3600:
+                _db.db_user_subscription.update_one(
+                    {"subscription_id": s["subscription_id"]},
+                    {"$set": {"status": "FAILED"}}
+                )
+                s["status"] = "FAILED"
+                
+    return render_template("user/transactions.html",
+        active_page="transactions",
+        transactions=subscriptions,
+        now=now
     )
+
+
+@app.route("/user/transactions/invoice/<sub_id>")
+def user_transactions_invoice(sub_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+        
+    from pytavia_core import database as _db_plans, config as _cfg_plans
+    _db = _db_plans.get_db_conn(_cfg_plans.mainDB)
+    
+    transaction = _db.db_user_subscription.find_one({"subscription_id": sub_id, "fk_user_id": session["fk_user_id"]})
+    if not transaction:
+        return "Transaction not found", 404
+        
+    user = _db.db_user.find_one({"fk_user_id": session["fk_user_id"]})
+        
+    return render_template("user/invoice.html", transaction=transaction, user=user)
 
 
 @app.route("/user/settings")
@@ -6783,6 +7364,58 @@ def user_settings():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     return view_user.view_user(app).settings_html()
+
+
+@app.route("/user/account/delete", methods=["POST"])
+def user_account_delete():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+
+    from pytavia_core import database as _dba, config as _cfga
+    import time as _time
+
+    _db = _dba.get_db_conn(_cfga.mainDB)
+    fk_user_id = session["fk_user_id"]
+    deleted_at = _time.strftime("%Y-%m-%d %H:%M:%S UTC", _time.gmtime())
+    deleted_ts = int(_time.time())
+
+    soft = {"$set": {
+        "is_deleted": True, 
+        "deleted_at": deleted_at, 
+        "deleted_ts": deleted_ts,
+        "status": "DELETED"
+    }}
+
+    # Soft-delete the user record
+    _db.db_user.update_one({"pkey": fk_user_id}, soft)
+    _db.db_user_auth.update_one({"fk_user_id": fk_user_id}, soft)
+
+    # Soft-delete all QR cards and their detail tables
+    qr_cols = [
+        "db_qrcard", "db_qrcard_web", "db_qrcard_ecard", "db_qrcard_images",
+        "db_qrcard_video", "db_qrcard_pdf", "db_qrcard_special", "db_qrcard_allinone",
+        "db_qrcard_web_static", "db_qrcard_text", "db_qrcard_wa_static",
+        "db_qrcard_email_static", "db_qrcard_vcard_static", "db_qr_index",
+        "db_qr_frame", "db_user_activity_log"
+    ]
+    for col in qr_cols:
+        try:
+            getattr(_db, col).update_many({"fk_user_id": fk_user_id}, soft)
+        except Exception:
+            pass
+
+    # Soft-delete assets specifically to "SOFT_DELETED" for admin R2 cleanup
+    soft_assets = soft.copy()
+    soft_assets["$set"] = soft["$set"].copy()
+    soft_assets["$set"]["status"] = "SOFT_DELETED"
+    soft_assets["$set"]["soft_deleted_at"] = deleted_ts
+    _db.db_qr_assets.update_many({"fk_user_id": fk_user_id, "status": "ACTIVE"}, soft_assets)
+
+    # Soft-delete subscriptions
+    _db.db_user_subscription.update_many({"fk_user_id": fk_user_id}, soft)
+
+    session.clear()
+    return redirect("/?account_deleted=1")
 
 @app.route("/user/security-history")
 def user_security_history():

@@ -1,0 +1,205 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Transactions Audit | Admin{% endblock %}
+
+{% block extra_head %}
+<style>
+    .page-header {
+        display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;
+    }
+    .page-title h1 { margin-bottom: 5px; color: var(--text-color); }
+    .page-title p { margin: 0; color: #8A8878; font-size: 14px; }
+
+    .filter-tabs {
+        display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;
+    }
+    .filter-btn {
+        background: #181914; border: 1px solid #3A3B30;
+        color: #8A8878; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn:hover { background: #252619; color: #E8E5DC; }
+    .filter-btn.active { background: var(--primary); color: #111209; border-color: var(--primary); box-shadow: 0 4px 10px rgba(235,168,27,0.2); }
+
+    .transaction-table th { background: transparent; border-bottom: 2px solid #3A3B30; }
+    .transaction-table td { font-size: 13px; white-space: nowrap; }
+    
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    }
+    .status-badge.active    { background: rgba(34,197,94,.1); color: #22c55e; border: 1px solid rgba(34,197,94,.2); }
+    .status-badge.pending   { background: rgba(235,168,27,.1); color: #eba81b; border: 1px solid rgba(235,168,27,.2); }
+    .status-badge.failed    { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+    .status-badge.expired   { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+    .status-badge.cancelled { background: rgba(255,255,255,.05); color: #9ca3af; border: 1px solid rgba(255,255,255,.1); }
+
+    .email-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    .ref-cell { font-family: monospace; opacity: 0.7; font-size: 12px; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #8A8878; }
+    .empty-state i { font-size: 50px; opacity: 0.1; margin-bottom: 20px; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">
+        <h1>Transactions Audit</h1>
+        <p>Global monitor of all payment processing histories and subscription lifetimes.</p>
+    </div>
+</div>
+
+<div class="filter-tabs" id="filterTabs">
+    <button class="filter-btn active" data-filter="all">All Records</button>
+    <button class="filter-btn" data-filter="active">Active / Paid</button>
+    <button class="filter-btn" data-filter="pending">Pending</button>
+    <button class="filter-btn" data-filter="failed">Failed / Expired</button>
+    <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+</div>
+
+<div class="table-container">
+    {% if transactions %}
+    <div style="overflow-x: auto;">
+        <table class="transaction-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Inv/Ref ID</th>
+                    <th>Subscribed Package</th>
+                    <th>Purchase Date</th>
+                    <th>Gateway</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="trxBody">
+                {% for t in transactions %}
+                <tr class="trx-row" data-status="{{ t.status | lower }}">
+                    <td>
+                        <div class="email-cell">
+                            <i class="fa-solid fa-user-circle" style="opacity: 0.5;"></i> {{ t.user_name }}
+                        </div>
+                        <div style="font-size: 11px; opacity: 0.6; margin-left: 22px;">{{ t.user_email }}</div>
+                    </td>
+                    <td>
+                        <div class="ref-cell" style="color: var(--primary);">{{ t.invoice_number if t.invoice_number else ("INV-" ~ t.payment_ref) }}</div>
+                        <div class="ref-cell">{{ t.payment_ref }}</div>
+                    </td>
+                    <td>
+                        <strong>{{ t.plan_name }}</strong><br>
+                        <span style="font-size: 11px; opacity: 0.6;">Rp {{ "{:,.0f}".format(t.price_paid_idr).replace(',', '.') }} / {{ t.period_days }} Days</span>
+                    </td>
+                    <td class="ts-cell" data-ts="{{ t.timestamp }}">—</td>
+                    <td style="text-transform: uppercase; font-size: 11px; font-weight: bold; opacity: 0.8;">{{ t.payment_method }}</td>
+                    <td>
+                        <span class="status-badge {{ t.status | lower }}">
+                            {% if t.status == 'ACTIVE' %} PAID {% else %} {{ t.status | capitalize }} {% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-server"></i>
+        <h3>No Checkouts Recorded</h3>
+        <p>No users have initiated any plans checkout sequences yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="pagination-controls" id="paginationControls" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;">
+    <!-- Pagination dynamically injected here -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Format Timestamps
+    document.querySelectorAll('.ts-cell').forEach(function(td) {
+        var ts = parseFloat(td.dataset.ts);
+        if (ts && ts > 0) {
+            var date = new Date(ts * 1000);
+            td.innerHTML = `<strong>${date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</strong><br><span style="font-size: 11px; opacity: 0.6;">${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>`;
+        }
+    });
+
+    // Pagination & Frontend Filtering Logic
+    const rowsPerPage = 10;
+    let currentPage = 1;
+
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const allRows = Array.from(document.querySelectorAll('.trx-row'));
+    const paginationControls = document.getElementById('paginationControls');
+    
+    // Core function to evaluate and render rows
+    function applyFilterAndPaginate() {
+        const activeFilterBtn = document.querySelector('.filter-btn.active');
+        const filter = activeFilterBtn.getAttribute('data-filter');
+        
+        // 1. Identify which rows match the filter
+        let filteredRows = [];
+        allRows.forEach(row => {
+            row.style.display = 'none'; // Hide all initially
+            let status = row.getAttribute('data-status');
+            
+            if (filter === 'all' || (filter === 'failed' && status === 'expired') || status === filter) {
+                filteredRows.push(row);
+            }
+        });
+        
+        // 2. Calculate Pagination
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages || 1;
+        
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        
+        // 3. Display the page subset
+        filteredRows.slice(startIndex, endIndex).forEach(row => {
+            row.style.display = '';
+        });
+        
+        // 4. Render Pagination Buttons
+        renderPaginationButtons(totalPages);
+    }
+    
+    function renderPaginationButtons(totalPages) {
+        paginationControls.innerHTML = '';
+        if (totalPages <= 1) return; // No pagination needed
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i;
+            btn.style.padding = '6px 12px';
+            btn.style.background = (i === currentPage) ? 'var(--primary)' : '#181914';
+            btn.style.color = (i === currentPage) ? '#111209' : '#8A8878';
+            btn.style.border = '1px solid #3A3B30';
+            btn.style.borderRadius = '6px';
+            btn.style.cursor = 'pointer';
+            btn.style.fontWeight = '600';
+            
+            btn.addEventListener('click', () => {
+                currentPage = i;
+                applyFilterAndPaginate();
+            });
+            paginationControls.appendChild(btn);
+        }
+    }
+
+    // Bind Filter Buttons to reset page and re-render
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentPage = 1; // Reset to page 1 on filter change
+            applyFilterAndPaginate();
+        });
+    });
+    
+    // Initial Render
+    applyFilterAndPaginate();
+
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+[
+  {
+    "name": "Instant Payment",
+    "payments": [
+      {
+        "merchants": [
+          { "id": "SP", "name": "QRIS", "icon": "/static/assets/img/payment-method/qris.png" }
+        ],
+        "fee": "0,70%"
+      },
+      {
+        "merchants": [
+          { "id": "OV", "name": "OVO", "icon": "/static/assets/img/payment-method/ovo.png" }
+        ],
+        "fee": "1,67%"
+      },
+      {
+        "merchants": [
+          { "id": "SA", "name": "Shopee Pay", "icon": "/static/assets/img/payment-method/shopee-pay.png" }
+        ],
+        "fee": "1,67%"
+      },
+      {
+        "merchants": [
+          { "id": "DA", "name": "Dana", "icon": "/static/assets/img/payment-method/dana.webp" }
+        ],
+        "fee": "1,67%"
+      }
+    ]
+  },
+  {
+    "name": "Virtual Account",
+    "payments": [
+      {
+        "merchants": [
+          { "id": "BC", "name": "BCA", "icon": "/static/assets/img/payment-method/bca.png" }
+        ],
+        "fee": "Rp 4.400"
+      },
+      {
+        "merchants": [
+          { "id": "M2", "name": "Mandiri", "icon": "/static/assets/img/payment-method/mandiri.png" }
+        ],
+        "fee": "Rp 4.000"
+      },
+      {
+        "merchants": [
+          { "id": "BR", "name": "Briva", "icon": "/static/assets/img/payment-method/briva.webp" }
+        ],
+        "fee": "Rp 4.000"
+      },
+      {
+        "merchants": [
+          { "id": "BV", "name": "BSI", "icon": "/static/assets/img/payment-method/bsi.webp" }
+        ],
+        "fee": "Rp 4.000"
+      },
+      {
+        "merchants": [
+          { "id": "BT", "name": "Permata Bank", "icon": "/static/assets/img/payment-method/permata bank.png" }
+        ],
+        "fee": "Rp 3.000"
+      },
+      {
+        "merchants": [
+          { "id": "I1", "name": "BNI", "icon": "/static/assets/img/payment-method/bni.png" }
+        ],
+        "fee": "Rp 3.000"
+      },
+      {
+        "merchants": [
+          { "id": "VA", "name": "Maybank", "icon": "/static/assets/img/payment-method/maybank.png" }
+        ],
+        "fee": "Rp 3.000"
+      },
+      {
+        "merchants": [
+          { "id": "B1", "name": "CIMB", "icon": "/static/assets/img/payment-method/cimb.png" }
+        ],
+        "fee": "Rp 3.000"
+      }
+    ]
+  },
+  {
+    "name": "Credit Card",
+    "payments": [
+      {
+        "merchants": [
+          { "id": "VC", "name": "Visa", "icon": "/static/assets/img/payment-method/visa.svg" }
+        ],
+        "fee": "2,90% + Rp 2.500"
+      },
+      {
+        "merchants": [
+          { "id": "VC2", "name": "Master Card", "icon": "/static/assets/img/payment-method/master.svg" }
+        ],
+        "fee": "2,90% + Rp 2.500"
+      }
+    ]
+  },
+  {
+    "name": "Others",
+    "payments": [
+      {
+        "merchants": [
+          { "id": "A1", "name": "ATM Bersama", "icon": "/static/assets/img/payment-method/atm bersama.png" }
+        ],
+        "fee": "Rp 3.000"
+      },
+      {
+        "merchants": [
+          { "id": "FT", "name": "Retail", "icon": "/static/assets/img/payment-method/retail.png" }
+        ],
+        "fee": "Rp 5.000"
+      }
+    ]
+  }
+]

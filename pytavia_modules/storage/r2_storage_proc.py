@@ -189,23 +189,27 @@ class r2_storage_proc:
         except ClientError:
             pass
 
-    def delete_keys_batch(self, keys: list) -> int:
-        """Delete a specific list of R2 keys using S3 batch delete (max 1000/call).
-        Returns count of successfully deleted objects."""
+    def delete_keys_batch(self, keys: list) -> dict:
+        """Delete a specific list of R2 keys concurrently.
+        Returns a dictionary containing the count of deleted objects and the exact R2 responses."""
         if not keys:
-            return 0
-        deleted = 0
-        for i in range(0, len(keys), 1000):
-            batch = [{"Key": k} for k in keys[i:i + 1000]]
+            return {"deleted": 0, "results": []}
+            
+        import concurrent.futures
+        
+        def _del_single(key):
             try:
-                resp = self._client.delete_objects(
-                    Bucket=self._bucket,
-                    Delete={"Objects": batch, "Quiet": False},
-                )
-                deleted += len(resp.get("Deleted", []))
-            except ClientError:
-                pass
-        return deleted
+                resp = self._client.delete_object(Bucket=self._bucket, Key=key)
+                return {"key": key, "status": "success", "r2_resp": resp.get("ResponseMetadata", {})}
+            except Exception as e:
+                print(f"Failed to delete {key}: {e}")
+                return {"key": key, "status": "error", "error_msg": str(e)}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            results = list(executor.map(_del_single, keys))
+            deleted = sum(1 for r in results if r["status"] == "success")
+            
+        return {"deleted": deleted, "results": results}
 
     # ── List ────────────────────────────────────────────────────────────
 

@@ -1,0 +1,164 @@
+{% extends "admin/base.html" %}
+{% block title %}User Subscriptions — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .subs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .subs-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .table-wrap {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        color: var(--text-color);
+        text-align: left;
+    }
+
+    th {
+        padding: 16px 20px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #8A8878;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0,0,0,0.1);
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .plan-badge {
+        font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px;
+        text-transform: uppercase; letter-spacing: .4px; display: inline-block;
+    }
+    .plan-badge.single    { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .plan-badge.team      { background: rgba(168,85,247,.15); color: #c084fc; }
+    .plan-badge.corporate { background: rgba(235,168,27,.15); color: var(--primary); }
+
+    .status-badge {
+        font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .status-badge.active    { background: rgba(34,197,94,.15);  color: #22c55e; }
+    .status-badge.pending   { background: rgba(234,179,8,.15);  color: #eab308; }
+    .status-badge.expired   { background: rgba(239,68,68,.15);  color: #f87171; }
+    .status-badge.cancelled { background: rgba(255,255,255,.1);  color: #a1a1aa; }
+
+    .btn-activate {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 12px; background: var(--primary); color: #111209;
+        border: none; border-radius: 6px; font-size: 11px; font-weight: 700;
+        cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-activate:hover { opacity: 0.9; }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #8A8878;
+    }
+</style>
+
+<div class="subs-header">
+    <div>
+        <div class="subs-title"><i class="fa-solid fa-file-invoice"></i> Subscriptions</div>
+        <div style="font-size:13px;color:#8A8878;margin-top: 4px;">Monitor and manage user subscriptions.</div>
+    </div>
+</div>
+
+<div class="table-wrap">
+    {% if subscriptions %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date / Time</th>
+                <th>User ID</th>
+                <th>Plan</th>
+                <th>Price Paid</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subscriptions %}
+            <tr>
+                <td class="ts-cell" data-ts="{{ s.timestamp }}">—</td>
+                <td style="font-family: monospace; font-size: 12px; opacity: 0.8;">{{ s.fk_user_id[:8] }}...</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="plan-badge {{ s.plan_id }}">{{ s.plan_id }}</span>
+                        <span>{{ s.plan_name }}</span>
+                    </div>
+                </td>
+                <td>Rp {{ "{:,.0f}".format(s.price_paid_idr).replace(',', '.') }}</td>
+                <td>{{ s.period_days }} Days</td>
+                <td>
+                    <span class="status-badge {{ s.status | lower }}">
+                        {% if s.status == 'ACTIVE' %}<i class="fa-solid fa-circle" style="font-size:6px;"></i>{% endif %}
+                        {{ s.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if s.status == 'PENDING' %}
+                    <form method="POST" action="/admin/subscriptions/activate/{{ s.subscription_id }}" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn-activate">
+                            <i class="fa-solid fa-bolt"></i> Activate
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="color:#8A8878;font-size:11px;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom: 10px; opacity: 0.5;"></i>
+        <p>No subscriptions found.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.querySelectorAll('.ts-cell').forEach(function(td) {
+        var ts = parseFloat(td.dataset.ts);
+        if (ts && ts > 0) {
+            td.textContent = new Date(ts * 1000).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -68,6 +68,7 @@ class auth_proc:
 
             # Insert db_user
             user_rec = database.get_record("db_user")
+            user_rec["fk_user_id"] = user_rec["pkey"]   # mirror pkey into fk_user_id
             user_rec["username"] = username
             user_rec["name"]     = name
             user_rec["email"]    = email
@@ -314,6 +315,11 @@ class auth_proc:
             if user_auth.get("inactive_status") == "TRUE":
                 response["message_action"] = "LOGIN_FAILED"
                 response["message_desc"]   = "Account is inactive"
+                return response
+
+            if user_auth.get("is_deleted"):
+                response["message_action"] = "LOGIN_FAILED"
+                response["message_desc"]   = "Account has been deleted"
                 return response
 
             user_rec = self.mgdDB.db_user.find_one({ "pkey": user_auth["fk_user_id"] })

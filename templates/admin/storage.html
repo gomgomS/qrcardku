@@ -216,6 +216,9 @@
         border-radius: 3px;
         width: 0%;
         transition: width .3s;
+    }
+    
+    .progress-bar-fill.indeterminate {
         animation: indeterminate 1.4s ease-in-out infinite;
     }
 
@@ -307,7 +310,10 @@
     </div>
     <div class="stat-card">
         <div class="stat-label">Total Size</div>
-        <div class="stat-value" id="stat-size">{{ total_size_fmt }}</div>
+        <div class="stat-value" id="stat-size" style="display:flex; align-items:baseline; gap:8px;">
+            {{ total_size_fmt }} 
+            <span style="font-size:12px; color:#8A8878; font-weight:normal;">(Whole data: {{ whole_total_size_fmt }})</span>
+        </div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Selected</div>
@@ -325,6 +331,9 @@
     </button>
     <button class="btn-outline-sm" onclick="toggleSelectAll()">&#9745; Select All</button>
     <button class="btn-outline-sm" onclick="clearSelection()">&#9744; Clear</button>
+    <button class="btn-outline-sm" onclick="scanOrphans()" style="border-color: rgba(96,165,250,0.3); color: #60a5fa; margin-left: auto;">
+        <i class="fa-solid fa-radar"></i> Scan Orphaned Files
+    </button>
     <span class="sel-count" id="sel-label"></span>
 </div>
 
@@ -453,9 +462,16 @@
     }
 
     // ── Progress helpers ─────────────────────────────────────────────────────
-    function showProgress(sub) {
+    function showProgress(sub, determinative) {
         document.getElementById('prog-sub').textContent = sub || 'Please wait…';
         document.getElementById('prog-detail').textContent = 'Processing…';
+        if (determinative) {
+            document.getElementById('prog-bar').classList.remove('indeterminate');
+            document.getElementById('prog-bar').style.width = '0%';
+        } else {
+            document.getElementById('prog-bar').classList.add('indeterminate');
+            document.getElementById('prog-bar').style.width = '0%';
+        }
         document.getElementById('progress-overlay').classList.add('show');
     }
 
@@ -512,19 +528,93 @@
         .then(function(data) {
             hideProgress();
             if (data.ok) {
-                showToast('Deleted ' + data.deleted + ' assets (' + data.freed_fmt + ') from R2.', 'success');
-                // Reload after short delay so toast is visible
-                setTimeout(function() {
-                    if (mode === 'all') {
-                        window.location.href = '?page=1';
-                    } else {
-                        // Stay on current page; if it's now empty the BE will clamp
-                        window.location.href = '?page=' + _currentPage;
+                var r2Info = "";
+                if (data.r2_responses && data.r2_responses.length > 0) {
+                    var sample = data.r2_responses[0];
+                    if (sample.status === 'success' && sample.r2_resp) {
+                        r2Info = " (R2 HTTP " + sample.r2_resp.HTTPStatusCode + ")";
+                        console.log("Cloudflare R2 Bulk Delete Response Sample:", sample);
+                    } else if (sample.status === 'error') {
+                        r2Info = " (R2 Err: " + sample.error_msg + ")";
                     }
-                }, 1200);
+                }
+                
+                showToast('Deleted ' + data.deleted + ' assets (' + data.freed_fmt + ') from DB. R2: ' + data.deleted_r2 + ' deleted' + r2Info, 'success');
+                
+                if (data.r2_responses && data.r2_responses.length > 0 && confirm('Deletion Successful!\n\nDB Records Removed: ' + data.deleted + '\nR2 File Blocks Removed: ' + data.deleted_r2 + '\n\nCloudflare Raw HTTP Response:\n' + JSON.stringify(data.r2_responses.slice(0, 3), null, 2) + '\n\nClick OK to reload the page.')) {
+                    window.location.href = (mode === 'all') ? '?page=1' : '?page=' + _currentPage;
+                } else {
+                    setTimeout(function() {
+                        window.location.href = (mode === 'all') ? '?page=1' : '?page=' + _currentPage;
+                    }, 1200);
+                }
             } else {
                 showToast('Error: ' + (data.error || 'Delete failed.'), 'error');
             }
+        })
+        .catch(function(err) {
+            hideProgress();
+            showToast('Network error. Please try again.', 'error');
+            console.error(err);
+        });
+    }
+
+    // ── Scan Orphans ─────────────────────────────────────────────────────────
+    function scanOrphans() {
+        if (!confirm('Run a deep scan measuring all files in Cloudflare R2 against your MongoDB database to find missing, orphaned, or deleted-user files?\n\nThis might take a few seconds depending on bucket size.')) return;
+
+        showProgress('Starting scan job…', true);
+
+        var csrf = (document.getElementById('csrf-token-val') || {}).value || '';
+
+        fetch('/admin/storage/scan_orphans/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf,
+            }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) {
+                hideProgress();
+                showToast('Error: ' + (data.error || 'Scan failed.'), 'error');
+                return;
+            }
+            var jobId = data.job_id;
+            var timer = setInterval(function() {
+                fetch('/admin/storage/scan_orphans/progress/' + jobId)
+                .then(function(r) { return r.json(); })
+                .then(function(pData) {
+                    if (!pData.ok) {
+                        clearInterval(timer);
+                        hideProgress();
+                        showToast('Error getting progress status.', 'error');
+                        return;
+                    }
+                    var job = pData.job;
+                    if (job.status === 'completed') {
+                        clearInterval(timer);
+                        document.getElementById('prog-bar').style.width = '100%';
+                        document.getElementById('prog-detail').textContent = 'Completed!';
+                        showToast('Scan complete! Tracked ' + job.orphans + ' new orphaned files.', 'success');
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
+                    } else if (job.status === 'error') {
+                        clearInterval(timer);
+                        hideProgress();
+                        showToast('Scan error: ' + (job.error || 'Internal Failure'), 'error');
+                    } else {
+                        document.getElementById('prog-sub').textContent = job.step;
+                        if (job.total > 0) {
+                            var pct = (job.current / job.total) * 100;
+                            document.getElementById('prog-bar').style.width = pct + '%';
+                            document.getElementById('prog-detail').textContent = job.current.toLocaleString() + ' / ' + job.total.toLocaleString() + ' checked';
+                        }
+                    }
+                });
+            }, 800);
         })
         .catch(function(err) {
             hideProgress();

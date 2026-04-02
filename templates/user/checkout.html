@@ -1,0 +1,254 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Checkout" %}
+{% set active_page = "plans" %}
+
+{% block extra_css %}
+<style>
+    .checkout-wrap {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 30px;
+    }
+    
+    @media (max-width: 768px) {
+        .checkout-wrap {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .section-box {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .section-title {
+        font-size: 16px; 
+        font-weight: 700; 
+        color: var(--text-main);
+        margin-bottom: 20px;
+        display: flex; 
+        align-items: center; 
+        gap: 10px;
+    }
+
+    /* Summary Specifics */
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    .summary-item.total {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--border-color);
+        color: var(--text-main);
+        font-weight: 700;
+        font-size: 18px;
+    }
+    .summary-val { text-align: right; color: var(--text-main); font-weight: 600; }
+
+    .plan-preview {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: rgba(255,255,255,0.02);
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+    .plan-preview .icon { font-size: 32px; }
+    .plan-preview .details { flex: 1; }
+    .plan-preview .name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+    .plan-preview .meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .btn-pay {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; padding: 14px 0; border-radius: 10px;
+        background: var(--primary); color: #111209;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer; border: none; transition: opacity 0.2s;
+        margin-top: 24px;
+    }
+    .btn-pay:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-title" style="margin-bottom: 20px;">
+    <a href="/user/plans" style="color: var(--text-muted); text-decoration: none; margin-right: 10px;"><i class="fa-solid fa-arrow-left"></i></a>
+    Checkout Summary
+</div>
+
+<form method="POST" action="/user/plans/checkout">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="plan_id" value="{{ plan.plan_id }}">
+    
+    <div class="checkout-wrap">
+        <div class="checkout-left">
+            <div class="section-box">
+                <div class="section-title">
+                    <i class="fa-solid fa-box-open" style="color: var(--primary);"></i>
+                    Selected Plan
+                </div>
+                
+                <div class="plan-preview">
+                    {% set icon = '📦' %}
+                    {% if plan.plan_id == 'single' %}{% set icon = '👤' %}{% endif %}
+                    {% if plan.plan_id == 'team' %}{% set icon = '👥' %}{% endif %}
+                    {% if plan.plan_id == 'corporate' %}{% set icon = '🏢' %}{% endif %}
+                    
+                    <div class="icon">{{ icon }}</div>
+                    <div class="details">
+                        <div class="name">{{ plan.name }}</div>
+                        <div class="meta">{{ plan.max_qr }} QR Slot{{ 's' if plan.max_qr != 1 else '' }} • {{ plan.max_storage_mb }} MB Storage</div>
+                    </div>
+                </div>
+                
+                <p style="margin-top: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                    By confirming this payment, the quotas above will be instantly activated and added to your total active capacity. The subscription will be valid for <strong>{{ plan.period_days }} days</strong>.
+                </p>
+            </div>
+            
+            <div class="section-box">
+                <div class="section-title">
+                    <i class="fa-regular fa-credit-card" style="color: var(--primary);"></i>
+                    Payment Method
+                </div>
+                <!-- Hidden input mapped to Duitku code mapping -->
+                <input type="hidden" name="payment_method" id="val-payment-method" value="" required>
+
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                    <p>Select your preferred payment option below. Powered by <strong>Duitku</strong>.</p>
+                </div>
+
+                <style>
+                    .payment-category {
+                        margin-top: 16px;
+                    }
+                    .payment-category-title {
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: var(--text-main);
+                        margin-bottom: 8px;
+                    }
+                    .payment-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                        gap: 12px;
+                    }
+                    .pm-card {
+                        background: rgba(255,255,255,0.03);
+                        border: 2px solid var(--border-color);
+                        border-radius: 12px;
+                        padding: 12px;
+                        cursor: pointer;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center; 
+                        justify-content: center;
+                        gap: 8px;
+                        transition: all 0.2s;
+                    }
+                    .pm-card:hover {
+                        border-color: rgba(255,255,255,0.2);
+                        background: rgba(255,255,255,0.06);
+                    }
+                    .pm-card.selected {
+                        border-color: var(--primary);
+                        background: rgba(235, 168, 27, 0.05); /* very light primary */
+                    }
+                    .pm-card-merchants {
+                        display: flex;
+                        gap: 8px;
+                        align-items: center;
+                        justify-content: center;
+                        flex-wrap: wrap;
+                    }
+                    .pm-card img {
+                        height: 24px;
+                        max-width: 60px;
+                        object-fit: contain;
+                        filter: brightness(1.1); /* Slightly pop the images */
+                    }
+                    .pm-card .fee {
+                        font-size: 11px;
+                        color: var(--text-muted);
+                        text-align: center;
+                    }
+                </style>
+
+                {% for category in payment_categories %}
+                <div class="payment-category">
+                    <div class="payment-category-title">{{ category.name }}</div>
+                    <div class="payment-grid">
+                        {% for payment in category.payments %}
+                        <div class="pm-card" data-code="{{ payment.merchants[0].id }}" onclick="selectPayment(this)">
+                            <div class="pm-card-merchants">
+                                {% for m in payment.merchants %}
+                                <img src="{{ m.icon }}" alt="{{ m.name }}" title="{{ m.name }}">
+                                {% endfor %}
+                            </div>
+                            <div class="fee">+ {{ payment.fee }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <script>
+                    function selectPayment(element) {
+                        document.querySelectorAll('.pm-card').forEach(function(c) {
+                            c.classList.remove('selected');
+                        });
+                        element.classList.add('selected');
+                        document.getElementById('val-payment-method').value = element.getAttribute('data-code');
+                        
+                        // Unlock checkout button
+                        document.getElementById('btn-submit').removeAttribute('disabled');
+                        document.getElementById('btn-submit').style.opacity = '1';
+                        document.getElementById('btn-submit').style.cursor = 'pointer';
+                    }
+                </script>
+
+            </div>
+        </div>
+        
+        <div class="checkout-right">
+            <div class="section-box" style="position: sticky; top: 20px;">
+                <div class="section-title">Order Summary</div>
+                
+                <div class="summary-item">
+                    <span>{{ plan.name }} Package</span>
+                    <span class="summary-val">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Duration</span>
+                    <span class="summary-val">{{ plan.period_days }} Days</span>
+                </div>
+                <div class="summary-item">
+                    <span>Admin Fee</span>
+                    <span class="summary-val">Rp 0</span>
+                </div>
+                
+                <div class="summary-item total">
+                    <span>Total</span>
+                    <span class="summary-val">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                </div>
+                
+                <button type="submit" class="btn-pay" id="btn-submit" disabled style="opacity: 0.5; cursor: not-allowed;">
+                    Proceed to Payment <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -5,11 +5,8 @@
 
 {% block extra_css %}
 <style>
-    .plans-header {
-        margin-bottom: 28px;
-    }
+    .plans-header { margin-bottom: 28px; }
 
-    /* ── Plan cards grid ── */
     .plans-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -24,261 +21,79 @@
         padding: 28px 24px 24px;
         display: flex;
         flex-direction: column;
-        gap: 0;
         position: relative;
         transition: border-color 0.2s, box-shadow 0.2s;
     }
-
-    .plan-card:hover {
-        border-color: var(--primary);
-        box-shadow: 0 4px 24px rgba(235,168,27,.08);
-    }
-
-    .plan-card.featured {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 1px var(--primary), 0 8px 32px rgba(235,168,27,.12);
-    }
+    .plan-card:hover { border-color: var(--primary); box-shadow: 0 4px 24px rgba(235,168,27,.08); }
+    .plan-card.featured { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary), 0 8px 32px rgba(235,168,27,.12); }
 
     .plan-badge {
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--primary);
-        color: #111209;
-        font-size: 10px;
-        font-weight: 700;
-        padding: 3px 12px;
-        border-radius: 20px;
-        letter-spacing: .5px;
-        text-transform: uppercase;
-        white-space: nowrap;
+        position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+        background: var(--primary); color: #111209;
+        font-size: 10px; font-weight: 700; padding: 3px 12px;
+        border-radius: 20px; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap;
     }
 
-    .plan-icon {
-        font-size: 28px;
-        margin-bottom: 14px;
-    }
+    .plan-icon { font-size: 28px; margin-bottom: 14px; }
+    .plan-name { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+    .plan-tagline { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
 
-    .plan-name {
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 4px;
-    }
+    .plan-price { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
+    .plan-price-amount { font-size: 28px; font-weight: 800; color: var(--text-main); }
+    .plan-price-currency { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .plan-price-period { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
 
-    .plan-tagline {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 20px;
-        line-height: 1.4;
-    }
+    .plan-divider { border: none; border-top: 1px solid var(--border-color); margin: 16px 0; }
 
-    .plan-price {
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-        margin-bottom: 6px;
-    }
-
-    .plan-price-amount {
-        font-size: 28px;
-        font-weight: 800;
-        color: var(--text-main);
-    }
-
-    .plan-price-currency {
-        font-size: 13px;
-        color: var(--text-muted);
-        font-weight: 500;
-    }
-
-    .plan-price-period {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 20px;
-    }
-
-    .plan-divider {
-        border: none;
-        border-top: 1px solid var(--border-color);
-        margin: 16px 0;
-    }
-
-    .plan-features {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        flex: 1;
-    }
-
-    .plan-features li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 13px;
-        color: var(--text-main);
-    }
-
-    .plan-features li i {
-        color: #22c55e;
-        font-size: 12px;
-        flex-shrink: 0;
-        width: 16px;
-    }
-
-    .plan-features li .feat-label {
-        color: var(--text-muted);
-        font-size: 11px;
-        display: block;
-    }
+    .plan-features { list-style: none; padding: 0; margin: 0 0 24px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--text-main); }
+    .plan-features li i { color: #22c55e; font-size: 12px; flex-shrink: 0; width: 16px; margin-top: 2px; }
+    .plan-features li .feat-label { color: var(--text-muted); font-size: 11px; display: block; }
 
     .btn-buy {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 11px 0;
-        border-radius: 9px;
-        border: 1px solid var(--primary);
-        background: transparent;
-        color: var(--primary);
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.18s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; padding: 11px 0; border-radius: 9px;
+        border: 1px solid var(--primary); background: transparent;
+        color: var(--primary); font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.18s;
     }
+    .btn-buy:hover { background: var(--primary); color: #111209; }
+    .btn-buy.featured-btn { background: var(--primary); color: #111209; }
+    .btn-buy.featured-btn:hover { opacity: 0.9; }
 
-    .btn-buy:hover {
-        background: var(--primary);
-        color: #111209;
-    }
-
-    .btn-buy.featured-btn {
-        background: var(--primary);
-        color: #111209;
-    }
-
-    .btn-buy.featured-btn:hover {
-        opacity: 0.9;
-    }
-
-    /* ── Accumulate note ── */
     .accumulate-note {
-        background: var(--bg-content);
-        border: 1px solid var(--border-color);
-        border-left: 3px solid var(--primary);
-        border-radius: 10px;
-        padding: 14px 18px;
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-bottom: 36px;
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        line-height: 1.5;
+        background: var(--bg-content); border: 1px solid var(--border-color);
+        border-left: 3px solid var(--primary); border-radius: 10px;
+        padding: 14px 18px; font-size: 13px; color: var(--text-muted);
+        margin-bottom: 36px; display: flex; align-items: flex-start; gap: 12px; line-height: 1.5;
     }
+    .accumulate-note i { color: var(--primary); font-size: 15px; margin-top: 1px; flex-shrink: 0; }
 
-    .accumulate-note i {
-        color: var(--primary);
-        font-size: 15px;
-        margin-top: 1px;
-        flex-shrink: 0;
-    }
-
-    /* ── My Subscriptions ── */
     .section-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text-main);
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-size: 16px; font-weight: 700; color: var(--text-main);
+        margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
     }
 
-    .subs-table-wrap {
-        background: var(--bg-content);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .subs-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-    }
-
-    .subs-table th {
-        text-align: left;
-        padding: 11px 16px;
-        background: rgba(255,255,255,0.03);
-        color: var(--text-muted);
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: .4px;
-        border-bottom: 1px solid var(--border-color);
-        white-space: nowrap;
-    }
-
-    .subs-table td {
-        padding: 13px 16px;
-        border-bottom: 1px solid var(--border-color);
-        color: var(--text-main);
-        vertical-align: middle;
-    }
-
+    .subs-table-wrap { background: var(--bg-content); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; }
+    .subs-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .subs-table th { text-align: left; padding: 11px 16px; background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .subs-table td { padding: 13px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
     .subs-table tr:last-child td { border-bottom: none; }
     .subs-table tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-    }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .status-badge.active    { background: rgba(34,197,94,.12);  color: #22c55e; }
+    .status-badge.expired   { background: rgba(239,68,68,.1);   color: #f87171; }
+    .status-badge.cancelled { background: rgba(255,255,255,.06);color: var(--text-muted); }
 
-    .status-badge.active   { background: rgba(34,197,94,.12);  color: #22c55e; }
-    .status-badge.expired  { background: rgba(239,68,68,.1);   color: #f87171; }
-    .status-badge.cancelled{ background: rgba(255,255,255,.06);color: var(--text-muted); }
-
-    .plan-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-    }
-
+    .plan-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
     .plan-pill.single    { background: rgba(59,130,246,.12);  color: #60a5fa; }
     .plan-pill.team      { background: rgba(168,85,247,.12);  color: #c084fc; }
     .plan-pill.corporate { background: rgba(235,168,27,.12);  color: var(--primary); }
 
-    .empty-subs {
-        padding: 40px 20px;
-        text-align: center;
-        color: var(--text-muted);
-    }
-
+    .empty-subs { padding: 40px 20px; text-align: center; color: var(--text-muted); }
     .empty-subs i { font-size: 36px; opacity: .3; margin-bottom: 12px; display: block; }
     .empty-subs p { font-size: 13px; }
-
-    /* Coming soon overlay on buy button */
-    .btn-buy[data-soon]::after {
-        content: ' (Coming soon)';
-        font-size: 11px;
-        opacity: .7;
-    }
 </style>
 {% endblock %}
 
@@ -288,139 +103,62 @@
     <div style="font-size: 13px; color: var(--text-muted);">Choose a plan that fits your needs. Plans accumulate — buying the same plan twice doubles your quota.</div>
 </div>
 
-<!-- Accumulate info -->
 <div class="accumulate-note">
     <i class="fa-solid fa-circle-info"></i>
     <span>
-        Plans are <strong style="color: var(--text-main);">accumulative</strong> — each purchase adds on top of your existing quota and has its own expiry date.
-        For example, buying <em>Single</em> twice gives you <strong style="color: var(--text-main);">2 QR cards</strong> and <strong style="color: var(--text-main);">60 MB</strong> of storage across two separate billing periods.
+        Plans are <strong style="color: var(--text-main);">accumulative</strong> — each purchase adds on top of your existing quota with its own expiry date.
+        For example, buying <em>Single</em> twice gives you <strong style="color: var(--text-main);">2 QR cards</strong> and <strong style="color: var(--text-main);">60 MB</strong> across two separate billing periods.
     </span>
 </div>
 
 <!-- Plan cards -->
+{% set icons = {'single': '👤', 'team': '👥', 'corporate': '🏢'} %}
 <div class="plans-grid">
-
-    <!-- Single -->
-    <div class="plan-card">
-        <div class="plan-icon">👤</div>
-        <div class="plan-name">Single</div>
-        <div class="plan-tagline">Perfect for individuals who need one dynamic QR.</div>
-        <div class="plan-price">
-            <span class="plan-price-currency">IDR</span>
-            <span class="plan-price-amount">20.000</span>
-        </div>
-        <div class="plan-price-period">per month</div>
-        <hr class="plan-divider">
-        <ul class="plan-features">
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>1</strong> QR card slot <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>30 MB</strong> storage <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>All QR types</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Scan analytics</span>
-            </li>
-        </ul>
-        <button class="btn-buy" data-plan="single" data-soon onclick="onBuyClick('single', 'Single', 20000, 1, 30)">
-            <i class="fa-solid fa-cart-shopping"></i> Get Single
-        </button>
+{% for plan in plans %}
+{% if plan.status == 'ACTIVE' %}
+<div class="plan-card {% if plan.plan_id == 'team' %}featured{% endif %}">
+    {% if plan.plan_id == 'team' %}<div class="plan-badge">Most Popular</div>{% endif %}
+    <div class="plan-icon">{{ icons.get(plan.plan_id, '📦') }}</div>
+    <div class="plan-name">{{ plan.name }}</div>
+    <div class="plan-tagline">{{ plan.description }}</div>
+    <div class="plan-price">
+        <span class="plan-price-currency">IDR</span>
+        <span class="plan-price-amount">{{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
     </div>
-
-    <!-- Team -->
-    <div class="plan-card featured">
-        <div class="plan-badge">Most Popular</div>
-        <div class="plan-icon">👥</div>
-        <div class="plan-name">Team</div>
-        <div class="plan-tagline">Great for small teams managing multiple QR cards.</div>
-        <div class="plan-price">
-            <span class="plan-price-currency">IDR</span>
-            <span class="plan-price-amount">120.000</span>
-        </div>
-        <div class="plan-price-period">per month</div>
-        <hr class="plan-divider">
-        <ul class="plan-features">
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>10</strong> QR card slots <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>250 MB</strong> storage <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>All QR types</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Scan analytics</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Priority support</span>
-            </li>
-        </ul>
-        <button class="btn-buy featured-btn" data-plan="team" data-soon onclick="onBuyClick('team', 'Team', 120000, 10, 250)">
-            <i class="fa-solid fa-cart-shopping"></i> Get Team
-        </button>
-    </div>
-
-    <!-- Corporate -->
-    <div class="plan-card">
-        <div class="plan-icon">🏢</div>
-        <div class="plan-name">Corporate</div>
-        <div class="plan-tagline">For large organizations with high-volume QR needs.</div>
-        <div class="plan-price">
-            <span class="plan-price-currency">IDR</span>
-            <span class="plan-price-amount">420.000</span>
-        </div>
-        <div class="plan-price-period">per month</div>
-        <hr class="plan-divider">
-        <ul class="plan-features">
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>40</strong> QR card slots <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span><strong>500 MB</strong> storage <span class="feat-label">Per purchase</span></span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>All QR types</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Scan analytics</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Priority support</span>
-            </li>
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>Dedicated account manager</span>
-            </li>
-        </ul>
-        <button class="btn-buy" data-plan="corporate" data-soon onclick="onBuyClick('corporate', 'Corporate', 420000, 40, 500)">
-            <i class="fa-solid fa-cart-shopping"></i> Get Corporate
-        </button>
-    </div>
-
+    <div class="plan-price-period">per {{ plan.period_days }} day{{ 's' if plan.period_days != 1 else '' }}</div>
+    <hr class="plan-divider">
+    <ul class="plan-features">
+        <li>
+            <i class="fa-solid fa-check"></i>
+            <span><strong>{{ plan.max_qr }}</strong> QR card slot{{ 's' if plan.max_qr != 1 else '' }} <span class="feat-label">Per purchase</span></span>
+        </li>
+        <li>
+            <i class="fa-solid fa-check"></i>
+            <span><strong>{{ plan.max_storage_mb }} MB</strong> storage <span class="feat-label">Per purchase</span></span>
+        </li>
+        {% for feat in plan.features %}
+        <li>
+            <i class="fa-solid fa-check"></i>
+            <span>{{ feat }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    <button class="btn-buy {% if plan.plan_id == 'team' %}featured-btn{% endif %}"
+        onclick="onBuyClick('{{ plan.plan_id }}', '{{ plan.name }}', {{ plan.price_idr }}, {{ plan.max_qr }}, {{ plan.max_storage_mb }})">
+        <i class="fa-solid fa-cart-shopping"></i> Get {{ plan.name }}
+    </button>
+</div>
+{% endif %}
+{% endfor %}
 </div>
 
 <!-- My Subscriptions -->
-<div class="section-title">
-    <i class="fa-solid fa-receipt" style="color: var(--primary);"></i>
-    My Subscriptions
+<div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <i class="fa-solid fa-receipt" style="color: var(--primary);"></i>
+        My Subscriptions
+    </div>
+    <a href="/user/transactions" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600;">View All Transactions <i class="fa-solid fa-arrow-right"></i></a>
 </div>
 
 <div class="subs-table-wrap">
@@ -442,23 +180,32 @@
         <tr>
             <td>
                 <span class="plan-pill {{ s.plan_id }}">
-                    {% if s.plan_id == 'single' %}👤
-                    {% elif s.plan_id == 'team' %}👥
-                    {% elif s.plan_id == 'corporate' %}🏢
-                    {% endif %}
-                    {{ s.plan_name }}
+                    {{ icons.get(s.plan_id, '📦') }} {{ s.plan_name }}
                 </span>
             </td>
             <td>{{ s.max_qr }}</td>
             <td>{{ s.max_storage_mb }} MB</td>
-            <td>IDR {{ "{:,.0f}".format(s.price_paid_idr) }}</td>
-            <td class="ts-cell" data-ts="{{ s.started_at }}">{{ s.started_at }}</td>
-            <td class="ts-cell" data-ts="{{ s.expires_at }}">{{ s.expires_at }}</td>
+            <td>IDR {{ "{:,.0f}".format(s.price_paid_idr).replace(',', '.') }}</td>
+            <td class="ts-cell" data-ts="{{ s.started_at }}">—</td>
+            <td class="ts-cell" data-ts="{{ s.expires_at }}">—</td>
             <td>
                 <span class="status-badge {{ s.status | lower }}">
                     {% if s.status == 'ACTIVE' %}<i class="fa-solid fa-circle" style="font-size:7px;"></i>{% endif %}
                     {{ s.status | capitalize }}
                 </span>
+                
+                {% if s.status == 'PENDING' %}
+                <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                    {% if s.payment_url %}
+                    <a href="{{ s.payment_url }}" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; background: var(--primary); color: #111209; text-decoration: none;">Pay Now</a>
+                    {% endif %}
+                    <form method="POST" action="/user/plans/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure you want to cancel this pending payment?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="subscription_id" value="{{ s.subscription_id }}">
+                        <button type="submit" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(239,68,68,.3); color: #ef4444;">Cancel</button>
+                    </form>
+                </div>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -467,30 +214,25 @@
 {% else %}
 <div class="empty-subs">
     <i class="fa-regular fa-credit-card"></i>
-    <p>You have no active subscriptions yet. Choose a plan above to get started.</p>
+    <p>No subscriptions yet. Choose a plan above to get started.</p>
 </div>
 {% endif %}
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Format timestamps
     document.querySelectorAll('.ts-cell').forEach(function(td) {
         var ts = parseFloat(td.dataset.ts);
         if (ts && ts > 0) {
             td.textContent = new Date(ts * 1000).toLocaleDateString('id-ID', {
                 day: '2-digit', month: 'short', year: 'numeric'
             });
-        } else {
-            td.textContent = '—';
         }
     });
 
     function onBuyClick(planId, planName, priceIdr, maxQr, maxStorageMb) {
-        // Payment flow not yet implemented — placeholder
-        alert('Payment for "' + planName + '" plan is coming soon!\n\nPlan details:\n• ' + maxQr + ' QR slot(s)\n• ' + maxStorageMb + ' MB storage\n• IDR ' + priceIdr.toLocaleString('id-ID') + ' / month');
+        window.location.href = '/user/plans/checkout?plan=' + encodeURIComponent(planId);
     }
 </script>
 {% endblock %}

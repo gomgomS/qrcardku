@@ -136,7 +136,37 @@ class user_storage_proc:
         (backward compatibility for uploads made before tracking was added).
         """
         try:
+            import time
             _r2 = r2_mod.r2_storage_proc()
+
+            # ── Calculate Storage and QR Quota from db_user_subscription ──
+            now_ts = int(time.time())
+            active_subs = list(self.mgdDB.db_user_subscription.find({
+                "fk_user_id": fk_user_id,
+                "status": "ACTIVE",
+                "expires_at": {"$gt": now_ts}
+            }))
+            
+            total_storage_mb = 0
+            total_qr_quota = 0
+            
+            if active_subs:
+                for sub in active_subs:
+                    total_storage_mb += sub.get("max_storage_mb", 0)
+                    total_qr_quota += sub.get("max_qr", 0)
+            else:
+                user_rec = self.mgdDB.db_user.find_one({"pkey": fk_user_id})
+                if user_rec:
+                    user_created_ms = user_rec.get("rec_timestamp", 0) 
+                    user_created_s = user_created_ms / 1000
+                    if now_ts - user_created_s <= 2592000:  # 30 days
+                        total_storage_mb = 60
+                        total_qr_quota = 1
+                    else:
+                        total_storage_mb = 0
+                        total_qr_quota = 0
+                        
+            dynamic_limit_bytes = int(total_storage_mb) * 1024 * 1024
 
             # ── Build qrcard_id → QR meta map from DB ───────────────────
             qr_meta = {}  # qrcard_id -> {qr_name, qr_type, edit_url}
@@ -236,29 +266,34 @@ class user_storage_proc:
                         })
 
             files.sort(key=lambda x: x["size"], reverse=True)
-            pct        = min(int(total_bytes / STORAGE_LIMIT_BYTES * 100), 100)
-            free_bytes = max(STORAGE_LIMIT_BYTES - total_bytes, 0)
+            pct        = min(int(total_bytes / dynamic_limit_bytes * 100), 100) if dynamic_limit_bytes > 0 else 100
+            free_bytes = max(dynamic_limit_bytes - total_bytes, 0)
 
             return {
-                "ok":           True,
-                "total_bytes":  total_bytes,
-                "limit_bytes":  STORAGE_LIMIT_BYTES,
-                "free_bytes":   free_bytes,
-                "percent_used": pct,
-                "total_fmt":    _fmt_size(total_bytes),
-                "limit_fmt":    _fmt_size(STORAGE_LIMIT_BYTES),
-                "free_fmt":     _fmt_size(free_bytes),
-                "file_count":   len(files),
-                "files":        files,
+                "ok":               True,
+                "total_bytes":      total_bytes,
+                "limit_bytes":      dynamic_limit_bytes,
+                "free_bytes":       free_bytes,
+                "percent_used":     pct,
+                "total_fmt":        _fmt_size(total_bytes),
+                "limit_fmt":        _fmt_size(dynamic_limit_bytes),
+                "free_fmt":         _fmt_size(free_bytes),
+                "file_count":       len(files),
+                "files":            files,
+                "max_qr_quota":     total_qr_quota,
+                "active_qr_count":  len(cards)
             }
         except Exception:
             if self.webapp:
                 self.webapp.logger.debug(traceback.format_exc())
             return {
                 "ok": False,
-                "total_bytes": 0, "limit_bytes": STORAGE_LIMIT_BYTES,
-                "free_bytes": STORAGE_LIMIT_BYTES, "percent_used": 0,
-                "total_fmt": "0 B", "limit_fmt": _fmt_size(STORAGE_LIMIT_BYTES),
-                "free_fmt": _fmt_size(STORAGE_LIMIT_BYTES),
+                "total_bytes": 0, "limit_bytes": 0,
+                "free_bytes": 0, "percent_used": 100,
+                "total_fmt": "0 B", "limit_fmt": "0 B",
+                "free_fmt": "0 B",
                 "file_count": 0, "files": [],
+                "max_qr_quota": 0,
+                "active_qr_count": 0
             }
+

@@ -115,13 +115,13 @@ class asset_tracker_proc:
         except Exception:
             pass
 
-    def get_soft_deleted_assets(self, limit: int = 2000) -> list:
-        """Return all SOFT_DELETED assets for admin review, newest first."""
+    def get_soft_deleted_assets(self, limit: int = 50, offset: int = 0) -> list:
+        """Return SOFT_DELETED assets for admin review, newest first, with pagination."""
         try:
             return list(self._db().db_qr_assets.find(
                 {"status": "SOFT_DELETED"},
                 {"_id": 0},
-            ).sort("soft_deleted_at", -1).limit(limit))
+            ).sort("soft_deleted_at", -1).skip(offset).limit(limit))
         except Exception:
             return []
 

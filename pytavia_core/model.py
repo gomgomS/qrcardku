@@ -337,36 +337,13 @@ db = {
     # USERS
 
     "db_user"                         : {
-        "fk_user_id"                : "",
-        "user_uuid"                 : "",
+        "fk_user_id"                : "",       # same value as pkey
         "username"                  : "",
-        "password"                  : "",
-        "role"                      : "TRAINEE", # TRAINER | TRAINEE | ADMIN
         "name"                      : "",
-        "phone"                     : "",
         "email"                     : "",
-        #email verificatoin
-        "ver_email"                 : "FALSE",
-        'ver_rec'                   : [],
-        # money information
-        "balance"                   : 0,
-        "rec_transaction"           : [],
-        # apply trainer information
-        "cv_user"                   : "",
-        "cv_user_html"              : "",
-        "cv_user_preview"           : "",
-        "cv_link"                   : "",
-        "status_applying"           : [],
-        "summery_status_applying"   : "",
-        "last_login"                : "",
-        "str_last_login"            : "",       
-        "login_status"              : "",      # TRUE | FALSE
-        "inactive_status"           : "FALSE", # TRUE | FALSE
-        "lock_status"               : "FALSE", # TRUE | FALSE
-        "lock_note"                 : "",
-        "image"                     : "",
-        "register_trainee"          : "TRUE",   # TRUE | FALSE
-        "register_trainer"          : "FALSE",  # TRUE | FALSE
+        "phone"                     : "",
+        "status"                    : "UNVERIFIED",     # UNVERIFIED | ACTIVE
+        "verification_token"        : "",
     },
 
     "db_user_auth"                    : {
@@ -811,6 +788,42 @@ db = {
         "status"        : "ACTIVE", # ACTIVE | DELETED
         "created_at"    : "",
         "timestamp"     : 0,
+    },
+
+    # Plan definitions (seeded / managed by admin)
+    "db_plan_definition": {
+        "plan_id"           : "",       # single | team | corporate
+        "name"              : "",       # display name e.g. "Single"
+        "price_idr"         : 0,        # price in IDR per period
+        "period_days"       : 30,       # billing period in days
+        "max_qr"            : 0,        # max QR cards allowed
+        "max_storage_mb"    : 0,        # max storage in MB
+        "description"       : "",       # short marketing description
+        "features"          : [],       # list of feature strings for display
+        "status"            : "ACTIVE", # ACTIVE | INACTIVE
+        "created_at"        : "",
+        "timestamp"         : 0,
+    },
+
+    # User subscriptions — one doc per purchase (accumulative model)
+    # e.g. user buys Single twice → 2 docs, each with its own expires_at
+    "db_user_subscription": {
+        "subscription_id"   : "",       # UUID hex
+        "fk_user_id"        : "",       # owner
+        "plan_id"           : "",       # single | team | corporate
+        "plan_name"         : "",       # snapshot of plan name at purchase time
+        "price_paid_idr"    : 0,        # actual amount paid
+        "max_qr"            : 0,        # snapshot of QR quota at purchase time
+        "max_storage_mb"    : 0,        # snapshot of storage quota at purchase time
+        "period_days"       : 30,       # duration in days
+        "started_at"        : 0,        # unix timestamp — when subscription begins
+        "expires_at"        : 0,        # unix timestamp — when subscription ends
+        "payment_ref"       : "",       # payment gateway reference (for later)
+        "payment_method"    : "",       # e.g. transfer | midtrans | xendit
+        "notes"             : "",       # admin notes
+        "status"            : "ACTIVE", # ACTIVE | EXPIRED | CANCELLED
+        "created_at"        : "",
+        "timestamp"         : 0,
     },
 
     # User activity log (QR create / delete events)

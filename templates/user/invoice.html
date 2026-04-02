@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ transaction.payment_ref }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --brand: #eba81b;
+            --brand-dark: #cc9014;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --bg: #ffffff;
+            --border: #e5e7eb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .action-bar {
+            background: #111827;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn {
+            background: var(--brand); color: #111209;
+            border: none; padding: 10px 20px; border-radius: 8px;
+            font-weight: 600; font-size: 14px; cursor: pointer;
+            transition: 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { background: var(--brand-dark); }
+        .back-link {
+            color: #9ca3af; text-decoration: none; font-size: 14px; font-weight: 500;
+        }
+        .back-link:hover { color: #fff; }
+
+        .invoice-wrapper {
+            max-width: 800px;
+            margin: 40px auto;
+            background: var(--bg);
+            padding: 50px 60px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .logo-area h1 { font-weight: 800; font-size: 28px; color: var(--text-main); letter-spacing: -0.5px; }
+        .logo-area p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+        .invoice-title {
+            text-align: right;
+        }
+        .invoice-title h2 { font-size: 36px; font-weight: 800; color: var(--text-muted); opacity: 0.5; text-transform: uppercase; letter-spacing: 2px;}
+        .invoice-title .ref { font-size: 15px; font-weight: 600; margin-top: 5px; color: var(--brand-dark); font-family: monospace; }
+
+        .billing-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 50px;
+        }
+        
+        .b-section h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; }
+        .b-section p { font-size: 14px; font-weight: 500; color: var(--text-main); line-height: 1.6; }
+        .b-section .muted { font-weight: 400; color: var(--text-muted); }
+
+        .table-wrap { margin-bottom: 50px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 16px; background: #f9fafb; font-size: 12px; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        td.amount { text-align: right; font-weight: 600; }
+        th.amount { text-align: right; }
+
+        .totals {
+            width: 300px; margin-left: auto;
+        }
+        .total-row { display: flex; justify-content: space-between; padding: 12px 16px; font-size: 14px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        .total-row:last-child { border-bottom: none; }
+        .total-row.grand {
+            background: #f9fafb; font-size: 18px; font-weight: 700; color: var(--text-main); border-bottom: 2px solid var(--text-main); border-top: 2px solid var(--text-main);
+        }
+
+        .footer {
+            text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 60px;
+            padding-top: 20px; border-top: 1px solid var(--border);
+        }
+
+        .status-stamp {
+            display: inline-block; padding: 6px 16px; border-radius: 4px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
+            border: 2px solid; margin-top: 10px;
+        }
+        .status-stamp.active { color: #22c55e; border-color: #22c55e; }
+        .status-stamp.pending { color: #eba81b; border-color: #eba81b; }
+        .status-stamp.failed { color: #f87171; border-color: #f87171; }
+        .status-stamp.cancelled { color: #9ca3af; border-color: #9ca3af; }
+
+
+        @media print {
+            body { background: white; }
+            .action-bar { display: none !important; }
+            .invoice-wrapper { margin: 0; padding: 0; box-shadow: none; border: none; max-width: 100%; }
+            @page { margin: 1.5cm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="action-bar">
+        <a href="/user/transactions" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Transactions</a>
+        <button class="btn" onclick="window.print()"><i class="fa-solid fa-download"></i> Download as PDF</button>
+    </div>
+
+    <div class="invoice-wrapper">
+        <div class="header">
+            <div class="logo-area">
+                <img src="/static/assets/img/mainlogo.png" alt="Logo" style="height: 48px; margin-bottom: 12px; display: block;">
+                <p>Digital Services & QR Management</p>
+                <p>Jakarta, Indonesia</p>
+            </div>
+            <div class="invoice-title">
+                <h2>INVOICE</h2>
+                {% set inv_nr = transaction.invoice_number if transaction.invoice_number else "INV-" ~ transaction.payment_ref %}
+                <div class="ref" style="font-size: 18px;">{{ inv_nr }}</div>
+                <div class="ref" style="opacity: 0.6; font-size: 11px; font-weight: normal; margin-top: 2px;">Ref: {{ transaction.payment_ref }}</div>
+                
+                {% set stat = transaction.status | lower() %}
+                {% set display_stat = 'PAID' if transaction.status == 'ACTIVE' else transaction.status %}
+                <div class="status-stamp {{ stat }}">{{ display_stat }}</div>
+            </div>
+        </div>
+
+        <div class="billing-grid">
+            <div class="b-section">
+                <h3>Billed To</h3>
+                <p>{{ user.name if user else "Customer" }}</p>
+                <p class="muted">{{ user.email if user else "" }}</p>
+            </div>
+            <div class="b-section">
+                <h3>Transaction Details</h3>
+                <p class="muted">Generated on: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.timestamp }}"></span></p>
+                <p class="muted">Payment Due: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.payment_due_timestamp if transaction.payment_due_timestamp else (transaction.timestamp + 3600) }}"></span></p>
+                <p class="muted" style="{% if not transaction.started_at %}opacity:0.4;{% endif %}">Paid Off: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.started_at }}"></span></p>
+                <p class="muted" style="{% if not transaction.expires_at %}opacity:0.4;{% endif %}">Expires: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.expires_at }}"></span></p>
+                <p class="muted" style="margin-top: 8px;">Method: <span style="color: var(--text-main); font-weight: 500;">{{ transaction.payment_method }}</span></p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Implementation / Description</th>
+                        <th>Period</th>
+                        <th class="amount">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>{{ transaction.plan_name }} Package</strong><br>
+                            <span style="font-size: 13px; color: var(--text-muted);">Includes {{ transaction.max_qr }} QR Slot(s) & {{ transaction.max_storage_mb }} MB Storage Allocation</span>
+                        </td>
+                        <td>{{ transaction.period_days }} Days</td>
+                        <td class="amount">Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="totals">
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span>Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</span>
+            </div>
+            <div class="total-row">
+                <span>Admin Fee</span>
+                <span>Rp 0</span>
+            </div>
+            <div class="total-row grand">
+                <span>Grand Total</span>
+                <span>Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            Generated by QRKartu Platform. This is a computer-generated document and does not require a signature.
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.ts-disp').forEach(function(span) {
+            var ts = parseFloat(span.dataset.ts);
+            if (ts && ts > 0) {
+                var date = new Date(ts * 1000);
+                span.innerText = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) + " " + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                span.innerText = "Pending";
+            }
+        });
+    </script>
+</body>
+</html>

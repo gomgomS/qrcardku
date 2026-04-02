@@ -1,0 +1,112 @@
+{% extends "user/base.html" %}
+
+{% set page_title = "Payment Success" %}
+{% set active_page = "plans" %}
+
+{% block extra_css %}
+<style>
+    .result-wrap {
+        max-width: 500px;
+        margin: 40px auto;
+        text-align: center;
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 40px 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    
+    .icon-success {
+        width: 80px; height: 80px;
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 36px;
+        margin: 0 auto 24px;
+    }
+    
+    .title {
+        font-size: 24px; font-weight: 700; color: var(--text-main);
+        margin-bottom: 12px;
+    }
+    
+    .desc {
+        font-size: 14px; color: var(--text-muted); line-height: 1.5;
+        margin-bottom: 30px;
+    }
+
+    .detail-box {
+        background: rgba(255,255,255,0.02);
+        border: 1px dashed var(--border-color);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 30px;
+        text-align: left;
+    }
+    .d-row {
+        display: flex; justify-content: space-between;
+        margin-bottom: 8px; font-size: 13px;
+    }
+    .d-row:last-child { margin-bottom: 0; }
+    .d-lbl { color: var(--text-muted); }
+    .d-val { color: var(--text-main); font-weight: 600; }
+    
+    .btn-primary-block {
+        display: block; width: 100%; border-radius: 10px;
+        background: var(--primary); color: #111209;
+        font-size: 14px; font-weight: 700; padding: 14px 0;
+        text-decoration: none; transition: opacity 0.2s;
+    }
+    .btn-primary-block:hover { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-wrap">
+    {% if subscription and subscription.status == "ACTIVE" %}
+        <div class="icon-success" style="background: rgba(34, 197, 94, 0.1); color: #22c55e;">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div class="title">Payment Successful!</div>
+        <div class="desc">
+            Your transaction has been verified. Your subscription quotas have been instantly activated and added to your account!
+        </div>
+    {% else %}
+        <div class="icon-success" style="background: rgba(235, 168, 27, 0.1); color: #eba81b;">
+            <i class="fa-regular fa-clock"></i>
+        </div>
+        <div class="title">Waiting for Verification</div>
+        <div class="desc">
+            Your payment reference has been recorded. Once the transaction is cleared by the bank, your subscription will activate automatically.
+        </div>
+    {% endif %}
+    
+    {% if subscription %}
+    <div class="detail-box">
+        <div class="d-row">
+            <span class="d-lbl">Reference ID</span>
+            <span class="d-val">{{ subscription.payment_ref }}</span>
+        </div>
+        <div class="d-row">
+            <span class="d-lbl">Plan</span>
+            <span class="d-val">{{ subscription.plan_name }}</span>
+        </div>
+        <div class="d-row">
+            <span class="d-lbl">Amount</span>
+            <span class="d-val">Rp {{ "{:,.0f}".format(subscription.price_paid_idr).replace(',', '.') }}</span>
+        </div>
+        <div class="d-row">
+            <span class="d-lbl">Status</span>
+            {% if subscription.status == "ACTIVE" %}
+                <span class="d-val" style="color: #22c55e;">ACTIVE</span>
+            {% else %}
+                <span class="d-val" style="color: #eba81b;">{{ subscription.status }}</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <a href="/user/plans" class="btn-primary-block">Return to Plans</a>
+</div>
+{% endblock %}

@@ -1,0 +1,398 @@
+{% extends "admin/base.html" %}
+{% block title %}Plans Config — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .plans-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .plans-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+    }
+
+    .plan-edit-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .plan-edit-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        gap: 10px;
+    }
+
+    .plan-edit-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .plan-id-badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .plan-id-badge.single    { background: rgba(59,130,246,.2);  color: #60a5fa; }
+    .plan-id-badge.team      { background: rgba(168,85,247,.2);  color: #c084fc; }
+    .plan-id-badge.corporate { background: rgba(235,168,27,.2);  color: var(--primary); }
+
+    .plan-status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: #8A8878;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+        position: absolute; cursor: pointer;
+        inset: 0; background: rgba(255,255,255,.15); border-radius: 20px;
+        transition: background .2s;
+    }
+    .toggle-slider:before {
+        content: ''; position: absolute;
+        width: 14px; height: 14px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%; transition: transform .2s;
+    }
+    input:checked + .toggle-slider { background: var(--primary); }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    .plan-edit-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .field-row {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .field-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .field-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #8A8878;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .field-input {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text-color);
+        font-size: 13px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color .2s;
+        font-family: inherit;
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: rgba(235,168,27,.04);
+    }
+
+    .field-input.textarea {
+        resize: vertical;
+        min-height: 100px;
+        line-height: 1.6;
+    }
+
+    .field-hint {
+        font-size: 11px;
+        color: #5a5a4a;
+        line-height: 1.4;
+    }
+
+    .price-input-wrap {
+        display: flex;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: border-color .2s;
+    }
+
+    .price-input-wrap:focus-within { border-color: var(--primary); background: rgba(235,168,27,.04); }
+
+    .price-prefix {
+        padding: 9px 10px 9px 12px;
+        font-size: 12px;
+        color: #8A8878;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .price-input-wrap .field-input {
+        border: none;
+        background: transparent;
+        padding-left: 4px;
+    }
+
+    .price-input-wrap .field-input:focus { background: transparent; }
+
+    .plan-edit-footer {
+        padding: 16px 20px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .save-status {
+        font-size: 12px;
+        color: #8A8878;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 100px;
+    }
+
+    .save-status.saved   { color: #22c55e; }
+    .save-status.saving  { color: var(--primary); }
+    .save-status.error   { color: #f87171; }
+
+    .btn-save {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        background: var(--primary);
+        color: #111209;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+
+    .btn-save:hover { opacity: .88; }
+    .btn-save:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed; bottom: 28px; right: 28px; z-index: 10000;
+        display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .toast {
+        background: #1E1F18; border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px; padding: 12px 18px; font-size: 13px;
+        color: var(--text-color); display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(12px);
+        transition: opacity .3s, transform .3s; pointer-events: auto; min-width: 240px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-left: 3px solid #22c55e; }
+    .toast.error   { border-left: 3px solid var(--danger); }
+</style>
+
+<div class="plans-header">
+    <div class="plans-title">&#128179; Plans Config</div>
+    <div style="font-size:13px;color:#8A8878;">Configure pricing, quotas, and features for each plan.</div>
+</div>
+
+<div class="plans-grid">
+{% for plan in plans %}
+<div class="plan-edit-card" id="card-{{ plan.plan_id }}">
+
+    <div class="plan-edit-header">
+        <div class="plan-edit-title">
+            {% if plan.plan_id == 'single' %}👤{% elif plan.plan_id == 'team' %}👥{% else %}🏢{% endif %}
+            <span>{{ plan.name }}</span>
+            <span class="plan-id-badge {{ plan.plan_id }}">{{ plan.plan_id }}</span>
+        </div>
+        <label class="plan-status-toggle">
+            <span id="status-label-{{ plan.plan_id }}">{{ 'Active' if plan.status == 'ACTIVE' else 'Inactive' }}</span>
+            <div class="toggle-wrap">
+                <input type="checkbox" id="toggle-{{ plan.plan_id }}"
+                    {% if plan.status == 'ACTIVE' %}checked{% endif %}
+                    onchange="onToggleStatus('{{ plan.plan_id }}', this)">
+                <span class="toggle-slider"></span>
+            </div>
+        </label>
+    </div>
+
+    <div class="plan-edit-body">
+
+        <!-- Name -->
+        <div class="field-row">
+            <div class="field-label">Plan Name</div>
+            <input class="field-input" type="text" id="name-{{ plan.plan_id }}"
+                value="{{ plan.name }}" placeholder="e.g. Single">
+        </div>
+
+        <!-- Description -->
+        <div class="field-row">
+            <div class="field-label">Short Description</div>
+            <input class="field-input" type="text" id="desc-{{ plan.plan_id }}"
+                value="{{ plan.description }}" placeholder="Shown below plan name on pricing page">
+        </div>
+
+        <!-- Price + Period -->
+        <div class="field-row-2">
+            <div class="field-row">
+                <div class="field-label">Price (IDR / period)</div>
+                <div class="price-input-wrap">
+                    <span class="price-prefix">IDR</span>
+                    <input class="field-input" type="number" id="price-{{ plan.plan_id }}"
+                        value="{{ plan.price_idr }}" min="0" step="1000">
+                </div>
+            </div>
+            <div class="field-row">
+                <div class="field-label">Period (days)</div>
+                <input class="field-input" type="number" id="period-{{ plan.plan_id }}"
+                    value="{{ plan.period_days }}" min="1">
+            </div>
+        </div>
+
+        <!-- QR + Storage -->
+        <div class="field-row-2">
+            <div class="field-row">
+                <div class="field-label">Max QR Cards</div>
+                <input class="field-input" type="number" id="max-qr-{{ plan.plan_id }}"
+                    value="{{ plan.max_qr }}" min="0">
+            </div>
+            <div class="field-row">
+                <div class="field-label">Max Storage (MB)</div>
+                <input class="field-input" type="number" id="max-storage-{{ plan.plan_id }}"
+                    value="{{ plan.max_storage_mb }}" min="0">
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="field-row">
+            <div class="field-label">Features</div>
+            <textarea class="field-input textarea" id="features-{{ plan.plan_id }}"
+                placeholder="One feature per line">{{ plan.features | join('\n') }}</textarea>
+            <div class="field-hint">One feature per line. Displayed as bullet points on the pricing page.</div>
+        </div>
+
+    </div>
+
+    <div class="plan-edit-footer">
+        <div class="save-status" id="status-{{ plan.plan_id }}"></div>
+        <button class="btn-save" onclick="savePlan('{{ plan.plan_id }}')">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<input type="hidden" id="csrf-token-val" value="{{ csrf_token() }}">
+
+<script>
+    function showToast(msg, type) {
+        type = type || 'success';
+        var wrap = document.getElementById('toast-wrap');
+        var t = document.createElement('div');
+        t.className = 'toast ' + type;
+        t.innerHTML = '<span>' + (type === 'success' ? '✓' : '✕') + '</span><span>' + msg + '</span>';
+        wrap.appendChild(t);
+        requestAnimationFrame(function() { requestAnimationFrame(function() { t.classList.add('show'); }); });
+        setTimeout(function() {
+            t.classList.remove('show');
+            setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+        }, 3500);
+    }
+
+    function onToggleStatus(planId, chk) {
+        var label = document.getElementById('status-label-' + planId);
+        label.textContent = chk.checked ? 'Active' : 'Inactive';
+    }
+
+    function savePlan(planId) {
+        var statusEl = document.getElementById('status-' + planId);
+        var btn = document.querySelector('#card-' + planId + ' .btn-save');
+        btn.disabled = true;
+        statusEl.className = 'save-status saving';
+        statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+        var name        = document.getElementById('name-' + planId).value.trim();
+        var desc        = document.getElementById('desc-' + planId).value.trim();
+        var price       = parseInt(document.getElementById('price-' + planId).value) || 0;
+        var period      = parseInt(document.getElementById('period-' + planId).value) || 30;
+        var maxQr       = parseInt(document.getElementById('max-qr-' + planId).value) || 0;
+        var maxStorage  = parseInt(document.getElementById('max-storage-' + planId).value) || 0;
+        var featuresRaw = document.getElementById('features-' + planId).value;
+        var features    = featuresRaw.split('\n').map(function(f) { return f.trim(); }).filter(Boolean);
+        var status      = document.getElementById('toggle-' + planId).checked ? 'ACTIVE' : 'INACTIVE';
+
+        var csrf = document.getElementById('csrf-token-val').value;
+        fetch('/admin/plans/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({
+                plan_id: planId, name: name, description: desc,
+                price_idr: price, period_days: period,
+                max_qr: maxQr, max_storage_mb: maxStorage,
+                features: features, status: status
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            if (data.ok) {
+                statusEl.className = 'save-status saved';
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Saved';
+                showToast('"' + (name || planId) + '" plan updated.', 'success');
+                setTimeout(function() { statusEl.innerHTML = ''; statusEl.className = 'save-status'; }, 3000);
+            } else {
+                statusEl.className = 'save-status error';
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Error';
+                showToast('Error: ' + (data.error || 'Save failed.'), 'error');
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            statusEl.className = 'save-status error';
+            statusEl.innerHTML = 'Network error';
+            showToast('Network error. Please try again.', 'error');
+        });
+    }
+</script>
+{% endblock %}
