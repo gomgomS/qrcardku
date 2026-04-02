@@ -7268,7 +7268,20 @@ def user_qr_list():
 def user_stats():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
-    return view_user.view_user(app).stats_html()
+    fk_user_id = session["fk_user_id"]
+    _db = database.get_db_conn(config.mainDB)
+    qrcards = list(_db.db_qrcard.find(
+        {"fk_user_id": fk_user_id},
+        {"_id": 0, "stats": 1, "created_at": 1}
+    ))
+    total_qr = len(qrcards)
+    total_scans = sum((q.get("stats") or {}).get("scan_count", 0) for q in qrcards)
+    sub_info = _get_sub_info(fk_user_id)
+    stats_data = {
+        "total_qr": total_qr,
+        "total_scans": total_scans,
+    }
+    return view_user.view_user(app).stats_html(stats=stats_data, sub_info=sub_info)
 
 @app.route("/user/storage")
 def user_storage():

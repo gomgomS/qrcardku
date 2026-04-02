@@ -161,11 +161,13 @@ class view_user:
             print(traceback.format_exc())
             return "Failed to load My QR Codes page"
 
-    def stats_html(self, msg=None, error_msg=None):
+    def stats_html(self, stats=None, sub_info=None, msg=None, error_msg=None):
         try:
             return render_template(
                 "/user/stats.html",
-                msg=msg, 
+                stats=stats,
+                sub_info=sub_info,
+                msg=msg,
                 error_msg=error_msg
             )
         except:
