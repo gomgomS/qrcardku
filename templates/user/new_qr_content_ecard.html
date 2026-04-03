@@ -587,8 +587,11 @@
                 <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
             </div>
             {% endif %}
-            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qr_name | default('', true) }}" required>
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                Only letters and numbers allowed. No spaces or special characters.
+            </div>
 
             <!-- Autocomplete / Fill Sample Data -->
             <div class="autocomplete-row">
@@ -3619,6 +3622,23 @@
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 <script>
 function saveAndNext() {
+    var nameInput = document.getElementById('qr-name-input');
+    if (nameInput) {
+        var nameVal = nameInput.value.trim();
+        if (!nameVal) {
+            nameInput.focus();
+            nameInput.setCustomValidity('QR name is required.');
+            nameInput.reportValidity();
+            return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(nameVal)) {
+            nameInput.focus();
+            nameInput.setCustomValidity('Only letters and numbers are allowed.');
+            nameInput.reportValidity();
+            return;
+        }
+        nameInput.setCustomValidity('');
+    }
     var overlay = document.getElementById('save-next-overlay');
     var msgEl = document.getElementById('save-overlay-msg');
     var subEl = document.getElementById('save-overlay-sub');

@@ -491,10 +491,6 @@
                     <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
                     <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
                 </div>
-                <div class="frame-text-row"><label>Text</label><input type="text" id="frame-text" value="Scan me!"
-                        maxlength="32"></div>
-                <div class="frame-text-color-row"><label style="font-size:12px; font-weight:600;">Text
-                        Color</label><input type="color" id="frame-text-color" value="#000000"></div>
             </div>
         </div>
 
@@ -603,16 +599,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         generateQR();
 
-        // Frame text
-        document.getElementById('frame-text').addEventListener('input', function () {
-            document.getElementById('frame-caption-text').textContent = this.value;
-            document.getElementById('frame_text_input').value = this.value;
-        });
-        // Frame text color
-        document.getElementById('frame-text-color').addEventListener('input', function () {
-            document.getElementById('frame-caption-text').style.color = this.value;
-            document.getElementById('frame_text_color_input').value = this.value;
-        });
         // QR colors — regenerate QR on change
         document.getElementById('qr-fg-color').addEventListener('input', function () {
             _qrFgColor = this.value;

@@ -573,8 +573,12 @@
                 <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
             </div>
             {% endif %}
-            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qr_name | default('', true) }}" required>
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required
+                pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                Only letters and numbers allowed. No spaces or special characters.
+            </div>
 
             <!-- Basic Information Section -->
             <div class="collapse-section">

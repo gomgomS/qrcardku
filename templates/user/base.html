@@ -55,6 +55,19 @@
         [data-theme="light"] .new-qr-step-nav .btn-next:not(.btn-next-disabled):not(:disabled) { background-color: var(--primary) !important; color: white !important; }
         [data-theme="light"] .avatar { background-color: #e5e7eb !important; }
 
+        /* Active status dot (e.g. plans / transactions) — visible on dark UI */
+        [data-theme="dark"] .status-badge.active > i.fa-circle {
+            color: #ffffff !important;
+            font-size: 8px !important;
+            opacity: 1;
+            filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
+        }
+
+        /* Native checkboxes — clear check / focus ring in dark mode */
+        [data-theme="dark"] input[type="checkbox"] {
+            accent-color: var(--primary);
+        }
+
         /* ── Global form inputs — always white/readable ───────────────── */
         input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
         select,
@@ -488,13 +501,14 @@
 
         /* Mobile responsive */
         @media (max-width: 768px) {
-            body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+            body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
             .mobile-nav-bar { display: flex; }
             aside.sidebar {
                 position: fixed;
                 left: -280px;
                 top: 0;
                 height: 100vh;
+                height: 100dvh;
                 z-index: 1000;
                 transition: left 0.3s ease;
                 width: var(--sidebar-width);
@@ -502,7 +516,7 @@
             aside.sidebar.sidebar-open { left: 0; }
             .main-wrapper { width: 100%; flex-direction: column; overflow: hidden; }
             .top-header { display: none !important; }
-            .main-content { padding: 16px; }
+            .main-content { padding: 16px; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); }
         }
 
         /* Shiny Text Animation */

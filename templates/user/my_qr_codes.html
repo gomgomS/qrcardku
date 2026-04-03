@@ -487,6 +487,21 @@
     .del-modal-confirm:hover { background: #b91c1c; }
     .del-modal-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    .qr-name-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+    .qr-name-row .qr-name-title {
+        min-width: 0;
+        word-break: break-word;
+    }
+    .qr-name-row .qr-scan-trigger,
+    .qr-name-row .qr-draft-icon {
+        flex-shrink: 0;
+    }
+
     @media (max-width: 768px) {
         /* Top actions */
         .top-actions { flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
@@ -498,48 +513,128 @@
         /* Filter/sort bar */
         .table-controls { flex-direction: column; align-items: flex-start; gap: 8px; }
 
-        /* Table → card layout */
-        .qr-table { border: none; background: transparent; box-shadow: none; }
+        /* Table → card stack */
+        .qr-table { border: none; background: transparent; box-shadow: none; margin-bottom: 48px; }
         .qr-table thead { display: none; }
-        .qr-table tbody { display: flex; flex-direction: column; gap: 10px; }
-        .qr-table tr {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
+        .qr-table tbody { display: flex; flex-direction: column; gap: 12px; }
+
+        .qr-table tr.qr-list-row {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr) auto;
+            grid-template-areas:
+                "cb name menu"
+                "cb type state"
+                "cb scans scans";
+            column-gap: 10px;
+            row-gap: 8px;
+            align-items: start;
             background: var(--bg-content);
             border: 1px solid var(--border-color) !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            border-radius: 8px;
-            padding: 12px;
+            border-radius: 10px;
+            padding: 14px 12px 12px;
             position: relative;
-            gap: 4px;
         }
-        .qr-table td { border: none !important; padding: 2px 4px; font-size: 13px; }
 
-        /* Checkbox */
-        .qr-table td:nth-child(1) { width: auto; padding: 0; }
+        .qr-table tr.qr-list-row > td {
+            border: none !important;
+            padding: 0 !important;
+            font-size: 13px;
+            vertical-align: top;
+        }
 
-        /* Name col — takes remaining width, leave room for action button */
-        .qr-table td:nth-child(2) { flex: 1; min-width: 0; padding: 0 4px; padding-right: 36px; }
+        .qr-cell-select { grid-area: cb; padding-top: 2px !important; }
+        .qr-cell-select .qr-row-checkbox {
+            width: 18px;
+            height: 18px;
+        }
 
-        /* QR Type — full width second line */
-        .qr-table td:nth-child(3) { width: 100%; padding-left: 28px; font-size: 12px; }
+        .qr-cell-name { grid-area: name; min-width: 0; padding-right: 4px !important; }
 
-        /* Hide Created, Edited */
-        .qr-table td:nth-child(4),
-        .qr-table td:nth-child(5) { display: none; }
+        .qr-list-row .qr-name-row {
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .qr-list-row .qr-name-title {
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1.35;
+            color: var(--text-main);
+        }
+        .qr-list-row .qr-scan-trigger,
+        .qr-list-row .qr-draft-icon {
+            margin-top: 2px;
+        }
 
-        /* State badge — inline after type */
-        .qr-table td:nth-child(6) { padding-left: 28px; }
+        .qr-cell-type {
+            grid-area: type;
+            font-size: 12px;
+            line-height: 1.4;
+            align-self: center;
+        }
+        .qr-cell-type > span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
 
-        /* Scans count */
-        .qr-table td:nth-child(7) { font-size: 12px; color: var(--text-muted); }
+        .qr-cell-created,
+        .qr-cell-edited { display: none !important; }
 
-        /* Actions dropdown — top-right corner */
-        .qr-table td:nth-child(8) {
-            position: absolute;
-            top: 10px; right: 10px;
+        .qr-cell-state {
+            grid-area: state;
+            justify-self: end;
+            align-self: center;
+            text-align: right;
+        }
+        .qr-cell-state .status-active,
+        .qr-cell-state span[style*="inline-flex"] {
+            white-space: nowrap;
+        }
+
+        .qr-cell-scans {
+            grid-area: scans;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            padding-top: 10px !important;
+            border-top: 1px solid var(--border-color);
+        }
+        .qr-cell-scans::before {
+            content: "Scans: ";
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .qr-cell-actions {
+            grid-area: menu;
+            justify-self: end;
+        }
+        .qr-cell-actions .dropdown-wrapper > button {
+            min-width: 40px;
+            min-height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            border-radius: 8px;
+            border-color: var(--border-color) !important;
+        }
+
+        /* Non-data rows (empty states) */
+        .qr-table tr:not(.qr-list-row) {
+            display: block;
+            background: var(--bg-content);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             padding: 0;
+        }
+        .qr-table tr:not(.qr-list-row) td {
+            display: block;
+            width: 100% !important;
+            border: none !important;
+            text-align: center;
+            padding: 32px 16px !important;
         }
 
         /* Empty state */
@@ -1031,19 +1126,6 @@
     <div class="tab" role="tab" tabindex="0" data-filter="dynamic" aria-selected="false">Dynamic</div>
 </div>
 
-<div class="table-controls" style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-    <div>
-        <span style="font-size: 13px; color: var(--text-muted);">Filters applied</span>
-        <div
-            style="display: inline-block; background: #2A2810; padding: 4px 12px; border-radius: 16px; margin-left: 8px; font-size: 13px; color: var(--primary);">
-            1 QR card status <i class="fa-solid fa-xmark" style="margin-left: 8px; cursor: pointer;"></i>
-        </div>
-    </div>
-    <div style="font-size: 13px; color: var(--text-muted);">
-        <i class="fa-solid fa-filter"></i> Filter &nbsp;&nbsp;
-        <i class="fa-solid fa-sort"></i> Sort by: Most recent
-    </div>
-</div>
 
 {% if sub_info and sub_info.has_active %}
 <div class="card" style="margin-bottom: 24px; background-color: #2A2810; border-color: #fde047; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
@@ -1090,11 +1172,11 @@
             {% if qr_list %}
             {% for qr in qr_list %}
             <tr class="qr-list-row" data-kind="{% if qr.qr_type in ['web-static', 'wa-static', 'email-static', 'vcard-static', 'text'] %}static{% else %}dynamic{% endif %}">
-                <td><input type="checkbox" class="qr-row-checkbox" name="qrcard_ids" value="{{ qr.qrcard_id }}"></td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                <td class="qr-cell-select"><input type="checkbox" class="qr-row-checkbox" name="qrcard_ids" value="{{ qr.qrcard_id }}"></td>
+                <td class="qr-cell-name">
+                    <div class="qr-name-row">
                         {% if qr.status == 'DRAFT' %}
-                        <span style="color:var(--text-muted);cursor:not-allowed;opacity:0.4;" title="Complete the QR design to activate scan">
+                        <span class="qr-draft-icon" style="color:var(--text-muted);cursor:not-allowed;opacity:0.4;" title="Complete the QR design to activate scan">
                             <i class="fa-solid fa-qrcode"></i>
                         </span>
                         {% else %}
@@ -1108,10 +1190,10 @@
                             data-edit-url="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}" role="button"
                             aria-label="Click to scan QR card"><i class="fa-solid fa-qrcode"></i></span>
                         {% endif %}
-                        <div>{{ qr.name }}</div>
+                        <div class="qr-name-title">{{ qr.name }}</div>
                     </div>
                 </td>
-                <td><span style="color: var(--primary);">
+                <td class="qr-cell-type"><span style="color: var(--primary);">
                         {% if qr.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
                         {% elif qr.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
                         {% elif qr.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
@@ -1127,9 +1209,9 @@
                         {% elif qr.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> All in One
                         {% else %}<i class="fa-solid fa-qrcode"></i> {{ qr.qr_type | capitalize }}{% endif %}
                     </span></td>
-                <td>{{ qr.created_at[:10] }}</td>
-                <td>-</td>
-                <td>
+                <td class="qr-cell-created">{{ qr.created_at[:10] }}</td>
+                <td class="qr-cell-edited">-</td>
+                <td class="qr-cell-state">
                     {% if qr.status == 'DRAFT' %}
                     <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600;">
                         <i class="fa-solid fa-pen-to-square"></i> Draft
@@ -1138,7 +1220,7 @@
                     <span class="status-active">{{ qr.status | capitalize }}</span>
                     {% endif %}
                 </td>
-                <td>
+                <td class="qr-cell-scans">
                     {% set limit = qr.scan_limit_value if qr.scan_limit_enabled else None %}
                     {% if limit and limit > 0 %}
                     {{ qr.stats.scan_count }} / {{ limit }}
@@ -1146,7 +1228,7 @@
                     {{ qr.stats.scan_count }}
                     {% endif %}
                 </td>
-                <td>
+                <td class="qr-cell-actions">
                     <div style="position: relative; display: inline-block;" class="dropdown-wrapper">
                         <button type="button"
                             style="border:1px solid #ddd; background:var(--bg-content); padding: 4px 8px; border-radius:4px;"

@@ -358,15 +358,6 @@
                     </a>
                 </div>
 
-                <div class="frame-text-row">
-                    <label for="frame-text">Text</label>
-                    <input type="text" id="frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="32">
-                </div>
-                <div class="frame-text-color-row">
-                    <label for="frame-text-color">Text color</label>
-                    <input type="color" id="frame-text-color" value="#000000" title="Text color">
-                    <span id="frame-color-hex" style="font-size: 12px; color: var(--text-muted);">#000000</span>
-                </div>
             </div>
         </div>
     </div>
@@ -505,18 +496,6 @@
         attachCollapseListener('.collapse-header');
 
         const frameCaption = document.getElementById('frame-caption');
-
-        const frameTextEl = document.getElementById('frame-text');
-        const frameColorEl = document.getElementById('frame-text-color');
-        const frameColorHex = document.getElementById('frame-color-hex');
-        if (frameTextEl) frameTextEl.addEventListener('input', function () { frameCaption.textContent = this.value || 'Scan me!'; });
-        if (frameColorEl) {
-            frameColorEl.addEventListener('input', function () {
-                frameCaption.style.color = this.value;
-                if (frameColorHex) frameColorHex.textContent = this.value;
-            });
-        }
-        if (frameColorHex && frameColorEl) frameColorHex.textContent = frameColorEl.value;
 
         // SVG frame helpers
         var _svgFrameBase = null;

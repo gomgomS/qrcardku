@@ -1285,8 +1285,11 @@
                 style="display:none;background:#fee2e2;color:#b91c1c;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;">
                 <i class="fa-solid fa-triangle-exclamation"></i> <span id="fe-validation-error-msg"></span>
             </div>
-            <input type="text" name="qr_name" class="name-qr-input" placeholder="Name QR Card"
-                value="{{ qr_name | default('', true) }}" required maxlength="120">
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+                value="{{ qr_name | default('', true) }}" required maxlength="120" pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                Only letters and numbers allowed. No spaces or special characters.
+            </div>
 
             <div class="design-tabs">
                 <div class="design-tab active" data-tab="content">Content</div>
@@ -3289,6 +3292,23 @@
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 <script>
 function saveAndNext() {
+    var nameInput = document.getElementById('qr-name-input');
+    if (nameInput) {
+        var nameVal = nameInput.value.trim();
+        if (!nameVal) {
+            nameInput.focus();
+            nameInput.setCustomValidity('QR name is required.');
+            nameInput.reportValidity();
+            return;
+        }
+        if (!/^[a-zA-Z0-9]+$/.test(nameVal)) {
+            nameInput.focus();
+            nameInput.setCustomValidity('Only letters and numbers are allowed.');
+            nameInput.reportValidity();
+            return;
+        }
+        nameInput.setCustomValidity('');
+    }
     if (typeof saveEditBlockContent === 'function') saveEditBlockContent();
     if (typeof _feValidateAndSanitize === 'function' && !_feValidateAndSanitize()) return;
     var overlay = document.getElementById('save-next-overlay');
