@@ -1047,11 +1047,13 @@
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            <div class="form-group" style="margin-top: 16px;">
+                            <div class="form-group" style="margin-top: 16px;" id="scan-limit-field"
+                                {% if not (qrcard and qrcard.get('scan_limit_enabled')) %}style="opacity:0.4;pointer-events:none;"{% endif %}>
                                 <label class="form-label" style="font-size: 12px;">Scan Limit</label>
                                 <input type="number" name="scan_limit_value" id="scan-limit-value" class="form-control"
                                     placeholder="e.g. 50" min="1"
-                                    value="{{ qrcard.get('scan_limit_value', '') if qrcard else '' }}">
+                                    value="{{ qrcard.get('scan_limit_value', '') if qrcard else '' }}"
+                                    {% if not (qrcard and qrcard.get('scan_limit_enabled')) %}disabled{% endif %}>
                             </div>
                         </div>
                     </div>
@@ -1685,6 +1687,19 @@
     function cancelUrlEdit() {
         var w = document.getElementById('url-change-warning'); if (w) w.style.display = 'none';
     }
+
+    // ── Scan limit toggle ──
+    (function () {
+        var scanToggle = document.getElementById('scan-limit-toggle');
+        var scanLimitField = document.getElementById('scan-limit-field');
+        var scanLimitInput = document.getElementById('scan-limit-value');
+        function toggleScanLimit() {
+            var on = scanToggle && scanToggle.checked;
+            if (scanLimitInput) scanLimitInput.disabled = !on;
+            if (scanLimitField) { scanLimitField.style.opacity = on ? '1' : '0.4'; scanLimitField.style.pointerEvents = on ? '' : 'none'; }
+        }
+        if (scanToggle) { scanToggle.addEventListener('change', toggleScanLimit); toggleScanLimit(); }
+    })();
 
     (function () {
         var schedToggle = document.getElementById('schedule-toggle');

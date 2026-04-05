@@ -191,12 +191,13 @@
 
         .social-login {
             display: flex;
-            gap: 16px;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .social-btn {
-            flex: 1;
-            padding: 12px;
+            width: 100%;
+            padding: 12px 16px;
             border: 1px solid var(--border-color);
             border-radius: 30px;
             background: #1E1F18;
@@ -204,11 +205,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background 0.2s;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-dark);
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s, border-color 0.2s;
         }
 
         .social-btn:hover {
-            background: #181914;
+            background: #2a2b22;
+            border-color: #4a4b3a;
         }
 
         .footer-text {
@@ -404,14 +411,12 @@
 
         /* Shiny Text Animation */
         .shiny-text {
-            background: linear-gradient(
-                120deg,
-                var(--text-dark) 0%,
-                var(--text-dark) 40%,
-                #ffffff 50%,
-                var(--text-dark) 60%,
-                var(--text-dark) 100%
-            );
+            background: linear-gradient(120deg,
+                    var(--text-dark) 0%,
+                    var(--text-dark) 40%,
+                    #ffffff 50%,
+                    var(--text-dark) 60%,
+                    var(--text-dark) 100%);
             background-size: 200% auto;
             color: var(--text-dark);
             background-clip: text;
@@ -480,20 +485,15 @@
             </div>
 
             <div class="social-login">
-                <a href="/auth/login/google" class="social-btn">
-                    <img src="{{ url_for('static', filename='assets/icons/google-color.svg') }}" alt="Google" width="24"
-                        height="24">
-                </a>
-                <a href="/auth/login/linkedin" class="social-btn">
-                    <img src="{{ url_for('static', filename='assets/icons/linkedin-color.svg') }}" alt="LinkedIn"
-                        width="24" height="24">
+                <a href="/auth/login/google" class="social-btn" id="btn-google-login">
+                    <img src="{{ url_for('static', filename='assets/icons/google-color.svg') }}" alt="Google" width="20"
+                        height="20">
+                    Continue with Google
                 </a>
             </div>
         </div>
 
-        <div class="footer-text">
-            2026 &copy; QRkartu - 'QR card' is a trademark of DENSO WAVE INCORPORATED
-        </div>
+
     </div>
 
     <div class="illustration-container">
