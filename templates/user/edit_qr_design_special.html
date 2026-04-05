@@ -396,8 +396,8 @@
         <span class="step-item step-completed"><span class="step-num"><i
                     class="fa-solid fa-check"></i></span><span>Type</span></span>
         <span class="step-item step-completed"><span class="step-num"><i
-                    class="fa-solid fa-check"></i></span><span>Content</span></span>
-        <span class="step-item step-active"><span class="step-num">3</span><span>QR design</span></span>
+                    class="fa-solid fa-check"></i></span><span data-i18n="nq_step2">Content</span></span>
+        <span class="step-item step-active"><span class="step-num">3</span><span data-i18n="nq_step3">QR design</span></span>
     </div>
     <div class="new-qr-step-nav">
         <form method="POST" action="{{ back_url }}" style="display:inline;">
@@ -408,9 +408,9 @@
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
-            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
-        <button form="design-form" type="submit" class="btn-next">Save Changes</button>
+        <button form="design-form" type="submit" class="btn-next"><span data-i18n="nd_save_changes">Save Changes</span></button>
     </div>
 </div>
 
@@ -439,14 +439,14 @@
 
 <div class="new-qr-container">
     <div class="form-column">
-        <div class="page-title">Edit QR Design</div>
+        <div class="page-title" data-i18n="ed_design_qr">Edit QR Design</div>
 
         <div class="collapse-section">
             <div class="collapse-header" onclick="toggleCollapse(this)">
                 <div class="header-left-col">
                     <div class="header-icon"><i class="fa-solid fa-border-all"></i></div>
                     <div class="header-text">
-                        <h3>Frame</h3>
+                        <h3 data-i18n="nd_s_frame">Frame</h3>
                         <p>QR card outline.</p>
                     </div>
                 </div>
@@ -455,19 +455,19 @@
             <div class="collapse-body show">
                 <!-- Standard SVG frames -->
                 <div class="custom-frames-section" id="standard-frames-section" style="display:none;">
-                    <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
+                    <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> <span data-i18n="nd_std_frames">Standard frames</span></div>
                     <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
                 </div>
                 <!-- SVG frame controls -->
                 <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
-                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="nd_frame_style">Frame style</div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
-                        <label for="svg-frame-color">Frame color</label>
+                        <label for="svg-frame-color" data-i18n="nd_frame_color">Frame color</label>
                         <input type="color" id="svg-frame-color" value="#000000" title="Frame color">
                         <span id="svg-frame-color-hex" style="font-size:12px;color:var(--text-muted);">#000000</span>
                     </div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
-                        <label for="card-bg-color-picker">Background</label>
+                        <label for="card-bg-color-picker" data-i18n="nd_background">Background</label>
                         <div class="qrs-color-swatch-wrap" onclick="document.getElementById('card-bg-color-picker').click()" style="position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="color" id="card-bg-color-picker" value="#ffffff" style="position:absolute;opacity:0;width:28px;height:28px;cursor:pointer;" oninput="onCardBgChange(this.value)">
                             <div id="card-bg-swatch" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border-color);background:#ffffff;flex-shrink:0;"></div>
@@ -475,21 +475,21 @@
                         </div>
                     </div>
                     <div class="frame-text-row">
-                        <label for="svg-frame-text">Frame text</label>
+                        <label for="svg-frame-text" data-i18n="nd_frame_text">Frame text</label>
                         <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
                     </div>
                 </div>
                 <!-- Default frames (from admin) -->
                 <div class="custom-frames-section" id="default-frames-section" style="display:none;">
-                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> <span data-i18n="nd_default_frames">Default frames</span></div>
                     <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
 
                 <div class="custom-frames-section">
-                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
+                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> <span data-i18n="nd_my_frames">My custom frames</span></div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
-                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
-                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
+                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;" data-i18n="nd_loading">Loading…</div>
+                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> <span data-i18n="nd_create_frame">Create new frame</span></a>
                 </div>
             </div>
         </div>
@@ -530,7 +530,7 @@
                     <div class="frame-caption" id="frame-caption-text">Scan me!</div>
                 </div>
             </div>
-            <div class="preview-disclaimer"><i class="fa-solid fa-circle-info"></i> Preview is approximate.</div>
+            <div class="preview-disclaimer"><i class="fa-solid fa-circle-info"></i> <span data-i18n="ed_preview_approx">Preview is approximate.</span></div>
         </div>
     </div>
 </div>
@@ -541,7 +541,7 @@
         <i class="fa-solid fa-arrow-left"></i>
     </button>
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-        <i class="fa-regular fa-eye"></i> Preview
+        <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
     </button>
     <button type="button" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete" onclick="submitDesignWithOverlay()">
         <i class="fa-solid fa-arrow-right"></i>
@@ -549,7 +549,7 @@
 </div>
 <div id="design-complete-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;flex-direction:column;gap:20px;">
     <div style="width:56px;height:56px;border:4px solid rgba(255,255,255,0.15);border-top-color:#ffffff;border-radius:50%;animation:spin 0.9s linear infinite;"></div>
-    <div style="color:#fff;font-size:16px;font-weight:600;">Saving your QR design…</div>
+    <div style="color:#fff;font-size:16px;font-weight:600;" data-i18n="nd_saving">Saving your QR design…</div>
 </div>
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 {% endblock %}

@@ -1252,16 +1252,16 @@
     <div class="new-qr-steps">
         <span class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </span>
         <span class="step-item step-active">
             <span class="step-num">2</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">3</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
@@ -1274,7 +1274,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="special_sections" id="specialSectionsData" value="[]" />
 
-    <div class="page-title" style="margin-bottom: 24px;">Edit Special QR Content</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="eq_edit_special">Edit Special QR Content</div>
 
     <div class="new-qr-container">
         <div class="form-column">
@@ -1285,16 +1285,16 @@
             </div>
             {% endif %}
 
-            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
                 value="{{ qr_name | default(qrcard.name, true) }}" required
                 pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
             <div class="design-tabs">
-                <div class="design-tab active" data-tab="content">Content</div>
-                <div class="design-tab" data-tab="stats">Stats</div>
+                <div class="design-tab active" data-tab="content" data-i18n="nc_tab_content">Content</div>
+                <div class="design-tab" data-tab="stats" data-i18n="nc_tab_stats">Stats</div>
             </div>
 
             <!-- Content Tab -->
@@ -1304,13 +1304,13 @@
                 <div class="editor-panel" style="margin-bottom: 20px;">
                     <div class="sub-collapse-header"
                         onclick="this.nextElementSibling.classList.toggle('show'); var ch=this.querySelector('i.fa-solid'); ch.classList.toggle('fa-chevron-down'); ch.classList.toggle('fa-chevron-up');">
-                        <div class="toggle-label-with-icon" style="font-weight: 600;">Welcome screen</div>
+                        <div class="toggle-label-with-icon" style="font-weight: 600;" data-i18n="nc_s_welcome">Welcome screen</div>
                         <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                     </div>
                     <div class="sub-collapse-body">
                         <div style="margin-top: 8px;">
                             <label
-                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Image</label>
+                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;" data-i18n="nc_label_image">Image</label>
                             <label
                                 style="display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px; cursor: pointer; background: var(--bg-body);">
                                 <div id="welcome-img-preview"
@@ -1324,7 +1324,7 @@
                                         style="width: 32px; height: 32px; background: var(--border-color); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
                                         <i class="fa-regular fa-image" style="color: var(--text-muted);"></i>
                                     </div>
-                                    <span style="font-size: 13px; color: var(--text-muted);">Upload Image</span>
+                                    <span style="font-size: 13px; color: var(--text-muted);" data-i18n="nc_ws_upload_image">Upload Image</span>
                                     {% endif %}
                                 </div>
                                 <input type="file" name="special_welcome_img" accept="image/*" style="display: none;"
@@ -1332,18 +1332,17 @@
                             </label>
                             <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
                                 <button type="button" id="welcome-preview-btn" class="btn-outline"
-                                    style="padding: 4px 12px; font-size: 12px;">Preview</button>
+                                    style="padding: 4px 12px; font-size: 12px;"><span data-i18n="nc_ws_preview_btn">Preview Welcome Screen</span></button>
                                 <button type="button" id="welcome-delete-btn" class="btn-outline"
-                                    style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}">Remove</button>
+                                    style="padding: 4px 12px; font-size: 12px; color: #b91c1c; border-color: #fecaca; {% if not (qrcard and qrcard.get('welcome_img_url')) %}display: none;{% endif %}"><span data-i18n="nc_ws_remove_btn">Remove</span></button>
                                 <input type="hidden" name="welcome_img_delete" id="welcome_img_delete" value="0">
                             </div>
-                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Max 1 MB</p>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;" data-i18n="nc_ws_max_1mb">Max 1 MB</p>
                         </div>
 
                         <div style="margin-top: 20px;">
                             <label
-                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;">Background
-                                color</label>
+                                style="font-size: 12px; font-weight: 600; color: var(--text-main); display: block; margin-bottom: 8px;" data-i18n="nc_ws_bg_color">Background color</label>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <input type="color" id="welcome_bg_color_picker" name="welcome_bg_color"
                                     value="{{ qrcard.get('welcome_bg_color', '#2F6BFD') if qrcard else '#2F6BFD' }}"
@@ -1404,7 +1403,7 @@
                     <div class="toggle-row">
                         <div class="toggle-label-with-icon">
                             <i class="fa-solid fa-shield-halved"></i>
-                            <span>Enable scan limit</span>
+                            <span data-i18n="nc_stats_enable_scan_limit">Enable scan limit</span>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" name="scan_limit_enabled" id="scanLimitToggle" {% if
@@ -1457,7 +1456,7 @@
             <i class="fa-solid fa-arrow-left"></i>
         </a>
         <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-            <i class="fa-regular fa-eye"></i> Preview
+            <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
         </button>
         <button type="submit" form="content-form" class="mobile-bar-arrow primary" title="Save">
             <i class="fa-solid fa-arrow-right"></i>
@@ -1573,8 +1572,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-regular fa-eye"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-regular fa-eye"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
@@ -2939,8 +2938,15 @@
             var previewBtn = document.getElementById('welcome-preview-btn');
             if (previewBtn) {
                 previewBtn.addEventListener('click', function () {
-                    if (_currentSrc) playWelcomePreview(_currentSrc);
-                    else alert('Upload an image first (max 1 MB).');
+                    if (_currentSrc) {
+                        if (window.innerWidth <= 768) {
+                            var col = document.getElementById('preview-column');
+                            var mobileBtn = document.getElementById('mobile-preview-btn');
+                            if (col) col.classList.add('mobile-open');
+                            if (mobileBtn) mobileBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Close';
+                        }
+                        playWelcomePreview(_currentSrc);
+                    } else alert('Upload an image first (max 1 MB).');
                 });
             }
         }

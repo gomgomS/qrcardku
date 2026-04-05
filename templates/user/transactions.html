@@ -56,18 +56,18 @@
 {% block content %}
 <div class="trx-header">
     <div>
-        <a href="/user/plans" style="color: var(--text-muted); text-decoration: none; margin-bottom: 10px; display: inline-block; font-size: 13px;"><i class="fa-solid fa-arrow-left"></i> Back to Plans</a>
-        <div class="page-title">Transaction History</div>
-        <div style="font-size: 13px; color: var(--text-muted);">View and manage all your past subscriptions and payments.</div>
+        <a href="/user/plans" style="color: var(--text-muted); text-decoration: none; margin-bottom: 10px; display: inline-block; font-size: 13px;"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="tr_back_plans">Back to Plans</span></a>
+        <div class="page-title" data-i18n="tr_title">Transaction History</div>
+        <div style="font-size: 13px; color: var(--text-muted);" data-i18n="tr_subtitle">View and manage all your past subscriptions and payments.</div>
     </div>
 </div>
 
 <div class="filter-tabs" id="filterTabs">
-    <button class="filter-btn active" data-filter="all">All</button>
-    <button class="filter-btn" data-filter="active">Active / Success</button>
-    <button class="filter-btn" data-filter="pending">Pending</button>
-    <button class="filter-btn" data-filter="failed">Failed</button>
-    <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+    <button class="filter-btn active" data-filter="all" data-i18n="tr_filter_all">All</button>
+    <button class="filter-btn" data-filter="active" data-i18n="tr_filter_active">Active / Success</button>
+    <button class="filter-btn" data-filter="pending" data-i18n="tr_filter_pending">Pending</button>
+    <button class="filter-btn" data-filter="failed" data-i18n="tr_filter_failed">Failed</button>
+    <button class="filter-btn" data-filter="cancelled" data-i18n="tr_filter_cancelled">Cancelled</button>
 </div>
 
 <div class="table-card">
@@ -76,13 +76,13 @@
         <table class="trx-table">
             <thead>
                 <tr>
-                    <th>Ref ID</th>
-                    <th>Date</th>
-                    <th>Plan</th>
-                    <th>Amount</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Action</th>
+                    <th data-i18n="tr_th_ref">Ref ID</th>
+                    <th data-i18n="tr_th_date">Date</th>
+                    <th data-i18n="tr_th_plan">Plan</th>
+                    <th data-i18n="tr_th_amount">Amount</th>
+                    <th data-i18n="tr_th_method">Method</th>
+                    <th data-i18n="tr_th_status">Status</th>
+                    <th style="text-align: right;" data-i18n="tr_th_action">Action</th>
                 </tr>
             </thead>
             <tbody id="trxBody">
@@ -101,7 +101,7 @@
                     </td>
                     <td style="text-align: right;">
                         <a href="/user/transactions/invoice/{{ t.subscription_id }}" target="_blank" class="btn-invoice">
-                            <i class="fa-solid fa-file-invoice"></i> Invoice
+                            <i class="fa-solid fa-file-invoice"></i> <span data-i18n="tr_invoice">Invoice</span>
                         </a>
                     </td>
                 </tr>
@@ -112,8 +112,8 @@
     {% else %}
     <div class="empty-state">
         <i class="fa-solid fa-receipt"></i>
-        <p>No transaction records found.</p>
-        <a href="/user/plans" class="btn-invoice" style="padding: 10px 20px; font-size: 13px;">View Plans</a>
+        <p data-i18n="tr_empty">No transaction records found.</p>
+        <a href="/user/plans" class="btn-invoice" style="padding: 10px 20px; font-size: 13px;" data-i18n="tr_view_plans">View Plans</a>
     </div>
     {% endif %}
 </div>

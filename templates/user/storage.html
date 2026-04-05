@@ -530,8 +530,8 @@
 
 {% block content %}
 <div class="storage-header">
-    <div class="page-title" style="margin-bottom: 4px;">Storage</div>
-    <div style="font-size: 13px; color: var(--text-muted);">Manage your files stored in the cloud. To free up space, edit the QR card and remove files from it.</div>
+    <div class="page-title" style="margin-bottom: 4px;" data-i18n="sg_title">Storage</div>
+    <div style="font-size: 13px; color: var(--text-muted);" data-i18n="sg_subtitle">Manage your files stored in the cloud. To free up space, edit the QR card and remove files from it.</div>
 </div>
 
 <input type="hidden" id="csrf-token-val" value="{{ csrf_token() }}">
@@ -540,12 +540,12 @@
 <div class="usage-card">
     <div class="usage-top">
         <div>
-            <div class="usage-title">Storage usage</div>
-            <div class="usage-subtitle">{{ info.file_count }} file{{ 's' if info.file_count != 1 else '' }} stored across all your QR cards</div>
+            <div class="usage-title" data-i18n="sg_usage_title">Storage usage</div>
+            <div class="usage-subtitle">{{ info.file_count }} file{{ 's' if info.file_count != 1 else '' }} <span data-i18n="sg_stored_across">stored across all your QR cards</span></div>
         </div>
         <div class="usage-numbers">
             <div class="usage-used">{{ info.total_fmt }}</div>
-            <div class="usage-limit">of {{ info.limit_fmt }}</div>
+            <div class="usage-limit"><span data-i18n="sg_of_limit">of</span> {{ info.limit_fmt }}</div>
         </div>
     </div>
     <div class="usage-bar-wrap">
@@ -555,15 +555,15 @@
     <div class="usage-stats">
         <div class="usage-stat">
             <div class="usage-stat-dot" style="background: var(--primary);"></div>
-            <span>Used: {{ info.total_fmt }}</span>
+            <span><span data-i18n="sg_used">Used:</span> {{ info.total_fmt }}</span>
         </div>
         <div class="usage-stat">
             <div class="usage-stat-dot" style="background: var(--border-color);"></div>
-            <span>Free: {{ info.free_fmt }}</span>
+            <span><span data-i18n="sg_free">Free:</span> {{ info.free_fmt }}</span>
         </div>
         <div class="usage-stat">
             <i class="fa-solid fa-circle-info" style="font-size: 12px;"></i>
-            <span>Limit: {{ info.limit_fmt }} per account</span>
+            <span><span data-i18n="sg_limit_label">Limit:</span> {{ info.limit_fmt }} <span data-i18n="sg_limit_per_account">per account</span></span>
         </div>
     </div>
 </div>
@@ -571,10 +571,10 @@
 <!-- Tabs -->
 <div class="storage-tabs">
     <div class="storage-tab active" id="tab-storage" onclick="switchTab('storage')">
-        <i class="fa-solid fa-hard-drive"></i> Storage
+        <i class="fa-solid fa-hard-drive"></i> <span data-i18n="sg_tab_storage">Storage</span>
     </div>
     <div class="storage-tab" id="tab-garbage" onclick="switchTab('garbage')">
-        <i class="fa-solid fa-trash-can"></i> Garbage
+        <i class="fa-solid fa-trash-can"></i> <span data-i18n="sg_tab_garbage">Garbage</span>
         <span class="storage-tab-badge" id="tab-garbage-badge"></span>
     </div>
 </div>
@@ -589,27 +589,27 @@
             <div class="files-card-title">Files ({{ info.file_count }})</div>
         </div>
         <div class="filter-row">
-            <span class="filter-row-label">File type:</span>
+            <span class="filter-row-label" data-i18n="sg_filter_type">File type:</span>
             <div class="files-filter" id="filter-bar">
-                <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')">All</button>
-                <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> Images</button>
-                <button class="filter-btn" data-filter="video" onclick="filterFiles(this, 'video')"><i class="fa-solid fa-play"></i> Videos</button>
-                <button class="filter-btn" data-filter="pdf" onclick="filterFiles(this, 'pdf')"><i class="fa-solid fa-file-pdf"></i> PDFs</button>
+                <button class="filter-btn active" data-filter="all" onclick="filterFiles(this, 'all')" data-i18n="sg_filter_all">All</button>
+                <button class="filter-btn" data-filter="image" onclick="filterFiles(this, 'image')"><i class="fa-regular fa-image"></i> <span data-i18n="sg_filter_images">Images</span></button>
+                <button class="filter-btn" data-filter="video" onclick="filterFiles(this, 'video')"><i class="fa-solid fa-play"></i> <span data-i18n="sg_filter_videos">Videos</span></button>
+                <button class="filter-btn" data-filter="pdf" onclick="filterFiles(this, 'pdf')"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="sg_filter_pdfs">PDFs</span></button>
             </div>
         </div>
         <div class="filter-row">
-            <span class="filter-row-label">Group:</span>
+            <span class="filter-row-label" data-i18n="sg_filter_group">Group:</span>
             <div class="files-filter" id="group-filter-bar">
-                <button class="filter-btn active" data-group="all" onclick="filterByGroup(this, 'all')">All</button>
-                <button class="filter-btn" data-group="assets" onclick="filterByGroup(this, 'assets')"><i class="fa-solid fa-folder"></i> QR Assets</button>
-                <button class="filter-btn" data-group="generated" onclick="filterByGroup(this, 'generated')"><i class="fa-solid fa-qrcode"></i> QR Generated</button>
-                <button class="filter-btn" data-group="template" onclick="filterByGroup(this, 'template')"><i class="fa-solid fa-border-all"></i> Template Frames</button>
+                <button class="filter-btn active" data-group="all" onclick="filterByGroup(this, 'all')" data-i18n="sg_filter_all">All</button>
+                <button class="filter-btn" data-group="assets" onclick="filterByGroup(this, 'assets')"><i class="fa-solid fa-folder"></i> <span data-i18n="sg_group_assets">QR Assets</span></button>
+                <button class="filter-btn" data-group="generated" onclick="filterByGroup(this, 'generated')"><i class="fa-solid fa-qrcode"></i> <span data-i18n="sg_group_generated">QR Generated</span></button>
+                <button class="filter-btn" data-group="template" onclick="filterByGroup(this, 'template')"><i class="fa-solid fa-border-all"></i> <span data-i18n="sg_group_template">Template Frames</span></button>
             </div>
         </div>
         <div class="filter-row" id="qrcard-filter-row">
-            <span class="filter-row-label">QR card:</span>
+            <span class="filter-row-label" data-i18n="sg_filter_qr">QR card:</span>
             <select class="qr-filter-select" id="qr-filter-select" onchange="filterByQr(this.value)">
-                <option value="all">All QR cards</option>
+                <option value="all" data-i18n="sg_filter_all_qr">All QR cards</option>
                 {% if info.files %}
                 {% set seen = namespace(names=[]) %}
                 {% for f in info.files %}
@@ -627,24 +627,24 @@
     <div class="qr-info-panel" id="qr-info-panel">
         <div class="qr-info-stats">
             <div class="qr-info-stat">
-                <span class="qr-info-stat-label">Usage</span>
+                <span class="qr-info-stat-label" data-i18n="sg_qr_usage">Usage</span>
                 <span class="qr-info-stat-value" id="qrinfo-usage">—</span>
             </div>
             <div class="qr-info-stat">
-                <span class="qr-info-stat-label">of total storage</span>
+                <span class="qr-info-stat-label" data-i18n="sg_qr_of_total">of total storage</span>
                 <span class="qr-info-stat-value" id="qrinfo-of-total">—</span>
             </div>
             <div class="qr-info-stat">
-                <span class="qr-info-stat-label">Files</span>
+                <span class="qr-info-stat-label" data-i18n="sg_qr_files">Files</span>
                 <span class="qr-info-stat-value" id="qrinfo-files">—</span>
             </div>
             <div class="qr-info-stat">
-                <span class="qr-info-stat-label">Would free up</span>
+                <span class="qr-info-stat-label" data-i18n="sg_qr_savings">Would free up</span>
                 <span class="qr-info-stat-value green" id="qrinfo-savings">—</span>
             </div>
         </div>
         <button type="button" class="btn-delete-qr" id="btn-delete-qr">
-            <i class="fa-solid fa-trash"></i> Delete QR &amp; assets
+            <i class="fa-solid fa-trash"></i> <span data-i18n="sg_delete_qr_btn">Delete QR &amp; assets</span>
         </button>
     </div>
 
@@ -682,12 +682,12 @@
                 {% if f.qr_type == 'frame' %}
                 <a href="{{ f.edit_url }}" class="btn-edit">
                     <i class="fa-solid fa-border-all"></i>
-                    <span>Template</span>
+                    <span data-i18n="sg_btn_template">Template</span>
                 </a>
                 {% else %}
                 <a href="{{ f.edit_url }}" class="btn-edit">
                     <i class="fa-solid fa-pen"></i>
-                    <span>Edit QR</span>
+                    <span data-i18n="sg_btn_edit">Edit QR</span>
                 </a>
                 {% endif %}
             </div>
@@ -701,7 +701,7 @@
     {% else %}
     <div class="empty-state">
         <div><i class="fa-regular fa-folder-open"></i></div>
-        <p>No files stored yet. Upload images, videos, or PDFs through your QR cards.</p>
+        <p data-i18n="sg_no_files">No files stored yet. Upload images, videos, or PDFs through your QR cards.</p>
     </div>
     {% endif %}
 </div>
@@ -718,13 +718,13 @@
                 Garbage
                 <span class="garbage-badge" id="garbage-count-badge" style="display:none;"></span>
             </div>
-            <div class="garbage-summary" id="garbage-summary" style="margin-top:3px;">
+            <div class="garbage-summary" id="garbage-summary" style="margin-top:3px;" data-i18n="sg_garbage_checking">
                 Checking for unused files…
             </div>
         </div>
         <button type="button" class="btn-cleanup" id="btn-cleanup" style="display:none;"
                 onclick="confirmCleanup()">
-            <i class="fa-solid fa-broom"></i> Clean up
+            <i class="fa-solid fa-broom"></i> <span data-i18n="sg_garbage_clean_up">Clean up</span>
         </button>
     </div>
     <div id="garbage-list"></div>
@@ -740,18 +740,18 @@
 <div class="del-modal-overlay" id="gc-modal-overlay">
     <div class="del-modal">
         <div class="del-modal-icon"><i class="fa-solid fa-broom" style="color:#f59e0b;"></i></div>
-        <div class="del-modal-title">Delete unused files?</div>
-        <div class="del-modal-body" id="gc-modal-body">
+        <div class="del-modal-title" data-i18n="sg_del_unused_title">Delete unused files?</div>
+        <div class="del-modal-body" id="gc-modal-body" data-i18n="sg_del_unused_body">
             These files are no longer used by any QR card and can be safely removed.
         </div>
         <div class="del-modal-warning">
             <i class="fa-solid fa-circle-exclamation"></i>
-            This action is permanent and cannot be undone.
+            <span data-i18n="sg_permanent">This action is permanent and cannot be undone.</span>
         </div>
         <div class="del-modal-actions">
-            <button type="button" class="btn-cancel-del" onclick="closeGcModal()">Cancel</button>
+            <button type="button" class="btn-cancel-del" onclick="closeGcModal()" data-i18n="sg_cancel">Cancel</button>
             <button type="button" class="btn-confirm-del" id="gc-confirm-btn" onclick="doCleanup()">
-                <i class="fa-solid fa-broom"></i> Yes, clean up
+                <i class="fa-solid fa-broom"></i> <span data-i18n="sg_yes_cleanup">Yes, clean up</span>
             </button>
         </div>
     </div>
@@ -766,19 +766,19 @@
 <div class="del-modal-overlay" id="del-modal-overlay">
     <div class="del-modal">
         <div class="del-modal-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div class="del-modal-title">Delete QR &amp; all assets?</div>
+        <div class="del-modal-title" data-i18n="sg_del_qr_title">Delete QR &amp; all assets?</div>
         <div class="del-modal-body">
-            You are about to delete <strong id="del-modal-qr-name"></strong> and all its files
+            <span data-i18n="sg_del_qr_pretext">You are about to delete</span> <strong id="del-modal-qr-name"></strong> <span data-i18n="sg_del_qr_files_and">and all its files</span>
             (<span id="del-modal-summary"></span>).
         </div>
         <div class="del-modal-warning">
             <i class="fa-solid fa-circle-exclamation"></i>
-            This action is permanent and cannot be undone.
+            <span data-i18n="sg_permanent">This action is permanent and cannot be undone.</span>
         </div>
         <div class="del-modal-actions">
-            <button type="button" class="btn-cancel-del" id="btn-cancel-del">Cancel</button>
+            <button type="button" class="btn-cancel-del" id="btn-cancel-del" data-i18n="sg_cancel">Cancel</button>
             <button type="button" class="btn-confirm-del" id="btn-confirm-del">
-                <i class="fa-solid fa-trash"></i> Yes, delete permanently
+                <i class="fa-solid fa-trash"></i> <span data-i18n="sg_del_qr_confirm">Yes, delete permanently</span>
             </button>
         </div>
     </div>
@@ -816,11 +816,11 @@
 
         // "Used: X" stat
         var stats = document.querySelectorAll('.usage-stat span');
-        if (stats.length > 0) stats[0].textContent = 'Used: ' + fmtBytes(TOTAL_BYTES);
+        if (stats.length > 0) stats[0].textContent = window.i18nStr('sg_used', 'Used:') + ' ' + fmtBytes(TOTAL_BYTES);
 
         // "Free: X" stat
         var freeBytes = Math.max(0, LIMIT_BYTES - TOTAL_BYTES);
-        if (stats.length > 1) stats[1].textContent = 'Free: ' + fmtBytes(freeBytes);
+        if (stats.length > 1) stats[1].textContent = window.i18nStr('sg_free', 'Free:') + ' ' + fmtBytes(freeBytes);
     }
 
     var _activeCat   = 'all';
@@ -876,7 +876,7 @@
 
         var showFrom = totalRows ? start + 1 : 0;
         var showTo   = Math.min(end, totalRows);
-        info.textContent = 'Showing ' + showFrom + '–' + showTo + ' of ' + totalRows + ' file' + (totalRows !== 1 ? 's' : '');
+        info.textContent = window.i18nStr('sg_showing', 'Showing') + ' ' + showFrom + '–' + showTo + ' ' + window.i18nStr('sg_of', 'of') + ' ' + totalRows + ' ' + (totalRows !== 1 ? window.i18nStr('sg_files', 'files') : window.i18nStr('sg_file', 'file'));
 
         // Build page buttons (prev, pages, next)
         btns.innerHTML = '';
@@ -989,7 +989,7 @@
     document.getElementById('btn-confirm-del').addEventListener('click', function() {
         var btn = this;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting…';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + window.i18nStr('sg_deleting', 'Deleting…');
 
         var csrfToken = document.getElementById('csrf-token-val').value;
         fetch('/api/storage/delete_qr_assets', {
@@ -1017,17 +1017,17 @@
                 _currentPage = 1;
                 renderPage();
                 updateUsageBar(res.freed_bytes || 0);
-                showToast('Deleted "' + _pendingQrName + '" successfully');
+                showToast(window.i18nStr('sg_deleted_success', 'Deleted successfully') + ' "' + _pendingQrName + '"');
             } else {
-                alert('Error: ' + (res.error || 'Could not delete. Please try again.'));
+                alert('Error: ' + (res.error || window.i18nStr('sg_delete_error', 'Could not delete. Please try again.')));
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-trash"></i> Yes, delete permanently';
+                btn.innerHTML = '<i class="fa-solid fa-trash"></i> ' + window.i18nStr('sg_del_qr_confirm', 'Yes, delete permanently');
             }
         })
         .catch(function() {
-            alert('Network error. Please try again.');
+            alert(window.i18nStr('sg_network_error', 'Network error. Please try again.'));
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-trash"></i> Yes, delete permanently';
+            btn.innerHTML = '<i class="fa-solid fa-trash"></i> ' + window.i18nStr('sg_del_qr_confirm', 'Yes, delete permanently');
         });
     });
 
@@ -1061,7 +1061,7 @@
                 + '<div class="file-icon ' + f.category + '">' + iconForCat(f.category) + '</div>'
                 + '<div class="file-info">'
                 +   '<div class="file-name" title="' + f.fname + '">' + f.fname + '</div>'
-                +   '<div class="file-meta"><span class="orphan-badge"><i class="fa-solid fa-unlink"></i> Not used</span></div>'
+                +   '<div class="file-meta"><span class="orphan-badge"><i class="fa-solid fa-unlink"></i> ' + window.i18nStr('sg_not_used', 'Not used') + '</span></div>'
                 + '</div>'
                 + '<div class="file-size">' + f.size_fmt + '</div>'
                 + '</div>';
@@ -1077,7 +1077,7 @@
 
         var showFrom = total ? start + 1 : 0;
         var showTo   = Math.min(end, total);
-        info.textContent = 'Showing ' + showFrom + '–' + showTo + ' of ' + total + ' file' + (total !== 1 ? 's' : '');
+        info.textContent = window.i18nStr('sg_showing', 'Showing') + ' ' + showFrom + '–' + showTo + ' ' + window.i18nStr('sg_of', 'of') + ' ' + total + ' ' + (total !== 1 ? window.i18nStr('sg_files', 'files') : window.i18nStr('sg_file', 'file'));
 
         btns.innerHTML = '';
         function makeGcBtn(label, page, isActive, isDisabled) {
@@ -1127,31 +1127,31 @@
 
                 var tabBadge = document.getElementById('tab-garbage-badge');
                 if (!_garbageFiles.length) {
-                    summary.textContent = 'No unused files found. Your storage is clean.';
+                    summary.textContent = window.i18nStr('sg_garbage_no_unused', 'No unused files found. Your storage is clean.');
                     badge.style.display = 'none';
                     btn.style.display   = 'none';
                     if (tabBadge) { tabBadge.textContent = ''; tabBadge.classList.remove('visible'); }
-                    list.innerHTML = '<div class="garbage-empty"><i class="fa-solid fa-circle-check" style="color:#16a34a;opacity:1;"></i><span>All files are in use — nothing to clean up.</span></div>';
+                    list.innerHTML = '<div class="garbage-empty"><i class="fa-solid fa-circle-check" style="color:#16a34a;opacity:1;"></i><span>' + window.i18nStr('sg_garbage_all_used', 'All files are in use — nothing to clean up.') + '</span></div>';
                     return;
                 }
 
                 badge.textContent  = _garbageFiles.length;
                 badge.style.display = '';
                 if (tabBadge) { tabBadge.textContent = _garbageFiles.length; tabBadge.classList.add('visible'); }
-                summary.textContent = _garbageFiles.length + ' unused file' + (_garbageFiles.length !== 1 ? 's' : '') + ' — ' + data.total_fmt + ' can be freed';
+                summary.textContent = _garbageFiles.length + ' ' + (_garbageFiles.length !== 1 ? window.i18nStr('sg_unused_files', 'unused files') : window.i18nStr('sg_unused_file', 'unused file')) + ' — ' + data.total_fmt + ' ' + window.i18nStr('sg_can_be_freed', 'can be freed');
                 btn.style.display   = '';
 
                 _gcPage = 1;
                 renderGarbagePage();
             })
             .catch(function() {
-                document.getElementById('garbage-summary').textContent = 'Could not check for unused files.';
+                document.getElementById('garbage-summary').textContent = window.i18nStr('sg_garbage_cannot_check', 'Could not check for unused files.');
             });
     }
 
     function confirmCleanup() {
         var body = document.getElementById('gc-modal-body');
-        body.textContent = _garbageFiles.length + ' unused file' + (_garbageFiles.length !== 1 ? 's' : '') + ' will be permanently deleted.';
+        body.textContent = _garbageFiles.length + ' ' + (_garbageFiles.length !== 1 ? window.i18nStr('sg_unused_files', 'unused files') : window.i18nStr('sg_unused_file', 'unused file')) + ' ' + window.i18nStr('sg_will_be_deleted', 'will be permanently deleted.');
         document.getElementById('gc-modal-overlay').classList.add('open');
     }
 
@@ -1174,14 +1174,14 @@
             btn.disabled = false;
             if (data.ok) {
                 updateUsageBar(data.freed_bytes || 0);
-                showToast('Cleaned up ' + data.deleted + ' file' + (data.deleted !== 1 ? 's' : '') + ', freed ' + data.freed_fmt);
+                showToast(window.i18nStr('sg_cleaned_up', 'Cleaned up') + ' ' + data.deleted + ' ' + (data.deleted !== 1 ? window.i18nStr('sg_files', 'files') : window.i18nStr('sg_file', 'file')) + ', ' + window.i18nStr('sg_freed', 'freed') + ' ' + data.freed_fmt);
                 _gcPage = 1;
                 loadGarbage();
             } else {
-                alert('Cleanup failed: ' + (data.error || 'Unknown error'));
+                alert(window.i18nStr('sg_cleanup_failed', 'Cleanup failed.') + (data.error ? ' ' + data.error : ''));
             }
         })
-        .catch(function() { closeGcModal(); btn.disabled = false; alert('Cleanup failed.'); });
+        .catch(function() { closeGcModal(); btn.disabled = false; alert(window.i18nStr('sg_cleanup_failed', 'Cleanup failed.')); });
     }
 
     document.getElementById('gc-modal-overlay').addEventListener('click', function(e) {

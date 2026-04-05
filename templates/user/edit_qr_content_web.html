@@ -538,23 +538,23 @@
     <div class="new-qr-steps">
         <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">2</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">3</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
         <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
-            Back</a>
-        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i
+            <span data-i18n="nq_back">Back</span></a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled><span data-i18n="nq_next">Next</span> <i
                 class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
@@ -562,7 +562,7 @@
 <form id="content-form" method="POST" action="{{ form_action | default('/qr/new/' ~ qr_type ~ '/qr-design') }}"
     enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="nc_page_title">Complete the content of the QR</div>
 
     <div class="new-qr-container">
         <!-- Left form section -->
@@ -573,10 +573,10 @@
                 <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
             </div>
             {% endif %}
-            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
                 value="{{ qr_name | default('', true) }}" required
                 pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -586,7 +586,7 @@
                     <div class="header-left-col">
                         <div class="header-icon"><i class="fa-solid fa-circle-info"></i></div>
                         <div class="header-text">
-                            <h3>Basic Information</h3>
+                            <h3 data-i18n="nc_s_basic">Basic Information</h3>
                             <p>Add essential information.</p>
                         </div>
                     </div>
@@ -615,7 +615,7 @@
                     <div class="header-left-col">
                         <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
                         <div class="header-text">
-                            <h3>Stats</h3>
+                            <h3 data-i18n="nc_s_stats">Stats</h3>
                             <p>Key metrics and data to evaluate performance.</p>
                         </div>
                     </div>
@@ -643,7 +643,7 @@
 
                             <div class="toggle-row" style="padding-left: 22px;">
                                 <div class="toggle-label-with-icon">
-                                    Activate the schedule to work during certain dates
+                                    <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox">
@@ -823,7 +823,7 @@
                 </div>
 
                 <div class="preview-disclaimer">
-                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                    <i class="fa-regular fa-circle-info"></i> <span data-i18n="nc_preview_disclaimer">IMPORTANT: Don't forget to test your QR card</span>
                 </div>
             </div>
         </div>
@@ -834,7 +834,7 @@
             <i class="fa-solid fa-arrow-left"></i>
         </a>
         <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-            <i class="fa-regular fa-eye"></i> Preview
+            <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
         </button>
         <button type="submit" form="content-form" class="mobile-bar-arrow primary" title="Save">
             <i class="fa-solid fa-arrow-right"></i>
@@ -850,8 +850,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-regular fa-eye"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-regular fa-eye"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script>

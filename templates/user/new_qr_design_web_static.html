@@ -141,15 +141,15 @@
     <div class="new-qr-steps">
         <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </a>
         <a href="/qr/new/web-static" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">3</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </span>
     </div>
     <div class="new-qr-step-nav">
@@ -158,9 +158,9 @@
             <input type="hidden" name="back_from_design" value="1" />
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</button>
+            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
-        <button type="button" class="btn-next" onclick="submitDesignWithOverlay()">Complete</button>
+        <button type="button" class="btn-next" onclick="submitDesignWithOverlay()"><span data-i18n="nd_complete">Complete</span></button>
     </div>
 </div>
 
@@ -192,7 +192,7 @@
 <div class="new-qr-container">
     <!-- Left form section -->
     <div class="form-column">
-        <div class="page-title">Design the QR</div>
+        <div class="page-title" data-i18n="nd_design_qr">Design the QR</div>
 
         <!-- QR Code Style Section -->
         <div class="collapse-section" id="qr-style-section">
@@ -200,14 +200,14 @@
                 <div class="header-left-col">
                     <div class="header-icon style-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div class="header-text">
-                        <h3>QR Code Style</h3>
-                        <p>Customize dot shape and colors of your QR.</p>
+                        <h3 data-i18n="nd_s_qr_style">QR Code Style</h3>
+                        <p data-i18n="nd_s_qr_style_sub">Customize dot shape and colors of your QR.</p>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
             </div>
             <div class="collapse-body show">
-                <div class="qrs-label">Dot Shape</div>
+                <div class="qrs-label" data-i18n="nd_dot_shape">Dot Shape</div>
                 <div class="selection-grid qr-dot-grid" id="qr-dot-grid">
                     <div class="grid-item active" onclick="selectDotStyle(this,'square')">
                         <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="0"/><rect x="13" y="1" width="10" height="10" rx="0"/><rect x="25" y="1" width="10" height="10" rx="0"/><rect x="1" y="13" width="10" height="10" rx="0"/><rect x="13" y="13" width="10" height="10" rx="0"/><rect x="25" y="13" width="10" height="10" rx="0"/><rect x="1" y="25" width="10" height="10" rx="0"/><rect x="13" y="25" width="10" height="10" rx="0"/><rect x="25" y="25" width="10" height="10" rx="0"/></svg>
@@ -234,7 +234,7 @@
                         <span class="frame-label">Classy+</span>
                     </div>
                 </div>
-                <div class="qrs-label" style="margin-top:18px;">Corner Style</div>
+                <div class="qrs-label" style="margin-top:18px;" data-i18n="nd_corner_style">Corner Style</div>
                 <div class="selection-grid qr-corner-grid" id="qr-corner-grid">
                     <div class="grid-item active" onclick="selectCornerStyle(this,'square')">
                         <svg class="qr-shape-thumb" viewBox="0 0 36 36" fill="currentColor"><rect x="1" y="1" width="16" height="16" rx="0"/><rect x="4" y="4" width="10" height="10" fill="var(--bg-content)" rx="0"/><rect x="6" y="6" width="6" height="6" rx="0"/></svg>
@@ -251,7 +251,7 @@
                 </div>
                 <div class="qrs-color-row">
                     <div class="qrs-color-item">
-                        <label>QR Color</label>
+                        <label data-i18n="nd_qr_color">QR Color</label>
                         <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-dot-color-picker').click()">
                             <input type="color" id="qr-dot-color-picker" value="#000000" oninput="onQRColorChange('dot',this.value)">
                             <div class="qrs-color-swatch" id="qr-dot-swatch" style="background:#000000;"></div>
@@ -259,7 +259,7 @@
                         </div>
                     </div>
                     <div class="qrs-color-item">
-                        <label>Background</label>
+                        <label data-i18n="nd_background">Background</label>
                         <div class="qrs-color-swatch-wrap" onclick="document.getElementById('qr-bg-color-picker').click()">
                             <input type="color" id="qr-bg-color-picker" value="#ffffff" oninput="onQRColorChange('bg',this.value)">
                             <div class="qrs-color-swatch" id="qr-bg-swatch" style="background:#ffffff;border:1px solid #ddd;"></div>
@@ -275,8 +275,8 @@
                 <div class="header-left-col">
                     <div class="header-icon"><i class="fa-solid fa-border-all"></i></div>
                     <div class="header-text">
-                        <h3>Frame</h3>
-                        <p>Define the QR card outline by choosing from preset frames.</p>
+                        <h3 data-i18n="nd_s_frame">Frame</h3>
+                        <p data-i18n="nd_s_frame_sub">Define the QR card outline by choosing from preset frames.</p>
                     </div>
                 </div>
                 <i class="fa-solid fa-chevron-up frame-chevron" style="color: var(--text-muted);"></i>
@@ -284,19 +284,19 @@
             <div class="collapse-body show">
                 <!-- Standard SVG frames -->
                 <div class="custom-frames-section" id="standard-frames-section" style="display:none;">
-                    <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> Standard frames</div>
+                    <div class="custom-frames-label"><i class="fa-solid fa-shapes"></i> <span data-i18n="nd_std_frames">Standard frames</span></div>
                     <div class="selection-grid frame-grid" id="standard-frames-grid"></div>
                 </div>
                 <!-- SVG frame controls -->
                 <div id="svg-frame-controls" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border-color);">
-                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Frame style</div>
+                    <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;" data-i18n="nd_frame_style">Frame style</div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
-                        <label for="svg-frame-color">Frame color</label>
+                        <label for="svg-frame-color" data-i18n="nd_frame_color">Frame color</label>
                         <input type="color" id="svg-frame-color" value="#000000" title="Frame color">
                         <span id="svg-frame-color-hex" style="font-size:12px;color:var(--text-muted);">#000000</span>
                     </div>
                     <div class="frame-text-color-row" style="margin-bottom:6px;">
-                        <label for="card-bg-color-picker">Background</label>
+                        <label for="card-bg-color-picker" data-i18n="nd_background">Background</label>
                         <div class="qrs-color-swatch-wrap" onclick="document.getElementById('card-bg-color-picker').click()" style="position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="color" id="card-bg-color-picker" value="#ffffff" style="position:absolute;opacity:0;width:28px;height:28px;cursor:pointer;" oninput="onCardBgChange(this.value)">
                             <div id="card-bg-swatch" style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border-color);background:#ffffff;flex-shrink:0;"></div>
@@ -304,20 +304,20 @@
                         </div>
                     </div>
                     <div class="frame-text-row">
-                        <label for="svg-frame-text">Frame text</label>
+                        <label for="svg-frame-text" data-i18n="nd_frame_text">Frame text</label>
                         <input type="text" id="svg-frame-text" value="Scan me!" placeholder="e.g. Scan me!" maxlength="40">
                     </div>
                 </div>
                 <!-- Default frames (from admin) -->
                 <div class="custom-frames-section" id="default-frames-section" style="display:none;">
-                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> Default frames</div>
+                    <div class="custom-frames-label"><i class="fa-solid fa-star"></i> <span data-i18n="nd_default_frames">Default frames</span></div>
                     <div class="selection-grid frame-grid" id="default-frames-grid"></div>
                 </div>
                 <div class="custom-frames-section">
-                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> My custom frames</div>
+                    <div class="custom-frames-label"><i class="fa-regular fa-image"></i> <span data-i18n="nd_my_frames">My custom frames</span></div>
                     <div class="selection-grid frame-grid" id="custom-frames-grid" style="display:none;"></div>
-                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;">Loading…</div>
-                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> Create new frame</a>
+                    <div id="custom-frames-empty" style="font-size:12px;color:var(--text-muted);padding:4px 0;" data-i18n="nd_loading">Loading…</div>
+                    <a href="/user/templates" style="font-size:12px;color:var(--primary);display:inline-block;margin-top:6px;" target="_blank"><i class="fa-solid fa-plus"></i> <span data-i18n="nd_create_frame">Create new frame</span></a>
                 </div>
             </div>
         </div>
@@ -336,7 +336,7 @@
                 </div>
             </div>
 
-            <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">QR Code preview</span>
+            <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;" data-i18n="nd_qr_preview">QR Code preview</span>
 
             <div class="qr-card">
                 <div id="qr-preview-frame" class="qr-preview-frame frame-none">
@@ -348,7 +348,7 @@
             </div>
 
             <div class="preview-disclaimer">
-                <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                <i class="fa-regular fa-circle-info"></i> <span data-i18n="nc_preview_disclaimer">IMPORTANT: Don't forget to test your QR card</span>
             </div>
         </div>
     </div>
@@ -360,7 +360,7 @@
         <i class="fa-solid fa-arrow-left"></i>
     </button>
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-        <i class="fa-regular fa-eye"></i> Preview
+        <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
     </button>
     <button type="button" class="mobile-bar-arrow" style="background: var(--primary); border-color: var(--primary); color: white;" title="Complete" onclick="submitDesignWithOverlay()">
         <i class="fa-solid fa-arrow-right"></i>
@@ -378,8 +378,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-regular fa-eye"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-regular fa-eye"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script>

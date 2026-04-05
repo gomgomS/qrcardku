@@ -108,13 +108,13 @@
 
 {% block content %}
 <div class="plans-header">
-    <div class="page-title" style="margin-bottom: 4px;">Plans & Payments</div>
-    <div style="font-size: 13px; color: var(--text-muted);">Choose a plan that fits your needs. Plans accumulate — buying the same plan twice doubles your quota.</div>
+    <div class="page-title" style="margin-bottom: 4px;" data-i18n="pl_title">Plans & Payments</div>
+    <div style="font-size: 13px; color: var(--text-muted);" data-i18n="pl_subtitle">Choose a plan that fits your needs. Plans accumulate — buying the same plan twice doubles your quota.</div>
 </div>
 
 <div class="accumulate-note">
     <i class="fa-solid fa-circle-info"></i>
-    <span>
+    <span data-i18n-html="pl_accumulate_note">
         Plans are <strong style="color: var(--text-main);">accumulative</strong> — each purchase adds on top of your existing quota with its own expiry date.
         For example, buying <em>Single</em> twice gives you <strong style="color: var(--text-main);">2 QR cards</strong> and <strong style="color: var(--text-main);">60 MB</strong> across two separate billing periods.
     </span>
@@ -126,7 +126,7 @@
 {% for plan in plans %}
 {% if plan.status == 'ACTIVE' %}
 <div class="plan-card {% if plan.plan_id == 'team' %}featured{% endif %}">
-    {% if plan.plan_id == 'team' %}<div class="plan-badge">Most Popular</div>{% endif %}
+    {% if plan.plan_id == 'team' %}<div class="plan-badge" data-i18n="pl_most_popular">Most Popular</div>{% endif %}
     <div class="plan-icon">{{ icons.get(plan.plan_id, '📦') }}</div>
     <div class="plan-name">{{ plan.name }}</div>
     <div class="plan-tagline">{{ plan.description }}</div>
@@ -134,16 +134,16 @@
         <span class="plan-price-currency">IDR</span>
         <span class="plan-price-amount">{{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
     </div>
-    <div class="plan-price-period">per {{ plan.period_days }} day{{ 's' if plan.period_days != 1 else '' }}</div>
+    <div class="plan-price-period"><span data-i18n="pl_per">per</span> {{ plan.period_days }} <span data-i18n="{{ 'pl_day' if plan.period_days == 1 else 'pl_days' }}">{{ 'day' if plan.period_days == 1 else 'days' }}</span></div>
     <hr class="plan-divider">
     <ul class="plan-features">
         <li>
             <i class="fa-solid fa-check"></i>
-            <span><strong>{{ plan.max_qr }}</strong> QR card slot{{ 's' if plan.max_qr != 1 else '' }} <span class="feat-label">Per purchase</span></span>
+            <span><strong>{{ plan.max_qr }}</strong> <span data-i18n="{{ 'pl_qr_slot' if plan.max_qr == 1 else 'pl_qr_slots' }}">QR card slot{{ 's' if plan.max_qr != 1 else '' }}</span> <span class="feat-label" data-i18n="pl_per_purchase">Per purchase</span></span>
         </li>
         <li>
             <i class="fa-solid fa-check"></i>
-            <span><strong>{{ plan.max_storage_mb }} MB</strong> storage <span class="feat-label">Per purchase</span></span>
+            <span><strong>{{ plan.max_storage_mb }} MB</strong> <span data-i18n="pl_storage">storage</span> <span class="feat-label" data-i18n="pl_per_purchase">Per purchase</span></span>
         </li>
         {% for feat in plan.features %}
         <li>
@@ -154,7 +154,7 @@
     </ul>
     <button class="btn-buy {% if plan.plan_id == 'team' %}featured-btn{% endif %}"
         onclick="onBuyClick('{{ plan.plan_id }}', '{{ plan.name }}', {{ plan.price_idr }}, {{ plan.max_qr }}, {{ plan.max_storage_mb }})">
-        <i class="fa-solid fa-cart-shopping"></i> Get {{ plan.name }}
+        <i class="fa-solid fa-cart-shopping"></i> <span data-i18n="pl_get">Get</span> {{ plan.name }}
     </button>
 </div>
 {% endif %}
@@ -165,9 +165,9 @@
 <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
     <div>
         <i class="fa-solid fa-receipt" style="color: var(--primary);"></i>
-        My Subscriptions
+        <span data-i18n="pl_my_subs">My Subscriptions</span>
     </div>
-    <a href="/user/transactions" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600;">View All Transactions <i class="fa-solid fa-arrow-right"></i></a>
+    <a href="/user/transactions" style="font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600;"><span data-i18n="pl_view_transactions">View All Transactions</span> <i class="fa-solid fa-arrow-right"></i></a>
 </div>
 
 <div class="subs-table-wrap">
@@ -175,13 +175,13 @@
 <table class="subs-table">
     <thead>
         <tr>
-            <th>Plan</th>
-            <th>QR Slots</th>
-            <th>Storage</th>
-            <th>Price Paid</th>
-            <th>Started</th>
-            <th>Expires</th>
-            <th>Status</th>
+            <th data-i18n="pl_th_plan">Plan</th>
+            <th data-i18n="pl_th_qr_slots">QR Slots</th>
+            <th data-i18n="pl_th_storage">Storage</th>
+            <th data-i18n="pl_th_price_paid">Price Paid</th>
+            <th data-i18n="pl_th_started">Started</th>
+            <th data-i18n="pl_th_expires">Expires</th>
+            <th data-i18n="pl_th_status">Status</th>
         </tr>
     </thead>
     <tbody>
@@ -211,12 +211,12 @@
                 {% if s.status == 'PENDING' %}
                 <div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
                     {% if s.payment_url %}
-                    <a href="{{ s.payment_url }}" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; background: var(--primary); color: #111209; text-decoration: none;">Pay Now</a>
+                    <a href="{{ s.payment_url }}" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; background: var(--primary); color: #111209; text-decoration: none;" data-i18n="pl_pay_now">Pay Now</a>
                     {% endif %}
-                    <form method="POST" action="/user/plans/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure you want to cancel this pending payment?');">
+                    <form method="POST" action="/user/plans/cancel" style="margin: 0;" onsubmit="return confirm(window.i18nStr ? window.i18nStr('pl_cancel_confirm', 'Are you sure you want to cancel this pending payment?') : 'Are you sure you want to cancel this pending payment?');">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="subscription_id" value="{{ s.subscription_id }}">
-                        <button type="submit" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(239,68,68,.3); color: #ef4444;">Cancel</button>
+                        <button type="submit" class="btn-buy" style="padding: 4px 10px; font-size: 11px; width: auto; border-color: rgba(239,68,68,.3); color: #ef4444;" data-i18n="pl_cancel_pending">Cancel</button>
                     </form>
                 </div>
                 {% endif %}
@@ -228,7 +228,7 @@
 {% else %}
 <div class="empty-subs">
     <i class="fa-regular fa-credit-card"></i>
-    <p>No subscriptions yet. Choose a plan above to get started.</p>
+    <p data-i18n="pl_no_subs">No subscriptions yet. Choose a plan above to get started.</p>
 </div>
 {% endif %}
 </div>
@@ -253,19 +253,19 @@
         var days = Math.floor(diff / 86400);
         var hours = Math.floor((diff % 86400) / 3600);
         if (diff <= 0) {
-            el.textContent = 'Expired';
+            el.textContent = window.i18nStr ? window.i18nStr('pl_expired', 'Expired') : 'Expired';
             el.className = 'countdown-badge urgent';
         } else if (days === 0) {
-            el.textContent = hours + 'h left';
+            el.textContent = hours + (window.i18nStr ? window.i18nStr('pl_h_left', 'h left') : 'h left');
             el.className = 'countdown-badge urgent';
         } else if (days <= 7) {
-            el.textContent = days + 'd left';
+            el.textContent = days + (window.i18nStr ? window.i18nStr('pl_d_left', 'd left') : 'd left');
             el.className = 'countdown-badge urgent';
         } else if (days <= 30) {
-            el.textContent = days + 'd left';
+            el.textContent = days + (window.i18nStr ? window.i18nStr('pl_d_left', 'd left') : 'd left');
             el.className = 'countdown-badge warning';
         } else {
-            el.textContent = days + 'd left';
+            el.textContent = days + (window.i18nStr ? window.i18nStr('pl_d_left', 'd left') : 'd left');
             el.className = 'countdown-badge ok';
         }
     });

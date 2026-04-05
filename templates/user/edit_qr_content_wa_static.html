@@ -106,28 +106,28 @@
     <div class="new-qr-steps">
         <a href="/qr/list" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>My QR Codes</span>
+            <span data-i18n="eq_my_qr_codes">My QR Codes</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">1</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">2</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
-        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled><span data-i18n="nq_next">Next</span> <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
 
 <form id="content-form" method="POST" action="/qr/update/wa-static/{{ qrcard_id }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-    <div class="page-title" style="margin-bottom: 24px;">Edit WhatsApp QR</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="eq_edit_wa">Edit WhatsApp QR</div>
 
     <div class="new-qr-container">
         <div class="form-column">
@@ -138,9 +138,10 @@
             {% endif %}
 
             <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input"
-                placeholder="Name QR Card" value="{{ qr_name | default('', true) }}" required
+                placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
+                value="{{ qr_name | default('', true) }}" required
                 pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -149,15 +150,15 @@
                     <div class="header-left-col">
                         <div class="header-icon" style="color: #16a34a;"><i class="fa-brands fa-whatsapp"></i></div>
                         <div class="header-text">
-                            <h3>WhatsApp</h3>
-                            <p>Phone number and pre-filled message for the recipient.</p>
+                            <h3 data-i18n="nc_s_whatsapp">WhatsApp</h3>
+                            <p data-i18n="nc_s_whatsapp_sub">Phone number and pre-filled message for the recipient.</p>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body show">
                     <div class="form-group">
-                        <label class="form-label">Phone Number <span style="color:#b91c1c;">*</span></label>
+                        <label class="form-label"><span data-i18n="nc_label_wa_phone">Phone Number</span> <span style="color:#b91c1c;">*</span></label>
                         <div class="phone-prefix-group">
                             <span class="phone-prefix"><i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> +</span>
                             <input type="text" name="wa_phone" id="wa-phone-input"
@@ -166,11 +167,11 @@
                                 inputmode="numeric" pattern="[0-9]+" maxlength="20" required>
                         </div>
                         <p style="font-size:11px; color:var(--text-muted); margin-top:6px;">
-                            <i class="fa-solid fa-circle-info"></i> International format without +. Example: 628123456789
+                            <i class="fa-solid fa-circle-info"></i> <span data-i18n="nc_info_wa_phone">International format without +. Example: 628123456789</span>
                         </p>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Pre-filled Message</label>
+                        <label class="form-label" data-i18n="nc_label_wa_message">Pre-filled Message</label>
                         <textarea name="wa_message" id="wa-message-input" class="form-control"
                             maxlength="1000" placeholder="Hello, I'm interested in your product...">{{ wa_message | default('', true) }}</textarea>
                         <div class="char-count"><span id="char-count">{{ (wa_message or '')|length }}</span> / 1000</div>
@@ -184,7 +185,7 @@
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
                 <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-                    <i class="fa-brands fa-whatsapp"></i> Preview
+                    <i class="fa-brands fa-whatsapp"></i> <span data-i18n="nc_preview_btn">Preview</span>
                 </button>
                 <button type="submit" form="content-form" class="mobile-bar-arrow primary" id="mobile-next-btn" disabled title="Next">
                     <i class="fa-solid fa-arrow-right"></i>
@@ -201,7 +202,7 @@
                         <span class="static-badge">static</span>
                     </div>
                 </div>
-                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">Preview</span>
+                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;" data-i18n="nc_preview_btn">Preview</span>
                 <div class="wa-preview-card">
                     <div class="wa-preview-icon"><i class="fa-brands fa-whatsapp"></i></div>
                     <div class="wa-preview-phone {% if not wa_phone %}placeholder{% endif %}" id="wa-preview-phone">
@@ -212,7 +213,7 @@
                     </div>
                 </div>
                 <div class="preview-disclaimer">
-                    <i class="fa-solid fa-circle-info"></i> Scanning opens WhatsApp with this number & message
+                    <i class="fa-solid fa-circle-info"></i> <span data-i18n="nc_disc_wa">Scanning opens WhatsApp with this number &amp; message</span>
                 </div>
             </div>
         </div>
@@ -226,8 +227,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-brands fa-whatsapp"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-brands fa-whatsapp"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script>
@@ -262,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 previewPhone.textContent = '+' + val;
                 previewPhone.classList.remove('placeholder');
             } else {
-                previewPhone.textContent = 'Enter a phone number above';
+                previewPhone.textContent = window.i18nStr ? window.i18nStr('nc_js_enter_phone', 'Enter a phone number above') : 'Enter a phone number above';
                 previewPhone.classList.add('placeholder');
             }
             checkValid();

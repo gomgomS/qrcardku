@@ -102,28 +102,28 @@
     <div class="new-qr-steps">
         <a href="/qr/list" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>My QR Codes</span>
+            <span data-i18n="eq_my_qr_codes">My QR Codes</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">1</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">2</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
-        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled><span data-i18n="nq_next">Next</span> <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
 
 <form id="content-form" method="POST" action="/qr/update/email-static/{{ qrcard_id }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-    <div class="page-title" style="margin-bottom: 24px;">Edit Email QR</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="eq_edit_email">Edit Email QR</div>
 
     <div class="new-qr-container">
         <div class="form-column">
@@ -134,9 +134,10 @@
             {% endif %}
 
             <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input"
-                placeholder="Name QR Card" value="{{ qr_name | default('', true) }}" required
+                placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
+                value="{{ qr_name | default('', true) }}" required
                 pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -145,27 +146,27 @@
                     <div class="header-left-col">
                         <div class="header-icon" style="color: #dc2626;"><i class="fa-solid fa-envelope"></i></div>
                         <div class="header-text">
-                            <h3>Email</h3>
-                            <p>Recipient address, subject, and pre-filled body.</p>
+                            <h3 data-i18n="nc_s_email">Email</h3>
+                            <p data-i18n="nc_s_email_sub">Recipient address, subject, and pre-filled body.</p>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body show">
                     <div class="form-group">
-                        <label class="form-label" for="email-address-input">Email Address <span style="color:#b91c1c;">*</span></label>
+                        <label class="form-label" for="email-address-input"><span data-i18n="nc_label_email_address">Email Address</span> <span style="color:#b91c1c;">*</span></label>
                         <input type="email" name="email_address" id="email-address-input" class="form-control"
                             placeholder="recipient@example.com"
                             value="{{ email_address | default('', true) }}" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="email-subject-input">Subject</label>
+                        <label class="form-label" for="email-subject-input" data-i18n="nc_label_email_subject">Subject</label>
                         <input type="text" name="email_subject" id="email-subject-input" class="form-control"
                             placeholder="e.g. Inquiry about your product"
                             value="{{ email_subject | default('', true) }}" maxlength="255">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="email-body-input">Message</label>
+                        <label class="form-label" for="email-body-input" data-i18n="nc_label_email_message">Message</label>
                         <textarea name="email_body" id="email-body-input" class="form-control"
                             maxlength="2000" placeholder="Hello, I would like to...">{{ email_body | default('', true) }}</textarea>
                         <div class="char-count"><span id="char-count">{{ (email_body or '')|length }}</span> / 2000</div>
@@ -178,7 +179,7 @@
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
                 <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-                    <i class="fa-solid fa-envelope"></i> Preview
+                    <i class="fa-solid fa-envelope"></i> <span data-i18n="nc_preview_btn">Preview</span>
                 </button>
                 <button type="submit" form="content-form" class="mobile-bar-arrow primary" id="mobile-next-btn" disabled title="Next">
                     <i class="fa-solid fa-arrow-right"></i>
@@ -194,7 +195,7 @@
                         <span class="static-badge">static</span>
                     </div>
                 </div>
-                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">Preview</span>
+                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;" data-i18n="nc_preview_btn">Preview</span>
                 <div class="email-preview-card">
                     <div class="email-preview-icon-row">
                         <div class="email-preview-icon"><i class="fa-solid fa-envelope"></i></div>
@@ -210,7 +211,7 @@
                     </div>
                 </div>
                 <div class="preview-disclaimer">
-                    <i class="fa-solid fa-circle-info"></i> Scanning opens the email app with this pre-filled draft
+                    <i class="fa-solid fa-circle-info"></i> <span data-i18n="nc_disc_email">Scanning opens the email app with this pre-filled draft</span>
                 </div>
             </div>
         </div>
@@ -224,8 +225,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-solid fa-envelope"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-solid fa-envelope"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script>
@@ -261,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         emailInput.addEventListener('input', function () {
             var val = this.value.trim();
             if (val) { previewAddr.textContent = val; previewAddr.classList.remove('placeholder'); }
-            else { previewAddr.textContent = 'Enter an email address above'; previewAddr.classList.add('placeholder'); }
+            else { previewAddr.textContent = window.i18nStr ? window.i18nStr('nc_js_enter_email', 'Enter an email address above') : 'Enter an email address above'; previewAddr.classList.add('placeholder'); }
             checkValid();
         });
     }

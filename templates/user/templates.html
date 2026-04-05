@@ -257,8 +257,8 @@
 
 {% block content %}
 <div class="templates-header">
-    <div class="page-title" style="margin: 0;">QR Frames</div>
-    <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> Create frame</button>
+    <div class="page-title" style="margin: 0;" data-i18n="tp_title">QR Frames</div>
+    <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> <span data-i18n="tp_create_frame">Create frame</span></button>
 </div>
 
 {% if msg %}
@@ -277,11 +277,11 @@
     {% for frame in frames %}
     <div class="frame-card">
         <img class="frame-card-img" src="{{ frame.image_url }}" alt="{{ frame.name }}" loading="lazy">
-        <div class="frame-area-badge"><i class="fa-solid fa-qrcode"></i> Area marked</div>
+        <div class="frame-area-badge"><i class="fa-solid fa-qrcode"></i> <span data-i18n="tp_area_marked">Area marked</span></div>
         <div class="frame-card-body">
             <span class="frame-card-name">{{ frame.name }}</span>
             <form method="POST" action="/user/frames/delete/{{ frame.frame_id }}" style="margin:0;"
-                  onsubmit="return confirm('Delete this frame?');">
+                  onsubmit="return confirm(window.i18nStr ? window.i18nStr('tp_confirm_delete', 'Delete this frame?') : 'Delete this frame?');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="frame-card-delete" title="Delete frame">
                     <i class="fa-solid fa-trash"></i>
@@ -295,9 +295,9 @@
 <div class="empty-state-container">
     <div class="empty-message">
         <i class="fa-regular fa-image"></i>
-        <div>No custom frames yet.</div>
-        <div style="font-size:13px;">Upload an image and mark where the QR should appear.</div>
-        <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> Create your first frame</button>
+        <div data-i18n="tp_no_frames">No custom frames yet.</div>
+        <div style="font-size:13px;" data-i18n="tp_no_frames_sub">Upload an image and mark where the QR should appear.</div>
+        <button class="btn-primary" onclick="openBuilder()"><i class="fa-solid fa-plus"></i> <span data-i18n="tp_create_first">Create your first frame</span></button>
     </div>
 </div>
 {% endif %}
@@ -306,7 +306,7 @@
 <div class="builder-overlay" id="builder-overlay">
     <div class="builder-modal">
         <button class="builder-close" onclick="closeBuilder()" type="button">&times;</button>
-        <div class="builder-title"><i class="fa-solid fa-border-all" style="color:var(--primary);margin-right:8px;"></i>Create QR Frame</div>
+        <div class="builder-title"><i class="fa-solid fa-border-all" style="color:var(--primary);margin-right:8px;"></i><span data-i18n="tp_modal_title">Create QR Frame</span></div>
 
         <form method="POST" action="/user/frames/save" enctype="multipart/form-data" id="builder-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -317,43 +317,43 @@
 
             <!-- Step 1: Upload -->
             <div class="builder-step">
-                <div class="builder-step-label"><span class="step-num">1</span> Upload frame image</div>
+                <div class="builder-step-label"><span class="step-num">1</span> <span data-i18n="tp_step1">Upload frame image</span></div>
                 <div class="upload-area" id="upload-area" onclick="document.getElementById('frame-image-input').click()"
                      ondragover="event.preventDefault();this.classList.add('drag-over')"
                      ondragleave="this.classList.remove('drag-over')"
                      ondrop="handleDrop(event)">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <p><strong>Click to upload</strong> or drag &amp; drop</p>
-                    <p style="margin-top:4px;">JPG, PNG, WebP — max 5 MB</p>
+                    <p><strong data-i18n="tp_upload_click">Click to upload</strong> <span data-i18n="tp_upload_drop">or drag &amp; drop</span></p>
+                    <p style="margin-top:4px;" data-i18n="tp_upload_formats">JPG, PNG, WebP — max 5 MB</p>
                 </div>
                 <input type="file" name="frame_image" id="frame-image-input" accept="image/jpeg,image/png,image/webp">
             </div>
 
             <!-- Step 2: Mark QR area -->
             <div class="builder-step" id="step2" style="display:none;">
-                <div class="builder-step-label"><span class="step-num">2</span> Mark where the QR code should appear</div>
+                <div class="builder-step-label"><span class="step-num">2</span> <span data-i18n="tp_step2">Mark where the QR code should appear</span></div>
                 <div class="canvas-wrap" id="canvas-wrap">
                     <canvas id="frame-canvas"></canvas>
                 </div>
                 <div class="canvas-hint">
                     <i class="fa-solid fa-hand-pointer"></i>
-                    Click and drag on the image to mark the QR area. Drag again to reposition.
+                    <span data-i18n="tp_canvas_hint">Click and drag on the image to mark the QR area. Drag again to reposition.</span>
                 </div>
                 <div id="area-status" style="font-size:12px;color:var(--text-muted);margin-top:6px;"></div>
             </div>
 
             <!-- Step 3: Name + Save -->
             <div class="builder-step" id="step3" style="display:none;">
-                <div class="builder-step-label"><span class="step-num">3</span> Name this frame</div>
+                <div class="builder-step-label"><span class="step-num">3</span> <span data-i18n="tp_step3">Name this frame</span></div>
                 <div class="builder-name-row">
                     <input type="text" name="frame_name" id="frame-name-input" placeholder="e.g. Church Poster, Event Banner…" maxlength="60" required>
                 </div>
             </div>
 
             <div class="builder-actions">
-                <button type="button" class="btn-secondary" onclick="closeBuilder()">Cancel</button>
+                <button type="button" class="btn-secondary" onclick="closeBuilder()" data-i18n="tp_cancel">Cancel</button>
                 <button type="submit" class="btn-primary" id="builder-save-btn" style="display:none;">
-                    <i class="fa-solid fa-floppy-disk"></i> Save Frame
+                    <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="tp_save">Save Frame</span>
                 </button>
             </div>
         </form>
@@ -543,8 +543,8 @@
         if (!sel) { el.textContent = ''; return; }
         var rw = Math.abs(sel.ex - sel.sx);
         var rh = Math.abs(sel.ey - sel.sy);
-        if (rw < 10 || rh < 10) { el.textContent = 'Selection too small — drag a larger area.'; el.style.color = '#dc2626'; }
-        else { el.textContent = 'QR area selected. Drag again to reposition.'; el.style.color = '#16a34a'; }
+        if (rw < 10 || rh < 10) { el.textContent = window.i18nStr('tp_area_small', 'Selection too small — drag a larger area.'); el.style.color = '#dc2626'; }
+        else { el.textContent = window.i18nStr('tp_area_ok', 'QR area selected. Drag again to reposition.'); el.style.color = '#16a34a'; }
     }
 
     function revealSaveButton() {
@@ -562,7 +562,7 @@
         var h = parseFloat(document.getElementById('input-qr-h').value) || 0;
         if (w < 0.01 || h < 0.01) {
             e.preventDefault();
-            alert('Please mark the QR area on the image before saving.');
+            alert(window.i18nStr('tp_alert_no_area', 'Please mark the QR area on the image before saving.'));
         }
     });
 })();

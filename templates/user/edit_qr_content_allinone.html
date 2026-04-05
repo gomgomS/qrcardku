@@ -267,11 +267,11 @@
         </span>
         <a href="{{ step3_url }}" class="step-item" style="color: var(--text-muted); text-decoration: none;">
             <span class="step-num">2</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </a>
     </div>
     <div class="new-qr-step-nav">
-        <a href="{{ back_url | default('/qr/list') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="{{ back_url | default('/qr/list') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></a>
         <button type="button" class="btn-next" id="content-next-btn" onclick="submitWithOverlay()">Save &amp; Continue <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
@@ -293,10 +293,10 @@
             </div>
             {% endif %}
 
-            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
                 value="{{ qrcard.get('name', qr_name) | default('', true) }}" required
                 pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -305,7 +305,7 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon hi-amber"><i class="fa-solid fa-palette"></i></div>
-                        <div class="header-text"><h3>Appearance</h3><p>Customize the style and template.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_appearance">Appearance</h3><p data-i18n="nc_s_appearance_sub">Customize the style and template.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
@@ -428,7 +428,7 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon hi-green"><i class="fa-solid fa-circle-info"></i></div>
-                        <div class="header-text"><h3>Basic Information</h3><p>Title, description and cover image.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_basic">Basic Information</h3><p>Title, description and cover image.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
@@ -481,7 +481,7 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon hi-green"><i class="fa-solid fa-layer-group"></i></div>
-                        <div class="header-text"><h3>Content Blocks</h3><p>Add contacts, links, social media, images, videos and PDFs.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_content_blocks">Content Blocks</h3><p>Add contacts, links, social media, images, videos and PDFs.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
                 </div>
@@ -508,7 +508,7 @@
                     <div class="header-left-col">
                         <div class="header-icon hi-amber"><i class="fa-solid fa-object-group"></i></div>
                         <div class="header-text">
-                            <h3>Welcome Screen</h3>
+                            <h3 data-i18n="nc_s_welcome">Welcome Screen</h3>
                             <p>Optional splash screen before main content.</p>
                         </div>
                     </div>
@@ -582,14 +582,14 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
-                        <div class="header-text"><h3>Stats</h3><p>Key metrics and data.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_stats">Stats</h3><p data-i18n="nc_s_stats_sub">Key metrics and data.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body">
                     <div>
                         <div class="sub-collapse-header">
-                            <div class="toggle-label-with-icon"><i class="fa-solid fa-link" style="color: var(--text-main);"></i> URL configuration</div>
+                            <div class="toggle-label-with-icon"><i class="fa-solid fa-link" style="color: var(--text-main);"></i> <span data-i18n="nc_stats_url_config">URL configuration</span></div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
@@ -640,7 +640,7 @@
                     </div>
                     <div>
                         <div class="sub-collapse-header">
-                            <div class="toggle-label-with-icon"><i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit</div>
+                            <div class="toggle-label-with-icon"><i class="fa-solid fa-expand" style="color: var(--text-main);"></i> <span data-i18n="nc_stats_scan_limit_toggle">Scan limit</span></div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
@@ -675,7 +675,7 @@
                     </div>
                 </div>
                 <div class="preview-disclaimer">
-                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                    <i class="fa-regular fa-circle-info"></i> <span data-i18n="nc_preview_disclaimer">IMPORTANT: Don't forget to test your QR card</span>
                 </div>
             </div>
         </div>
@@ -686,7 +686,7 @@
             <i class="fa-solid fa-arrow-left"></i>
         </a>
         <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-            <i class="fa-regular fa-eye"></i> Preview
+            <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
         </button>
         <button type="button" class="mobile-bar-arrow primary" title="Save & Continue" onclick="submitWithOverlay()">
             <i class="fa-solid fa-arrow-right"></i>
@@ -772,8 +772,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-regular fa-eye"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-regular fa-eye"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
@@ -1766,8 +1766,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (previewBtn) {
                 previewBtn.addEventListener('click', function () {
                     var s = getWelcomeEffectiveSrc();
-                    if (s) playWelcomePreview(s);
-                    else alert('Upload an image or pick from My Assets (max 1 MB for uploads).');
+                    if (s) {
+                        if (window.innerWidth <= 768) {
+                            var col = document.getElementById('preview-column');
+                            var mobileBtn = document.getElementById('mobile-preview-btn');
+                            if (col) col.classList.add('mobile-open');
+                            if (mobileBtn) mobileBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Close';
+                        }
+                        playWelcomePreview(s);
+                    } else alert('Upload an image or pick from My Assets (max 1 MB for uploads).');
                 });
             }
         }

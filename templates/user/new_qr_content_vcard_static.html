@@ -106,20 +106,20 @@
     <div class="new-qr-steps">
         <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">2</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true" style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
-            <span class="step-num">3</span><span>QR design</span>
+            <span class="step-num">3</span><span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
-        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Next <i class="fa-solid fa-arrow-right"></i></button>
+        <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></a>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled><span data-i18n="nq_next">Next</span> <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
 
@@ -127,7 +127,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="vcard_phones_json" id="vcard-phones-json" value="{{ vcard_phones_json | default('[]', true) }}" />
 
-    <div class="page-title" style="margin-bottom: 24px;">vCard Details</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="nc_page_vcard_details">vCard Details</div>
 
     <div class="new-qr-container">
         <div class="form-column">
@@ -138,8 +138,8 @@
             {% endif %}
 
             <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input"
-                placeholder="Name QR Card" value="{{ qr_name | default('', true) }}" required pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder" value="{{ qr_name | default('', true) }}" required pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -148,7 +148,7 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon" style="color: var(--primary);"><i class="fa-regular fa-id-badge"></i></div>
-                        <div class="header-text"><h3>Basic Information</h3><p>Name, company, and job title.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_basic">Basic Information</h3><p data-i18n="nc_s_basic_vcard_sub">Name, company, and job title.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
                 </div>
@@ -156,24 +156,24 @@
                     <div class="form-group">
                         <div class="form-row">
                             <div>
-                                <label class="form-label" for="vc-firstname">First Name <span style="color:#b91c1c;">*</span></label>
+                                <label class="form-label" for="vc-firstname"><span data-i18n="nc_label_first_name">First Name</span> <span style="color:#b91c1c;">*</span></label>
                                 <input type="text" name="vcard_first_name" id="vc-firstname" class="form-control"
                                     placeholder="John" value="{{ vcard_first_name | default('', true) }}" required>
                             </div>
                             <div>
-                                <label class="form-label" for="vc-surname">Surname</label>
+                                <label class="form-label" for="vc-surname" data-i18n="nc_label_surname">Surname</label>
                                 <input type="text" name="vcard_surname" id="vc-surname" class="form-control"
                                     placeholder="Doe" value="{{ vcard_surname | default('', true) }}">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="vc-company">Company</label>
+                        <label class="form-label" for="vc-company" data-i18n="nc_label_company">Company</label>
                         <input type="text" name="vcard_company" id="vc-company" class="form-control"
                             placeholder="Acme Inc." value="{{ vcard_company | default('', true) }}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="vc-title">Title / Position</label>
+                        <label class="form-label" for="vc-title" data-i18n="nc_label_title_position">Title / Position</label>
                         <input type="text" name="vcard_title" id="vc-title" class="form-control"
                             placeholder="e.g. Product Manager" value="{{ vcard_title | default('', true) }}">
                     </div>
@@ -185,28 +185,28 @@
                 <div class="collapse-header">
                     <div class="header-left-col">
                         <div class="header-icon" style="color: var(--primary);"><i class="fa-solid fa-address-book"></i></div>
-                        <div class="header-text"><h3>Contact Information</h3><p>Phone numbers, email, and website.</p></div>
+                        <div class="header-text"><h3 data-i18n="nc_s_contact">Contact Information</h3><p data-i18n="nc_s_contact_sub">Phone numbers, email, and website.</p></div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
                 </div>
                 <div class="collapse-body show">
                     <!-- Phone numbers -->
                     <div class="form-group">
-                        <label class="form-label"><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Phone Numbers</label>
+                        <label class="form-label"><i class="fa-solid fa-phone" style="margin-right:6px;"></i><span data-i18n="nc_label_phone_numbers">Phone Numbers</span></label>
                         <div class="phone-rows" id="phone-rows"></div>
                         <button type="button" class="add-phone-btn" onclick="addPhoneRow()">
-                            <i class="fa-solid fa-plus"></i> Add phone
+                            <i class="fa-solid fa-plus"></i> <span data-i18n="nc_label_add_phone">Add phone</span>
                         </button>
                     </div>
                     <!-- Email -->
                     <div class="form-group">
-                        <label class="form-label" for="vc-email"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i>Email</label>
+                        <label class="form-label" for="vc-email"><i class="fa-solid fa-envelope" style="margin-right:6px;"></i><span data-i18n="nc_s_email">Email</span></label>
                         <input type="email" name="vcard_email" id="vc-email" class="form-control"
                             placeholder="john@example.com" value="{{ vcard_email | default('', true) }}">
                     </div>
                     <!-- Website -->
                     <div class="form-group">
-                        <label class="form-label" for="vc-website"><i class="fa-solid fa-globe" style="margin-right:6px;"></i>Personal Website</label>
+                        <label class="form-label" for="vc-website"><i class="fa-solid fa-globe" style="margin-right:6px;"></i><span data-i18n="nc_label_personal_website">Personal Website</span></label>
                         <input type="text" name="vcard_website" id="vc-website" class="form-control"
                             placeholder="example.com" value="{{ vcard_website | default('', true) }}">
                     </div>
@@ -217,7 +217,7 @@
             <div class="mobile-bottom-bar">
                 <a href="{{ back_url | default('/qr/new') }}" class="mobile-bar-arrow" title="Back"><i class="fa-solid fa-arrow-left"></i></a>
                 <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
-                    <i class="fa-regular fa-id-badge"></i> Preview
+                    <i class="fa-regular fa-id-badge"></i> <span data-i18n="nc_preview_btn">Preview</span>
                 </button>
                 <button type="submit" form="content-form" class="mobile-bar-arrow primary" id="mobile-next-btn" disabled title="Next">
                     <i class="fa-solid fa-arrow-right"></i>
@@ -234,7 +234,7 @@
                         <span class="static-badge">static</span>
                     </div>
                 </div>
-                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;">Contact Preview</span>
+                <span style="font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 12px;" data-i18n="nc_contact_preview">Contact Preview</span>
                 <div class="vcard-preview-card">
                     <div class="vcard-preview-header">
                         <div class="vcard-avatar"><i class="fa-solid fa-user"></i></div>
@@ -256,7 +256,7 @@
                     </div>
                 </div>
                 <div class="preview-disclaimer">
-                    <i class="fa-solid fa-circle-info"></i> Scanning saves this contact to the phone
+                    <i class="fa-solid fa-circle-info"></i> <span data-i18n="nc_disc_vcard">Scanning saves this contact to the phone</span>
                 </div>
             </div>
         </div>
@@ -269,10 +269,17 @@ function toggleMobilePreview() {
     var col = document.getElementById('preview-column');
     var btn = document.getElementById('mobile-preview-btn');
     var isOpen = col.classList.toggle('mobile-open');
-    btn.innerHTML = isOpen ? '<i class="fa-solid fa-xmark"></i> Close' : '<i class="fa-regular fa-id-badge"></i> Preview';
+    btn.innerHTML = isOpen
+        ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+        : '<i class="fa-regular fa-id-badge"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
 }
 
-var phoneTypeLabels = { office: 'Office', mobile: 'Mobile', fax: 'Fax', others: 'Other' };
+var phoneTypeLabels = {
+    office: window.i18nStr ? window.i18nStr('nc_phone_office', 'Office') : 'Office',
+    mobile: window.i18nStr ? window.i18nStr('nc_phone_mobile', 'Mobile') : 'Mobile',
+    fax: window.i18nStr ? window.i18nStr('nc_phone_fax', 'Fax') : 'Fax',
+    others: window.i18nStr ? window.i18nStr('nc_phone_other', 'Other') : 'Other'
+};
 
 function createPhoneRow(type, number) {
     type = type || 'mobile';
@@ -329,7 +336,7 @@ function updatePreview() {
     var prevName = document.getElementById('prev-name');
     var fullName = (firstName + ' ' + surname).trim();
     if (fullName) { prevName.textContent = fullName; prevName.classList.remove('placeholder'); }
-    else { prevName.textContent = 'Enter first name above'; prevName.classList.add('placeholder'); }
+    else { prevName.textContent = window.i18nStr ? window.i18nStr('nc_js_enter_firstname', 'Enter first name above') : 'Enter first name above'; prevName.classList.add('placeholder'); }
 
     var titleCompany = document.getElementById('prev-title-company');
     var tc = [title, company].filter(Boolean).join(' · ');

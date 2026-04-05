@@ -550,23 +550,23 @@
     <div class="new-qr-steps">
         <a href="{{ step1_url | default('/qr/new') }}" class="step-item step-completed">
             <span class="step-num"><i class="fa-solid fa-check"></i></span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </a>
         <span class="step-item step-active">
             <span class="step-num">2</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <button type="button" onclick="saveAndNext()" class="step-item step-disabled" id="step3-link" disabled
             aria-disabled="true"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">3</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </button>
     </div>
     <div class="new-qr-step-nav">
         <a href="{{ back_url | default('/qr/new') }}" class="btn-outline"><i class="fa-solid fa-arrow-left"></i>
-            Back</a>
-        <button type="button" onclick="saveAndNext()" class="btn-next" id="content-next-btn" disabled>Save &amp; Next <i
+            <span data-i18n="nq_back">Back</span></a>
+        <button type="button" onclick="saveAndNext()" class="btn-next" id="content-next-btn" disabled><span data-i18n="nc_save_next">Save &amp; Next</span> <i
                 class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
@@ -575,7 +575,7 @@
     enctype="multipart/form-data"
     onsubmit="event.preventDefault();saveAndNext();">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-    <div class="page-title" style="margin-bottom: 24px;">Complete the content of the QR</div>
+    <div class="page-title" style="margin-bottom: 24px;" data-i18n="nc_page_title">Complete the content of the QR</div>
 
     <div class="new-qr-container">
         <!-- Left form section -->
@@ -586,9 +586,9 @@
                 <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
             </div>
             {% endif %}
-            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card"
+            <input type="text" name="qr_name" id="qr-name-input" class="name-qr-input" placeholder="Name QR Card" data-i18n-placeholder="nc_name_placeholder"
                 value="{{ qr_name | default('', true) }}" required pattern="[a-zA-Z0-9]+" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;" data-i18n="nc_name_help">
                 Only letters and numbers allowed. No spaces or special characters.
             </div>
 
@@ -613,8 +613,8 @@
                     <div class="header-left-col">
                         <div class="header-icon"><i class="fa-solid fa-circle-info"></i></div>
                         <div class="header-text">
-                            <h3>Basic Information</h3>
-                            <p>Add essential information.</p>
+                            <h3 data-i18n="nc_s_basic">Basic Information</h3>
+                            <p data-i18n="nc_s_basic_sub">Add essential information.</p>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-up" style="color: var(--text-muted);"></i>
@@ -642,8 +642,8 @@
                     <div class="header-left-col">
                         <div class="header-icon"><i class="fa-solid fa-chart-column"></i></div>
                         <div class="header-text">
-                            <h3>Stats</h3>
-                            <p>Key metrics and data to evaluate performance.</p>
+                            <h3 data-i18n="nc_s_stats">Stats</h3>
+                            <p data-i18n="nc_s_stats_sub">Key metrics and data to evaluate performance.</p>
                         </div>
                     </div>
                     <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
@@ -654,7 +654,7 @@
                     <div>
                         <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon">
-                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> Schedule a date
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> <span data-i18n="nc_stats_schedule">Schedule a date</span>
                             </div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
@@ -670,7 +670,7 @@
 
                             <div class="toggle-row" style="padding-left: 22px;">
                                 <div class="toggle-label-with-icon">
-                                    Activate the schedule to work during certain dates
+                                    <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox">
@@ -682,7 +682,7 @@
                             <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
                                 <div style="flex: 1;">
                                     <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
                                         <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
@@ -690,7 +690,7 @@
                                 </div>
                                 <div style="flex: 1;">
                                     <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
+                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
                                     <div
                                         style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
                                         <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
@@ -704,7 +704,7 @@
                     <div>
                         <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon">
-                                <i class="fa-solid fa-link" style="color: var(--text-main);"></i> URL configuration
+                                <i class="fa-solid fa-link" style="color: var(--text-main);"></i> <span data-i18n="nc_stats_url_config">URL configuration</span>
                             </div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
@@ -737,7 +737,7 @@
                     <div>
                         <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon">
-                                <i class="fa-solid fa-expand" style="color: var(--text-main);"></i> Scan limit
+                                <i class="fa-solid fa-expand" style="color: var(--text-main);"></i> <span data-i18n="nc_stats_scan_limit_toggle">Scan limit</span>
                             </div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
@@ -749,7 +749,7 @@
 
                             <div class="toggle-row">
                                 <div class="toggle-label-with-icon">
-                                    Enable scan limit
+                                    <span data-i18n="nc_stats_enable_scan_limit">Enable scan limit</span>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="scan_limit_enabled" id="scan-limit-toggle">
@@ -809,7 +809,7 @@
                 </div>
 
                 <div class="preview-disclaimer">
-                    <i class="fa-regular fa-circle-info"></i> IMPORTANT: Don't forget to test your QR card
+                    <i class="fa-regular fa-circle-info"></i> <span data-i18n="nc_preview_disclaimer">IMPORTANT: Don't forget to test your QR card</span>
                 </div>
             </div>
         </div>
@@ -834,8 +834,8 @@
 <div id="save-next-overlay" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.65);align-items:center;justify-content:center;flex-direction:column;gap:20px;">
     <div style="background:var(--bg-content);border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;">
         <div style="margin:0 auto 20px;width:48px;height:48px;border:4px solid var(--border-color);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-        <div id="save-overlay-msg" style="font-size:16px;font-weight:600;color:var(--text-main);margin-bottom:8px;">Saving your content…</div>
-        <div id="save-overlay-sub" style="font-size:13px;color:var(--text-muted);">Please wait, uploading assets to the cloud</div>
+        <div id="save-overlay-msg" style="font-size:16px;font-weight:600;color:var(--text-main);margin-bottom:8px;" data-i18n="nc_saving">Saving your content…</div>
+        <div id="save-overlay-sub" style="font-size:13px;color:var(--text-muted);" data-i18n="nc_saving_sub">Please wait, uploading assets to the cloud</div>
     </div>
 </div>
 </form>
@@ -848,8 +848,8 @@
         var btn = document.getElementById('mobile-preview-btn');
         var isOpen = col.classList.toggle('mobile-open');
         btn.innerHTML = isOpen
-            ? '<i class="fa-solid fa-xmark"></i> Close'
-            : '<i class="fa-regular fa-eye"></i> Preview';
+            ? '<i class="fa-solid fa-xmark"></i> ' + (window.i18nStr ? window.i18nStr('nc_close_btn', 'Close') : 'Close')
+            : '<i class="fa-regular fa-eye"></i> ' + (window.i18nStr ? window.i18nStr('nc_preview_btn', 'Preview') : 'Preview');
     }
 </script>
 <script>
@@ -985,7 +985,7 @@
                 fetch('{{ url_for("static", filename="json_file/web_dump.json") }}')
                     .then(function(r) { return r.json(); })
                     .then(function(data) { _dumpCache = data; applyWebAutocomplete(data); })
-                    .catch(function() { toggle.checked = false; alert('Could not load sample data.'); });
+                    .catch(function() { toggle.checked = false; alert(window.i18nStr ? window.i18nStr('nc_autofill_error', 'Could not load sample data.') : 'Could not load sample data.'); });
             });
         }
     })();
@@ -999,13 +999,13 @@ function saveAndNext() {
         var nameVal = nameInput.value.trim();
         if (!nameVal) {
             nameInput.focus();
-            nameInput.setCustomValidity('QR name is required.');
+            nameInput.setCustomValidity(window.i18nStr ? window.i18nStr('nc_name_required', 'QR name is required.') : 'QR name is required.');
             nameInput.reportValidity();
             return;
         }
         if (!/^[a-zA-Z0-9]+$/.test(nameVal)) {
             nameInput.focus();
-            nameInput.setCustomValidity('Only letters and numbers are allowed.');
+            nameInput.setCustomValidity(window.i18nStr ? window.i18nStr('nc_name_invalid', 'Only letters and numbers are allowed.') : 'Only letters and numbers are allowed.');
             nameInput.reportValidity();
             return;
         }
@@ -1016,7 +1016,7 @@ function saveAndNext() {
     var subEl = document.getElementById('save-overlay-sub');
     overlay.style.display = 'flex';
     msgEl.textContent = 'Saving your content\u2026';
-    subEl.textContent = 'Please wait, uploading assets to the cloud';
+    subEl.textContent = window.i18nStr ? window.i18nStr('nc_saving_sub', 'Please wait, uploading assets to the cloud') : 'Please wait, uploading assets to the cloud';
     var form = document.getElementById('content-form');
     var fd = new FormData(form);
     fetch('/qr/new/web/save-draft', { method: 'POST', body: fd })
@@ -1036,7 +1036,7 @@ function saveAndNext() {
         })
         .catch(function(err) {
             overlay.style.display = 'none';
-            alert('An error occurred while saving. Please try again.');
+            alert(window.i18nStr ? window.i18nStr('nc_save_error', 'An error occurred while saving. Please try again.') : 'An error occurred while saving. Please try again.');
             console.error(err);
         });
 }

@@ -167,6 +167,38 @@
             color: var(--primary);
         }
 
+        .lang-switcher {
+            display: flex;
+            gap: 6px;
+            padding: 10px 16px;
+            border-top: 1px solid var(--border-color);
+        }
+        .lang-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #111;
+        }
+        .lang-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-main);
+        }
+
         .sidebar-footer {
             padding: 24px 16px;
             border-top: 1px solid var(--border-color);
@@ -557,46 +589,51 @@
 
         <nav class="sidebar-nav">
             <a href="/qr/new" class="nav-item {% if active_page == 'new_qr' %}active{% endif %}">
-                <i class="fa-solid fa-plus-circle"></i> New QR
+                <i class="fa-solid fa-plus-circle"></i> <span data-i18n="sb_new_qr">New QR</span>
             </a>
             <!-- Divider or spacing in QRFY is visible sometimes, but mostly plain links -->
             <a href="/qr/list" class="nav-item {% if active_page == 'my_qr_codes' %}active{% endif %}"
                 style="margin-top: 16px;">
-                <i class="fa-solid fa-border-all"></i> QR list
+                <i class="fa-solid fa-border-all"></i> <span data-i18n="sb_qr_list">QR list</span>
             </a>
             <a href="/user/stats" class="nav-item {% if active_page == 'stats' %}active{% endif %}">
-                <i class="fa-solid fa-chart-column"></i> Stats
+                <i class="fa-solid fa-chart-column"></i> <span data-i18n="sb_stats">Stats</span>
             </a>
             <a href="/user/templates" class="nav-item {% if active_page == 'templates' %}active{% endif %}">
-                <i class="fa-solid fa-layer-group"></i> Templates
+                <i class="fa-solid fa-layer-group"></i> <span data-i18n="sb_templates">Templates</span>
             </a>
             <a href="/user/storage" class="nav-item {% if active_page == 'storage' %}active{% endif %}">
-                <i class="fa-solid fa-hard-drive"></i> Storage
+                <i class="fa-solid fa-hard-drive"></i> <span data-i18n="sb_storage">Storage</span>
             </a>
             <a href="/user/plans" class="nav-item {% if active_page == 'plans' %}active{% endif %}">
-                <i class="fa-regular fa-credit-card"></i> Plans and payments
+                <i class="fa-regular fa-credit-card"></i> <span data-i18n="sb_plans">Plans and payments</span>
             </a>
 
             <a href="/user/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}"
                 style="margin-top: 16px;">
-                <i class="fa-solid fa-gear"></i> Settings
+                <i class="fa-solid fa-gear"></i> <span data-i18n="sb_settings">Settings</span>
             </a>
 
             <div style="margin-top: 32px; padding-left: 16px">
                 <a href="/user/activity-history"
                     class="nav-item {% if active_page == 'activity_history' %}active{% endif %}"
-                    style="padding-left: 0; font-weight: 400; font-size: 13px;">
+                    style="padding-left: 0; font-weight: 400; font-size: 13px;" data-i18n="sb_activity">
                     Activity history
                 </a>
-                <a href="#" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px;">
+                <a href="#" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px;" data-i18n="sb_help">
                     Help center
                 </a>
                 <a href="/auth/logout" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px; color: #dc2626;"
-                    onclick="return confirm('Are you sure you want to logout?');">
-                    <i class="fa-solid fa-right-from-bracket" style="color: #dc2626;"></i> Logout
+                    onclick="return confirm(window.i18nStr ? window.i18nStr('sb_logout_confirm', 'Are you sure you want to logout?') : 'Are you sure you want to logout?');">
+                    <i class="fa-solid fa-right-from-bracket" style="color: #dc2626;"></i> <span data-i18n="sb_logout">Logout</span>
                 </a>
             </div>
         </nav>
+
+        <div class="lang-switcher" id="lang-switcher">
+            <button class="lang-btn" data-lang="en" onclick="switchLang('en')">🇬🇧 EN</button>
+            <button class="lang-btn" data-lang="id" onclick="switchLang('id')">🇮🇩 ID</button>
+        </div>
 
         <div class="sidebar-footer">
             {% if sub_info and sub_info.has_active %}
@@ -604,17 +641,17 @@
                 <span>
                     <i class="fa-regular fa-clock"></i>
                     {% if sub_info.days_remaining > 0 %}
-                        {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} remaining
+                        {{ sub_info.days_remaining }} <span data-i18n="sb_days_remaining">days remaining</span>
                     {% else %}
-                        Expires today
+                        <span data-i18n="sb_expires_today">Expires today</span>
                     {% endif %}
                 </span>
-                <a href="/user/plans" class="btn">Upgrade</a>
+                <a href="/user/plans" class="btn" data-i18n="sb_upgrade">Upgrade</a>
             </div>
             {% else %}
             <div class="upgrade-btn" style="background-color: #2d1a1a; border: 1px solid #7f1d1d; color: #fca5a5;">
-                <span><i class="fa-solid fa-ban"></i> No subscription</span>
-                <a href="/user/plans" class="btn" style="background-color: #dc2626;">Subscribe</a>
+                <span><i class="fa-solid fa-ban"></i> <span data-i18n="sb_no_sub">No subscription</span></span>
+                <a href="/user/plans" class="btn" style="background-color: #dc2626;" data-i18n="sb_subscribe">Subscribe</a>
             </div>
             {% endif %}
         </div>
@@ -662,6 +699,70 @@
     </div>
 
     {% block extra_js %}{% endblock %}
+
+    <!-- Global i18n -->
+    <script>
+    (function () {
+        var _cache = {};
+
+        function applyI18n(data) {
+            // text content
+            document.querySelectorAll('[data-i18n]').forEach(function (el) {
+                var k = el.getAttribute('data-i18n');
+                if (data[k] !== undefined) el.textContent = data[k];
+            });
+            // data-label attribute (used by hover preview JS)
+            document.querySelectorAll('[data-i18n-label]').forEach(function (el) {
+                var k = el.getAttribute('data-i18n-label');
+                if (data[k] !== undefined) el.setAttribute('data-label', data[k]);
+            });
+            // data-desc attribute (used by hover preview JS)
+            document.querySelectorAll('[data-i18n-desc]').forEach(function (el) {
+                var k = el.getAttribute('data-i18n-desc');
+                if (data[k] !== undefined) el.setAttribute('data-desc', data[k]);
+            });
+            // innerHTML (safe: content comes from our own JSON files only)
+            document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+                var k = el.getAttribute('data-i18n-html');
+                if (data[k] !== undefined) el.innerHTML = data[k];
+            });
+            // placeholder attribute
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+                var k = el.getAttribute('data-i18n-placeholder');
+                if (data[k] !== undefined) el.setAttribute('placeholder', data[k]);
+            });
+            // sync active button state
+            var lang = localStorage.getItem('lang') || 'en';
+            document.querySelectorAll('.lang-btn').forEach(function (btn) {
+                btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+            });
+        }
+
+        function loadLang(lang) {
+            if (_cache[lang]) { applyI18n(_cache[lang]); return; }
+            fetch('/static/json_file/data_' + lang + '.json')
+                .then(function (r) { return r.json(); })
+                .then(function (data) { _cache[lang] = data; applyI18n(data); })
+                .catch(function (e) { console.warn('[i18n] failed to load', lang, e); });
+        }
+
+        window.switchLang = function (lang) {
+            localStorage.setItem('lang', lang);
+            loadLang(lang);
+        };
+
+        // Sync helper for JS strings (safe to call any time after first load)
+        window.i18nStr = function (key, fallback) {
+            var lang = localStorage.getItem('lang') || 'en';
+            return (_cache[lang] && _cache[lang][key] !== undefined) ? _cache[lang][key] : (fallback || key);
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadLang(localStorage.getItem('lang') || 'en');
+        });
+    })();
+    </script>
+
     <script>
         (function() {
             var sidebar = document.getElementById('main-sidebar');

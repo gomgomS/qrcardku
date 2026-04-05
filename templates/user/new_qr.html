@@ -348,28 +348,28 @@
     <div class="new-qr-steps">
         <span class="step-item step-active">
             <span class="step-num">1</span>
-            <span>Type of QR card</span>
+            <span data-i18n="nq_step1">Type of QR card</span>
         </span>
         <span class="step-item step-disabled">
             <span class="step-num">2</span>
-            <span>Content</span>
+            <span data-i18n="nq_step2">Content</span>
         </span>
         <span class="step-item step-disabled">
             <span class="step-num">3</span>
-            <span>QR design</span>
+            <span data-i18n="nq_step3">QR design</span>
         </span>
     </div>
     <div class="new-qr-step-nav">
-        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></a>
         {% if _gate_no_sub or _gate_quota %}
-        <span class="btn-next" style="opacity:0.4; cursor:not-allowed; pointer-events:none;">Next <i class="fa-solid fa-arrow-right"></i></span>
+        <span class="btn-next" style="opacity:0.4; cursor:not-allowed; pointer-events:none;"><span data-i18n="nq_next">Next</span> <i class="fa-solid fa-arrow-right"></i></span>
         {% else %}
-        <a href="/qr/new/web" class="btn-next">Next <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="/qr/new/web" class="btn-next"><span data-i18n="nq_next">Next</span> <i class="fa-solid fa-arrow-right"></i></a>
         {% endif %}
     </div>
 </div>
 
-<div class="page-title" style="margin-bottom: 24px;">Select a QR type</div>
+<div class="page-title" style="margin-bottom: 24px;" data-i18n="nq_title">Select a QR type</div>
 
 <div class="new-qr-container">
     <div class="qr-types {% if _gate_no_sub or _gate_quota %}no-sub-gate{% endif %}" style="position:relative;">
@@ -401,64 +401,64 @@
         <div class="qr-section-header" id="dynamic-header" onclick="toggleSection('dynamic')">
             <div class="qr-type-title">
                 <i class="fa-solid fa-chevron-down toggle-icon" id="dynamic-icon"></i>
-                Dynamic QR <span class="badge-tracking">with tracking</span>
+                <span data-i18n="nq_dynamic_title">Dynamic QR</span> <span class="badge-tracking" data-i18n="nq_dynamic_badge">with tracking</span>
             </div>
         </div>
         <div class="qr-section-body" id="dynamic-body">
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; padding-left: 26px;">Update content in real time, without changing your code</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; padding-left: 26px;" data-i18n="nq_dynamic_sub">Update content in real time, without changing your code</p>
             <div class="qr-grid">
-                <a href="/qr/new/web" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/web_contoh.png" data-label="Website" data-desc="Redirect anyone who scans to any URL — product pages, landing pages, or online stores. You can update the destination link anytime without reprinting.">
+                <a href="/qr/new/web" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/web_contoh.png" data-label="Website" data-desc="Redirect anyone who scans to any URL — product pages, landing pages, or online stores. You can update the destination link anytime without reprinting." data-i18n-label="nq_web_label" data-i18n-desc="nq_web_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-globe"></i></div>
-                        <div class="qr-info"><h4>Website</h4><p>Open a URL</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_web_name">Website</h4><p data-i18n="nq_web_short">Open a URL</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/pdf" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/pdf_contoh.png" data-label="PDF" data-desc="Share a PDF document instantly — menus, brochures, catalogs, or manuals. No app needed on the scanner's side, just a browser.">
+                <a href="/qr/new/pdf" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/pdf_contoh.png" data-label="PDF" data-desc="Share a PDF document instantly — menus, brochures, catalogs, or manuals. No app needed on the scanner's side, just a browser." data-i18n-label="nq_pdf_label" data-i18n-desc="nq_pdf_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-file-pdf"></i></div>
-                        <div class="qr-info"><h4>PDF</h4><p>Show a PDF</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_pdf_name">PDF</h4><p data-i18n="nq_pdf_short">Show a PDF</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/images" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/img_contoh.png" data-label="Images" data-desc="Display a photo gallery when scanned. Great for portfolios, event photos, product shots, or real estate listings.">
+                <a href="/qr/new/images" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/img_contoh.png" data-label="Images" data-desc="Display a photo gallery when scanned. Great for portfolios, event photos, product shots, or real estate listings." data-i18n-label="nq_images_label" data-i18n-desc="nq_images_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-images"></i></div>
-                        <div class="qr-info"><h4>Images</h4><p>Show an image gallery</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_images_name">Images</h4><p data-i18n="nq_images_short">Show an image gallery</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/ecard" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/ecard_contoh.png" data-label="E-card" data-desc="A digital business card — share your name, job title, phone, email, and social links. Scanners can save your contact directly to their phone.">
+                <a href="/qr/new/ecard" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/ecard_contoh.png" data-label="E-card" data-desc="A digital business card — share your name, job title, phone, email, and social links. Scanners can save your contact directly to their phone." data-i18n-label="nq_ecard_label" data-i18n-desc="nq_ecard_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-id-badge"></i></div>
-                        <div class="qr-info"><h4>E-card</h4><p>Share contact details</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_ecard_name">E-card</h4><p data-i18n="nq_ecard_short">Share contact details</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/video" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/vid_contoh.png" data-label="Video" data-desc="Play a video directly on scan — product demos, tutorials, testimonials, or promo clips. No login or app required for the viewer.">
+                <a href="/qr/new/video" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/vid_contoh.png" data-label="Video" data-desc="Play a video directly on scan — product demos, tutorials, testimonials, or promo clips. No login or app required for the viewer." data-i18n-label="nq_video_label" data-i18n-desc="nq_video_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-play"></i></div>
-                        <div class="qr-info"><h4>Video</h4><p>Show a video</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_video_name">Video</h4><p data-i18n="nq_video_short">Show a video</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/links" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/links_contoh.png" data-label="Links" data-desc="Bundle multiple links into a single clean page — like a mini link-in-bio. Perfect for creators, teams, or campaigns with many destinations.">
+                <a href="/qr/new/links" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/links_contoh.png" data-label="Links" data-desc="Bundle multiple links into a single clean page — like a mini link-in-bio. Perfect for creators, teams, or campaigns with many destinations." data-i18n-label="nq_links_label" data-i18n-desc="nq_links_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-list-ul"></i></div>
-                        <div class="qr-info"><h4>Links</h4><p>Group links</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_links_name">Links</h4><p data-i18n="nq_links_short">Group links</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/sosmed" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/sosmed_contoh.png" data-label="Sosmed" data-desc="Show all your social media profiles in one place. One scan gets visitors to your Instagram, TikTok, YouTube, and more — all at once.">
+                <a href="/qr/new/sosmed" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/sosmed_contoh.png" data-label="Sosmed" data-desc="Show all your social media profiles in one place. One scan gets visitors to your Instagram, TikTok, YouTube, and more — all at once." data-i18n-label="nq_sosmed_label" data-i18n-desc="nq_sosmed_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-regular fa-thumbs-up"></i></div>
-                        <div class="qr-info"><h4>Sosmed</h4><p>Share your social profiles</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_sosmed_name">Sosmed</h4><p data-i18n="nq_sosmed_short">Share your social profiles</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/allinone" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/allinone_contoh.png" data-label="All in One" data-desc="Combine text, links, images, video, and contact info into one rich landing page. The most flexible option for telling your full story.">
+                <a href="/qr/new/allinone" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/allinone_contoh.png" data-label="All in One" data-desc="Combine text, links, images, video, and contact info into one rich landing page. The most flexible option for telling your full story." data-i18n-label="nq_allinone_label" data-i18n-desc="nq_allinone_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-layer-group"></i></div>
-                        <div class="qr-info"><h4>All in One</h4><p>Combine multiple content types</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_allinone_name">All in One</h4><p data-i18n="nq_allinone_short">Combine multiple content types</p></div>
                     </div>
                 </a>
-                <a href="/qr/new/special" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/special_contoh.png" data-label="Special" data-desc="Build a fully custom HTML page from scratch. Total creative freedom — ideal for unique promotions, interactive content, or branded experiences.">
+                <a href="/qr/new/special" style="text-decoration: none; color: inherit;" data-preview="/static/assets/img/contoh_qr/special_contoh.png" data-label="Special" data-desc="Build a fully custom HTML page from scratch. Total creative freedom — ideal for unique promotions, interactive content, or branded experiences." data-i18n-label="nq_special_label" data-i18n-desc="nq_special_desc">
                     <div class="qr-card">
                         <div class="qr-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                        <div class="qr-info"><h4>Special</h4><p>Build custom HTML pages</p></div>
+                        <div class="qr-info"><h4 data-i18n="nq_special_name">Special</h4><p data-i18n="nq_special_short">Build custom HTML pages</p></div>
                     </div>
                 </a>
             </div>
@@ -472,9 +472,9 @@
                 </div>
                 <div>
                     <div class="static-qr-title">
-                        Static QR <span style="background-color: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;">no tracking</span>
+                        <span data-i18n="nq_static_title">Static QR</span> <span style="background-color: #ffedd5; color: #9a3412; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;" data-i18n="nq_static_badge">no tracking</span>
                     </div>
-                    <p style="font-size: 12px; color: var(--text-muted);">Reprint required when updating content</p>
+                    <p style="font-size: 12px; color: var(--text-muted);" data-i18n="nq_static_sub">Reprint required when updating content</p>
                 </div>
             </div>
             <div class="qr-section-body collapsed" id="static-body">
@@ -482,31 +482,31 @@
                     <a href="/qr/new/web-static" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
                             <div class="qr-icon"><i class="fa-solid fa-globe"></i></div>
-                            <div class="qr-info"><h4>Website</h4><p>Open a URL</p></div>
+                            <div class="qr-info"><h4 data-i18n="nq_web_name">Website</h4><p data-i18n="nq_web_short">Open a URL</p></div>
                         </div>
                     </a>
                     <a href="/qr/new/text" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
                             <div class="qr-icon"><i class="fa-solid fa-font"></i></div>
-                            <div class="qr-info"><h4>Text</h4><p>Plain text message</p></div>
+                            <div class="qr-info"><h4 data-i18n="nq_text_name">Text</h4><p data-i18n="nq_text_short">Plain text message</p></div>
                         </div>
                     </a>
                     <a href="/qr/new/wa-static" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
                             <div class="qr-icon" style="background-color: #dcfce7; color: #16a34a;"><i class="fa-brands fa-whatsapp"></i></div>
-                            <div class="qr-info"><h4>WhatsApp</h4><p>Send a WA message</p></div>
+                            <div class="qr-info"><h4 data-i18n="nq_wa_name">WhatsApp</h4><p data-i18n="nq_wa_short">Send a WA message</p></div>
                         </div>
                     </a>
                     <a href="/qr/new/email-static" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
                             <div class="qr-icon" style="background-color: #fee2e2; color: #dc2626;"><i class="fa-solid fa-envelope"></i></div>
-                            <div class="qr-info"><h4>Email</h4><p>Send a pre-filled email</p></div>
+                            <div class="qr-info"><h4 data-i18n="nq_email_name">Email</h4><p data-i18n="nq_email_short">Send a pre-filled email</p></div>
                         </div>
                     </a>
                     <a href="/qr/new/vcard-static" style="text-decoration: none; color: inherit;">
                         <div class="qr-card">
                             <div class="qr-icon" style="background-color: #2A2810; color: #d4941a;"><i class="fa-regular fa-id-badge"></i></div>
-                            <div class="qr-info"><h4>vCard</h4><p>Save contact to phone</p></div>
+                            <div class="qr-info"><h4 data-i18n="nq_vcard_name">vCard</h4><p data-i18n="nq_vcard_short">Save contact to phone</p></div>
                         </div>
                     </a>
                 </div>
@@ -516,8 +516,8 @@
     </div>
 
     <div class="qr-preview">
-        <h3 style="color: var(--text-muted); font-weight: 500; margin-bottom: 4px;">Example</h3>
-        <p id="preview-hint" style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Hover a type to preview</p>
+        <h3 style="color: var(--text-muted); font-weight: 500; margin-bottom: 4px;" data-i18n="nq_example">Example</h3>
+        <p id="preview-hint" style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;" data-i18n="nq_hover_hint">Hover a type to preview</p>
         <div class="preview-frame" id="preview-frame" style="display:none;">
             <span class="corner corner-tl"></span>
             <span class="corner corner-tr"></span>

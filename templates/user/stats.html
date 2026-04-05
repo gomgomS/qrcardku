@@ -60,34 +60,34 @@
 <div class="stats-top-banner">
     <span>
         <i class="fa-solid fa-circle-info"></i>
-        {% if sub_info.is_trial %}You are using QRkartu's free trial.{% else %}Active plan: <strong>{{ sub_info.plan_name }}</strong>.{% endif %}
+        {% if sub_info.is_trial %}<span data-i18n="st_trial">You are using QRkartu's free trial.</span>{% else %}<span data-i18n="st_plan_active">Active plan:</span> <strong>{{ sub_info.plan_name }}</strong>.{% endif %}
         {% if sub_info.days_remaining > 0 %}
-            {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} remaining.
+            {{ sub_info.days_remaining }} day{{ 's' if sub_info.days_remaining != 1 else '' }} <span data-i18n="st_days_remaining_suffix">remaining</span>.
         {% else %}
-            Expires today!
+            <span data-i18n="st_expires_today">Expires today!</span>
         {% endif %}
     </span>
-    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none;">Upgrade</a>
+    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; text-decoration: none;" data-i18n="st_upgrade">Upgrade</a>
 </div>
 {% else %}
 <div class="stats-top-banner" style="background-color: #2d1a1a; border-color: #dc2626; color: #fca5a5;">
-    <span><i class="fa-solid fa-ban"></i> You don't have an active subscription. Some features may be limited.</span>
-    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; background-color: #dc2626; text-decoration: none;">Subscribe</a>
+    <span><i class="fa-solid fa-ban"></i> <span data-i18n="st_no_sub">You don't have an active subscription. Some features may be limited.</span></span>
+    <a href="/user/plans" class="btn-primary" style="padding: 6px 16px; font-size: 13px; background-color: #dc2626; text-decoration: none;" data-i18n="st_subscribe">Subscribe</a>
 </div>
 {% endif %}
 
-<div class="page-title" style="margin-bottom: 24px;">Stats</div>
+<div class="page-title" style="margin-bottom: 24px;" data-i18n="st_title">Stats</div>
 
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-icon"><i class="fa-solid fa-qrcode"></i></div>
         <div class="stat-value">{{ stats.total_qr if stats else 0 }}</div>
-        <div class="stat-label">Total QR Codes</div>
+        <div class="stat-label" data-i18n="st_total_qr">Total QR Codes</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon"><i class="fa-solid fa-expand"></i></div>
         <div class="stat-value">{{ stats.total_scans if stats else 0 }}</div>
-        <div class="stat-label">Total Scans</div>
+        <div class="stat-label" data-i18n="st_total_scans">Total Scans</div>
     </div>
 </div>
 {% endblock %}
