@@ -161,6 +161,27 @@
     }
 
     .theme-card.selected .check-icon { display: inline; }
+
+    @media (max-width: 768px) {
+        .settings-tabs {
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .st-tab[style*="margin-left: auto"] {
+            margin-left: 0 !important;
+        }
+        .settings-section {
+            flex-direction: column;
+            gap: 24px;
+            padding: 20px 16px;
+        }
+        .section-info {
+            width: 100%;
+        }
+        .form-content {
+            max-width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
