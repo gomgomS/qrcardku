@@ -458,35 +458,6 @@
             font-size: 0.9rem;
         }
 
-        /* 6. Mobile Feature */
-        .mobile-section {
-            background: #1E1F18;
-        }
-
-        .mobile-layout {
-            display: flex;
-            align-items: center;
-            gap: 40px;
-        }
-
-        .mobile-text {
-            flex: 1;
-        }
-
-        .mobile-text h3 {
-            font-size: 1.5rem;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .mobile-phone {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-
         .phone-frame {
             width: 100%;
             max-width: 300px;
@@ -677,6 +648,95 @@
             justify-content: space-between;
         }
 
+        .faq-answer {
+            padding: 0 24px 24px;
+            color: var(--text-muted);
+            display: none;
+            line-height: 1.6;
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+
+        .faq-item.active .faq-question span:last-child {
+            transform: rotate(45deg);
+        }
+
+        .faq-question span:last-child {
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        /* Pricing Section */
+        .landing-plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        .landing-plan-card {
+            background: #111;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .landing-plan-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-4px);
+        }
+
+        .landing-plan-card.featured {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color), 0 8px 32px rgba(235, 168, 27, 0.12);
+        }
+
+        .landing-plan-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: #111;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .landing-plan-icon { font-size: 32px; margin-bottom: 16px; }
+        .landing-plan-name { font-size: 20px; font-weight: 700; color: white; margin-bottom: 6px; }
+        .landing-plan-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+        
+        .landing-plan-price { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+        .landing-plan-currency { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .landing-plan-amount { font-size: 36px; font-weight: 800; color: white; }
+        .landing-plan-period { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+        .landing-plan-features { list-style: none; padding: 0; margin: 0 0 32px; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+        .landing-plan-features li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: #e2e8f0; }
+        .landing-plan-features li i { color: var(--primary-color); font-size: 14px; flex-shrink: 0; margin-top: 3px; }
+
+        .landing-btn-buy {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px 0; border-radius: 50px;
+            border: 1px solid var(--primary-color); background: transparent;
+            color: var(--primary-color); font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .landing-btn-buy:hover { background: var(--primary-color); color: #111; }
+        .landing-btn-buy.featured-btn { background: var(--primary-color); color: #111; }
+
         /* 12. Footer */
         footer {
             background: #09090b;
@@ -758,7 +818,6 @@
 
             .qr-body,
             .how-grid,
-            .mobile-layout,
             .tech-layout,
             .strategy-grid {
                 grid-template-columns: 1fr;
@@ -791,10 +850,6 @@
             }
             .qr-mobile-dropdown {
                 display: block !important;
-            }
-            .mobile-layout {
-                flex-direction: column;
-                text-align: center;
             }
         }
 
@@ -928,6 +983,34 @@
                 background-position: 200% center;
             }
         }
+
+        /* Language Switcher */
+        .lang-switcher-landing {
+            display: flex;
+            gap: 4px;
+        }
+        .lang-switcher-landing .lang-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 6px 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .lang-switcher-landing .lang-btn.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #111;
+        }
+        .lang-switcher-landing .lang-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.06);
+            color: var(--text-main);
+        }
     </style>
 </head>
 
@@ -940,16 +1023,20 @@
                 <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 64px; width: auto; display: block;">
             </a>
             <nav class="nav-links">
-                <a href="#">Products</a>
-                <a href="#">Features</a>
-                <a href="#">Solutions</a>
-                <a href="#">Support</a>
-                <a href="#">Pricing</a>
+                <a href="#" data-i18n="nav_products">Products</a>
+                <a href="#" data-i18n="nav_features">Features</a>
+                <a href="#" data-i18n="nav_solutions">Solutions</a>
+                <a href="#" data-i18n="nav_support">Support</a>
+                <a href="#" data-i18n="nav_pricing">Pricing</a>
             </nav>
             <div class="auth-buttons">
+                <div class="lang-switcher-landing" style="margin-right: 8px;">
+                    <button class="lang-btn" data-lang="en" onclick="switchLang('en')">🇬🇧</button>
+                    <button class="lang-btn" data-lang="id" onclick="switchLang('id')">🇮🇩</button>
+                </div>
                 <a href="/login" class="nav-links"
-                    style="text-decoration: none; color: var(--text-dark); font-weight: 600;">Log In</a>
-                <a href="/register" class="btn btn-primary">Sign Up</a>
+                    style="text-decoration: none; color: var(--text-dark); font-weight: 600;" data-i18n="login">Log In</a>
+                <a href="/register" class="btn btn-primary" data-i18n="sign_up">Sign Up</a>
                 
                 <button class="mobile-menu-btn" id="open-mobile-menu">
                     <i class="fa-solid fa-bars"></i>
@@ -969,22 +1056,26 @@
             </button>
         </div>
         <div class="mobile-menu-overlay-links">
-            <a href="#">Products</a>
-            <a href="#">Features</a>
-            <a href="#">Solutions</a>
-            <a href="#">Support</a>
-            <a href="#">Pricing</a>
+            <a href="#" data-i18n="nav_products">Products</a>
+            <a href="#" data-i18n="nav_features">Features</a>
+            <a href="#" data-i18n="nav_solutions">Solutions</a>
+            <a href="#" data-i18n="nav_support">Support</a>
+            <a href="#" data-i18n="nav_pricing">Pricing</a>
             <hr style="border-color: var(--border-color); margin: 8px 0;">
-            <a href="/login">Log In</a>
-            <a href="/register" class="btn btn-primary" style="text-align: center;">Sign Up</a>
+            <div class="lang-switcher-landing" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 8px;">
+                <button class="lang-btn" data-lang="en" onclick="switchLang('en')" style="font-size: 16px; padding: 10px 14px; flex: 1;">🇬🇧 English</button>
+                <button class="lang-btn" data-lang="id" onclick="switchLang('id')" style="font-size: 16px; padding: 10px 14px; flex: 1;">🇮🇩 Indonesia</button>
+            </div>
+            <a href="/login" data-i18n="login">Log In</a>
+            <a href="/register" class="btn btn-primary" style="text-align: center;" data-i18n="sign_up">Sign Up</a>
         </div>
     </div>
 
     <!-- 2. Hero & QR Creator Tool -->
     <section class="hero">
         <div class="container">
-            <h1>QR card Generator: Create your free QR card</h1>
-            <p>Create vCards, websites, texts, and much more. Customize, track, and boost your marketing with
+            <h1 data-i18n="hero_title">QR card Generator: Create your free QR card</h1>
+            <p data-i18n="hero_desc">Create vCards, websites, texts, and much more. Customize, track, and boost your marketing with
                 QRkartu.</p>
 
             <div class="qr-tool">
@@ -1015,15 +1106,15 @@
                 <div class="qr-body">
                     <div class="qr-input">
                         <div id="input-website" class="qr-form-group">
-                            <label>Submit URL</label>
+                            <label data-i18n="qr_submit_url">Submit URL</label>
                             <input type="url" id="val-website" placeholder="https://yourwebsite.com" value="https://">
                         </div>
                         <div id="input-text" class="qr-form-group" style="display:none;">
-                            <label>Submit Text</label>
+                            <label data-i18n="qr_submit_text">Submit Text</label>
                             <textarea id="val-text" placeholder="Enter your text here..." maxlength="200" rows="3" style="width:100%; padding:14px; border:1px solid var(--border-color); border-radius:8px; font-size:1rem; background:transparent; color:var(--text-main); font-family:inherit;"></textarea>
                             <div style="font-size:12px; color:var(--text-muted); text-align:right; margin-top:4px;"><span id="text-count">0</span>/200</div>
                         </div>
-                        <p class="text-muted" style="font-size: 0.9rem;">Your QR card will be generated automatically
+                        <p class="text-muted" style="font-size: 0.9rem;" data-i18n="qr_auto_generate">Your QR card will be generated automatically
                             after you enter the details.</p>
                     </div>
                     <div class="qr-preview">
@@ -1034,9 +1125,9 @@
                             </div>
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
-                            <span class="fw-bold">Scan ME!</span>
+                            <span class="fw-bold" data-i18n="qr_scan_me">Scan ME!</span>
                             <button id="btn-download-qr" class="btn btn-primary" style="display:none; padding: 10px 24px; font-size: 0.9rem; border-radius: 50px;">
-                                <i class="fa-solid fa-download"></i> Download QR
+                                <i class="fa-solid fa-download"></i> <span data-i18n="qr_download">Download QR</span>
                             </button>
                         </div>
                     </div>
@@ -1046,8 +1137,8 @@
             <!-- 3. Secondary CTA -->
             <div class="secondary-cta">
                 <a href="/register" class="btn btn-primary"
-                    style="font-size: 1.125rem; padding: 18px 48px; border-radius: 50px;">Create QR card</a>
-                <p class="text-muted" style="margin-top: 16px;">✔️ No credit card required &nbsp; ✔️ Track dynamic codes
+                    style="font-size: 1.125rem; padding: 18px 48px; border-radius: 50px;" data-i18n="cta_create_qr">Create QR card</a>
+                <p class="text-muted" style="margin-top: 16px;" data-i18n-html="cta_no_credit_card">✔️ No credit card required &nbsp; ✔️ Track dynamic codes
                 </p>
             </div>
         </div>
@@ -1057,26 +1148,26 @@
     <section class="section">
         <div class="container">
             <div class="section-title">
-                <h2>How to create a QR card?</h2>
-                <p>Follow these quick steps to generate, customize and export.</p>
+                <h2 data-i18n="how_title">How to create a QR card?</h2>
+                <p data-i18n="how_desc">Follow these quick steps to generate, customize and export.</p>
             </div>
             <div class="how-grid">
                 <div class="how-card">
                     <div class="how-number">1</div>
-                    <h3>Choose Content</h3>
-                    <p class="text-muted">Select the type of data you want to embed. From Website URLs to detailed
+                    <h3 data-i18n="how_step1_title">Choose Content</h3>
+                    <p class="text-muted" data-i18n="how_step1_desc">Select the type of data you want to embed. From Website URLs to detailed
                         vCards.</p>
                 </div>
                 <div class="how-card">
                     <div class="how-number">2</div>
-                    <h3>Customize Details</h3>
-                    <p class="text-muted">Enhance your QR card with vibrant colors, a central logo, and appealing
+                    <h3 data-i18n="how_step2_title">Customize Details</h3>
+                    <p class="text-muted" data-i18n="how_step2_desc">Enhance your QR card with vibrant colors, a central logo, and appealing
                         frames.</p>
                 </div>
                 <div class="how-card">
                     <div class="how-number">3</div>
-                    <h3>Download & Print</h3>
-                    <p class="text-muted">Export in vectors (SVG/EPS) or PNG/JPG formats ready for any high-quality
+                    <h3 data-i18n="how_step3_title">Download & Print</h3>
+                    <p class="text-muted" data-i18n="how_step3_desc">Export in vectors (SVG/EPS) or PNG/JPG formats ready for any high-quality
                         print.</p>
                 </div>
             </div>
@@ -1087,96 +1178,168 @@
     <section class="section" style="background: #1E1F18;">
         <div class="container">
             <div class="section-title">
-                <h2>Generate different types of QR Codes</h2>
-                <p>Versatility for physical-to-digital connections.</p>
+                <h2 data-i18n="types_title">Generate different types of QR Codes</h2>
+                <p data-i18n="types_desc">Versatility for physical-to-digital connections.</p>
             </div>
-            <div class="type-grid">
-                <div class="type-card">
-                    <div class="icon"><i class="fa-solid fa-globe"></i></div><span>Website</span>
+
+            <div class="qr-showcase">
+                <!-- Left pills -->
+                <div class="qr-showcase-col">
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/web_contoh.png" data-name="Website" data-desc="Redirect anyone who scans to any URL. Update the destination anytime without reprinting.">
+                        <div class="icon"><i class="fa-solid fa-globe"></i></div><span>Website</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/ecard_contoh.png" data-name="E-card" data-desc="A digital business card — share name, phone, email and social links. Scanners save contact directly to their phone.">
+                        <div class="icon"><i class="fa-regular fa-id-badge"></i></div><span>E-card</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/pdf_contoh.png" data-name="PDF" data-desc="Share a PDF document instantly — menus, brochures, catalogs, or manuals. No app needed on the scanner's side.">
+                        <div class="icon"><i class="fa-regular fa-file-pdf"></i></div><span>PDF</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/img_contoh.png" data-name="Images" data-desc="Display a beautiful photo gallery when scanned. Great for portfolios, product shots, or real estate listings.">
+                        <div class="icon"><i class="fa-regular fa-images"></i></div><span>Images</span>
+                    </div>
                 </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-solid fa-font"></i></div><span>Text</span>
+
+                <!-- Center phone -->
+                <div class="qr-showcase-center">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding-top:20px;overflow:hidden;">
+                            <img id="lp-phone-img" src="/static/assets/img/contoh_qr/web_contoh.png" alt="QR Preview"
+                                style="width:100%;height:100%;object-fit:cover;border-radius:4px;transition:opacity .25s;" data-loaded="/static/assets/img/contoh_qr/web_contoh.png">
+                        </div>
+                    </div>
+                    <div style="margin-top:20px;text-align:center;min-height:60px;">
+                        <div id="lp-phone-name" style="font-weight:700;font-size:15px;color:white;margin-bottom:4px;">Website</div>
+                        <div id="lp-phone-desc" style="font-size:12px;color:var(--text-muted);line-height:1.6;max-width:240px;margin:0 auto;">Redirect anyone who scans to any URL. Update the destination anytime without reprinting.</div>
+                    </div>
                 </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-regular fa-id-badge"></i></div><span>vCard Plus</span>
-                </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-regular fa-file-pdf"></i></div><span>PDF</span>
-                </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-regular fa-images"></i></div><span>Images</span>
-                </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-solid fa-play"></i></div><span>Video</span>
-                </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-solid fa-music"></i></div><span>Audio</span>
-                </div>
-                <div class="type-card">
-                    <div class="icon"><i class="fa-brands fa-app-store-ios"></i></div><span>Apps</span>
+
+                <!-- Right pills -->
+                <div class="qr-showcase-col">
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/vid_contoh.png" data-name="Video" data-desc="Play a video directly on scan — product demos, tutorials, or promo clips. No login or app required.">
+                        <div class="icon"><i class="fa-solid fa-play"></i></div><span>Video</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/links_contoh.png" data-name="Links" data-desc="Bundle multiple links into a single clean page. Perfect for creators or campaigns with many destinations.">
+                        <div class="icon"><i class="fa-solid fa-list-ul"></i></div><span>Links</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/sosmed_contoh.png" data-name="Social Media" data-desc="Show all your social profiles in one scan — Instagram, TikTok, YouTube, and more.">
+                        <div class="icon"><i class="fa-regular fa-thumbs-up"></i></div><span>Social Media</span>
+                    </div>
+                    <div class="type-card lp-qr-btn" data-preview="/static/assets/img/contoh_qr/special_contoh.png" data-name="Special" data-desc="Build a fully custom HTML page from scratch. Total creative freedom for unique promotions or branded experiences.">
+                        <div class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div><span>Special</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 6. Mobile Feature Spotlight -->
-    <section class="section mobile-section">
-        <div class="container mobile-layout">
-            <div class="mobile-text">
-                <h3>🔄 Dynamic URLs</h3>
-                <p class="text-muted mb-8" style="font-size: 1.125rem;">Update the destination link of your QR card at
-                    any time, without having to reprint it. Perfect for menus, portfolios, and evolving campaigns.</p>
-            </div>
-            <div class="mobile-phone">
-                <div class="phone-frame">
-                    <div class="phone-notch"></div>
-                    <div
-                        style="background: #1E1F18; border-radius: 12px; padding: 20px; text-align: left; margin-top: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                        <div style="height: 140px; background: #252619; border-radius: 8px; margin-bottom: 16px;"></div>
-                        <h4 style="margin-bottom: 8px;">Product Promotion</h4>
-                        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 16px;">Scan to view details</p>
-                        <div style="height: 36px; background: var(--primary-color); border-radius: 6px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="mobile-text">
-                <h3>🎨 Vector Formats</h3>
-                <p class="text-muted mb-8" style="font-size: 1.125rem;">Download in SVG, PDF, and EPS for infinite
-                    scalability. Guarantee perfect scannability on billboards and business cards alike.</p>
-            </div>
-        </div>
-    </section>
+    <style>
+        .qr-showcase {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+        }
+        .qr-showcase-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
+        .qr-showcase-center {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .qr-showcase-center .phone-frame {
+            width: 200px;
+            height: 400px;
+            padding: 28px 12px 12px;
+        }
+        .lp-qr-btn {
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+        }
+        .lp-qr-btn:hover, .lp-qr-btn.active {
+            border-color: var(--primary-color) !important;
+            background: rgba(235,168,27,0.08) !important;
+            transform: translateY(-2px);
+        }
+        .lp-qr-btn.active .icon {
+            background: var(--primary-color);
+            color: #111;
+        }
+        @media (max-width: 900px) {
+            .qr-showcase { flex-direction: column; gap: 20px; }
+            .qr-showcase-col { flex-direction: row; flex-wrap: wrap; }
+            .qr-showcase-col .type-card { flex: 1; min-width: 120px; }
+            .qr-showcase-center .phone-frame { width: 160px; height: 300px; }
+        }
+    </style>
+
+    <script>
+    (function() {
+        var phoneImg = document.getElementById('lp-phone-img');
+        var phoneName = document.getElementById('lp-phone-name');
+        var phoneDesc = document.getElementById('lp-phone-desc');
+        var fadeTimer = null;
+        var firstCard = document.querySelector('.lp-qr-btn');
+        if (firstCard) firstCard.classList.add('active');
+
+        document.querySelectorAll('.lp-qr-btn').forEach(function(card) {
+            card.addEventListener('mouseenter', function() {
+                document.querySelectorAll('.lp-qr-btn').forEach(function(c) { c.classList.remove('active'); });
+                card.classList.add('active');
+                var src = card.getAttribute('data-preview');
+                if (fadeTimer) clearTimeout(fadeTimer);
+                if (phoneImg.getAttribute('data-loaded') !== src) {
+                    phoneImg.style.opacity = '0';
+                    fadeTimer = setTimeout(function() {
+                        phoneImg.src = src;
+                        phoneImg.setAttribute('data-loaded', src);
+                        phoneImg.onload = function() { phoneImg.style.opacity = '1'; };
+                    }, 120);
+                } else {
+                    phoneImg.style.opacity = '1';
+                }
+                phoneName.textContent = card.getAttribute('data-name') || '';
+                phoneDesc.textContent = card.getAttribute('data-desc') || '';
+            });
+        });
+    })();
+    </script>
 
     <!-- 7. All-in-One Marketing Grid -->
     <section class="section">
         <div class="container">
             <div class="section-title">
-                <h2>Your all-in-one marketing platform</h2>
+                <h2 data-i18n="bento_title">Your all-in-one marketing platform</h2>
             </div>
             <div class="bento-grid">
                 <div class="bento-card bento-large">
-                    <h3>Custom Designs & Colors</h3>
-                    <p class="text-muted">Take full control of the appearance. Choose precise hex colors, modify
+                    <h3 data-i18n="bento_c1_title">Custom Designs & Colors</h3>
+                    <p class="text-muted" data-i18n="bento_c1_desc">Take full control of the appearance. Choose precise hex colors, modify
                         patterns, and seamlessly integrate your brand's unique logo right in the center.</p>
                 </div>
                 <div class="bento-card">
-                    <h3>Data Tracking</h3>
-                    <p class="text-muted">Monitor scans with precision. View analytics by location, device types,
+                    <h3 data-i18n="bento_c2_title">Data Tracking</h3>
+                    <p class="text-muted" data-i18n="bento_c2_desc">Monitor scans with precision. View analytics by location, device types,
                         operating systems, and timestamps.</p>
                 </div>
                 <div class="bento-card">
-                    <h3>Bulk Creation</h3>
-                    <p class="text-muted">Generate hundreds of unique QR codes instantly via CSV data upload or through
+                    <h3 data-i18n="bento_c3_title">Bulk Creation</h3>
+                    <p class="text-muted" data-i18n="bento_c3_desc">Generate hundreds of unique QR codes instantly via CSV data upload or through
                         our comprehensive API.</p>
                 </div>
                 <div class="bento-card bento-large">
-                    <h3>Dynamic URL Routing</h3>
-                    <p class="text-muted">Fix a typo or change a campaign target on the fly. Dynamic QR codes adapt
+                    <h3 data-i18n="bento_c4_title">Dynamic URL Routing</h3>
+                    <p class="text-muted" data-i18n="bento_c4_desc">Fix a typo or change a campaign target on the fly. Dynamic QR codes adapt
                         immediately without needing re-printing.</p>
                 </div>
             </div>
             <div class="text-center mt-8" style="margin-top: 40px;">
-                <a href="#" class="btn btn-primary" style="border-radius: 50px;">See all platform features</a>
+                <a href="#" class="btn btn-primary" style="border-radius: 50px;" data-i18n="bento_see_all">See all platform features</a>
             </div>
         </div>
     </section>
@@ -1186,38 +1349,38 @@
         <div class="container">
             <div class="section-title" style="max-width: 800px;">
                 <p
-                    style="color: var(--primary-color); font-weight: 700; text-transform: uppercase; margin-bottom: 12px;">
+                    style="color: var(--primary-color); font-weight: 700; text-transform: uppercase; margin-bottom: 12px;" data-i18n="strat_sup">
                     Use Cases</p>
-                <h2>Create your own QR codes to boost your marketing strategy.</h2>
+                <h2 data-i18n="strat_title">Create your own QR codes to boost your marketing strategy.</h2>
             </div>
             <div class="strategy-grid">
                 <div class="strategy-card">
                     <div class="strategy-img">📇</div>
                     <div class="strategy-body">
-                        <h3>Business Cards</h3>
-                        <p class="text-muted mb-4">Allow clients to save your exact contact info instantly directly to
+                        <h3 data-i18n="strat_c1_title">Business Cards</h3>
+                        <p class="text-muted mb-4" data-i18n="strat_c1_desc">Allow clients to save your exact contact info instantly directly to
                             their address book.</p>
-                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;" data-i18n-html="strat_view">View
                             guide &rarr;</a>
                     </div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-img">📄</div>
                     <div class="strategy-body">
-                        <h3>Flyers & Posters</h3>
-                        <p class="text-muted mb-4">Turn static street marketing into trackable interactive digital
+                        <h3 data-i18n="strat_c2_title">Flyers & Posters</h3>
+                        <p class="text-muted mb-4" data-i18n="strat_c2_desc">Turn static street marketing into trackable interactive digital
                             experiences in seconds.</p>
-                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;" data-i18n-html="strat_view">View
                             guide &rarr;</a>
                     </div>
                 </div>
                 <div class="strategy-card">
                     <div class="strategy-img">🛍️</div>
                     <div class="strategy-body">
-                        <h3>Product Packaging</h3>
-                        <p class="text-muted mb-4">Provide manuals, warranty info, or authenticity verification straight
+                        <h3 data-i18n="strat_c3_title">Product Packaging</h3>
+                        <p class="text-muted mb-4" data-i18n="strat_c3_desc">Provide manuals, warranty info, or authenticity verification straight
                             on the box.</p>
-                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">View
+                        <a href="#" style="color: var(--primary-color); font-weight: 600; text-decoration: none;" data-i18n-html="strat_view">View
                             guide &rarr;</a>
                     </div>
                 </div>
@@ -1225,79 +1388,102 @@
         </div>
     </section>
 
-    <!-- 9. Visual Branding Section -->
+    <!-- 9. Pricing Section -->
     <section class="section branding-section">
-        <div class="container">
-            <p style="text-transform: uppercase; font-weight: 700; color: #a5b4fc; letter-spacing: 2px;">Professional
-                Setup</p>
-            <h2 style="margin-top: 16px;">Deliver your own professional QR codes</h2>
-            <div style="display: flex; gap: 16px; justify-content: center;">
-                <a href="/register" class="btn btn-primary" style="background: #1E1F18; color: var(--text-dark);">Start
-                    for free</a>
-                <a href="/pricing" class="btn btn-outline"
-                    style="color: white; border-color: rgba(255,255,255,0.3);">View pricing</a>
-            </div>
-            <div class="branding-mockup">
-                Print Mockup Graphics Placeholder
+        <div class="container text-center">
+            <p style="text-transform: uppercase; font-weight: 700; color: var(--primary-color); letter-spacing: 2px;" data-i18n="pricing_sup">Pricing & Plans</p>
+            <h2 style="margin-top: 16px;" data-i18n="pricing_title">Choose a plan that fits your needs</h2>
+            <p class="text-muted" style="max-width: 600px; margin: 16px auto 0;" data-i18n="pricing_sub">Flexible plans. No hidden fees. Cancel anytime.</p>
+            
+            <div class="landing-plans-grid">
+                <!-- Single Plan -->
+                <div class="landing-plan-card">
+                    <div class="landing-plan-icon">👤</div>
+                    <div class="landing-plan-name" data-i18n="plan_single">Single</div>
+                    <div class="landing-plan-desc" data-i18n="plan_single_desc">Perfect for individuals and small projects.</div>
+                    <div class="landing-plan-price">
+                        <span class="landing-plan-currency">IDR</span>
+                        <span class="landing-plan-amount">10.000</span>
+                    </div>
+                    <div class="landing-plan-period" data-i18n="plan_7_day">per 7 days</div>
+                    <ul class="landing-plan-features">
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_1_qr">1 QR card slot</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_100mb">100 MB storage</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_dynamic">Dynamic URL routing</span></li>
+                    </ul>
+                    <a href="/register" class="landing-btn-buy"><span data-i18n="plan_get">Get Started</span></a>
+                </div>
+
+                <!-- Team Plan -->
+                <div class="landing-plan-card featured">
+                    <div class="landing-plan-badge" data-i18n="plan_most_popular">Most Popular</div>
+                    <div class="landing-plan-icon">👥</div>
+                    <div class="landing-plan-name" data-i18n="plan_team">Team</div>
+                    <div class="landing-plan-desc" data-i18n="plan_team_desc">Ideal for small businesses and agencies.</div>
+                    <div class="landing-plan-price">
+                        <span class="landing-plan-currency">IDR</span>
+                        <span class="landing-plan-amount">90.000</span>
+                    </div>
+                    <div class="landing-plan-period" data-i18n="plan_per_day">per 30 days</div>
+                    <ul class="landing-plan-features">
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_5_qr">5 QR card slots</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_500mb">500 MB storage</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_custom">Custom logo & colors</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_analytics">Basic analytics</span></li>
+                    </ul>
+                    <a href="/register" class="landing-btn-buy featured-btn"><span data-i18n="plan_get">Get Started</span></a>
+                </div>
+
+                <!-- Corporate Plan -->
+                <div class="landing-plan-card">
+                    <div class="landing-plan-icon">🏢</div>
+                    <div class="landing-plan-name" data-i18n="plan_corp">Corporate</div>
+                    <div class="landing-plan-desc" data-i18n="plan_corp_desc">Advanced features for large scale operations.</div>
+                    <div class="landing-plan-price">
+                        <span class="landing-plan-currency">IDR</span>
+                        <span class="landing-plan-amount">400.000</span>
+                    </div>
+                    <div class="landing-plan-period" data-i18n="plan_per_day">per 30 days</div>
+                    <ul class="landing-plan-features">
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_30_qr">30 QR card slots</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_5gb">5 GB storage</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_adv_analytics">Advanced scan tracking</span></li>
+                        <li><i class="fa-solid fa-check"></i> <span data-i18n="feat_bulk">Bulk generation API</span></li>
+                    </ul>
+                    <a href="/register" class="landing-btn-buy"><span data-i18n="plan_get">Get Started</span></a>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- 10. Tech Specs -->
-    <section class="section" style="background: #1E1F18;">
-        <div class="container tech-layout">
-            <div class="tech-img">📐</div>
-            <div class="tech-list">
-                <p
-                    style="color: var(--primary-color); font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">
-                    Technical Perfection</p>
-                <h2>Everything you need to know to get started</h2>
-                <div class="tech-item border-top">
-                    <span>High resolution vectors</span> <span>+</span>
-                </div>
-                <div class="tech-item">
-                    <span>Export in SVG, EPS, PDF</span> <span>+</span>
-                </div>
-                <div class="tech-item">
-                    <span>Error correction up to 30%</span> <span>+</span>
-                </div>
-                <div class="tech-item">
-                    <span>Advanced Scan Analytics</span> <span>+</span>
-                </div>
-                <div class="tech-item">
-                    <span>Bulk Generation API</span> <span>+</span>
-                </div>
-            </div>
-        </div>
-    </section>
+
 
     <!-- 11. FAQ -->
     <section class="section faq-section">
         <div class="container">
             <div class="section-title">
-                <h2>Do not leave with doubts</h2>
-                <div style="display: flex; justify-content: center; gap: 24px; margin-top: 24px;">
-                    <span style="font-weight: 600; color: var(--primary-color); cursor: pointer;">Platform FAQ</span>
-                    <span class="text-muted" style="cursor: pointer;">Pricing Questions</span>
-                    <span class="text-muted" style="cursor: pointer;">Account Support</span>
-                </div>
+                <h2 data-i18n="faq_title">Do not leave with doubts</h2>
             </div>
             <div class="faq-container">
                 <div class="faq-item">
-                    <div class="faq-question"><span>What exactly is a dynamic QR card?</span> <span>+</span></div>
+                    <div class="faq-question"><span data-i18n="faq_q1">What exactly is a dynamic QR card?</span> <span>+</span></div>
+                    <div class="faq-answer"><p data-i18n="faq_a1">A dynamic QR card allows you to change the destination URL or content at any time without having to reprint the physical QR code itself. This provides flexibility for evolving campaigns.</p></div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question"><span>How does the 14-day free trial work?</span> <span>+</span></div>
+                    <div class="faq-question"><span data-i18n="faq_q2">How does pricing and the plans work?</span> <span>+</span></div>
+                    <div class="faq-answer"><p data-i18n="faq_a2">Plans are accumulative — each purchase adds on top of your existing quota with its own expiry date. For example, buying a plan twice doubles your active quota across those respective billing periods.</p></div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question"><span>Are the generated QR codes for commercial use?</span> <span>+</span>
-                    </div>
+                    <div class="faq-question"><span data-i18n="faq_q3">Are the generated QR codes for commercial use?</span> <span>+</span></div>
+                    <div class="faq-answer"><p data-i18n="faq_a3">Yes, all QR codes generated on our platform, regardless of your plan, are fully cleared for personal and commercial use without any restrictions.</p></div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question"><span>What if my printed code gets damaged?</span> <span>+</span></div>
+                    <div class="faq-question"><span data-i18n="faq_q4">What if my printed code gets damaged?</span> <span>+</span></div>
+                    <div class="faq-answer"><p data-i18n="faq_a4">Our QR codes have up to 30% error correction, meaning they will likely still scan even if partially damaged. However, we highly recommend reprinting if essential elements are unreadable.</p></div>
                 </div>
                 <div class="faq-item">
-                    <div class="faq-question"><span>Can I design a custom QR with my logo?</span> <span>+</span></div>
+                    <div class="faq-question"><span data-i18n="faq_q5">Can I design a custom QR with my logo?</span> <span>+</span></div>
+                    <div class="faq-answer"><p data-i18n="faq_a5">Absolutely! You can add custom colors, choose unique patterns, and insert your brand's unique logo right in the center for a highly personalized look.</p></div>
                 </div>
             </div>
         </div>
@@ -1307,62 +1493,16 @@
     <footer>
         <div class="container">
             <div class="footer-cta">
-                <h2>Try our QR card generator for 7 days free.</h2>
-                <a href="/register" class="btn btn-primary" style="padding: 16px 40px; font-size: 1.125rem;">Start
+                <h2 data-i18n="foot_try">Try our QR card generator for 7 days free.</h2>
+                <a href="/register" class="btn btn-primary" style="padding: 16px 40px; font-size: 1.125rem;" data-i18n="foot_start">Start
                     now</a>
             </div>
 
-            <div class="footer-dashboard">
-                Dashboard Metrics Preview
-            </div>
-
-            <div class="footer-links">
-                <div style="padding-right: 40px;">
-                    <a href="/" class="logo" style="text-decoration: none; margin-bottom: 24px; display: inline-block;">
-                        <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 64px; width: auto; display: block;">
-                    </a>
-                    <p style="color: #a1a1aa; line-height: 1.6;">The complete QR card marketing platform for modern,
-                        ambitious teams looking to connect physical and digital spaces seamlessly.</p>
+            <div class="footer-bottom" style="margin-top: 40px; padding-top: 40px;">
+                <div style="display: flex; align-items: center; gap: 16px; color: #a1a1aa;">
+                    <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 32px; width: auto; display: inline-block;">
+                    <span>&copy; 2026 QRkartu. All rights reserved.</span>
                 </div>
-                <div>
-                    <h4>Products</h4>
-                    <ul>
-                        <li><a href="#">Generator</a></li>
-                        <li><a href="#">vCard Editor</a></li>
-                        <li><a href="#">Link Pages</a></li>
-                        <li><a href="#">Analytics</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4>Solutions</h4>
-                    <ul>
-                        <li><a href="#">Retail</a></li>
-                        <li><a href="#">Real Estate</a></li>
-                        <li><a href="#">Restaurants</a></li>
-                        <li><a href="#">Agencies</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Pricing Plan</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Use</a></li>
-                        <li><a href="#">Cookie Details</a></li>
-                        <li><a href="#">GDPR</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <div>&copy; 2026 QRkartu. All rights reserved.</div>
                 <div style="display: flex; gap: 24px;">
                     <a href="#" style="color: #a1a1aa; text-decoration: none;">Twitter</a>
                     <a href="#" style="color: #a1a1aa; text-decoration: none;">LinkedIn</a>
@@ -1521,7 +1661,74 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial trigger
     generateQR();
+
+    // FAQ Toggle
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        question.addEventListener('click', () => {
+            const isActive = item.classList.contains('active');
+            faqItems.forEach(i => i.classList.remove('active')); // close others
+            if (!isActive) item.classList.add('active');
+        });
+    });
 });
+</script>
+
+<!-- Global i18n -->
+<script>
+(function () {
+    var _cache = {};
+
+    function applyI18n(data) {
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n');
+            if (data[k] !== undefined) el.textContent = data[k];
+        });
+        document.querySelectorAll('[data-i18n-label]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n-label');
+            if (data[k] !== undefined) el.setAttribute('data-label', data[k]);
+        });
+        document.querySelectorAll('[data-i18n-desc]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n-desc');
+            if (data[k] !== undefined) el.setAttribute('data-desc', data[k]);
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n-html');
+            if (data[k] !== undefined) el.innerHTML = data[k];
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+            var k = el.getAttribute('data-i18n-placeholder');
+            if (data[k] !== undefined) el.setAttribute('placeholder', data[k]);
+        });
+        var lang = localStorage.getItem('lang') || 'en';
+        document.querySelectorAll('.lang-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+        });
+    }
+
+    function loadLang(lang) {
+        if (_cache[lang]) { applyI18n(_cache[lang]); return; }
+        fetch('/static/json_file/data_' + lang + '.json')
+            .then(function (r) { return r.json(); })
+            .then(function (data) { _cache[lang] = data; applyI18n(data); })
+            .catch(function (e) { console.warn('[i18n] failed to load', lang, e); });
+    }
+
+    window.switchLang = function (lang) {
+        localStorage.setItem('lang', lang);
+        loadLang(lang);
+    };
+
+    window.i18nStr = function (key, fallback) {
+        var lang = localStorage.getItem('lang') || 'en';
+        return (_cache[lang] && _cache[lang][key] !== undefined) ? _cache[lang][key] : (fallback || key);
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadLang(localStorage.getItem('lang') || 'en');
+    });
+})();
 </script>
 </body>
 

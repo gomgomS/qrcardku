@@ -158,25 +158,25 @@
 
 {% block content %}
 <div class="activity-header">
-    <div class="page-title" style="margin: 0;">Activity History</div>
-    <span style="font-size: 13px; color: var(--text-muted);">{{ total }} total events</span>
+    <div class="page-title" style="margin: 0;" data-i18n="ah_title">Activity History</div>
+    <span style="font-size: 13px; color: var(--text-muted);">{{ total }} <span data-i18n="ah_total_events">total events</span></span>
 </div>
 
 {% if logs %}
 
 <p class="pager-info">
-    Showing {{ ((page - 1) * per_page) + 1 }}–{{ [page * per_page, total] | min }} of {{ total }}
+    <span data-i18n="ah_showing">Showing</span> {{ ((page - 1) * per_page) + 1 }}–{{ [page * per_page, total] | min }} <span data-i18n="ah_of">of</span> {{ total }}
 </p>
 
 <table class="activity-table">
     <thead>
         <tr>
-            <th width="160">Action</th>
-            <th>QR Name</th>
-            <th>Type</th>
-            <th>Source</th>
-            <th>Detail</th>
-            <th>Date / Time</th>
+            <th width="160" data-i18n="ah_th_action">Action</th>
+            <th data-i18n="ah_th_qr_name">QR Name</th>
+            <th data-i18n="ah_th_type">Type</th>
+            <th data-i18n="ah_th_source">Source</th>
+            <th data-i18n="ah_th_detail">Detail</th>
+            <th data-i18n="ah_th_datetime">Date / Time</th>
         </tr>
     </thead>
     <tbody>
@@ -185,19 +185,19 @@
             <td>
                 {% if log.action == 'CREATE_QR' %}
                 <span class="action-badge action-create">
-                    <i class="fa-solid fa-plus"></i> Create QR
+                    <i class="fa-solid fa-plus"></i> <span data-i18n="ah_act_create">Create QR</span>
                 </span>
                 {% elif log.action == 'EDIT_QR' %}
                 <span class="action-badge action-edit">
-                    <i class="fa-solid fa-pen"></i> Edit QR
+                    <i class="fa-solid fa-pen"></i> <span data-i18n="ah_act_edit">Edit QR</span>
                 </span>
                 {% elif log.action == 'DELETE_QR_ASSETS' %}
                 <span class="action-badge action-storage">
-                    <i class="fa-solid fa-box-archive"></i> Delete Assets
+                    <i class="fa-solid fa-box-archive"></i> <span data-i18n="ah_act_del_assets">Delete Assets</span>
                 </span>
                 {% else %}
                 <span class="action-badge action-delete">
-                    <i class="fa-solid fa-trash"></i> Delete QR
+                    <i class="fa-solid fa-trash"></i> <span data-i18n="ah_act_delete">Delete QR</span>
                 </span>
                 {% endif %}
             </td>
@@ -209,30 +209,30 @@
             </td>
             <td>
                 <span class="qr-type-chip">
-                    {% if log.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> Website
-                    {% elif log.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> Website (static)
-                    {% elif log.qr_type == 'text' %}<i class="fa-solid fa-font"></i> Text
-                    {% elif log.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> WhatsApp
-                    {% elif log.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> Email
-                    {% elif log.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#d4941a;"></i> vCard
-                    {% elif log.qr_type == 'pdf' %}<i class="fa-regular fa-file-pdf" style="color:#dc2626;"></i> PDF
-                    {% elif log.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> All in One
-                    {% elif log.qr_type == 'ecard' %}<i class="fa-regular fa-id-card"></i> E-Card
-                    {% elif log.qr_type == 'images' %}<i class="fa-regular fa-images"></i> Images
-                    {% elif log.qr_type == 'video' %}<i class="fa-solid fa-play"></i> Video
-                    {% else %}<i class="fa-solid fa-qrcode"></i> {{ log.qr_type | capitalize }}
+                    {% if log.qr_type == 'web' %}<i class="fa-solid fa-globe"></i> <span data-i18n="mq_type_website">Website</span>
+                    {% elif log.qr_type == 'web-static' %}<i class="fa-solid fa-globe"></i> <span data-i18n="mq_type_website_static">Website (static)</span>
+                    {% elif log.qr_type == 'text' %}<i class="fa-solid fa-font"></i> <span data-i18n="mq_type_text">Text</span>
+                    {% elif log.qr_type == 'wa-static' %}<i class="fa-brands fa-whatsapp" style="color:#16a34a;"></i> <span data-i18n="mq_type_whatsapp">WhatsApp</span>
+                    {% elif log.qr_type == 'email-static' %}<i class="fa-solid fa-envelope" style="color:#dc2626;"></i> <span data-i18n="mq_type_email">Email</span>
+                    {% elif log.qr_type == 'vcard-static' %}<i class="fa-regular fa-id-badge" style="color:#d4941a;"></i> <span data-i18n="mq_type_vcard">vCard</span>
+                    {% elif log.qr_type == 'pdf' %}<i class="fa-regular fa-file-pdf" style="color:#dc2626;"></i> <span data-i18n="nq_pdf_label">PDF</span>
+                    {% elif log.qr_type == 'allinone' %}<i class="fa-solid fa-layer-group"></i> <span data-i18n="mq_type_allinone">All in One</span>
+                    {% elif log.qr_type == 'ecard' %}<i class="fa-regular fa-id-card"></i> <span data-i18n="nq_ecard_label">E-card</span>
+                    {% elif log.qr_type == 'images' %}<i class="fa-regular fa-images"></i> <span data-i18n="mq_type_images">Images</span>
+                    {% elif log.qr_type == 'video' %}<i class="fa-solid fa-play"></i> <span data-i18n="mq_type_video">Video</span>
+                    {% else %}<i class="fa-solid fa-qrcode"></i> <span style="text-transform: capitalize;">{{ log.qr_type }}</span>
                     {% endif %}
                 </span>
             </td>
             <td>
                 {% if log.source == 'storage' %}
-                <span class="source-badge"><i class="fa-solid fa-hard-drive"></i> Storage</span>
+                <span class="source-badge"><i class="fa-solid fa-hard-drive"></i> <span data-i18n="ah_src_storage">Storage</span></span>
                 {% elif log.source == 'bulk' %}
-                <span class="source-badge"><i class="fa-solid fa-layer-group"></i> Bulk</span>
+                <span class="source-badge"><i class="fa-solid fa-layer-group"></i> <span data-i18n="ah_src_bulk">Bulk</span></span>
                 {% elif log.source == 'my_qr_codes' %}
-                <span class="source-badge"><i class="fa-solid fa-qrcode"></i> My QRs</span>
+                <span class="source-badge"><i class="fa-solid fa-qrcode"></i> <span data-i18n="ah_src_myqr">My QRs</span></span>
                 {% elif log.source == 'create' %}
-                <span class="source-badge"><i class="fa-solid fa-plus"></i> New QR</span>
+                <span class="source-badge"><i class="fa-solid fa-plus"></i> <span data-i18n="ah_src_newqr">New QR</span></span>
                 {% else %}
                 <span class="source-badge">{{ log.source or '—' }}</span>
                 {% endif %}
@@ -240,15 +240,15 @@
             <td style="color: var(--text-muted); font-size: 12px; line-height: 1.6;">
                 {% if log.detail and log.detail.freed_bytes is defined %}
                     {% if log.detail.freed_bytes %}
-                    Freed {{ (log.detail.freed_bytes / 1048576) | round(2) }} MB
-                    {% if log.detail.deleted_count %}· {{ log.detail.deleted_count }} file(s){% endif %}
+                    <span data-i18n="ah_freed">Freed</span> {{ (log.detail.freed_bytes / 1048576) | round(2) }} MB
+                    {% if log.detail.deleted_count %}· {{ log.detail.deleted_count }} <span data-i18n="ah_file_s">file(s)</span>{% endif %}
                     {% else %}
-                    No assets
+                    <span data-i18n="ah_no_assets">No assets</span>
                     {% endif %}
                     {% if log.source == 'bulk' and log.detail.bulk_total_qrs is defined %}
                     <br><span style="font-size: 11px; color: var(--text-muted);">
-                        Batch: {{ log.detail.bulk_total_qrs }} QR(s) ·
-                        {{ (log.detail.bulk_total_freed / 1048576) | round(2) }} MB total
+                        <span data-i18n="ah_batch">Batch:</span> {{ log.detail.bulk_total_qrs }} QR(s) ·
+                        {{ (log.detail.bulk_total_freed / 1048576) | round(2) }} MB <span data-i18n="ah_total_lower">total</span>
                     </span>
                     {% endif %}
                 {% else %}
@@ -292,8 +292,8 @@
 <div class="card">
     <div class="empty-state">
         <i class="fa-solid fa-clock-rotate-left"></i>
-        <p style="font-size: 15px; font-weight: 500; margin-bottom: 6px;">No activity yet</p>
-        <p style="font-size: 13px;">Actions like creating or deleting QR codes will be recorded here.</p>
+        <p style="font-size: 15px; font-weight: 500; margin-bottom: 6px;" data-i18n="ah_no_activity">No activity yet</p>
+        <p style="font-size: 13px;" data-i18n="ah_activity_desc">Actions like creating or deleting QR codes will be recorded here.</p>
     </div>
 </div>
 {% endif %}

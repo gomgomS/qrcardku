@@ -149,7 +149,7 @@
 
 {% block content %}
 <div class="ht-header">
-    <a href="/user/help-center" class="ht-back"><i class="fa-solid fa-arrow-left"></i> All Tickets</a>
+    <a href="/user/help-center" class="ht-back"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="ht_all_tickets">All Tickets</span></a>
     <span style="color:var(--text-muted); font-size:12px;">{{ ticket.ticket_id }}</span>
 </div>
 
@@ -162,22 +162,22 @@
                 {{ ticket.created_at.strftime('%d %b %Y, %H:%M') if ticket.created_at else '' }} UTC
             </span>
             <span><i class="fa-solid fa-tag"></i> {{ ticket.category | capitalize }}</span>
-            <span><i class="fa-solid fa-comment"></i> {{ ticket.messages | length }} message{{ 's' if ticket.messages | length != 1 else '' }}</span>
+            <span><i class="fa-solid fa-comment"></i> {{ ticket.messages | length }} {% if ticket.messages | length != 1 %}<span data-i18n="ht_messages">messages</span>{% else %}<span data-i18n="ht_message">message</span>{% endif %}</span>
         </div>
     </div>
     <div>
         <span class="status-badge status-{{ ticket.status }}">
-            {% if ticket.status == 'open' %}<i class="fa-solid fa-circle-dot"></i> Open
-            {% elif ticket.status == 'in_progress' %}<i class="fa-solid fa-spinner"></i> In Progress
-            {% elif ticket.status == 'fixed' %}<i class="fa-solid fa-circle-check"></i> Fixed
-            {% else %}<i class="fa-solid fa-lock"></i> Closed{% endif %}
+            {% if ticket.status == 'open' %}<i class="fa-solid fa-circle-dot"></i> <span data-i18n="ht_open">Open</span>
+            {% elif ticket.status == 'in_progress' %}<i class="fa-solid fa-spinner"></i> <span data-i18n="ht_in_progress">In Progress</span>
+            {% elif ticket.status == 'fixed' %}<i class="fa-solid fa-circle-check"></i> <span data-i18n="ht_fixed">Fixed</span>
+            {% else %}<i class="fa-solid fa-lock"></i> <span data-i18n="ht_closed">Closed</span>{% endif %}
         </span>
     </div>
 </div>
 
 <!-- Chat Messages -->
 <div class="ht-chat">
-    <div class="ht-chat-header"><i class="fa-solid fa-comments" style="color:var(--primary);"></i> Conversation</div>
+    <div class="ht-chat-header"><i class="fa-solid fa-comments" style="color:var(--primary);"></i> <span data-i18n="ht_conversation">Conversation</span></div>
     <div class="ht-messages" id="ht-messages-box">
         {% for m in ticket.messages %}
         <div class="ht-msg {{ 'user-msg' if m.sender_type == 'user' else 'admin-msg' }}">
@@ -187,7 +187,7 @@
             </div>
             <div>
                 <div class="ht-msg-sender">
-                    {{ 'You' if m.sender_type == 'user' else 'Support Team' }}
+                    {% if m.sender_type == 'user' %}<span data-i18n="ht_you">You</span>{% else %}<span data-i18n="ht_support">Support Team</span>{% endif %}
                 </div>
                 <div class="ht-msg-bubble">{{ m.message }}</div>
                 <div class="ht-msg-time">
@@ -203,16 +203,16 @@
 {% if ticket.status in ('closed', 'fixed') %}
 <div class="ht-closed-notice">
     <i class="fa-solid fa-lock"></i>
-    This ticket is <strong>{{ ticket.status }}</strong>. No further replies can be added.
+    <span data-i18n="ht_closed_pre">This ticket is</span> <strong>{{ ticket.status }}</strong>. <span data-i18n="ht_closed_post">No further replies can be added.</span>
 </div>
 {% else %}
 <div class="ht-reply-card">
-    <h4><i class="fa-solid fa-reply" style="color:var(--primary);"></i> Add a Reply</h4>
+    <h4><i class="fa-solid fa-reply" style="color:var(--primary);"></i> <span data-i18n="ht_add_reply">Add a Reply</span></h4>
     <form method="post" action="/user/help-center/{{ ticket.ticket_id }}/reply">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <textarea name="message" class="ht-reply-textarea" placeholder="Type your message..." required></textarea>
+        <textarea name="message" class="ht-reply-textarea" placeholder="Type your message..." data-i18n-placeholder="ht_type_message" required></textarea>
         <button type="submit" class="ht-btn-reply">
-            <i class="fa-solid fa-paper-plane"></i> Send Reply
+            <i class="fa-solid fa-paper-plane"></i> <span data-i18n="ht_send_reply">Send Reply</span>
         </button>
     </form>
 </div>
