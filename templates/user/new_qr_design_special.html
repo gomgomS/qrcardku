@@ -491,6 +491,7 @@ function onQRColorChange(target, value) {
         </span>
     </div>
     <div class="new-qr-step-nav">
+        {% set _sched_ctx = stats_carry|default({}, true) %}
         {% if is_update and back_url %}
         <form id="design-back-form" method="POST" action="{{ back_url }}" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -500,6 +501,11 @@ function onQRColorChange(target, value) {
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
             <input type="hidden" name="special_sections"
                 value="{{ special_sections | default([], true) | tojson | forceescape }}" />
+            <input type="hidden" name="scan_limit_enabled" value="{% if _sched_ctx.get('scan_limit_enabled') %}on{% endif %}" />
+            <input type="hidden" name="scan_limit_value" value="{{ _sched_ctx.get('scan_limit_value', 0) }}" />
+            <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx.get('schedule_enabled') %}on{% endif %}" />
+            <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') or '') | e }}" />
+            <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') or '') | e }}" />
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
         {% else %}
@@ -511,6 +517,11 @@ function onQRColorChange(target, value) {
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
             <input type="hidden" name="special_sections"
                 value="{{ special_sections | default([], true) | tojson | forceescape }}" />
+            <input type="hidden" name="scan_limit_enabled" value="{% if _sched_ctx.get('scan_limit_enabled') %}on{% endif %}" />
+            <input type="hidden" name="scan_limit_value" value="{{ _sched_ctx.get('scan_limit_value', 0) }}" />
+            <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx.get('schedule_enabled') %}on{% endif %}" />
+            <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') or '') | e }}" />
+            <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') or '') | e }}" />
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
         {% endif %}
@@ -526,6 +537,11 @@ function onQRColorChange(target, value) {
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
     {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
     <input type="hidden" name="special_sections" value="{{ special_sections | default([], true) | tojson | forceescape }}" />
+    <input type="hidden" name="scan_limit_enabled" value="{% if _sched_ctx.get('scan_limit_enabled') %}on{% endif %}" />
+    <input type="hidden" name="scan_limit_value" value="{{ _sched_ctx.get('scan_limit_value', 0) }}" />
+    <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx.get('schedule_enabled') %}on{% endif %}" />
+    <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') or '') | e }}" />
+    <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') or '') | e }}" />
 
     <!-- Hidden fields for design data filled by JS -->
     <input type="hidden" name="frame_type" id="frame_type_input" value="none" />

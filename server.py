@@ -1711,14 +1711,21 @@ def qr_video_redirect(short_code):
 def qr_special_redirect(short_code):
     """Public endpoint for special-page short URLs."""
     from pytavia_core import database as _db_sp, config as _cfg_sp
+    from pytavia_modules.qr.qr_public_visual_helper import enforce_scan_limit_and_increment
     _mgd = _db_sp.get_db_conn(_cfg_sp.mainDB)
     qrcard = _mgd.db_qrcard_special.find_one({"short_code": short_code, "status": "ACTIVE"})
     if not qrcard:
         qrcard = _mgd.db_qrcard.find_one({"short_code": short_code, "qr_type": "special", "status": "ACTIVE"})
     if not qrcard:
         abort(404)
-    # Bump scan count
-    _mgd.db_qrcard.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
+    _base_sp = _mgd.db_qrcard.find_one({"qrcard_id": qrcard.get("qrcard_id")})
+    if _base_sp:
+        _merged_sp = dict(qrcard)
+        for _k in ("schedule_enabled", "schedule_since", "schedule_until", "scan_limit_enabled", "scan_limit_value", "stats"):
+            if _k in _base_sp:
+                _merged_sp[_k] = _base_sp[_k]
+        qrcard = _merged_sp
+    qrcard = enforce_scan_limit_and_increment(qrcard, _mgd, app)
     _mgd.db_qrcard_special.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
     # special_sections is stored as a JSON string; parse it back to a list
     import json as _json_sp
@@ -6082,6 +6089,21 @@ def qr_new_special_design_draft(qrcard_id):
              _db_sd.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id, "qr_type": "special"})
     if not qrcard:
         return redirect(url_for("user_qr_list"))
+    _base_sd = _db_sd.db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id})
+    if _base_sd:
+        _m = dict(qrcard)
+        for _k in ("schedule_enabled", "schedule_since", "schedule_until", "scan_limit_enabled", "scan_limit_value"):
+            if _k in _base_sd:
+                _m[_k] = _base_sd[_k]
+        qrcard = _m
+    from pytavia_modules.qr.qr_special_proc import _schedule_date_for_html_input as _sp_sched_draft
+    _stats_carry_draft = {
+        "scan_limit_enabled": qrcard.get("scan_limit_enabled"),
+        "scan_limit_value": qrcard.get("scan_limit_value", 0),
+        "schedule_enabled": qrcard.get("schedule_enabled"),
+        "schedule_since": _sp_sched_draft(qrcard.get("schedule_since")) if qrcard.get("schedule_since") else "",
+        "schedule_until": _sp_sched_draft(qrcard.get("schedule_until")) if qrcard.get("schedule_until") else "",
+    }
     sc = qrcard.get("short_code", "")
     qr_encode_url = config.G_BASE_URL.rstrip("/") + "/special/" + sc if sc else None
     _special_sections = qrcard.get("special_sections", [])
@@ -6094,6 +6116,7 @@ def qr_new_special_design_draft(qrcard_id):
         url_content=qrcard.get("url_content", ""), qr_name=qrcard.get("name", ""),
         short_code=sc, qr_encode_url=qr_encode_url,
         special_sections=_special_sections, qrcard_id=qrcard_id,
+        stats_carry=_stats_carry_draft,
     )
 
 
@@ -6338,12 +6361,21 @@ def user_new_qr_special():
             special_sections = _json.loads(sections_json)
         except Exception:
             special_sections = []
+        _raw_lim = (request.form.get("scan_limit_value") or "").strip()
+        _content_stats = {
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
+            "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
+            "scan_limit_value": _raw_lim if _raw_lim.isdigit() else "100",
+        }
         return v.new_qr_content_html(
             base_url=config.G_BASE_URL,
             url_content=url_content,
             qr_name=qr_name,
             short_code=short_code,
             special_sections=special_sections,
+            content_stats_prefill=_content_stats,
         )
     return v.new_qr_content_html(base_url=config.G_BASE_URL)
 
@@ -6378,24 +6410,42 @@ def user_new_qr_design_special():
         except Exception as e:
             print(f"[DEBUG-STEP2] JSON parse error: {e}")
             special_sections = []
+        _sp_stats_pref = {
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
+            "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
+            "scan_limit_value": (lambda r: r if r.isdigit() else "100")((request.form.get("scan_limit_value") or "").strip()),
+        }
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
             error_msg = "A QR card with this name already exists."
-            return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections)
+            return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections, content_stats_prefill=_sp_stats_pref)
         if short_code:
             if not re.match(r"^[a-z0-9_-]{2,32}$", short_code):
                 error_msg = "Address identifier must be 2-32 characters: letters, numbers, '-' or '_'."
-                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections)
+                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections, content_stats_prefill=_sp_stats_pref)
             if not proc.is_short_code_unique(short_code):
                 error_msg = "This address identifier is already in use."
-                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections)
+                return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code, special_sections=special_sections, content_stats_prefill=_sp_stats_pref)
         else:
             short_code = proc._generate_short_code()
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/special/" + short_code
+    _raw_lim2 = (request.form.get("scan_limit_value") or "").strip() if request.method == "POST" else ""
+    _stats_carry_new = {}
+    if request.method == "POST":
+        _stats_carry_new = {
+            "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
+            "scan_limit_value": int(_raw_lim2) if _raw_lim2.isdigit() else 0,
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
+        }
     return v.new_qr_design_html(
         url_content=url_content, qr_name=qr_name, short_code=short_code,
         qr_encode_url=qr_encode_url, error_msg=error_msg, special_sections=special_sections,
+        stats_carry=_stats_carry_new,
     )
 
 
@@ -6421,6 +6471,7 @@ def qr_save_special():
             qr_type="special", source="create",
         )
         return redirect(url_for("user_qr_list"))
+    _rl_err = (request.form.get("scan_limit_value") or "").strip()
     return view_special.view_special(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
         qr_name=response.get("qr_name", ""),
@@ -6428,6 +6479,13 @@ def qr_save_special():
         qr_encode_url=response.get("qr_encode_url"),
         error_msg=response.get("error_msg", "Save failed."),
         special_sections=response.get("special_sections", []),
+        stats_carry={
+            "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
+            "scan_limit_value": int(_rl_err) if _rl_err.isdigit() else 0,
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
+        },
     )
 
 @app.route("/qr/special/upload-image", methods=["POST"])
@@ -6501,6 +6559,12 @@ def qr_update_content_special(qrcard_id):
             draft["url_content"] = url_content or draft.get("url_content", "")
             draft["name"] = qr_name or draft.get("name", "")
             draft["short_code"] = short_code or draft.get("short_code", "")
+            draft["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
+            _rl_b = (request.form.get("scan_limit_value") or "").strip()
+            draft["scan_limit_value"] = int(_rl_b) if _rl_b.isdigit() else int(draft.get("scan_limit_value") or 0)
+            draft["schedule_enabled"] = bool(request.form.get("schedule_enabled"))
+            draft["schedule_since"] = (request.form.get("schedule_since") or "").strip()
+            draft["schedule_until"] = (request.form.get("schedule_until") or "").strip()
             return view_update_special.view_update_special(app).update_qr_content_html(
                 qrcard=draft, base_url=config.G_BASE_URL,
                 url_content=draft.get("url_content", "QRkartu"),
@@ -6520,11 +6584,12 @@ def qr_update_content_special(qrcard_id):
         except Exception:
             special_sections = []
         extra_data = {"special_sections": special_sections}
-        if request.form.get("scan_limit_enabled"):
-            extra_data["scan_limit_enabled"] = True
+        extra_data["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
         raw_limit = (request.form.get("scan_limit_value") or "").strip()
-        if raw_limit.isdigit():
-            extra_data["scan_limit_value"] = int(raw_limit)
+        extra_data["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+        extra_data["schedule_enabled"] = bool(request.form.get("schedule_enabled"))
+        extra_data["schedule_since"] = (request.form.get("schedule_since") or "").strip()
+        extra_data["schedule_until"] = (request.form.get("schedule_until") or "").strip()
 
         extra_data["welcome_bg_color"] = request.form.get("welcome_bg_color", "#2F6BFD")
         extra_data["welcome_time"] = request.form.get("welcome_time", "2.5")
@@ -6560,6 +6625,31 @@ def qr_update_content_special(qrcard_id):
                     except Exception: pass
             elif qrcard.get("welcome_img_url"):
                 extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
+
+        if request.form.get("reset_qr_style") == "1":
+            _unset_sp = {
+                "qr_composite_url": "",
+                "qr_image_url": "",
+                "qr_dot_style": "",
+                "qr_corner_style": "",
+                "qr_dot_color": "",
+                "qr_bg_color": "",
+                "card_bg_color": "",
+            }
+            try:
+                _mgd_rs = database.get_db_conn(config.mainDB)
+                _mgd_rs.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$unset": _unset_sp},
+                )
+                _mgd_rs.db_qrcard_special.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    {"$unset": {"qr_composite_url": "", "qr_image_url": ""}},
+                )
+            except Exception:
+                pass
+            for _uk in _unset_sp:
+                qrcard.pop(_uk, None)
 
         _set_qr_draft(session, qrcard_id, url_content, qr_name, short_code, extra_data)
         return redirect(url_for("qr_update_design_special", qrcard_id=qrcard_id))
@@ -6642,6 +6732,9 @@ def qr_update_save_special(qrcard_id):
     params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled") or draft.get("scan_limit_enabled"))
     raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+    params["schedule_enabled"] = bool(request.form.get("schedule_enabled") or draft.get("schedule_enabled"))
+    params["schedule_since"] = (request.form.get("schedule_since") or draft.get("schedule_since") or "").strip()
+    params["schedule_until"] = (request.form.get("schedule_until") or draft.get("schedule_until") or "").strip()
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
     _frame_id_special = request.form.get("frame_id", "")

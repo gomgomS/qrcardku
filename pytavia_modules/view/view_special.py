@@ -10,7 +10,7 @@ class view_special:
 
     def new_qr_content_html(self, msg=None, error_msg=None, base_url=None,
                             url_content=None, qr_name=None, short_code=None,
-                            special_sections=None):
+                            special_sections=None, content_stats_prefill=None):
         try:
             return render_template(
                 "/user/new_qr_content_special.html",
@@ -22,6 +22,7 @@ class view_special:
                 qr_name=qr_name or "",
                 short_code=short_code or "",
                 special_sections=special_sections or [],
+                content_stats_prefill=content_stats_prefill or {},
             )
         except Exception:
             if self.webapp:
@@ -30,7 +31,7 @@ class view_special:
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None,
                            qr_encode_url=None, msg=None, error_msg=None,
-                           special_sections=None, qrcard_id=None):
+                           special_sections=None, qrcard_id=None, stats_carry=None):
         try:
             form_action = f"/qr/update/save/special/{qrcard_id}" if qrcard_id else "/qr/save/special"
             return render_template(
@@ -45,6 +46,7 @@ class view_special:
                 special_sections=special_sections or [],
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                stats_carry=stats_carry or {},
             )
         except Exception:
             if self.webapp:

@@ -1258,7 +1258,8 @@
             <span class="step-num">2</span>
             <span data-i18n="nq_step2">Content</span>
         </span>
-        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link"
+        <button type="submit" form="content-form" class="step-item step-disabled" id="step3-link" disabled
+            aria-disabled="true"
             style="background:none;border:none;cursor:pointer;font:inherit;color:inherit;padding:4px 12px 4px 4px;border-radius:20px;">
             <span class="step-num">3</span>
             <span data-i18n="nq_step3">QR design</span>
@@ -1266,11 +1267,12 @@
     </div>
     <div class="new-qr-step-nav">
         <a href="/qr/list" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> Cancel</a>
-        <button form="content-form" type="submit" class="btn-next">Save &amp; Next <i class="fa-solid fa-arrow-right"></i></button>
+        <button form="content-form" type="submit" class="btn-next" id="content-next-btn" disabled>Save &amp; Next <i class="fa-solid fa-arrow-right"></i></button>
     </div>
 </div>
 
-<form id="content-form" method="POST" action="/qr/update/special/{{ qrcard.qrcard_id }}" enctype="multipart/form-data">
+<form id="content-form" method="POST" action="/qr/update/special/{{ qrcard.qrcard_id }}" enctype="multipart/form-data"
+    onsubmit="var st=document.getElementById('schedule-toggle');var ss=document.getElementById('schedule-since');var su=document.getElementById('schedule-until');if(st&amp;&amp;st.checked){if(ss)ss.disabled=false;if(su)su.disabled=false;}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <input type="hidden" name="special_sections" id="specialSectionsData" value="[]" />
 
@@ -1387,19 +1389,112 @@
             <div class="tab-content" id="tab-stats">
                 <div class="editor-panel">
                     <h3><i class="fa-solid fa-chart-bar" style="color: var(--primary);"></i> Stats & URL</h3>
-                    <div class="form-group">
-                        <label class="form-label">Custom URL Path</label>
-                        <div class="url-prefix-group">
-                            <span class="url-prefix">{{ base_url | default('QRkartu') }}/special/</span>
-                            <input type="text" name="short_code" placeholder="my-page"
-                                value="{{ short_code | default(qrcard.short_code, true) }}" pattern="[a-z0-9_\-]{2,32}">
+                    <div class="form-group" style="margin-top: 8px;">
+                        <label class="form-label" style="font-size: 12px;">URL</label>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                            Customize your URL address identifier for this QR code.
+                        </p>
+                        <div style="font-size: 11px; margin-bottom: 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid #fecaca; background-color: #fef2f2; color: #b91c1c;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span style="margin-left: 6px;">
+                                Be careful when changing this URL. Updating it will also change the destination of this QR.
+                            </span>
                         </div>
+
+                        <!-- Static display (shown by default) -->
+                        <div id="url-static-display" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-body);">
+                            <span style="font-size:13px; color:var(--primary); word-break:break-all; font-family:monospace;">
+                                {{ base_url | default('https://QRkartu') }}/special/{{ short_code | default(qrcard.short_code if qrcard else '', true) }}
+                            </span>
+                            <button type="button" onclick="startUrlEdit()" style="flex-shrink:0; padding:5px 12px; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer; white-space:nowrap;">
+                                <i class="fa-solid fa-pen"></i> Change
+                            </button>
+                        </div>
+
+                        <!-- Warning shown after clicking Change -->
+                        <div id="url-change-warning" style="display:none; margin-top:10px; padding:12px; border-radius:6px; border:1px solid #f59e0b; background:#fffbeb;">
+                            <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:10px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color:#d97706; margin-top:2px; flex-shrink:0;"></i>
+                                <div style="font-size:12px; color:#92400e; font-weight:600;">
+                                    Changing the URL will permanently reset your custom QR style. This cannot be undone.
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button type="button" onclick="confirmUrlEdit()"
+                                    style="flex:1; padding:7px 0; font-size:12px; font-weight:600; border:none; background:#d97706; color:white; border-radius:6px; cursor:pointer;">
+                                    Yes, change URL &amp; reset QR
+                                </button>
+                                <button type="button" onclick="cancelUrlEdit()"
+                                    style="flex:1; padding:7px 0; font-size:12px; border:1px solid var(--border-color); background:var(--bg-content); color:var(--text-main); border-radius:6px; cursor:pointer;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Input (hidden until confirmed) -->
+                        <div id="url-input-group" style="display:none; margin-top:8px;">
+                            <div class="url-prefix-group">
+                                <div class="url-prefix" id="stats-url-prefix">{{ base_url | default('https://QRkartu') }}/special/</div>
+                                <input type="text" name="short_code" id="stats-short-code-input"
+                                    placeholder="Letters, numbers, '-' and '_' only"
+                                    value="{{ short_code | default(qrcard.short_code if qrcard else '', true) }}"
+                                    pattern="[a-zA-Z0-9_\-]{2,32}"
+                                    maxlength="32"
+                                    title="Letters, numbers, '-' and '_' only, 2–32 characters">
+                            </div>
+                            <p id="stats-url-preview" style="font-size:11px; color:var(--primary); margin-top:6px; word-break:break-all;"></p>
+                            <p style="font-size:11px; color:var(--text-muted); margin-top:4px;">Letters, numbers, '-' and '_' only (2–32 characters).</p>
+                        </div>
+
+                        <input type="hidden" name="reset_qr_style" id="reset-qr-style-flag" value="0">
                     </div>
                     <div class="form-group">
                         <label class="form-label">URL Content (fallback)</label>
                         <input type="text" name="url_content" class="form-control" placeholder="QRkartu"
                             value="{{ url_content | default(qrcard.url_content, true) }}">
                     </div>
+
+                    <!-- Schedule Date -->
+                    <div>
+                        <div class="sub-collapse-header"
+                            onclick="this.nextElementSibling.classList.toggle('show'); var ch=this.lastElementChild; if(ch&amp;&amp;ch.tagName==='I'){ ch.classList.toggle('fa-chevron-down'); ch.classList.toggle('fa-chevron-up'); }">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> <span data-i18n="nc_stats_schedule">Schedule a date</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">
+                                Set the dates on which your content will be shown through the QR. At the end of that period, it will be disabled.
+                            </p>
+                            <div class="toggle-row" style="padding-left: 22px;">
+                                <div class="toggle-label-with-icon">
+                                    <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="schedule_enabled" id="schedule-toggle" value="on" {% if qrcard.get('schedule_enabled') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="schedule-dates" style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px; {% if not qrcard.get('schedule_enabled') %}opacity: 0.4; pointer-events: none;{% endif %}">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
+                                    <input type="date" name="schedule_since" id="schedule-since" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_since', '') }}"
+                                        {% if not qrcard.get('schedule_enabled') %}disabled{% endif %}>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
+                                    <input type="date" name="schedule_until" id="schedule-until" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_until', '') }}"
+                                        {% if not qrcard.get('schedule_enabled') %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="toggle-row">
                         <div class="toggle-label-with-icon">
                             <i class="fa-solid fa-shield-halved"></i>
@@ -1461,7 +1556,7 @@
         <button type="submit" form="content-form" class="mobile-bar-arrow primary" title="Save">
             <i class="fa-solid fa-arrow-right"></i>
         </button>
-    </div>    <input type="hidden" name="reset_qr_style" id="reset-qr-style-flag" value="0">
+    </div>
 
 </form>
 
@@ -1615,7 +1710,75 @@
         document.getElementById('scanLimitValue').disabled = !this.checked;
     });
 
+    (function () {
+        var schedToggle = document.getElementById('schedule-toggle');
+        var schedDates = document.getElementById('schedule-dates');
+        var schedSince = document.getElementById('schedule-since');
+        var schedUntil = document.getElementById('schedule-until');
+        if (!schedToggle || !schedDates) return;
+        function updateSchedule() {
+            var on = schedToggle.checked;
+            schedDates.style.opacity = on ? '1' : '0.4';
+            schedDates.style.pointerEvents = on ? '' : 'none';
+            if (schedSince) schedSince.disabled = !on;
+            if (schedUntil) schedUntil.disabled = !on;
+        }
+        schedToggle.addEventListener('change', updateSchedule);
+        updateSchedule();
+    })();
+
+    // Stats tab: live URL preview + strip invalid short_code characters
+    (function () {
+        var baseUrl = {{ (base_url or '') | tojson }};
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var shortInput = document.getElementById('stats-short-code-input');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (!shortInput || !previewEl) return;
+        function stripInvalidChars(val) {
+            return (val || '').replace(/[^a-zA-Z0-9_-]/g, '');
+        }
+        function updateUrlPreview() {
+            var code = shortInput.value.trim();
+            var prefix = prefixEl ? prefixEl.textContent.trim() : (baseUrl.replace(/\/$/, '') + '/special/');
+            previewEl.textContent = code ? prefix + code : '';
+        }
+        shortInput.addEventListener('input', function () {
+            var filtered = stripInvalidChars(shortInput.value);
+            if (filtered !== shortInput.value) shortInput.value = filtered;
+            updateUrlPreview();
+        });
+        shortInput.addEventListener('paste', function () {
+            var self = shortInput;
+            setTimeout(function () { self.value = stripInvalidChars(self.value); updateUrlPreview(); }, 0);
+        });
+        updateUrlPreview();
+    })();
+
     // ==================== SECTIONS LIST ====================
+    function syncSpecialStepNav() {
+        var qrNameInput = document.querySelector('#content-form input[name="qr_name"]');
+        var nameVal = qrNameInput ? (qrNameInput.value || '').trim() : '';
+        var nameOk = nameVal.length > 0 && /^[a-zA-Z0-9]+$/.test(nameVal);
+        var hasSections = Array.isArray(sections) && sections.length > 0;
+        var valid = nameOk && hasSections;
+        var step3Link = document.getElementById('step3-link');
+        var contentNextBtn = document.getElementById('content-next-btn');
+        if (step3Link) {
+            if (valid) {
+                step3Link.classList.remove('step-disabled');
+                step3Link.removeAttribute('aria-disabled');
+                step3Link.disabled = false;
+            } else {
+                step3Link.classList.add('step-disabled');
+                step3Link.setAttribute('aria-disabled', 'true');
+                step3Link.disabled = true;
+            }
+        }
+        if (contentNextBtn) {
+            contentNextBtn.disabled = !valid;
+        }
+    }
+
     function renderSections() {
         const container = document.getElementById('sectionsContainer');
         if (sections.length === 0) {
@@ -1661,6 +1824,7 @@
                 }
             });
         }
+        syncSpecialStepNav();
     }
 
     function addNewSection() {
@@ -2955,6 +3119,12 @@
     // ==================== INIT ====================
     renderSections();
 
+    (function () {
+        var qrNameInput = document.querySelector('#content-form input[name="qr_name"]');
+        if (qrNameInput) qrNameInput.addEventListener('input', syncSpecialStepNav);
+        syncSpecialStepNav();
+    })();
+
     var _originalShortCode = {{ (qrcard.short_code if qrcard and qrcard.get('short_code') else '') | tojson }};
 
     function startUrlEdit() {
@@ -2967,7 +3137,13 @@
         var sd = document.getElementById('url-static-display'); if (sd) sd.style.display = 'none';
         var ig = document.getElementById('url-input-group'); if (ig) ig.style.display = 'block';
         var flag = document.getElementById('reset-qr-style-flag'); if (flag) flag.value = '1';
-        var inp = document.getElementById('stats-short-code-input'); if (inp) inp.focus();
+        var inp = document.getElementById('stats-short-code-input');
+        var prefixEl = document.getElementById('stats-url-prefix');
+        var previewEl = document.getElementById('stats-url-preview');
+        if (inp) inp.focus();
+        if (previewEl && prefixEl && inp) {
+            previewEl.textContent = inp.value ? prefixEl.textContent.trim() + inp.value : '';
+        }
     }
 
     function cancelUrlEdit() {
