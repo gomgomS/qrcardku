@@ -499,7 +499,8 @@
 </div>
 
 <form id="content-form" method="POST" action="{{ form_action | default('/qr/update/video/' ~ qrcard_id) }}"
-    enctype="multipart/form-data">
+    enctype="multipart/form-data"
+    onsubmit="var st=document.getElementById('schedule-toggle');var ss=document.getElementById('schedule-since');var su=document.getElementById('schedule-until');if(st&amp;&amp;st.checked){if(ss)ss.disabled=false;if(su)su.disabled=false;}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="page-title" style="margin-bottom: 24px;">Edit video gallery content</div>
 
@@ -940,6 +941,56 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Schedule Date -->
+                    <div>
+                        <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> <span data-i18n="nc_stats_schedule">Schedule a date</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+
+                        <div class="sub-collapse-body">
+                            <p
+                                style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">
+                                Set the dates on which your content will be shown through the QR. At the end of that
+                                period,
+                                it
+                                will be disabled.
+                            </p>
+
+                            <div class="toggle-row" style="padding-left: 22px;">
+                                <div class="toggle-label-with-icon">
+                                    <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="schedule_enabled" id="schedule-toggle" value="on"
+                                        {% if qrcard and qrcard.get('schedule_enabled') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="schedule-dates" style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;
+                                {% if not (qrcard and qrcard.get('schedule_enabled')) %}opacity: 0.4; pointer-events: none;{% endif %}">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
+                                    <input type="date" name="schedule_since" id="schedule-since" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_since', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
+                                    <input type="date" name="schedule_until" id="schedule-until" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_until', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon">
@@ -1106,6 +1157,21 @@
         var scanRow = document.getElementById('scan-limit-row');
         function toggleScanLimit() { if (scanRow) scanRow.style.display = scanToggle && scanToggle.checked ? 'block' : 'none'; }
         if (scanToggle) { scanToggle.addEventListener('change', toggleScanLimit); toggleScanLimit(); }
+
+        // ── Schedule toggle ──
+        var schedToggle = document.getElementById('schedule-toggle');
+        var schedDates = document.getElementById('schedule-dates');
+        var schedSince = document.getElementById('schedule-since');
+        var schedUntil = document.getElementById('schedule-until');
+        function updateScheduleUI() {
+            if (!schedToggle || !schedDates) return;
+            var on = schedToggle.checked;
+            schedDates.style.opacity = on ? '1' : '0.4';
+            schedDates.style.pointerEvents = on ? '' : 'none';
+            if (schedSince) schedSince.disabled = !on;
+            if (schedUntil) schedUntil.disabled = !on;
+        }
+        if (schedToggle) { schedToggle.addEventListener('change', updateScheduleUI); updateScheduleUI(); }
 
         // ── Live preview updates ──
         var titleInput = document.getElementById('video_title');

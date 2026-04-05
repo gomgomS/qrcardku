@@ -16,6 +16,19 @@ SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
 
 
+def _schedule_date_for_html_input(val):
+    if val is None or val == "":
+        return ""
+    if isinstance(val, datetime):
+        return val.strftime("%Y-%m-%d")
+    s = str(val).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    if "T" in s:
+        return s.split("T", 1)[0][:10]
+    return s
+
+
 class qr_links_proc:
     """Standalone processor for Links QR cards."""
 
@@ -89,6 +102,9 @@ class qr_links_proc:
                 "stats": {"scan_count": 0},
                 "scan_limit_enabled": bool(params.get("scan_limit_enabled", False)),
                 "scan_limit_value": max(int(params.get("scan_limit_value", 0)) if str(params.get("scan_limit_value", 0)).strip().isdigit() else 0, 0),
+                "schedule_enabled": bool(params.get("schedule_enabled")),
+                "schedule_since": (params.get("schedule_since") or "").strip(),
+                "schedule_until": (params.get("schedule_until") or "").strip(),
                 "status": "ACTIVE",
                 "created_at": created_at,
                 "timestamp": current_time,
@@ -117,11 +133,40 @@ class qr_links_proc:
             return {"message_action": "ADD_QRCARD_FAILED", "message_desc": "An internal error occurred.", "message_data": {}}
 
     def get_qrcard(self, fk_user_id, qrcard_id):
+        """Prefer links row; merge scan/schedule and shell fields from db_qrcard when both exist."""
         try:
             doc = self.mgdDB.db_qrcard_links.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"})
-            if doc:
-                return doc
-            return self.mgdDB.db_qrcard.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "status": "ACTIVE"})
+            base_doc = self.mgdDB.db_qrcard.find_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "status": "ACTIVE"}
+            )
+            out = None
+            if doc and base_doc:
+                for sk in (
+                    "qr_image_url",
+                    "qr_composite_url",
+                    "frame_id",
+                    "url_content",
+                    "name",
+                    "short_code",
+                    "scan_limit_enabled",
+                    "scan_limit_value",
+                    "schedule_enabled",
+                    "schedule_since",
+                    "schedule_until",
+                    "stats",
+                ):
+                    if sk in base_doc:
+                        doc[sk] = base_doc[sk]
+                out = doc
+            elif doc:
+                out = doc
+            else:
+                out = base_doc
+            if out:
+                for dk in ("schedule_since", "schedule_until"):
+                    if dk in out and out[dk] is not None and out[dk] != "":
+                        out[dk] = _schedule_date_for_html_input(out[dk])
+            return out
         except Exception:
             self.webapp.logger.debug(traceback.format_exc())
             return None
@@ -150,6 +195,10 @@ class qr_links_proc:
                     update_data["scan_limit_value"] = max(lv, 0)
                 except Exception:
                     pass
+            if "schedule_enabled" in params:
+                update_data["schedule_enabled"] = bool(params.get("schedule_enabled"))
+                update_data["schedule_since"] = (params.get("schedule_since") or "").strip()
+                update_data["schedule_until"] = (params.get("schedule_until") or "").strip()
 
             doc = self.get_qrcard(fk_user_id, qrcard_id)
             if doc:
@@ -201,6 +250,9 @@ class qr_links_proc:
             "short_code": (request.form.get("short_code") or "").strip().lower(),
             "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
             "scan_limit_value": int(v) if (v := (request.form.get("scan_limit_value") or "").strip()).isdigit() else 0,
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
         }
 
         result = self.add_qrcard(params)

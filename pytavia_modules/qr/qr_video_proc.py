@@ -16,6 +16,19 @@ SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
 
 
+def _schedule_date_for_html_input(val):
+    if val is None or val == "":
+        return ""
+    if isinstance(val, datetime):
+        return val.strftime("%Y-%m-%d")
+    s = str(val).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    if "T" in s:
+        return s.split("T", 1)[0][:10]
+    return s
+
+
 class qr_video_proc:
     """Standalone processor for video QR cards."""
 
@@ -121,6 +134,10 @@ class qr_video_proc:
                 qrcard_rec["scan_limit_enabled"] = False
                 qrcard_rec["scan_limit_value"] = 0
 
+            qrcard_rec["schedule_enabled"] = bool(params.get("schedule_enabled"))
+            qrcard_rec["schedule_since"] = (params.get("schedule_since") or "").strip()
+            qrcard_rec["schedule_until"] = (params.get("schedule_until") or "").strip()
+
             qrcard_rec["status"] = "ACTIVE"
             qrcard_rec["created_at"] = created_at
             qrcard_rec["timestamp"] = current_time
@@ -137,6 +154,9 @@ class qr_video_proc:
             video_rec["stats"] = qrcard_rec.get("stats", {"scan_count": 0})
             video_rec["scan_limit_enabled"] = qrcard_rec.get("scan_limit_enabled", False)
             video_rec["scan_limit_value"] = qrcard_rec.get("scan_limit_value", 0)
+            video_rec["schedule_enabled"] = qrcard_rec.get("schedule_enabled", False)
+            video_rec["schedule_since"] = qrcard_rec.get("schedule_since", "")
+            video_rec["schedule_until"] = qrcard_rec.get("schedule_until", "")
             video_rec["status"] = qrcard_rec.get("status", "ACTIVE")
             video_rec["created_at"] = created_at
             video_rec["timestamp"] = current_time
@@ -180,14 +200,12 @@ class qr_video_proc:
             return []
 
     def get_qrcard(self, fk_user_id, qrcard_id):
-        """Return video doc for edit."""
+        """Return video doc for edit; merge scan/schedule and QR shell fields from db_qrcard when both exist."""
         try:
             doc = self.mgdDB.db_qrcard_video.find_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
             )
-            if doc:
-                return doc
-            return self.mgdDB.db_qrcard.find_one(
+            base_doc = self.mgdDB.db_qrcard.find_one(
                 {
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
@@ -195,6 +213,33 @@ class qr_video_proc:
                     "status": "ACTIVE",
                 }
             )
+            out = None
+            if doc and base_doc:
+                for sk in (
+                    "qr_image_url",
+                    "qr_composite_url",
+                    "frame_id",
+                    "url_content",
+                    "name",
+                    "short_code",
+                    "scan_limit_enabled",
+                    "scan_limit_value",
+                    "schedule_enabled",
+                    "schedule_since",
+                    "schedule_until",
+                ):
+                    if sk in base_doc:
+                        doc[sk] = base_doc[sk]
+                out = doc
+            elif doc:
+                out = doc
+            else:
+                out = base_doc
+            if out:
+                for dk in ("schedule_since", "schedule_until"):
+                    if dk in out and out[dk] is not None and out[dk] != "":
+                        out[dk] = _schedule_date_for_html_input(out[dk])
+            return out
         except Exception:
             self.webapp.logger.debug("qr_video_proc.get_qrcard failed", exc_info=True)
             return None
@@ -235,6 +280,11 @@ class qr_video_proc:
                     update_data["scan_limit_value"] = max(limit_val, 0)
                 except Exception:
                     pass
+
+            if "schedule_enabled" in params:
+                update_data["schedule_enabled"] = bool(params.get("schedule_enabled"))
+                update_data["schedule_since"] = (params.get("schedule_since") or "").strip()
+                update_data["schedule_until"] = (params.get("schedule_until") or "").strip()
 
             doc = self.get_qrcard(fk_user_id, qrcard_id)
             if doc:
@@ -310,6 +360,9 @@ class qr_video_proc:
         params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
         raw_limit = (request.form.get("scan_limit_value") or "").strip()
         params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+        params["schedule_enabled"] = bool(request.form.get("schedule_enabled"))
+        params["schedule_since"] = (request.form.get("schedule_since") or "").strip()
+        params["schedule_until"] = (request.form.get("schedule_until") or "").strip()
         result = self.add_qrcard(params)
         if result.get("message_action") == "ADD_QRCARD_FAILED":
             sc = params.get("short_code") or ""

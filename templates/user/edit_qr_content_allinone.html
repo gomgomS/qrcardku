@@ -39,7 +39,7 @@
     .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; transition: border-color 0.2s; box-sizing: border-box; }
     .form-control:focus { outline: none; border-color: var(--primary); }
     .name-qr-input { width: 100%; padding: 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 24px; box-sizing: border-box; }
-    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .3s; border-radius: 20px; }
     .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: var(--bg-content); transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -50,6 +50,18 @@
     .url-prefix-group input { flex: 1; border: none; padding: 10px 14px; background: var(--bg-content); color: var(--text-main); }
     .url-prefix-group input:focus { outline: none; }
     .toggle-label-with-icon { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-main); font-weight: 500; }
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        margin-bottom: 8px;
+        gap: 12px;
+    }
+    .toggle-row > .toggle-label-with-icon {
+        flex: 1;
+        min-width: 0;
+    }
     .template-select-area, .preview-column {
         --bg-body: #f9fafb; --bg-content: #ffffff; --bg-sidebar: #f3f4f6;
         --text-main: #111827; --text-muted: #6b7280; --border-color: #e5e7eb;
@@ -640,11 +652,51 @@
                     </div>
                     <div>
                         <div class="sub-collapse-header">
+                            <div class="toggle-label-with-icon">
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> <span data-i18n="nc_stats_schedule">Schedule a date</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
+                        </div>
+                        <div class="sub-collapse-body">
+                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; padding-left: 22px;">
+                                Set the dates on which your content will be shown through the QR. At the end of that period, it will be disabled.
+                            </p>
+                            <div class="toggle-row" style="padding-left: 22px;">
+                                <div class="toggle-label-with-icon">
+                                    <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="schedule_enabled" id="schedule-toggle" value="on"
+                                        {% if qrcard and qrcard.get('schedule_enabled') %}checked{% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div id="schedule-dates" style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;
+                                {% if not (qrcard and qrcard.get('schedule_enabled')) %}opacity: 0.4; pointer-events: none;{% endif %}">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
+                                    <input type="date" name="schedule_since" id="schedule-since" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_since', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
+                                    <input type="date" name="schedule_until" id="schedule-until" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_until', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon"><i class="fa-solid fa-expand" style="color: var(--text-main);"></i> <span data-i18n="nc_stats_scan_limit_toggle">Scan limit</span></div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
                         <div class="sub-collapse-body">
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
+                            <div class="toggle-row">
                                 <div class="toggle-label-with-icon">Enable scan limit</div>
                                 <label class="toggle-switch"><input type="checkbox" name="scan_limit_enabled" id="scan-limit-toggle" {% if qrcard and qrcard.get('scan_limit_enabled') %}checked{% endif %}><span class="slider"></span></label>
                             </div>
@@ -880,6 +932,23 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!toggle || !input) return;
         function sync() { input.disabled = !toggle.checked; }
         toggle.addEventListener('change', sync); sync();
+    })();
+
+    (function () {
+        var schedToggle = document.getElementById('schedule-toggle');
+        var schedDates = document.getElementById('schedule-dates');
+        var schedSince = document.getElementById('schedule-since');
+        var schedUntil = document.getElementById('schedule-until');
+        if (!schedToggle || !schedDates) return;
+        function updateSchedule() {
+            var on = schedToggle.checked;
+            schedDates.style.opacity = on ? '1' : '0.4';
+            schedDates.style.pointerEvents = on ? '' : 'none';
+            if (schedSince) schedSince.disabled = !on;
+            if (schedUntil) schedUntil.disabled = !on;
+        }
+        schedToggle.addEventListener('change', updateSchedule);
+        updateSchedule();
     })();
 
     // Colors
@@ -1785,6 +1854,13 @@ document.addEventListener('DOMContentLoaded', function () {
 function submitWithOverlay() {
     document.getElementById('save-next-overlay').style.display = 'flex';
     var form = document.getElementById('content-form');
+    var schedToggle = document.getElementById('schedule-toggle');
+    var schedSince = document.getElementById('schedule-since');
+    var schedUntil = document.getElementById('schedule-until');
+    if (schedToggle && schedToggle.checked) {
+        if (schedSince) schedSince.disabled = false;
+        if (schedUntil) schedUntil.disabled = false;
+    }
     // Fire submit event so the sections-serialization listener runs
     // (form.submit() bypasses addEventListener listeners)
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));

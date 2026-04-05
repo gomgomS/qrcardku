@@ -776,6 +776,10 @@ function onQRColorChange(target, value) {
             {% set f_val = qrcard.get(field, '') if qrcard else (pdf_data.get(field, '') if pdf_data else '') %}
             <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
             {% endfor %}
+            {% set _sched_ctx = qrcard if qrcard else pdf_data %}
+            <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx and _sched_ctx.get('schedule_enabled') %}on{% endif %}">
+            <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') if _sched_ctx else '') | e }}">
+            <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') if _sched_ctx else '') | e }}">
 
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
@@ -804,6 +808,10 @@ function onQRColorChange(target, value) {
     {% set f_val = qrcard.get(field, '') if qrcard else (pdf_data.get(field, '') if pdf_data else '') %}
     <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
     {% endfor %}
+    {% set _sched_ctx = qrcard if qrcard else pdf_data %}
+    <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx and _sched_ctx.get('schedule_enabled') %}on{% endif %}">
+    <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') if _sched_ctx else '') | e }}">
+    <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') if _sched_ctx else '') | e }}">
     <input type="hidden" name="frame_id" id="frame_id" value="">
     <input type="hidden" name="qr_dot_style"    id="qr_dot_style_input"    value="square">
     <input type="hidden" name="qr_corner_style" id="qr_corner_style_input" value="square">

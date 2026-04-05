@@ -29,7 +29,7 @@ class view_links:
             return "Failed to load New QR Content (Links)"
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None,
-                            qr_encode_url=None, msg=None, error_msg=None, links_data=None, qrcard_id=None):
+                            qr_encode_url=None, msg=None, error_msg=None, links_data=None, qrcard_id=None, stats_carry=None):
         try:
             form_action = f"/qr/update/save/links/{qrcard_id}" if qrcard_id else "/qr/save/links"
             return render_template(
@@ -44,6 +44,7 @@ class view_links:
                 links_data=links_data or {},
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                stats_carry=stats_carry,
             )
         except Exception:
             if self.webapp:

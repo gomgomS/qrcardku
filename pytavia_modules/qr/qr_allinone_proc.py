@@ -23,6 +23,19 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_COVER_SIZE = 2 * 1024 * 1024  # 2 MB
 
 
+def _schedule_date_for_html_input(val):
+    if val is None or val == "":
+        return ""
+    if isinstance(val, datetime):
+        return val.strftime("%Y-%m-%d")
+    s = str(val).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    if "T" in s:
+        return s.split("T", 1)[0][:10]
+    return s
+
+
 class qr_allinone_proc:
     """Standalone processor for All-in-One QR cards."""
 
@@ -116,6 +129,9 @@ class qr_allinone_proc:
                 "stats": {"scan_count": 0},
                 "scan_limit_enabled": bool(params.get("scan_limit_enabled", False)),
                 "scan_limit_value": max(int(params.get("scan_limit_value", 0)) if str(params.get("scan_limit_value", 0)).strip().isdigit() else 0, 0),
+                "schedule_enabled": bool(params.get("schedule_enabled", False)),
+                "schedule_since": (params.get("schedule_since") or "").strip(),
+                "schedule_until": (params.get("schedule_until") or "").strip(),
                 "status": params.get("status", "ACTIVE"),
                 "created_at": created_at,
                 "timestamp": current_time,
@@ -152,12 +168,22 @@ class qr_allinone_proc:
                 query["fk_user_id"] = fk_user_id
             doc = self.mgdDB.db_qrcard_allinone.find_one(query)
             if doc:
+                doc = dict(doc)
+                for dk in ("schedule_since", "schedule_until"):
+                    if doc.get(dk) not in (None, ""):
+                        doc[dk] = _schedule_date_for_html_input(doc[dk])
                 return doc
             # Fallback: try db_qrcard
             q2 = {"qrcard_id": qrcard_id, "qr_type": "allinone", "status": status_filter}
             if fk_user_id:
                 q2["fk_user_id"] = fk_user_id
-            return self.mgdDB.db_qrcard.find_one(q2)
+            doc = self.mgdDB.db_qrcard.find_one(q2)
+            if doc:
+                doc = dict(doc)
+                for dk in ("schedule_since", "schedule_until"):
+                    if doc.get(dk) not in (None, ""):
+                        doc[dk] = _schedule_date_for_html_input(doc[dk])
+            return doc
         except Exception:
             self.webapp.logger.debug(traceback.format_exc())
             return None
@@ -212,6 +238,9 @@ class qr_allinone_proc:
             "short_code": short_code,
             "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
             "scan_limit_value": int(v) if (v := (request.form.get("scan_limit_value") or "").strip()).isdigit() else 0,
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
         }
 
         result = self._add_qrcard_base(params)
@@ -420,6 +449,9 @@ class qr_allinone_proc:
             "short_code": short_code,
             "scan_limit_enabled": bool(request.form.get("scan_limit_enabled")),
             "scan_limit_value": int(v) if (v := (request.form.get("scan_limit_value") or "").strip()).isdigit() else 0,
+            "schedule_enabled": bool(request.form.get("schedule_enabled")),
+            "schedule_since": (request.form.get("schedule_since") or "").strip(),
+            "schedule_until": (request.form.get("schedule_until") or "").strip(),
             "status": "DRAFT",
         }
 
@@ -625,10 +657,17 @@ class qr_allinone_proc:
         if request.form.get("Allinone_font_apply_all") in ("on", "true", "1", "yes"):
             update_data["Allinone_font_apply_all"] = True
 
-        for key in ["welcome_time", "welcome_bg_color", "scan_limit_enabled", "scan_limit_value"]:
+        for key in ["welcome_time", "welcome_bg_color"]:
             v = request.form.get(key)
             if v is not None:
                 update_data[key] = v
+
+        update_data["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
+        _rl = (request.form.get("scan_limit_value") or "").strip()
+        update_data["scan_limit_value"] = int(_rl) if _rl.isdigit() else 0
+        update_data["schedule_enabled"] = bool(request.form.get("schedule_enabled"))
+        update_data["schedule_since"] = (request.form.get("schedule_since") or "").strip()
+        update_data["schedule_until"] = (request.form.get("schedule_until") or "").strip()
 
         # Welcome image
         welcome_delete = request.form.get("Allinone_welcome_img_delete", "0")

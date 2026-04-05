@@ -27,7 +27,7 @@ class view_video:
                 self.webapp.logger.debug(traceback.format_exc())
             return "Failed to load New QR Content (Video)"
 
-    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, video_data=None, qrcard_id=None):
+    def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, video_data=None, qrcard_id=None, stats_carry=None):
         try:
             form_action = f"/qr/update/save/video/{qrcard_id}" if qrcard_id else "/qr/save/video"
             return render_template(
@@ -40,6 +40,7 @@ class view_video:
                 msg=msg,
                 error_msg=error_msg,
                 video_data=video_data,
+                stats_carry=stats_carry,
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
             )

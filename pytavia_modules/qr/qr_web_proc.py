@@ -14,6 +14,20 @@ SHORT_CODE_LENGTH = 8
 SHORT_CODE_CHARS = string.ascii_lowercase + string.digits
 
 
+def _schedule_date_for_html_input(val):
+    """HTML date inputs need YYYY-MM-DD; Mongo may store datetime or ISO strings."""
+    if val is None or val == "":
+        return ""
+    if isinstance(val, datetime):
+        return val.strftime("%Y-%m-%d")
+    s = str(val).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        return s[:10]
+    if "T" in s:
+        return s.split("T", 1)[0][:10]
+    return s
+
+
 class qr_web_proc:
     """Standalone processor for web-type QR cards."""
 
@@ -119,6 +133,10 @@ class qr_web_proc:
                 qrcard_rec["scan_limit_enabled"] = False
                 qrcard_rec["scan_limit_value"] = 0
 
+            qrcard_rec["schedule_enabled"] = bool(params.get("schedule_enabled"))
+            qrcard_rec["schedule_since"] = (params.get("schedule_since") or "").strip()
+            qrcard_rec["schedule_until"] = (params.get("schedule_until") or "").strip()
+
             qrcard_rec["status"] = "ACTIVE"
             qrcard_rec["created_at"] = created_at
             qrcard_rec["timestamp"] = current_time
@@ -135,6 +153,9 @@ class qr_web_proc:
             web_rec["stats"] = qrcard_rec.get("stats", {"scan_count": 0})
             web_rec["scan_limit_enabled"] = qrcard_rec.get("scan_limit_enabled", False)
             web_rec["scan_limit_value"] = qrcard_rec.get("scan_limit_value", 0)
+            web_rec["schedule_enabled"] = qrcard_rec.get("schedule_enabled", False)
+            web_rec["schedule_since"] = qrcard_rec.get("schedule_since", "")
+            web_rec["schedule_until"] = qrcard_rec.get("schedule_until", "")
             web_rec["status"] = qrcard_rec.get("status", "ACTIVE")
             web_rec["created_at"] = created_at
             web_rec["timestamp"] = current_time
@@ -177,9 +198,25 @@ class qr_web_proc:
             self.webapp.logger.debug("qr_web_proc.get_qrcard_by_user failed", exc_info=True)
             return []
 
+    def _merge_schedule_from_web_row(self, fk_user_id, qrcard_id, doc):
+        """Fill schedule fields on main qrcard from db_qrcard_web if missing (collection drift)."""
+        if not doc:
+            return
+        try:
+            web_doc = self.mgdDB.db_qrcard_web.find_one(
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}
+            )
+            if not web_doc:
+                return
+            for sk in ("schedule_enabled", "schedule_since", "schedule_until"):
+                if sk not in doc and sk in web_doc:
+                    doc[sk] = web_doc[sk]
+        except Exception:
+            self.webapp.logger.debug("merge_schedule_from_web_row failed", exc_info=True)
+
     def get_qrcard(self, fk_user_id, qrcard_id):
         try:
-            return self.mgdDB.db_qrcard.find_one(
+            doc = self.mgdDB.db_qrcard.find_one(
                 {
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
@@ -187,6 +224,12 @@ class qr_web_proc:
                     "status": "ACTIVE",
                 }
             )
+            if doc:
+                self._merge_schedule_from_web_row(fk_user_id, qrcard_id, doc)
+                for dk in ("schedule_since", "schedule_until"):
+                    if doc.get(dk) not in (None, ""):
+                        doc[dk] = _schedule_date_for_html_input(doc[dk])
+            return doc
         except Exception:
             self.webapp.logger.debug("qr_web_proc.get_qrcard failed", exc_info=True)
             return None
@@ -212,6 +255,11 @@ class qr_web_proc:
                     update_data["scan_limit_value"] = max(limit_val, 0)
                 except Exception:
                     pass
+
+            if "schedule_enabled" in params:
+                update_data["schedule_enabled"] = bool(params.get("schedule_enabled"))
+                update_data["schedule_since"] = (params.get("schedule_since") or "").strip()
+                update_data["schedule_until"] = (params.get("schedule_until") or "").strip()
 
             doc = self.get_qrcard(fk_user_id, qrcard_id)
             if doc:
@@ -286,6 +334,9 @@ class qr_web_proc:
         params["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
         raw_limit = (request.form.get("scan_limit_value") or "").strip()
         params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
+        params["schedule_enabled"] = bool(request.form.get("schedule_enabled"))
+        params["schedule_since"] = (request.form.get("schedule_since") or "").strip()
+        params["schedule_until"] = (request.form.get("schedule_until") or "").strip()
         result = self.add_qrcard(params)
         if result.get("message_action") == "ADD_QRCARD_FAILED":
             sc = params.get("short_code") or ""

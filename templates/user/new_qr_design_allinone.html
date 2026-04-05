@@ -221,6 +221,8 @@
             {% for key, val in allinone_data.items() %}
                 {% if key == 'Allinone_sections' %}
                 {# sections passed as JSON #}
+                {% elif key in ('scan_limit_enabled', 'scan_limit_value', 'schedule_enabled', 'schedule_since', 'schedule_until', 'stats') %}
+                {# explicit hiddens below #}
                 {% elif val is iterable and val is not string and val is not mapping %}
                     {% for item in val %}
                     <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
@@ -232,6 +234,12 @@
                 {% endif %}
             {% endfor %}
             <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | forceescape }}" />
+            {% set _aio = allinone_data %}
+            <input type="hidden" name="scan_limit_enabled" value="{% if _aio.get('scan_limit_enabled') %}on{% endif %}">
+            <input type="hidden" name="scan_limit_value" value="{{ _aio.get('scan_limit_value', '') | e }}">
+            <input type="hidden" name="schedule_enabled" value="{% if _aio.get('schedule_enabled') %}on{% endif %}">
+            <input type="hidden" name="schedule_since" value="{{ (_aio.get('schedule_since', '') or '') | e }}">
+            <input type="hidden" name="schedule_until" value="{{ (_aio.get('schedule_until', '') or '') | e }}">
             {% endif %}
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
@@ -270,6 +278,8 @@
     {% for key, val in allinone_data.items() %}
         {% if key == 'Allinone_sections' %}
         {# handled by allinone_sections_json below #}
+        {% elif key in ('scan_limit_enabled', 'scan_limit_value', 'schedule_enabled', 'schedule_since', 'schedule_until', 'stats') %}
+        {# explicit hiddens below #}
         {% elif val is iterable and val is not string and val is not mapping %}
             {% for item in val %}
             <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
@@ -281,6 +291,12 @@
         {% endif %}
     {% endfor %}
     <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | forceescape }}" />
+    {% set _aio2 = allinone_data %}
+    <input type="hidden" name="scan_limit_enabled" value="{% if _aio2.get('scan_limit_enabled') %}on{% endif %}">
+    <input type="hidden" name="scan_limit_value" value="{{ _aio2.get('scan_limit_value', '') | e }}">
+    <input type="hidden" name="schedule_enabled" value="{% if _aio2.get('schedule_enabled') %}on{% endif %}">
+    <input type="hidden" name="schedule_since" value="{{ (_aio2.get('schedule_since', '') or '') | e }}">
+    <input type="hidden" name="schedule_until" value="{{ (_aio2.get('schedule_until', '') or '') | e }}">
     {% endif %}
 </form>
 

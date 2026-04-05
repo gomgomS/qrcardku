@@ -673,28 +673,19 @@
                                     <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox">
+                                    <input type="checkbox" name="schedule_enabled" id="schedule-toggle" value="on">
                                     <span class="slider"></span>
                                 </label>
                             </div>
 
-                            <!-- Date Inputs Disabled natively for layout purposes -->
-                            <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
+                            <div id="schedule-dates" style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px; opacity: 0.4; pointer-events: none;">
                                 <div style="flex: 1;">
-                                    <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
-                                    <div
-                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
-                                    </div>
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
+                                    <input type="date" name="schedule_since" id="schedule-since" class="form-control" style="background: var(--bg-body); color: var(--text-main);" disabled>
                                 </div>
                                 <div style="flex: 1;">
-                                    <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
-                                    <div
-                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
-                                    </div>
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
+                                    <input type="date" name="schedule_until" id="schedule-until" class="form-control" style="background: var(--bg-body); color: var(--text-main);" disabled>
                                 </div>
                             </div>
                         </div>
@@ -1018,7 +1009,19 @@ function saveAndNext() {
     msgEl.textContent = 'Saving your content\u2026';
     subEl.textContent = window.i18nStr ? window.i18nStr('nc_saving_sub', 'Please wait, uploading assets to the cloud') : 'Please wait, uploading assets to the cloud';
     var form = document.getElementById('content-form');
+    var schedToggle = document.getElementById('schedule-toggle');
+    var schedSince = document.getElementById('schedule-since');
+    var schedUntil = document.getElementById('schedule-until');
+    if (schedToggle && schedToggle.checked) {
+        if (schedSince) schedSince.disabled = false;
+        if (schedUntil) schedUntil.disabled = false;
+    }
     var fd = new FormData(form);
+    if (schedToggle && schedToggle.checked) {
+        fd.set('schedule_enabled', 'on');
+        if (schedSince && schedSince.value) fd.set('schedule_since', schedSince.value);
+        if (schedUntil && schedUntil.value) fd.set('schedule_until', schedUntil.value);
+    }
     fetch('/qr/new/web/save-draft', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -1040,6 +1043,26 @@ function saveAndNext() {
             console.error(err);
         });
 }
+</script>
+
+<script>
+(function () {
+    var schedToggle = document.getElementById('schedule-toggle');
+    var schedDates = document.getElementById('schedule-dates');
+    var schedSince = document.getElementById('schedule-since');
+    var schedUntil = document.getElementById('schedule-until');
+    if (schedToggle && schedDates) {
+        function updateSchedule() {
+            var on = schedToggle.checked;
+            schedDates.style.opacity = on ? '1' : '0.4';
+            schedDates.style.pointerEvents = on ? '' : 'none';
+            if (schedSince) schedSince.disabled = !on;
+            if (schedUntil) schedUntil.disabled = !on;
+        }
+        schedToggle.addEventListener('change', updateSchedule);
+        updateSchedule();
+    }
+}());
 </script>
 
 {% endblock %}

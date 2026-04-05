@@ -50,14 +50,23 @@ class view_update_links:
     def update_qr_design_html(self, qrcard, url_content=None, qr_name=None,
                                qr_encode_url=None, msg=None, error_msg=None):
         try:
+            from pytavia_modules.qr.qr_links_proc import _schedule_date_for_html_input as _links_sched_norm
             cid = qrcard.get("qrcard_id")
             url_content = url_content or qrcard.get("url_content") or "QRkartu"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
+            pdf_data = {
+                "scan_limit_enabled": qrcard.get("scan_limit_enabled"),
+                "scan_limit_value": qrcard.get("scan_limit_value", 0),
+                "schedule_enabled": qrcard.get("schedule_enabled"),
+                "schedule_since": _links_sched_norm(qrcard.get("schedule_since")),
+                "schedule_until": _links_sched_norm(qrcard.get("schedule_until")),
+            }
             return render_template(
                 "/user/edit_qr_design_links.html",
                 qr_type="links",
                 qrcard_id=cid,
                 qrcard=qrcard,
+                pdf_data=pdf_data,
                 url_content=url_content,
                 qr_name=qr_name,
                 short_code=qrcard.get("short_code") or "",

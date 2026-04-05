@@ -560,7 +560,8 @@
 </div>
 
 <form id="content-form" method="POST" action="{{ form_action | default('/qr/new/' ~ qr_type ~ '/qr-design') }}"
-    enctype="multipart/form-data">
+    enctype="multipart/form-data"
+    onsubmit="var st=document.getElementById('schedule-toggle');var ss=document.getElementById('schedule-since');var su=document.getElementById('schedule-until');if(st&amp;&amp;st.checked){if(ss)ss.disabled=false;if(su)su.disabled=false;}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="page-title" style="margin-bottom: 24px;" data-i18n="nc_page_title">Complete the content of the QR</div>
 
@@ -627,7 +628,7 @@
                     <div>
                         <div class="sub-collapse-header">
                             <div class="toggle-label-with-icon">
-                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> Schedule a date
+                                <i class="fa-solid fa-calendar-days" style="color: var(--primary);"></i> <span data-i18n="nc_stats_schedule">Schedule a date</span>
                             </div>
                             <i class="fa-solid fa-chevron-down" style="color: var(--text-muted);"></i>
                         </div>
@@ -646,28 +647,27 @@
                                     <span data-i18n="nc_stats_schedule_activate">Activate the schedule to work during certain dates</span>
                                 </div>
                                 <label class="toggle-switch">
-                                    <input type="checkbox">
+                                    <input type="checkbox" name="schedule_enabled" id="schedule-toggle" value="on"
+                                        {% if qrcard and qrcard.get('schedule_enabled') %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
 
-                            <!-- Date Inputs Disabled natively for layout purposes -->
-                            <div style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;">
+                            <div id="schedule-dates" style="display: flex; gap: 16px; padding-left: 22px; margin-top: 8px;
+                                {% if not (qrcard and qrcard.get('schedule_enabled')) %}opacity: 0.4; pointer-events: none;{% endif %}">
                                 <div style="flex: 1;">
-                                    <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Since</label>
-                                    <div
-                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
-                                    </div>
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_since">Since</label>
+                                    <input type="date" name="schedule_since" id="schedule-since" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_since', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
                                 </div>
                                 <div style="flex: 1;">
-                                    <label
-                                        style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Until</label>
-                                    <div
-                                        style="background: #f3f4f6; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between;">
-                                        <span></span> <i class="fa-regular fa-calendar" style="color: var(--text-muted);"></i>
-                                    </div>
+                                    <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="nc_stats_until">Until</label>
+                                    <input type="date" name="schedule_until" id="schedule-until" class="form-control"
+                                        style="background: var(--bg-body); color: var(--text-main);"
+                                        value="{{ qrcard.get('schedule_until', '') if qrcard else '' }}"
+                                        {% if not (qrcard and qrcard.get('schedule_enabled')) %}disabled{% endif %}>
                                 </div>
                             </div>
                         </div>
@@ -1007,5 +1007,24 @@
     }
 </script>
 
+<script>
+(function () {
+    var schedToggle = document.getElementById('schedule-toggle');
+    var schedDates = document.getElementById('schedule-dates');
+    var schedSince = document.getElementById('schedule-since');
+    var schedUntil = document.getElementById('schedule-until');
+    if (schedToggle && schedDates) {
+        function updateSchedule() {
+            var on = schedToggle.checked;
+            schedDates.style.opacity = on ? '1' : '0.4';
+            schedDates.style.pointerEvents = on ? '' : 'none';
+            if (schedSince) schedSince.disabled = !on;
+            if (schedUntil) schedUntil.disabled = !on;
+        }
+        schedToggle.addEventListener('change', updateSchedule);
+        updateSchedule();
+    }
+}());
+</script>
 
 {% endblock %}

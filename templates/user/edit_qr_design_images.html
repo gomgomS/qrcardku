@@ -492,6 +492,12 @@
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+            {% set _sctx = pdf_data if pdf_data else (qrcard if qrcard else {}) %}
+            <input type="hidden" name="scan_limit_enabled" value="{% if _sctx.get('scan_limit_enabled') %}on{% endif %}">
+            <input type="hidden" name="scan_limit_value" value="{{ _sctx.get('scan_limit_value', '') | e }}">
+            <input type="hidden" name="schedule_enabled" value="{% if _sctx.get('schedule_enabled') %}on{% endif %}">
+            <input type="hidden" name="schedule_since" value="{{ (_sctx.get('schedule_since', '') or '') | e }}">
+            <input type="hidden" name="schedule_until" value="{{ (_sctx.get('schedule_until', '') or '') | e }}">
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
         <button type="button" class="btn-next" onclick="submitDesignWithOverlay()"><span data-i18n="nd_complete">Complete</span></button>
@@ -504,6 +510,12 @@
     <input type="hidden" name="url_content" value="{{ url_content | e }}" />
     <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
     {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+    {% set _sctx = pdf_data if pdf_data else (qrcard if qrcard else {}) %}
+    <input type="hidden" name="scan_limit_enabled" value="{% if _sctx.get('scan_limit_enabled') %}on{% endif %}">
+    <input type="hidden" name="scan_limit_value" value="{{ _sctx.get('scan_limit_value', '') | e }}">
+    <input type="hidden" name="schedule_enabled" value="{% if _sctx.get('schedule_enabled') %}on{% endif %}">
+    <input type="hidden" name="schedule_since" value="{{ (_sctx.get('schedule_since', '') or '') | e }}">
+    <input type="hidden" name="schedule_until" value="{{ (_sctx.get('schedule_until', '') or '') | e }}">
     <input type="hidden" name="frame_id" id="frame_id" value="">
     <input type="hidden" name="qr_dot_style"    id="qr_dot_style_input"    value="square">
     <input type="hidden" name="qr_corner_style" id="qr_corner_style_input" value="square">

@@ -73,11 +73,27 @@ def normalize_ecard_contact_lists(qrcard):
 
 def enforce_scan_limit_and_increment(qrcard, mgdDB, webapp):
     """
-    Return qrcard if scan is allowed; abort(404) if no qrcard or scan limit reached.
+    Return qrcard if scan is allowed; abort(404) if no qrcard, scan limit reached, or outside schedule.
     Increments stats.scan_count in db_qrcard.
     """
     if not qrcard:
         abort(404)
+    # Schedule enforcement
+    if qrcard.get("schedule_enabled"):
+        from datetime import date
+        today = date.today()
+        since = (qrcard.get("schedule_since") or "").strip()
+        until = (qrcard.get("schedule_until") or "").strip()
+        try:
+            if since and today < date.fromisoformat(since):
+                abort(404)
+        except ValueError:
+            pass
+        try:
+            if until and today > date.fromisoformat(until):
+                abort(404)
+        except ValueError:
+            pass
     stats = qrcard.get("stats") or {}
     current_scans = int(stats.get("scan_count", 0) or 0)
     limit_enabled = bool(qrcard.get("scan_limit_enabled"))

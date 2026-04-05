@@ -47,11 +47,19 @@ class view_update_web:
             cid = qrcard.get("qrcard_id")
             url_content = url_content or qrcard.get("url_content") or "QRkartu"
             qr_name = qr_name or qrcard.get("name") or "Untitled QR"
+            pdf_data = {
+                "scan_limit_enabled": qrcard.get("scan_limit_enabled"),
+                "scan_limit_value": qrcard.get("scan_limit_value", 0),
+                "schedule_enabled": qrcard.get("schedule_enabled"),
+                "schedule_since": qrcard.get("schedule_since") or "",
+                "schedule_until": qrcard.get("schedule_until") or "",
+            }
             return render_template(
                 "/user/edit_qr_design_web.html",
                 qr_type="web",
                 qrcard_id=cid,
                 qrcard=qrcard,
+                pdf_data=pdf_data,
                 url_content=url_content,
                 qr_name=qr_name,
                 short_code=qrcard.get("short_code") or "",
