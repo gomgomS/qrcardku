@@ -1901,6 +1901,7 @@ def qr_update_save_pdf(qrcard_id):
     _frame_id_pdf = request.form.get("frame_id", "")
     _fk_pdf = session.get("fk_user_id")
     # Activate DRAFT if needed before update (so complete_pdf_update can find the record)
+    _was_draft_pdf = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": _fk_pdf}) or {}).get("status") == "DRAFT"
     _enc_url_pdf = _activate_draft_qrcard(_fk_pdf, qrcard_id, "db_qrcard_pdf", "/pdf/")
     result = proc.complete_pdf_update(request, session, qrcard_id, app.root_path)
     if not result.get("success"):
@@ -1919,6 +1920,19 @@ def qr_update_save_pdf(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, _fk_pdf, qrcard_id, _enc_url_pdf, _frame_id_pdf)
+    from pytavia_modules.user import user_activity_proc as _uap_pdf2
+    if _was_draft_pdf:
+        _uap_pdf2.user_activity_proc(app).log(
+            fk_user_id=_fk_pdf, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="pdf", source="create",
+        )
+    else:
+        _uap_pdf2.user_activity_proc(app).log(
+            fk_user_id=_fk_pdf, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="pdf", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -1944,6 +1958,7 @@ def qr_update_save_web(qrcard_id):
     raw_limit = (request.form.get("scan_limit_value") or "").strip() or str(draft.get("scan_limit_value") or "")
     params["scan_limit_value"] = int(raw_limit) if raw_limit.isdigit() else 0
     _frame_id_web = request.form.get("frame_id", "")
+    _was_draft_web = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     proc.edit_qrcard(params)
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_web)
@@ -1956,6 +1971,19 @@ def qr_update_save_web(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_web, _frame_id_web)
+    from pytavia_modules.user import user_activity_proc as _uap_web2
+    if _was_draft_web:
+        _uap_web2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=qr_name,
+            qr_type="web", source="create",
+        )
+    else:
+        _uap_web2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=qr_name,
+            qr_type="web", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -2018,6 +2046,7 @@ def qr_update_save_ecard(qrcard_id):
             proc.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}})
             proc.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}}, upsert=True)
 
+    _was_draft_ecard = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _frame_id_ecard = request.form.get("frame_id", "")
     _clear_qr_draft(session, qrcard_id)
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_ecard)
@@ -2030,6 +2059,19 @@ def qr_update_save_ecard(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_ecard, _frame_id_ecard)
+    from pytavia_modules.user import user_activity_proc as _uap_ecard2
+    if _was_draft_ecard:
+        _uap_ecard2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=qr_name,
+            qr_type="ecard", source="create",
+        )
+    else:
+        _uap_ecard2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=qr_name,
+            qr_type="ecard", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -3436,6 +3478,11 @@ def qr_update_save_web_static(qrcard_id):
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     _clear_qr_draft(session, qrcard_id)
+    from pytavia_modules.user import user_activity_proc as _uap_wsu
+    _uap_wsu.user_activity_proc(app).log(
+        fk_user_id=fk_user_id, action="EDIT_QR",
+        qrcard_id=qrcard_id, qr_name=qr_name, qr_type="web-static", source="edit",
+    )
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/update/text/<qrcard_id>", methods=["GET", "POST"])
@@ -3524,6 +3571,11 @@ def qr_update_save_text(qrcard_id):
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     _clear_qr_draft(session, qrcard_id)
+    from pytavia_modules.user import user_activity_proc as _uap_txu
+    _uap_txu.user_activity_proc(app).log(
+        fk_user_id=fk_user_id, action="EDIT_QR",
+        qrcard_id=qrcard_id, qr_name=qr_name, qr_type="text", source="edit",
+    )
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/wa-static")
@@ -3724,6 +3776,11 @@ def qr_update_save_wa_static(qrcard_id):
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     _clear_qr_draft(session, qrcard_id)
+    from pytavia_modules.user import user_activity_proc as _uap_wau
+    _uap_wau.user_activity_proc(app).log(
+        fk_user_id=fk_user_id, action="EDIT_QR",
+        qrcard_id=qrcard_id, qr_name=qr_name, qr_type="wa-static", source="edit",
+    )
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/vcard-static")
@@ -3987,6 +4044,11 @@ def qr_update_save_vcard_static(qrcard_id):
     })
     _save_qr_composite(app, session.get("fk_user_id"), qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     _clear_qr_draft(session, qrcard_id)
+    from pytavia_modules.user import user_activity_proc as _uap_vcu
+    _uap_vcu.user_activity_proc(app).log(
+        fk_user_id=session.get("fk_user_id"), action="EDIT_QR",
+        qrcard_id=qrcard_id, qr_name=_vd("qr_name") or "Untitled QR", qr_type="vcard-static", source="edit",
+    )
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/email-static")
@@ -4213,6 +4275,11 @@ def qr_update_save_email_static(qrcard_id):
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_u, request.form.get("frame_id", ""))
     _clear_qr_draft(session, qrcard_id)
+    from pytavia_modules.user import user_activity_proc as _uap_emu
+    _uap_emu.user_activity_proc(app).log(
+        fk_user_id=fk_user_id, action="EDIT_QR",
+        qrcard_id=qrcard_id, qr_name=qr_name, qr_type="email-static", source="edit",
+    )
     return redirect(url_for("user_qr_list"))
 
 @app.route("/qr/new/web")
@@ -4971,6 +5038,7 @@ def qr_update_save_links(qrcard_id):
     proc.edit_qrcard(params)
     _frame_id_links = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_links)
+    _was_draft_links = (database.get_db_conn(config.mainDB).db_qrcard.find_one({"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _enc_url_links = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_links", "/links/")
     _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
         "qr_dot_style": request.form.get("qr_dot_style", "square"),
@@ -4980,6 +5048,19 @@ def qr_update_save_links(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_links, _frame_id_links)
+    from pytavia_modules.user import user_activity_proc as _uap_lk2
+    if _was_draft_links:
+        _uap_lk2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="links", source="create",
+        )
+    else:
+        _uap_lk2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="links", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -5124,6 +5205,13 @@ def qr_save_sosmed():
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
         })
         _save_qr_composite(app, session.get("fk_user_id"), response.get("qrcard_id", ""), response.get("qr_encode_url", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_sm
+        _uap_sm.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=request.form.get("qr_name", ""),
+            qr_type="sosmed", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_sosmed.view_sosmed(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -5357,6 +5445,8 @@ def qr_update_save_sosmed(qrcard_id):
     proc.edit_qrcard(params)
     _frame_id_sosmed = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_sosmed)
+    _was_draft_sosmed = (database.get_db_conn(config.mainDB).db_qrcard.find_one(
+        {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _enc_url_sosmed = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_sosmed", "/sosmed/")
     _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
         "qr_dot_style": request.form.get("qr_dot_style", "square"),
@@ -5366,6 +5456,19 @@ def qr_update_save_sosmed(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_sosmed, _frame_id_sosmed)
+    from pytavia_modules.user import user_activity_proc as _uap_sm2
+    if _was_draft_sosmed:
+        _uap_sm2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="sosmed", source="create",
+        )
+    else:
+        _uap_sm2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="sosmed", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -6000,11 +6103,16 @@ def qr_update_save_allinone(qrcard_id):
     })
     _qr_encode_url = config.G_BASE_URL.rstrip("/") + "/allinone/" + (qrcard.get("short_code") or "")
     _save_qr_composite(app, fk_user_id, qrcard_id, _qr_encode_url, _frame_id)
+    from pytavia_modules.user import user_activity_proc as _uap_aio2
     if qrcard.get("status") == "DRAFT":
-        from pytavia_modules.user import user_activity_proc as _uap_aio2
         _uap_aio2.user_activity_proc(app).log(
             fk_user_id=fk_user_id, action="CREATE_QR",
             qrcard_id=qrcard_id, qr_name=qrcard.get("name", ""), qr_type="allinone", source="create",
+        )
+    else:
+        _uap_aio2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=qrcard.get("name", ""), qr_type="allinone", source="edit",
         )
     return redirect(url_for("user_qr_list"))
 
@@ -6105,6 +6213,13 @@ def qr_save_special():
     print(f"[DEBUG-STEP3] save response success: {response.get('success')}")
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_sp
+        _uap_sp.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=request.form.get("qr_name", ""),
+            qr_type="special", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_special.view_special(app).new_qr_design_html(
         url_content=response.get("url_content", ""),
@@ -6331,6 +6446,8 @@ def qr_update_save_special(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _frame_id_special = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_special)
+    _was_draft_special = (database.get_db_conn(config.mainDB).db_qrcard.find_one(
+        {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _enc_url_special = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_special", "/special/")
     _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
         "qr_dot_style": request.form.get("qr_dot_style", "square"),
@@ -6340,6 +6457,19 @@ def qr_update_save_special(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_special, _frame_id_special)
+    from pytavia_modules.user import user_activity_proc as _uap_sp2
+    if _was_draft_special:
+        _uap_sp2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="special", source="create",
+        )
+    else:
+        _uap_sp2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="special", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -6496,6 +6626,13 @@ def qr_save_images():
     response = qr_images_proc.qr_images_proc(app).complete_images_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_img
+        _uap_img.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=request.form.get("qr_name", ""),
+            qr_type="images", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_images.view_images(app).new_qr_design_html(
         url_content=response.get("url_content", ""), qr_name=response.get("qr_name", ""),
@@ -6669,6 +6806,13 @@ def qr_save_video():
     response = qr_video_proc.qr_video_proc(app).complete_video_save(request, session, app.root_path)
     if response.get("success"):
         _update_frame_id(session.get("fk_user_id"), response.get("qrcard_id", ""), request.form.get("frame_id", ""))
+        from pytavia_modules.user import user_activity_proc as _uap_vid
+        _uap_vid.user_activity_proc(app).log(
+            fk_user_id=session.get("fk_user_id"), action="CREATE_QR",
+            qrcard_id=response.get("qrcard_id", ""),
+            qr_name=request.form.get("qr_name", ""),
+            qr_type="video", source="create",
+        )
         return redirect(url_for("user_qr_list"))
     return view_video.view_video(app).new_qr_design_html(
         url_content=response.get("url_content", ""), qr_name=response.get("qr_name", ""),
@@ -6906,6 +7050,8 @@ def qr_update_save_images(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _frame_id_images = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_images)
+    _was_draft_images = (database.get_db_conn(config.mainDB).db_qrcard.find_one(
+        {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _enc_url_images = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_images", "/images/")
     _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
         "qr_dot_style": request.form.get("qr_dot_style", "square"),
@@ -6915,6 +7061,19 @@ def qr_update_save_images(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_images, _frame_id_images)
+    from pytavia_modules.user import user_activity_proc as _uap_img2
+    if _was_draft_images:
+        _uap_img2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="images", source="create",
+        )
+    else:
+        _uap_img2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="images", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 
@@ -7171,6 +7330,8 @@ def qr_update_save_video(qrcard_id):
     _clear_qr_draft(session, qrcard_id)
     _frame_id_video = request.form.get("frame_id", "")
     _update_frame_id(fk_user_id, qrcard_id, _frame_id_video)
+    _was_draft_video = (database.get_db_conn(config.mainDB).db_qrcard.find_one(
+        {"qrcard_id": qrcard_id, "fk_user_id": fk_user_id}) or {}).get("status") == "DRAFT"
     _enc_url_video = _activate_draft_qrcard(fk_user_id, qrcard_id, "db_qrcard_video", "/video/")
     _save_custom_qr_image(fk_user_id, qrcard_id, request.form.get("qr_image_data", ""), {
         "qr_dot_style": request.form.get("qr_dot_style", "square"),
@@ -7180,6 +7341,19 @@ def qr_update_save_video(qrcard_id):
         "card_bg_color": request.form.get("card_bg_color", "#ffffff"),
     })
     _save_qr_composite(app, fk_user_id, qrcard_id, _enc_url_video, _frame_id_video)
+    from pytavia_modules.user import user_activity_proc as _uap_vid2
+    if _was_draft_video:
+        _uap_vid2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="CREATE_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="video", source="create",
+        )
+    else:
+        _uap_vid2.user_activity_proc(app).log(
+            fk_user_id=fk_user_id, action="EDIT_QR",
+            qrcard_id=qrcard_id, qr_name=request.form.get("qr_name", ""),
+            qr_type="video", source="edit",
+        )
     return redirect(url_for("user_qr_list"))
 
 

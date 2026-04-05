@@ -51,6 +51,7 @@
     }
 
     .action-create  { background: #dcfce7; color: #166534; }
+    .action-edit    { background: #dbeafe; color: #1d4ed8; }
     .action-delete  { background: #fee2e2; color: #991b1b; }
     .action-storage { background: #2A2810; color: #92400e; }
 
@@ -185,6 +186,10 @@
                 {% if log.action == 'CREATE_QR' %}
                 <span class="action-badge action-create">
                     <i class="fa-solid fa-plus"></i> Create QR
+                </span>
+                {% elif log.action == 'EDIT_QR' %}
+                <span class="action-badge action-edit">
+                    <i class="fa-solid fa-pen"></i> Edit QR
                 </span>
                 {% elif log.action == 'DELETE_QR_ASSETS' %}
                 <span class="action-badge action-storage">
