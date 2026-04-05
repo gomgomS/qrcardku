@@ -19,7 +19,7 @@ class view_qr_list:
 
             index_entries = list(
                 mgdDB.db_qr_index.find(
-                    {"fk_user_id": fk_user_id, "status": {"$in": ["ACTIVE", "DRAFT"]}}
+                    {"fk_user_id": fk_user_id, "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]}}
                 ).sort("timestamp", -1)
             )
 
@@ -29,6 +29,7 @@ class view_qr_list:
                 "web-static": [], "text": [],
                 "wa-static": [], "email-static": [], "vcard-static": [],
                 "allinone": [], "links": [], "sosmed": [], "images": [], "video": [],
+                "special": [],
             }
             for e in index_entries:
                 t = e.get("qr_type") or "web"
@@ -43,7 +44,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": _web_ecard_ids},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -52,7 +53,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_pdf.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["pdf"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -61,7 +62,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_web_static.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["web-static"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -70,7 +71,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_text.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["text"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -79,7 +80,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_wa_static.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["wa-static"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -88,7 +89,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_email_static.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["email-static"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -97,7 +98,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_vcard_static.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["vcard-static"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -106,7 +107,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_allinone.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["allinone"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -115,7 +116,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["links"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -124,7 +125,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["sosmed"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -133,7 +134,7 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_images.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["images"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -142,7 +143,16 @@ class view_qr_list:
                 for doc in mgdDB.db_qrcard_video.find({
                     "fk_user_id": fk_user_id,
                     "qrcard_id": {"$in": id_by_type["video"]},
-                    "status": {"$in": ["ACTIVE", "DRAFT"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
+                }):
+                    full_by_id[doc["qrcard_id"]] = doc
+
+            # special — dedicated collection
+            if id_by_type["special"]:
+                for doc in mgdDB.db_qrcard_special.find({
+                    "fk_user_id": fk_user_id,
+                    "qrcard_id": {"$in": id_by_type["special"]},
+                    "status": {"$in": ["ACTIVE", "INACTIVE", "DRAFT"]},
                 }):
                     full_by_id[doc["qrcard_id"]] = doc
 
@@ -180,6 +190,12 @@ class view_qr_list:
                 fd = frame_data_by_qrcard.get(qid, {})
                 row["frame_id"] = fd.get("frame_id") or row.get("frame_id", "")
                 row["qr_composite_url"] = fd.get("qr_composite_url") or row.get("qr_composite_url", "")
+                # The index entry is the authoritative source for DRAFT state.
+                # db_qrcard_special intentionally keeps status=ACTIVE during draft
+                # so the toggle-status route always has a valid status to flip.
+                # Here we restore the correct DRAFT badge when the index says DRAFT.
+                if e.get("status") == "DRAFT":
+                    row["status"] = "DRAFT"
                 qr_list.append(row)
 
             return render_template(

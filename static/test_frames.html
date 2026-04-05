@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Frames Test</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: sans-serif;
+            padding: 40px;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .frame-box {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        img {
+            width: 150px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h2>Local SVG Frames Test</h2>
+    <p>These are loaded directly from your local project files.</p>
+    
+    <div class="container">
+        <div class="frame-box">
+            <span>Frame 18 (Default)</span>
+            <img src="/static/assets/svg/frames-1-BL0vSDLQ.svg#frame-18" alt="Frame 18">
+        </div>
+        <div class="frame-box">
+            <span>Frame 18 (Blue)</span>
+            <img src="/static/assets/svg/frames-1-BL0vSDLQ.svg#frame-18-blue" alt="Frame 18 Blue">
+        </div>
+        <div class="frame-box">
+            <span>Frame 0</span>
+            <img src="/static/assets/svg/frames-1-BL0vSDLQ.svg#frame-0" alt="Frame 0">
+        </div>
+        <div class="frame-box">
+            <span>Frame 22 (Blue)</span>
+            <img src="/static/assets/svg/frames-1-BL0vSDLQ.svg#frame-22-blue" alt="Frame 22 Blue">
+        </div>
+    </div>
+</body>
+</html>

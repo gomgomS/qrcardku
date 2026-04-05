@@ -1,0 +1,178 @@
+{% extends "admin/base.html" %}
+{% block title %}Support Tickets — Admin{% endblock %}
+{% block extra_head %}
+<style>
+    .tk-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .tk-title { font-size: 22px; font-weight: 700; color: #E8E5DC; }
+    .tk-title span { color: var(--primary); }
+
+    .tk-filters {
+        display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .tk-filter-btn {
+        padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        text-decoration: none; border: 1px solid #3A3B30; color: #8A8878;
+        background: transparent; cursor: pointer; transition: all .2s;
+    }
+    .tk-filter-btn:hover { color: #E8E5DC; border-color: #8A8878; }
+    .tk-filter-btn.active { background: var(--primary); border-color: var(--primary); color: #111; }
+
+    .tk-list { display: flex; flex-direction: column; gap: 8px; }
+    .tk-item {
+        background: #1E1F18; border: 1px solid #2C2D25;
+        border-radius: 8px; padding: 14px 18px;
+        display: flex; align-items: center; gap: 14px;
+        text-decoration: none; color: #E8E5DC;
+        transition: border-color .2s, background .2s;
+    }
+    .tk-item:hover { border-color: var(--primary); background: #252619; }
+
+    .tk-icon {
+        width: 38px; height: 38px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 15px; flex-shrink: 0;
+    }
+    .cat-bug   { background: rgba(220,38,38,.15); color: #f87171; }
+    .cat-help  { background: rgba(37,99,235,.15); color: #60a5fa; }
+    .cat-other { background: rgba(107,114,128,.15); color: #9ca3af; }
+
+    .tk-body { flex: 1; min-width: 0; }
+    .tk-subject {
+        font-size: 14px; font-weight: 600; color: #E8E5DC;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 3px;
+    }
+    .tk-meta { font-size: 12px; color: #8A8878; display: flex; gap: 12px; flex-wrap: wrap; }
+    .tk-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+        text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+    }
+    .status-open    { background: rgba(180,83,9,.15); color: #fbbf24; border: 1px solid rgba(180,83,9,.3); }
+    .status-in_progress { background: rgba(37,99,235,.15); color: #60a5fa; border: 1px solid rgba(37,99,235,.3); }
+    .status-closed  { background: rgba(107,114,128,.15); color: #9ca3af; border: 1px solid rgba(107,114,128,.3); }
+    .status-fixed   { background: rgba(22,163,74,.15); color: #4ade80; border: 1px solid rgba(22,163,74,.3); }
+
+    .unread-badge {
+        background: #dc2626; color: #fff; border-radius: 10px;
+        font-size: 10px; font-weight: 700; padding: 2px 7px; white-space: nowrap;
+    }
+    .tk-id { font-size: 11px; color: #8A8878; }
+
+    .tk-empty {
+        text-align: center; padding: 56px 24px; color: #8A8878;
+    }
+    .tk-empty i { font-size: 40px; margin-bottom: 12px; display: block; color: #2C2D25; }
+
+    .tk-summary {
+        display: flex; gap: 12px; margin-bottom: 22px; flex-wrap: wrap;
+    }
+    .tk-stat {
+        background: #1E1F18; border: 1px solid #2C2D25; border-radius: 8px;
+        padding: 14px 20px; flex: 1; min-width: 120px;
+    }
+    .tk-stat-num { font-size: 26px; font-weight: 700; color: var(--primary); }
+    .tk-stat-label { font-size: 12px; color: #8A8878; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tk-header">
+    <div class="tk-title">&#127915; Support <span>Tickets</span></div>
+    {% if total_unread > 0 %}
+    <span class="unread-badge" style="font-size:13px; padding: 4px 12px;">
+        {{ total_unread }} ticket{{ 's' if total_unread != 1 else '' }} with unread messages
+    </span>
+    {% endif %}
+</div>
+
+<!-- Summary Stats -->
+{% set counts = namespace(open=0, in_progress=0, fixed=0, closed=0) %}
+{% for t in tickets %}
+    {% if t.status == 'open' %}{% set counts.open = counts.open + 1 %}
+    {% elif t.status == 'in_progress' %}{% set counts.in_progress = counts.in_progress + 1 %}
+    {% elif t.status == 'fixed' %}{% set counts.fixed = counts.fixed + 1 %}
+    {% elif t.status == 'closed' %}{% set counts.closed = counts.closed + 1 %}
+    {% endif %}
+{% endfor %}
+
+<div class="tk-summary">
+    <div class="tk-stat">
+        <div class="tk-stat-num">{{ tickets | length }}</div>
+        <div class="tk-stat-label">Total</div>
+    </div>
+    <div class="tk-stat">
+        <div class="tk-stat-num" style="color:#fbbf24;">{{ counts.open }}</div>
+        <div class="tk-stat-label">Open</div>
+    </div>
+    <div class="tk-stat">
+        <div class="tk-stat-num" style="color:#60a5fa;">{{ counts.in_progress }}</div>
+        <div class="tk-stat-label">In Progress</div>
+    </div>
+    <div class="tk-stat">
+        <div class="tk-stat-num" style="color:#4ade80;">{{ counts.fixed }}</div>
+        <div class="tk-stat-label">Fixed</div>
+    </div>
+    <div class="tk-stat">
+        <div class="tk-stat-num" style="color:#9ca3af;">{{ counts.closed }}</div>
+        <div class="tk-stat-label">Closed</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="tk-filters">
+    <a href="/admin/tickets" class="tk-filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="/admin/tickets?status=open" class="tk-filter-btn {% if status_filter == 'open' %}active{% endif %}">Open</a>
+    <a href="/admin/tickets?status=in_progress" class="tk-filter-btn {% if status_filter == 'in_progress' %}active{% endif %}">In Progress</a>
+    <a href="/admin/tickets?status=fixed" class="tk-filter-btn {% if status_filter == 'fixed' %}active{% endif %}">Fixed</a>
+    <a href="/admin/tickets?status=closed" class="tk-filter-btn {% if status_filter == 'closed' %}active{% endif %}">Closed</a>
+</div>
+
+{% if tickets %}
+<div class="tk-list">
+    {% for t in tickets %}
+    <a href="/admin/tickets/{{ t.ticket_id }}" class="tk-item">
+        <div class="tk-icon
+            {% if t.category == 'bug' %}cat-bug{% elif t.category == 'help' %}cat-help{% else %}cat-other{% endif %}">
+            {% if t.category == 'bug' %}<i class="fa-solid fa-bug"></i>
+            {% elif t.category == 'help' %}<i class="fa-solid fa-circle-question"></i>
+            {% else %}<i class="fa-solid fa-comment"></i>{% endif %}
+        </div>
+        <div class="tk-body">
+            <div class="tk-subject">{{ t.subject }}</div>
+            <div class="tk-meta">
+                <span><i class="fa-solid fa-user" style="margin-right:3px;"></i>{{ t.username or t.fk_user_id }}</span>
+                <span><i class="fa-regular fa-calendar" style="margin-right:3px;"></i>
+                    {{ t.created_at.strftime('%d %b %Y') if t.created_at else '' }}</span>
+                <span><i class="fa-solid fa-comment" style="margin-right:3px;"></i>
+                    {{ t.messages | length }} msg{{ 's' if t.messages | length != 1 else '' }}</span>
+            </div>
+        </div>
+        <div class="tk-right">
+            {% if t.unread_admin and t.unread_admin > 0 %}
+            <span class="unread-badge">{{ t.unread_admin }} new</span>
+            {% endif %}
+            <span class="status-badge status-{{ t.status }}">
+                {% if t.status == 'open' %}<i class="fa-solid fa-circle-dot"></i> Open
+                {% elif t.status == 'in_progress' %}<i class="fa-solid fa-spinner"></i> In Progress
+                {% elif t.status == 'fixed' %}<i class="fa-solid fa-circle-check"></i> Fixed
+                {% else %}<i class="fa-solid fa-lock"></i> Closed{% endif %}
+            </span>
+            <span class="tk-id">{{ t.ticket_id }}</span>
+            <i class="fa-solid fa-chevron-right" style="color:#8A8878;font-size:11px;"></i>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="tk-empty">
+    <i class="fa-solid fa-inbox"></i>
+    No tickets found.
+</div>
+{% endif %}
+{% endblock %}

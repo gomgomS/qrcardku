@@ -67,6 +67,16 @@
         font-size: 11px;
     }
 
+    .status-inactive {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 11px;
+    }
+
     .dropdown-content.show {
         display: block !important;
     }
@@ -1180,6 +1190,10 @@
                         <span class="qr-draft-icon" style="color:var(--text-muted);cursor:not-allowed;opacity:0.4;" title="Complete the QR design to activate scan">
                             <i class="fa-solid fa-qrcode"></i>
                         </span>
+                        {% elif qr.status == 'INACTIVE' %}
+                        <span class="qr-draft-icon" style="color:#475569;cursor:not-allowed;opacity:0.5;" title="QR is inactive — set to Active to enable scanning">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </span>
                         {% else %}
                         <span class="qr-scan-trigger" data-tooltip="Click to scan" data-name="{{ qr.name }}"
                             data-qr-type="{{ qr.qr_type }}" data-status="{{ qr.status }}"
@@ -1217,6 +1231,8 @@
                     <span style="display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600;">
                         <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="mq_draft">Draft</span>
                     </span>
+                    {% elif qr.status == 'INACTIVE' %}
+                    <span class="status-inactive"><i class="fa-solid fa-circle-pause" style="margin-right:3px;"></i>Inactive</span>
                     {% else %}
                     <span class="status-active">{{ qr.status | capitalize }}</span>
                     {% endif %}
@@ -1244,9 +1260,18 @@
                             <a href="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}"
                                 style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--text-main); font-size: 13px; display: block; text-decoration: none;"><i
                                     class="fa-solid fa-pen"></i> <span data-i18n="mq_edit">Edit</span></a>
+                            <button type="button"
+                                    style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; border-top: 1px solid var(--border-color); cursor: pointer; font-size: 13px; {% if qr.status == 'INACTIVE' %}color: #16a34a;{% else %}color: #b45309;{% endif %}"
+                                    onclick="submitToggleStatus('{{ qr.qrcard_id }}')">
+                                    {% if qr.status == 'INACTIVE' %}
+                                    <i class="fa-solid fa-circle-play"></i> Set Active
+                                    {% else %}
+                                    <i class="fa-solid fa-circle-pause"></i> Set Inactive
+                                    {% endif %}
+                            </button>
                             {% endif %}
                             <button type="button"
-                                style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: #dc2626; font-size: 13px;"
+                                style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; border-top: 1px solid var(--border-color); cursor: pointer; color: #dc2626; font-size: 13px;"
                                 data-qrcard-id="{{ qr.qrcard_id }}"
                                 data-qr-name="{{ qr.name | e }}"
                                 data-qr-type="{{ qr.qr_type or 'web' }}"
@@ -1274,6 +1299,19 @@
         </tbody>
     </table>
 </form>
+
+<!-- Standalone toggle-status form — lives OUTSIDE bulk-delete-form to avoid invalid HTML nesting -->
+<form id="toggle-status-form" method="post" action="" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+<script>
+function submitToggleStatus(qrcardId) {
+    var form = document.getElementById('toggle-status-form');
+    form.action = '/qr/toggle-status/' + qrcardId;
+    form.submit();
+}
+</script>
 
 <script>
 (function () {

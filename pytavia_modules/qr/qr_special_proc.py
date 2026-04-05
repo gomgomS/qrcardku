@@ -514,8 +514,9 @@ class qr_special_proc:
             return {"status": "error", "message_desc": result.get("error_msg", "Save failed.")}
         qrcard_id = result["qrcard_id"]
         self.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
-        self.mgdDB.db_qrcard_special.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
         self.mgdDB.db_qr_index.update_one({"qrcard_id": qrcard_id}, {"$set": {"status": "DRAFT"}})
+        # db_qrcard_special keeps status="ACTIVE" (set by add_qrcard) so the
+        # toggle-status route always finds a clear ACTIVE state to flip to INACTIVE.
         qrcard = self.mgdDB.db_qrcard.find_one({"qrcard_id": qrcard_id}, {"short_code": 1}) or {}
         sc = qrcard.get("short_code", "")
         qr_encode_url = config.G_BASE_URL.rstrip("/") + "/special/" + sc if sc else ""

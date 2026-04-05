@@ -422,6 +422,11 @@
                     &#9993; Email Templates
                 </a>
             </li>
+            <li>
+                <a href="/admin/tickets" class="{% if '/admin/tickets' in request.path %}active{% endif %}">
+                    &#127915; Support Tickets
+                </a>
+            </li>
         </ul>
         <div class="sidebar-footer">
             {% if admin_name or admin_email %}

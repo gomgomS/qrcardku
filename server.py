@@ -402,10 +402,20 @@ def _check_qr_quota_on_save():
 
 @app.context_processor
 def inject_user_sub_info():
-    """Inject subscription info into every template for the sidebar & banners."""
+    """Inject subscription info and unread help ticket count into every template."""
     if "fk_user_id" in session:
-        return {"sub_info": _get_sub_info(session["fk_user_id"])}
-    return {"sub_info": {"has_active": False, "days_remaining": 0, "plan_name": "", "max_qr": 0, "max_storage_mb": 0, "is_trial": False}}
+        fk_uid = session["fk_user_id"]
+        try:
+            from pytavia_core import database as _db_ctx, config as _cfg_ctx
+            _db_c = _db_ctx.get_db_conn(_cfg_ctx.mainDB)
+            _unread = _db_c.db_support_tickets.count_documents({
+                "fk_user_id": fk_uid,
+                "unread_user": {"$gt": 0},
+            })
+        except Exception:
+            _unread = 0
+        return {"sub_info": _get_sub_info(fk_uid), "help_unread_count": _unread}
+    return {"sub_info": {"has_active": False, "days_remaining": 0, "plan_name": "", "max_qr": 0, "max_storage_mb": 0, "is_trial": False}, "help_unread_count": 0}
 
 @app.route("/")
 def index():
@@ -1811,6 +1821,76 @@ def api_qr_size(qrcard_id):
         return jsonify({"ok": True, "bytes": total, "files": count, "size_fmt": _fmt_size(total)})
     except Exception:
         return jsonify({"ok": True, "bytes": 0, "files": 0, "size_fmt": "0 B"})
+
+
+@app.route("/qr/toggle-status/<qrcard_id>", methods=["POST"])
+def qr_toggle_status(qrcard_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from pytavia_core import database as _db_tog, config as _cfg_tog
+    _mgd_tog = _db_tog.get_db_conn(_cfg_tog.mainDB)
+    fk_user_id = session.get("fk_user_id")
+
+    # Verify ownership and get qr_type from db_qr_index
+    idx = _mgd_tog.db_qr_index.find_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+        {"_id": 0, "status": 1, "qr_type": 1},
+    )
+    if not idx:
+        return redirect(url_for("user_qr_list"))
+
+    qr_type = idx.get("qr_type", "")
+
+    _type_col_map = {
+        "pdf":          "db_qrcard_pdf",
+        "web-static":   "db_qrcard_web_static",
+        "text":         "db_qrcard_text",
+        "wa-static":    "db_qrcard_wa_static",
+        "email-static": "db_qrcard_email_static",
+        "vcard-static": "db_qrcard_vcard_static",
+        "allinone":     "db_qrcard_allinone",
+        "images":       "db_qrcard_images",
+        "video":        "db_qrcard_video",
+        "special":      "db_qrcard_special",
+    }
+    col_name = _type_col_map.get(qr_type)
+
+    # Read the authoritative current status from the type-specific collection
+    # (same source the list view uses), falling back to db_qrcard, then db_qr_index.
+    # This avoids stale-sync issues where previous partial updates left collections
+    # out of step with each other.
+    cur_status = None
+    if col_name:
+        spec_doc = getattr(_mgd_tog, col_name).find_one(
+            {"qrcard_id": qrcard_id}, {"_id": 0, "status": 1}
+        )
+        if spec_doc:
+            cur_status = spec_doc.get("status")
+    if cur_status is None:
+        base_doc = _mgd_tog.db_qrcard.find_one(
+            {"qrcard_id": qrcard_id}, {"_id": 0, "status": 1}
+        )
+        cur_status = (base_doc or {}).get("status") or idx.get("status", "ACTIVE")
+
+    if cur_status == "DRAFT":
+        return redirect(url_for("user_qr_list"))
+
+    new_status = "INACTIVE" if cur_status == "ACTIVE" else "ACTIVE"
+    set_op = {"$set": {"status": new_status}}
+
+    # Update all collections in sync
+    _mgd_tog.db_qr_index.update_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, set_op
+    )
+    _mgd_tog.db_qrcard.update_one(
+        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, set_op
+    )
+    if col_name:
+        getattr(_mgd_tog, col_name).update_one(
+            {"qrcard_id": qrcard_id}, set_op
+        )
+
+    return redirect(url_for("user_qr_list"))
 
 
 @app.route("/qr/delete/<qrcard_id>", methods=["POST"])
@@ -8461,3 +8541,251 @@ def social_authorize(provider):
     except Exception as e:
         app.logger.error(f"OAuth callback error: {e}")
         return view_login.view_login().html(error_msg="Failed to authenticate with social provider.")
+
+
+##########################################################
+# HELP CENTER — USER SIDE
+##########################################################
+
+def _get_db_tickets():
+    from pytavia_core import database as _dbt, config as _cfgt
+    return _dbt.get_db_conn(_cfgt.mainDB)
+
+def _new_ticket_id():
+    import random, string
+    return "TKT-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+@app.route("/user/help-center")
+def user_help_center():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session["fk_user_id"]
+    _db = _get_db_tickets()
+    tickets = list(_db.db_support_tickets.find(
+        {"fk_user_id": fk_user_id},
+        {"_id": 0}
+    ).sort("created_at", -1))
+    msg = request.args.get("msg")
+    error_msg = request.args.get("error_msg")
+    return render_template(
+        "user/help_center.html",
+        active_page="help_center",
+        tickets=tickets,
+        msg=msg,
+        error_msg=error_msg,
+        hide_top_nav=True,
+    )
+
+@app.route("/user/help-center/submit", methods=["POST"])
+def user_help_center_submit():
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from datetime import datetime as _dt
+    fk_user_id = session["fk_user_id"]
+    subject  = (request.form.get("subject") or "").strip()
+    category = (request.form.get("category") or "other").strip()
+    message  = (request.form.get("message") or "").strip()
+    if not subject or not message:
+        return redirect(url_for("user_help_center", error_msg="Subject and message are required."))
+    now = _dt.utcnow()
+    ticket = {
+        "ticket_id":   _new_ticket_id(),
+        "fk_user_id":  fk_user_id,
+        "username":    session.get("username", ""),
+        "subject":     subject,
+        "category":    category,
+        "status":      "open",
+        "created_at":  now,
+        "updated_at":  now,
+        "messages": [{
+            "sender_type": "user",
+            "sender_name": session.get("username", "User"),
+            "message":     message,
+            "sent_at":     now,
+            "read_by_user":  True,
+            "read_by_admin": False,
+        }],
+        "unread_user":  0,
+        "unread_admin": 1,
+    }
+    _db = _get_db_tickets()
+    _db.db_support_tickets.insert_one(ticket)
+    return redirect(url_for("user_help_center", msg="Ticket submitted successfully."))
+
+@app.route("/user/help-center/<ticket_id>")
+def user_help_ticket(ticket_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    fk_user_id = session["fk_user_id"]
+    _db = _get_db_tickets()
+    ticket = _db.db_support_tickets.find_one(
+        {"ticket_id": ticket_id, "fk_user_id": fk_user_id}, {"_id": 0}
+    )
+    if not ticket:
+        abort(404)
+    # Mark admin messages as read by user
+    _db.db_support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {
+            "$set": {
+                "unread_user": 0,
+                "messages.$[m].read_by_user": True,
+            }
+        },
+        array_filters=[{"m.sender_type": "admin"}],
+    )
+    # Reload after mark-read
+    ticket = _db.db_support_tickets.find_one(
+        {"ticket_id": ticket_id, "fk_user_id": fk_user_id}, {"_id": 0}
+    )
+    return render_template(
+        "user/help_ticket.html",
+        active_page="help_center",
+        ticket=ticket,
+        hide_top_nav=True,
+    )
+
+@app.route("/user/help-center/<ticket_id>/reply", methods=["POST"])
+def user_help_ticket_reply(ticket_id):
+    if "fk_user_id" not in session:
+        return redirect(url_for("login_view"))
+    from datetime import datetime as _dt
+    fk_user_id = session["fk_user_id"]
+    _db = _get_db_tickets()
+    ticket = _db.db_support_tickets.find_one(
+        {"ticket_id": ticket_id, "fk_user_id": fk_user_id}, {"_id": 0}
+    )
+    if not ticket:
+        abort(404)
+    if ticket.get("status") in ("closed", "fixed"):
+        return redirect(url_for("user_help_ticket", ticket_id=ticket_id))
+    msg_text = (request.form.get("message") or "").strip()
+    if not msg_text:
+        return redirect(url_for("user_help_ticket", ticket_id=ticket_id))
+    now = _dt.utcnow()
+    new_msg = {
+        "sender_type": "user",
+        "sender_name": session.get("username", "User"),
+        "message":     msg_text,
+        "sent_at":     now,
+        "read_by_user":  True,
+        "read_by_admin": False,
+    }
+    _db.db_support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {
+            "$push": {"messages": new_msg},
+            "$inc":  {"unread_admin": 1},
+            "$set":  {"updated_at": now},
+        }
+    )
+    return redirect(url_for("user_help_ticket", ticket_id=ticket_id))
+
+
+##########################################################
+# HELP CENTER — ADMIN SIDE
+##########################################################
+
+@app.route("/admin/tickets")
+def admin_tickets():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    _db = _get_db_tickets()
+    status_filter = request.args.get("status", "")
+    query = {}
+    if status_filter:
+        query["status"] = status_filter
+    tickets = list(_db.db_support_tickets.find(query, {"_id": 0}).sort("updated_at", -1))
+    total_unread = _db.db_support_tickets.count_documents({"unread_admin": {"$gt": 0}})
+    from pytavia_modules.view import view_admin as _va
+    admin_name  = session.get("admin_name", "")
+    admin_email = session.get("admin_email", "")
+    admin_role  = session.get("admin_role", "")
+    return render_template(
+        "admin/tickets.html",
+        tickets=tickets,
+        status_filter=status_filter,
+        total_unread=total_unread,
+        admin_name=admin_name,
+        admin_email=admin_email,
+        admin_role=admin_role,
+        msg=request.args.get("msg"),
+        error_msg=request.args.get("error_msg"),
+    )
+
+@app.route("/admin/tickets/<ticket_id>")
+def admin_ticket_detail(ticket_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    _db = _get_db_tickets()
+    ticket = _db.db_support_tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
+    if not ticket:
+        abort(404)
+    # Mark user messages as read by admin
+    _db.db_support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {
+            "$set": {
+                "unread_admin": 0,
+                "messages.$[m].read_by_admin": True,
+            }
+        },
+        array_filters=[{"m.sender_type": "user"}],
+    )
+    ticket = _db.db_support_tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
+    admin_name  = session.get("admin_name", "")
+    admin_email = session.get("admin_email", "")
+    admin_role  = session.get("admin_role", "")
+    return render_template(
+        "admin/ticket_detail.html",
+        ticket=ticket,
+        admin_name=admin_name,
+        admin_email=admin_email,
+        admin_role=admin_role,
+    )
+
+@app.route("/admin/tickets/<ticket_id>/reply", methods=["POST"])
+def admin_ticket_reply(ticket_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from datetime import datetime as _dt
+    _db = _get_db_tickets()
+    ticket = _db.db_support_tickets.find_one({"ticket_id": ticket_id}, {"_id": 0})
+    if not ticket:
+        abort(404)
+    msg_text = (request.form.get("message") or "").strip()
+    if not msg_text:
+        return redirect(url_for("admin_ticket_detail", ticket_id=ticket_id))
+    now = _dt.utcnow()
+    new_msg = {
+        "sender_type": "admin",
+        "sender_name": session.get("admin_name") or session.get("admin_email") or "Admin",
+        "message":     msg_text,
+        "sent_at":     now,
+        "read_by_user":  False,
+        "read_by_admin": True,
+    }
+    _db.db_support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {
+            "$push": {"messages": new_msg},
+            "$inc":  {"unread_user": 1},
+            "$set":  {"updated_at": now, "status": "in_progress" if ticket.get("status") == "open" else ticket.get("status")},
+        }
+    )
+    return redirect(url_for("admin_ticket_detail", ticket_id=ticket_id))
+
+@app.route("/admin/tickets/<ticket_id>/status", methods=["POST"])
+def admin_ticket_status(ticket_id):
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from datetime import datetime as _dt
+    _db = _get_db_tickets()
+    new_status = (request.form.get("status") or "").strip()
+    if new_status not in ("open", "in_progress", "closed", "fixed"):
+        return redirect(url_for("admin_ticket_detail", ticket_id=ticket_id))
+    _db.db_support_tickets.update_one(
+        {"ticket_id": ticket_id},
+        {"$set": {"status": new_status, "updated_at": _dt.utcnow()}}
+    )
+    return redirect(url_for("admin_tickets", msg=f"Ticket {ticket_id} status updated to {new_status}."))

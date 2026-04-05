@@ -1,0 +1,228 @@
+{% extends "user/base.html" %}
+{% block extra_css %}
+<style>
+    .ht-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .ht-back {
+        color: var(--text-muted); text-decoration: none; font-size: 13px;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-color);
+        background: var(--bg-content);
+        transition: color .2s, border-color .2s;
+    }
+    .ht-back:hover { color: var(--primary); border-color: var(--primary); }
+
+    .ht-meta-card {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .ht-subject {
+        font-size: 17px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;
+    }
+    .ht-meta-row {
+        font-size: 12px; color: var(--text-muted); display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .ht-meta-row span { display: flex; align-items: center; gap: 4px; }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+        text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+    }
+    .status-open    { background: #fef9ec; color: #b45309; border: 1px solid #fde68a; }
+    .status-in_progress { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .status-closed  { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .status-fixed   { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+    /* Chat section */
+    .ht-chat {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+    .ht-chat-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px; font-weight: 600; color: var(--text-muted);
+        display: flex; align-items: center; gap: 7px;
+    }
+    .ht-messages {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .ht-msg {
+        display: flex;
+        gap: 10px;
+        max-width: 80%;
+    }
+    .ht-msg.user-msg  { align-self: flex-end; flex-direction: row-reverse; }
+    .ht-msg.admin-msg { align-self: flex-start; }
+
+    .ht-msg-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
+    }
+    .user-msg .ht-msg-avatar  { background: var(--primary); color: #111; }
+    .admin-msg .ht-msg-avatar { background: #2563eb; color: #fff; }
+
+    .ht-msg-bubble {
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.55;
+        max-width: 100%;
+        word-break: break-word;
+    }
+    .user-msg .ht-msg-bubble {
+        background: var(--primary);
+        color: #111;
+        border-bottom-right-radius: 3px;
+    }
+    .admin-msg .ht-msg-bubble {
+        background: var(--bg-sidebar);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        border-bottom-left-radius: 3px;
+    }
+    .ht-msg-time {
+        font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: right;
+    }
+    .admin-msg .ht-msg-time { text-align: left; }
+    .ht-msg-sender {
+        font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 3px;
+    }
+
+    /* Reply form */
+    .ht-reply-card {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 18px;
+    }
+    .ht-reply-card h4 {
+        font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;
+    }
+    .ht-reply-textarea {
+        width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border-radius: 6px;
+        border: 1px solid var(--border-color);
+        font-size: 13px; background: #fff; color: #111;
+        resize: vertical; min-height: 80px;
+        margin-bottom: 10px;
+    }
+    .ht-reply-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(235,168,27,.15); }
+    .ht-btn-reply {
+        background: var(--primary); color: #111; border: none;
+        padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        transition: background .2s;
+    }
+    .ht-btn-reply:hover { background: var(--primary-hover); }
+
+    .ht-closed-notice {
+        text-align: center; padding: 14px; background: var(--bg-sidebar);
+        border: 1px solid var(--border-color); border-radius: 8px;
+        font-size: 13px; color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ht-header">
+    <a href="/user/help-center" class="ht-back"><i class="fa-solid fa-arrow-left"></i> All Tickets</a>
+    <span style="color:var(--text-muted); font-size:12px;">{{ ticket.ticket_id }}</span>
+</div>
+
+<!-- Ticket Meta -->
+<div class="ht-meta-card">
+    <div>
+        <div class="ht-subject">{{ ticket.subject }}</div>
+        <div class="ht-meta-row">
+            <span><i class="fa-regular fa-calendar"></i>
+                {{ ticket.created_at.strftime('%d %b %Y, %H:%M') if ticket.created_at else '' }} UTC
+            </span>
+            <span><i class="fa-solid fa-tag"></i> {{ ticket.category | capitalize }}</span>
+            <span><i class="fa-solid fa-comment"></i> {{ ticket.messages | length }} message{{ 's' if ticket.messages | length != 1 else '' }}</span>
+        </div>
+    </div>
+    <div>
+        <span class="status-badge status-{{ ticket.status }}">
+            {% if ticket.status == 'open' %}<i class="fa-solid fa-circle-dot"></i> Open
+            {% elif ticket.status == 'in_progress' %}<i class="fa-solid fa-spinner"></i> In Progress
+            {% elif ticket.status == 'fixed' %}<i class="fa-solid fa-circle-check"></i> Fixed
+            {% else %}<i class="fa-solid fa-lock"></i> Closed{% endif %}
+        </span>
+    </div>
+</div>
+
+<!-- Chat Messages -->
+<div class="ht-chat">
+    <div class="ht-chat-header"><i class="fa-solid fa-comments" style="color:var(--primary);"></i> Conversation</div>
+    <div class="ht-messages" id="ht-messages-box">
+        {% for m in ticket.messages %}
+        <div class="ht-msg {{ 'user-msg' if m.sender_type == 'user' else 'admin-msg' }}">
+            <div class="ht-msg-avatar">
+                {% if m.sender_type == 'user' %}<i class="fa-solid fa-user"></i>
+                {% else %}<i class="fa-solid fa-headset"></i>{% endif %}
+            </div>
+            <div>
+                <div class="ht-msg-sender">
+                    {{ 'You' if m.sender_type == 'user' else 'Support Team' }}
+                </div>
+                <div class="ht-msg-bubble">{{ m.message }}</div>
+                <div class="ht-msg-time">
+                    {{ m.sent_at.strftime('%d %b %Y, %H:%M') if m.sent_at else '' }} UTC
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Reply Form or Closed Notice -->
+{% if ticket.status in ('closed', 'fixed') %}
+<div class="ht-closed-notice">
+    <i class="fa-solid fa-lock"></i>
+    This ticket is <strong>{{ ticket.status }}</strong>. No further replies can be added.
+</div>
+{% else %}
+<div class="ht-reply-card">
+    <h4><i class="fa-solid fa-reply" style="color:var(--primary);"></i> Add a Reply</h4>
+    <form method="post" action="/user/help-center/{{ ticket.ticket_id }}/reply">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="message" class="ht-reply-textarea" placeholder="Type your message..." required></textarea>
+        <button type="submit" class="ht-btn-reply">
+            <i class="fa-solid fa-paper-plane"></i> Send Reply
+        </button>
+    </form>
+</div>
+{% endif %}
+
+<script>
+    // Auto-scroll messages to bottom
+    (function () {
+        var box = document.getElementById('ht-messages-box');
+        if (box) box.scrollTop = box.scrollHeight;
+    }());
+</script>
+{% endblock %}

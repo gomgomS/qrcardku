@@ -1,0 +1,217 @@
+{% extends "admin/base.html" %}
+{% block title %}Ticket {{ ticket.ticket_id }} — Admin{% endblock %}
+{% block extra_head %}
+<style>
+    .td-header {
+        display: flex; align-items: center; gap: 12px;
+        margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .td-back {
+        color: #8A8878; text-decoration: none; font-size: 13px;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 5px 12px; border-radius: 6px; border: 1px solid #3A3B30;
+        background: #1E1F18; transition: color .2s, border-color .2s;
+    }
+    .td-back:hover { color: var(--primary); border-color: var(--primary); }
+
+    .td-meta-card {
+        background: #1E1F18; border: 1px solid #2C2D25;
+        border-radius: 10px; padding: 18px 22px; margin-bottom: 20px;
+        display: flex; align-items: flex-start;
+        justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    }
+    .td-subject { font-size: 18px; font-weight: 700; color: #E8E5DC; margin-bottom: 7px; }
+    .td-meta-row { font-size: 12px; color: #8A8878; display: flex; gap: 14px; flex-wrap: wrap; }
+    .td-meta-row span { display: flex; align-items: center; gap: 5px; }
+
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+        text-transform: uppercase; letter-spacing: .4px; white-space: nowrap;
+    }
+    .status-open    { background: rgba(180,83,9,.15); color: #fbbf24; border: 1px solid rgba(180,83,9,.3); }
+    .status-in_progress { background: rgba(37,99,235,.15); color: #60a5fa; border: 1px solid rgba(37,99,235,.3); }
+    .status-closed  { background: rgba(107,114,128,.15); color: #9ca3af; border: 1px solid rgba(107,114,128,.3); }
+    .status-fixed   { background: rgba(22,163,74,.15); color: #4ade80; border: 1px solid rgba(22,163,74,.3); }
+
+    /* Status change form */
+    .td-status-form {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .td-status-select {
+        padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600;
+        border: 1px solid #3A3B30; background: #252619; color: #E8E5DC; cursor: pointer;
+    }
+    .td-status-btn {
+        padding: 6px 14px; background: var(--primary); color: #111;
+        border: none; border-radius: 6px; font-size: 12px; font-weight: 600;
+        cursor: pointer; transition: background .2s;
+    }
+    .td-status-btn:hover { background: var(--primary-hover); }
+
+    /* Chat */
+    .td-chat {
+        background: #1E1F18; border: 1px solid #2C2D25;
+        border-radius: 10px; overflow: hidden; margin-bottom: 16px;
+    }
+    .td-chat-header {
+        padding: 12px 18px; border-bottom: 1px solid #2C2D25;
+        font-size: 13px; font-weight: 600; color: #8A8878;
+        display: flex; align-items: center; gap: 7px;
+    }
+    .td-messages {
+        padding: 16px;
+        display: flex; flex-direction: column; gap: 14px;
+        max-height: 520px; overflow-y: auto;
+    }
+    .td-msg { display: flex; gap: 10px; max-width: 80%; }
+    .td-msg.user-msg  { align-self: flex-start; }
+    .td-msg.admin-msg { align-self: flex-end; flex-direction: row-reverse; }
+
+    .td-msg-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; flex-shrink: 0;
+    }
+    .user-msg .td-msg-avatar  { background: rgba(235,168,27,.2); color: var(--primary); }
+    .admin-msg .td-msg-avatar { background: rgba(37,99,235,.2); color: #60a5fa; }
+
+    .td-msg-bubble {
+        padding: 10px 14px; border-radius: 10px;
+        font-size: 13px; line-height: 1.55; max-width: 100%; word-break: break-word;
+    }
+    .user-msg .td-msg-bubble {
+        background: #252619; border: 1px solid #3A3B30; color: #E8E5DC;
+        border-bottom-left-radius: 3px;
+    }
+    .admin-msg .td-msg-bubble {
+        background: rgba(37,99,235,.15); border: 1px solid rgba(37,99,235,.3); color: #E8E5DC;
+        border-bottom-right-radius: 3px;
+    }
+    .td-msg-sender { font-size: 10px; font-weight: 600; color: #8A8878; margin-bottom: 3px; }
+    .td-msg-time {
+        font-size: 10px; color: #8A8878; margin-top: 4px;
+        text-align: left;
+    }
+    .admin-msg .td-msg-time { text-align: right; }
+
+    .unread-dot {
+        display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+        background: #dc2626; margin-left: 4px; vertical-align: middle;
+    }
+
+    /* Reply form */
+    .td-reply-card {
+        background: #1E1F18; border: 1px solid #2C2D25;
+        border-radius: 10px; padding: 18px;
+    }
+    .td-reply-card h4 {
+        font-size: 13px; font-weight: 600; color: #8A8878; margin-bottom: 10px;
+    }
+    .td-reply-textarea {
+        width: 100%; box-sizing: border-box;
+        padding: 10px 12px; border-radius: 6px;
+        border: 1px solid #3A3B30; font-size: 13px;
+        background: #252619; color: #E8E5DC;
+        resize: vertical; min-height: 90px; margin-bottom: 10px;
+        font-family: inherit;
+    }
+    .td-reply-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(235,168,27,.15); }
+    .td-btn-reply {
+        background: var(--primary); color: #111; border: none;
+        padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+        cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        transition: background .2s;
+    }
+    .td-btn-reply:hover { background: var(--primary-hover); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="td-header">
+    <a href="/admin/tickets" class="td-back"><i class="fa-solid fa-arrow-left"></i> All Tickets</a>
+    <span style="color:#8A8878; font-size:12px;">{{ ticket.ticket_id }}</span>
+</div>
+
+<!-- Ticket Meta + Status Change -->
+<div class="td-meta-card">
+    <div>
+        <div class="td-subject">{{ ticket.subject }}</div>
+        <div class="td-meta-row">
+            <span><i class="fa-solid fa-user"></i> {{ ticket.username or ticket.fk_user_id }}</span>
+            <span><i class="fa-regular fa-calendar"></i>
+                {{ ticket.created_at.strftime('%d %b %Y, %H:%M') if ticket.created_at else '' }} UTC
+            </span>
+            <span><i class="fa-solid fa-tag"></i> {{ ticket.category | capitalize }}</span>
+            <span><i class="fa-solid fa-comment"></i> {{ ticket.messages | length }} message{{ 's' if ticket.messages | length != 1 else '' }}</span>
+        </div>
+    </div>
+    <div>
+        <span class="status-badge status-{{ ticket.status }}">
+            {% if ticket.status == 'open' %}<i class="fa-solid fa-circle-dot"></i> Open
+            {% elif ticket.status == 'in_progress' %}<i class="fa-solid fa-spinner"></i> In Progress
+            {% elif ticket.status == 'fixed' %}<i class="fa-solid fa-circle-check"></i> Fixed
+            {% else %}<i class="fa-solid fa-lock"></i> Closed{% endif %}
+        </span>
+        <form method="post" action="/admin/tickets/{{ ticket.ticket_id }}/status" class="td-status-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="status" class="td-status-select">
+                <option value="open"        {% if ticket.status == 'open' %}selected{% endif %}>Open</option>
+                <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="fixed"       {% if ticket.status == 'fixed' %}selected{% endif %}>Fixed</option>
+                <option value="closed"      {% if ticket.status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+            <button type="submit" class="td-status-btn"><i class="fa-solid fa-check"></i> Update Status</button>
+        </form>
+    </div>
+</div>
+
+<!-- Chat Messages -->
+<div class="td-chat">
+    <div class="td-chat-header">
+        <i class="fa-solid fa-comments" style="color:var(--primary);"></i> Conversation
+    </div>
+    <div class="td-messages" id="td-messages-box">
+        {% for m in ticket.messages %}
+        <div class="td-msg {{ 'user-msg' if m.sender_type == 'user' else 'admin-msg' }}">
+            <div class="td-msg-avatar">
+                {% if m.sender_type == 'user' %}<i class="fa-solid fa-user"></i>
+                {% else %}<i class="fa-solid fa-headset"></i>{% endif %}
+            </div>
+            <div>
+                <div class="td-msg-sender">
+                    {{ m.sender_name or ('User' if m.sender_type == 'user' else 'Admin') }}
+                    {% if m.sender_type == 'user' and not m.read_by_admin %}
+                    <span class="unread-dot" title="Not read by admin yet"></span>
+                    {% endif %}
+                </div>
+                <div class="td-msg-bubble">{{ m.message }}</div>
+                <div class="td-msg-time">
+                    {{ m.sent_at.strftime('%d %b %Y, %H:%M') if m.sent_at else '' }} UTC
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Admin Reply Form -->
+<div class="td-reply-card">
+    <h4><i class="fa-solid fa-reply" style="color:var(--primary);"></i> Reply as Support Team</h4>
+    <form method="post" action="/admin/tickets/{{ ticket.ticket_id }}/reply">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <textarea name="message" class="td-reply-textarea"
+            placeholder="Type your reply to the user..." required></textarea>
+        <button type="submit" class="td-btn-reply">
+            <i class="fa-solid fa-paper-plane"></i> Send Reply
+        </button>
+    </form>
+</div>
+
+<script>
+    (function () {
+        var box = document.getElementById('td-messages-box');
+        if (box) box.scrollTop = box.scrollHeight;
+    }());
+</script>
+{% endblock %}

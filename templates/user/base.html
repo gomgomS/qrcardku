@@ -620,8 +620,11 @@
                     style="padding-left: 0; font-weight: 400; font-size: 13px;" data-i18n="sb_activity">
                     Activity history
                 </a>
-                <a href="#" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px;" data-i18n="sb_help">
-                    Help center
+                <a href="/user/help-center" class="nav-item {% if active_page == 'help_center' %}active{% endif %}" style="padding-left: 0; font-weight: 400; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+                    <span data-i18n="sb_help">Help center</span>
+                    {% if help_unread_count and help_unread_count > 0 %}
+                    <span style="background: #dc2626; color: #fff; border-radius: 10px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; line-height: 16px;">{{ help_unread_count }}</span>
+                    {% endif %}
                 </a>
                 <a href="/auth/logout" class="nav-item" style="padding-left: 0; font-weight: 400; font-size: 13px; color: #dc2626;"
                     onclick="return confirm(window.i18nStr ? window.i18nStr('sb_logout_confirm', 'Are you sure you want to logout?') : 'Are you sure you want to logout?');">
