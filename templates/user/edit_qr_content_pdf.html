@@ -3101,6 +3101,9 @@
             }
             if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
             if (delFlag)   { delFlag.value = '0'; }
+            // Clear autocomplete URL so uploaded file takes priority
+            var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+            if (acField) acField.value = '';
         });
     }
 

@@ -2343,7 +2343,8 @@ def qr_update_design_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/pdf_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
+                    unique_cover_name = f"ecard_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url
@@ -3067,7 +3068,9 @@ def qr_update_content_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/ecard_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
+                    import uuid as _uuid_local
+                    unique_cover_name = f"ecard_cover_img_{_uuid_local.uuid4().hex[:12]}{ext}"
+                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
                     for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                         extra_data[f] = cover_url
                         qrcard[f] = cover_url

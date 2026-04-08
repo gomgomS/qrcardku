@@ -1611,7 +1611,7 @@
 
 <!-- Profile image crop modal -->
 <div id="ecard-profile-crop-modal" class="ecard-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
-    <div class="ecard-crop-modal-box" style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+    <div class="ecard-crop-modal-box" onclick="event.stopPropagation()" style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
         <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize & crop image</div>
         <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
             <img id="ecard-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
@@ -1647,13 +1647,8 @@
 
         function checkContentValid() {
             var nameOk = qrNameInput && (qrNameInput.value || '').trim().length > 0;
-            const profileInput = document.querySelector('input[name="E-card_profile_img"]');
-            var hasNew = profileInput && profileInput.files && profileInput.files.length > 0;
-            var savedCover = document.querySelector('#cover-img-preview img');
 
-            var hasImage = hasNew || (savedCover && savedCover.src && savedCover.src.length > 0);
-
-            var valid = nameOk && hasImage;
+            var valid = nameOk;
 
             if (step3Link) {
                 if (valid) {
@@ -1672,8 +1667,6 @@
         }
 
         if (qrNameInput) qrNameInput.addEventListener('input', checkContentValid);
-        const profileInputCheck = document.querySelector('input[name="E-card_profile_img"]');
-        if (profileInputCheck) profileInputCheck.addEventListener('change', checkContentValid);
         checkContentValid();
         // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
         (function () {
@@ -2860,7 +2853,7 @@
         }
         if (cropModal) {
             cropModal.addEventListener('click', function (e) {
-                if (e.target === cropModal) {
+                if (e.target === cropModal && !ecardCropper) {
                     if (t1ImgInput) t1ImgInput.value = '';
                     closeCropModal();
                 }

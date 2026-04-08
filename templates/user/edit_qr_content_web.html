@@ -600,8 +600,9 @@
                         <div class="url-prefix-group">
                             <div class="url-prefix" style="color: var(--primary);">https://</div>
                             <input type="text" name="url_content" placeholder="www.yourwebsite.com"
-                                value="{{ url_content | default('QRkartu', true) }}"
+                                value="{{ url_content | default('qrkartu.com', true) }}"
                                 style="width: 100%; border: none; padding: 10px 14px; outline: none; background: #ffffff;"
+                                oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9\-._~:/?#\[\]@!$&'()*+,;=]/g,'')"
                                 required>
                         </div>
                     </div>

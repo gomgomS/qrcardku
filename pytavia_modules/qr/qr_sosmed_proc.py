@@ -337,27 +337,45 @@ class qr_sosmed_proc:
             except Exception:
                 pass
         else:
-            # Handle autocomplete/static welcome image
-            ac_welcome = (request.form.get("sosmed_welcome_img_autocomplete_url", "")
-                          or session.pop("sosmed_welcome_img_autocomplete_url", "")).strip()
-            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
-                try:
-                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}})
-                    self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}}, upsert=True)
-                except Exception:
-                    pass
-            elif ac_welcome and ac_welcome.startswith("/static/"):
-                ext = os.path.splitext(ac_welcome)[1] or ".jpg"
-                local_path = os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
+            # Priority: direct file upload from request (when user uploads their own welcome image)
+            _direct_welcome = request.files.get("Sosmed_welcome_img") if request.files else None
+            if _direct_welcome and _direct_welcome.filename:
+                _direct_welcome.seek(0, 2)
+                _dw_size = _direct_welcome.tell()
+                _direct_welcome.seek(0)
+                if _dw_size <= 1 * 1024 * 1024:
+                    _dw_ext = os.path.splitext(_direct_welcome.filename)[1].lower() or ".jpg"
+                    if _dw_ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        _dw_ext = ".jpg"
+                    _dw_name = f"welcome_{uuid.uuid4().hex[:12]}{_dw_ext}"
                     try:
-                        unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
-                        with open(local_path, "rb") as f:
-                            welcome_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_welcome_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_welcome_name})
+                        welcome_url = _r2.upload_file(_direct_welcome, f"sosmed/{new_id}/{_dw_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": _dw_name})
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
                         self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
                     except Exception:
                         pass
+            else:
+                # Handle autocomplete/static welcome image
+                ac_welcome = (request.form.get("sosmed_welcome_img_autocomplete_url", "")
+                              or session.pop("sosmed_welcome_img_autocomplete_url", "")).strip()
+                if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                    try:
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}})
+                        self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": ac_welcome}}, upsert=True)
+                    except Exception:
+                        pass
+                elif ac_welcome and ac_welcome.startswith("/static/"):
+                    ext = os.path.splitext(ac_welcome)[1] or ".jpg"
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
+                        try:
+                            unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                            with open(local_path, "rb") as f:
+                                welcome_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_welcome_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_welcome_name})
+                            self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}})
+                            self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
+                        except Exception:
+                            pass
 
         if cover_tmp_key and cover_tmp_name:
             ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
@@ -369,27 +387,45 @@ class qr_sosmed_proc:
             except Exception:
                 pass
         else:
-            # Handle autocomplete static image upload
-            ac_url = (request.form.get("sosmed_cover_img_autocomplete_url", "")
-                      or session.pop("sosmed_cover_img_autocomplete_url", "")).strip()
-            if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
-                try:
-                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}})
-                    self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}}, upsert=True)
-                except Exception:
-                    pass
-            elif ac_url and ac_url.startswith("/static/"):
-                ext = os.path.splitext(ac_url)[1] or ".jpg"
-                local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
+            # Priority: direct file upload from request (when user uploads their own cover image)
+            _direct_cover = request.files.get("Sosmed_profile_img") if request.files else None
+            if _direct_cover and _direct_cover.filename:
+                _direct_cover.seek(0, 2)
+                _dc_size = _direct_cover.tell()
+                _direct_cover.seek(0)
+                if _dc_size <= 2 * 1024 * 1024:
+                    _dc_ext = os.path.splitext(_direct_cover.filename)[1].lower() or ".jpg"
+                    if _dc_ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                        _dc_ext = ".jpg"
+                    _dc_name = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{_dc_ext}"
                     try:
-                        unique_cover_name = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{ext}"
-                        with open(local_path, "rb") as f:
-                            cover_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_cover_name})
+                        cover_url = _r2.upload_file(_direct_cover, f"sosmed/{new_id}/{_dc_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": _dc_name})
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
                         self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
                     except Exception:
                         pass
+            else:
+                # Handle autocomplete static image upload
+                ac_url = (request.form.get("sosmed_cover_img_autocomplete_url", "")
+                          or session.pop("sosmed_cover_img_autocomplete_url", "")).strip()
+                if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
+                    try:
+                        self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}})
+                        self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": ac_url}}, upsert=True)
+                    except Exception:
+                        pass
+                elif ac_url and ac_url.startswith("/static/"):
+                    ext = os.path.splitext(ac_url)[1] or ".jpg"
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
+                        try:
+                            unique_cover_name = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                            with open(local_path, "rb") as f:
+                                cover_url = _r2.upload_bytes(f.read(), f"sosmed/{new_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_id, "qr_type": "sosmed", "file_name": unique_cover_name})
+                            self.mgdDB.db_qrcard.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}})
+                            self.mgdDB.db_qrcard_sosmed.update_one({"qrcard_id": new_id}, {"$set": {"Sosmed_cover_img_url": cover_url}}, upsert=True)
+                        except Exception:
+                            pass
 
         return {"success": True, "qrcard_id": new_id}
 

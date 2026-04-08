@@ -2809,6 +2809,9 @@
             }
             if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
             if (delFlag)   { delFlag.value = '0'; }
+            // Clear autocomplete URL so uploaded file takes priority
+            var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+            if (acField) acField.value = '';
             // If user is on default template, show template1 preview so cover image is visible
             var activeTemplate = document.querySelector('input[name="pdf_template"]:checked');
             if (activeTemplate && activeTemplate.value === 'default') {
