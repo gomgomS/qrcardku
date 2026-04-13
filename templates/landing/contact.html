@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - QRkartu</title>
+    <link rel="icon" type="image/x-icon" href="/static/assets/img/favicon_io/favicon.ico">
+    <link rel="stylesheet" href="/static/assets/vendor/fontawesome/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #EBA81B;
+            --bg-light: #181914;
+            --bg-lighter: #1E1F18;
+            --text-main: #E8E5DC;
+            --text-muted: #8A8878;
+            --border-color: #2C2D25;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+        body { background: var(--bg-lighter); color: var(--text-main); line-height: 1.55; }
+        .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: #10100c;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .header-content {
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .logo img { height: 56px; width: auto; display: block; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 600; }
+        .nav-links a:hover { color: var(--primary-color); }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            background: var(--primary-color);
+            color: #111209;
+        }
+        .section { padding: 48px 0; }
+        .card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 26px;
+        }
+        h1 { font-size: 30px; margin-bottom: 18px; }
+        .row { margin-bottom: 14px; line-height: 1.8; }
+        .label { color: var(--text-muted); display: inline-block; min-width: 120px; }
+        .value { color: var(--text-main); font-weight: 600; }
+        .map-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .faq-title { font-size: 26px; margin-bottom: 16px; }
+        .faq-item {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: #171812;
+        }
+        .faq-item h3 { font-size: 16px; margin-bottom: 6px; }
+        .faq-item p { color: var(--text-muted); font-size: 14px; }
+        footer { border-top: 1px solid var(--border-color); padding: 30px 0; margin-top: 30px; }
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: #a1a1aa;
+            font-size: 14px;
+        }
+        .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+        .footer-links a { color: #a1a1aa; text-decoration: none; }
+        .footer-links a:hover { color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="/" class="logo"><img src="/static/assets/img/mainlogo.png" alt="QRkartu"></a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/contact">Contact</a>
+                <a href="/contact#faq">FAQ</a>
+            </nav>
+            <a href="/register" class="btn-primary">Create QR</a>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="container">
+            <div class="card">
+                <h1>Contact</h1>
+                <div class="row"><span class="label">Person</span><span class="value">+62 895-1234-5592</span></div>
+                <div class="row"><span class="label">a/n</span><span class="value">Taro</span></div>
+                <div class="row"><span class="label">Office</span><span class="value">Perum. Pandau Indah Jl. Cendana Raya No.6</span></div>
+                <a class="map-link" href="https://maps.app.goo.gl/dMyCkPdSaUsBs2xc8" target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-location-dot"></i> Open in Google Maps
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="faq">
+        <div class="container">
+            <h2 class="faq-title">FAQ</h2>
+            <div class="faq-item">
+                <h3>How can I contact support fastest?</h3>
+                <p>Please contact the number listed above for direct assistance.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I visit the office?</h3>
+                <p>Yes, use the address listed above and open the map link for easier navigation.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What details should I prepare before contacting?</h3>
+                <p>Prepare your account email and a short issue description so support can help faster.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-bottom">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="/static/assets/img/mainlogo.png" alt="QR" style="height:32px; width:auto;">
+                <span>&copy; 2026 QRkartu. All rights reserved.</span>
+            </div>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/contact">Contact</a>
+                <a href="/contact#faq">FAQ</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

@@ -421,6 +421,11 @@ def inject_user_sub_info():
 def index():
     return view_landing.view_landing().html()
 
+
+@app.route("/contact")
+def landing_contact():
+    return render_template("landing/contact.html")
+
 @app.route("/admin")
 def admin_redirect():
     if "fk_admin_id" not in session:
