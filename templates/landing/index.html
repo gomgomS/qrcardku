@@ -1037,11 +1037,11 @@
                 <img src="/static/assets/img/mainlogo.png" alt="QR" style="height: 64px; width: auto; display: block;">
             </a>
             <nav class="nav-links">
-                <a href="#" data-i18n="nav_products">Products</a>
-                <a href="#" data-i18n="nav_features">Features</a>
-                <a href="#" data-i18n="nav_solutions">Solutions</a>
-                <a href="#" data-i18n="nav_support">Support</a>
-                <a href="#" data-i18n="nav_pricing">Pricing</a>
+                <a href="#hero-section" data-i18n="nav_products">QR Generator</a>
+                <a href="#types-section" data-i18n="nav_features">QR Types</a>
+                <a href="#platform-section" data-i18n="nav_solutions">Features</a>
+                <a href="#faq-section" data-i18n="nav_support">FAQ</a>
+                <a href="#pricing-section" data-i18n="nav_pricing">Pricing</a>
             </nav>
             <div class="auth-buttons">
                 <div class="lang-switcher-landing" style="margin-right: 8px;">
@@ -1070,11 +1070,11 @@
             </button>
         </div>
         <div class="mobile-menu-overlay-links">
-            <a href="#" data-i18n="nav_products">Products</a>
-            <a href="#" data-i18n="nav_features">Features</a>
-            <a href="#" data-i18n="nav_solutions">Solutions</a>
-            <a href="#" data-i18n="nav_support">Support</a>
-            <a href="#" data-i18n="nav_pricing">Pricing</a>
+            <a href="#hero-section" data-i18n="nav_products">QR Generator</a>
+            <a href="#types-section" data-i18n="nav_features">QR Types</a>
+            <a href="#platform-section" data-i18n="nav_solutions">Features</a>
+            <a href="#faq-section" data-i18n="nav_support">FAQ</a>
+            <a href="#pricing-section" data-i18n="nav_pricing">Pricing</a>
             <hr style="border-color: var(--border-color); margin: 8px 0;">
             <div class="lang-switcher-landing" style="display: flex; gap: 8px; justify-content: center; margin-bottom: 8px;">
                 <button class="lang-btn" data-lang="en" onclick="switchLang('en')" style="font-size: 16px; padding: 10px 14px; flex: 1;">🇬🇧 English</button>
@@ -1086,7 +1086,7 @@
     </div>
 
     <!-- 2. Hero & QR Creator Tool -->
-    <section class="hero">
+    <section class="hero" id="hero-section">
         <div class="container">
             <h1 data-i18n="hero_title">QR card Generator: Create your free QR card</h1>
             <p data-i18n="hero_desc">Create vCards, websites, texts, and much more. Customize, track, and boost your marketing with
@@ -1189,7 +1189,7 @@
     </section>
 
     <!-- 5. QR Type Selector -->
-    <section class="section" style="background: #1E1F18;">
+    <section class="section" style="background: #1E1F18;" id="types-section">
         <div class="container">
             <div class="section-title">
                 <h2 data-i18n="types_title">Generate different types of QR Codes</h2>
@@ -1325,7 +1325,7 @@
     </script>
 
     <!-- 7. All-in-One Marketing Grid -->
-    <section class="section">
+    <section class="section" id="platform-section">
         <div class="container">
             <div class="section-title">
                 <h2 data-i18n="bento_title">Your all-in-one marketing platform</h2>
@@ -1403,7 +1403,7 @@
     </section>
 
     <!-- 9. Pricing Section -->
-    <section class="section branding-section">
+    <section class="section branding-section" id="pricing-section">
         <div class="container text-center">
             <p style="text-transform: uppercase; font-weight: 700; color: var(--primary-color); letter-spacing: 2px;" data-i18n="pricing_sup">Pricing & Plans</p>
             <h2 style="margin-top: 16px;" data-i18n="pricing_title">Choose a plan that fits your needs</h2>
@@ -1473,7 +1473,7 @@
 
 
     <!-- 11. FAQ -->
-    <section class="section faq-section">
+    <section class="section faq-section" id="faq-section">
         <div class="container">
             <div class="section-title">
                 <h2 data-i18n="faq_title">Do not leave with doubts</h2>
@@ -1660,6 +1660,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const openMenuBtn = document.getElementById('open-mobile-menu');
     const closeMenuBtn = document.getElementById('close-mobile-menu');
     const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    const navAnchorLinks = document.querySelectorAll('.nav-links a[href^="#"], .mobile-menu-overlay-links a[href^="#"]');
+
+    function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+            mobileMenuOverlay.classList.remove('open');
+        }
+        document.body.style.overflow = '';
+    }
+
+    function smoothScrollToTarget(targetId) {
+        const target = document.getElementById(targetId);
+        if (!target) return;
+        const header = document.querySelector('header');
+        const headerOffset = header ? header.offsetHeight + 8 : 88;
+        const targetTop = target.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+    }
 
     if (openMenuBtn && closeMenuBtn && mobileMenuOverlay) {
         openMenuBtn.addEventListener('click', () => {
@@ -1668,10 +1685,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         closeMenuBtn.addEventListener('click', () => {
-            mobileMenuOverlay.classList.remove('open');
-            document.body.style.overflow = '';
+            closeMobileMenu();
         });
     }
+
+    navAnchorLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            const href = this.getAttribute('href') || '';
+            if (!href.startsWith('#')) return;
+            const targetId = href.slice(1);
+            if (!targetId) return;
+            e.preventDefault();
+            closeMobileMenu();
+            smoothScrollToTarget(targetId);
+        });
+    });
     
     // Initial trigger
     generateQR();
