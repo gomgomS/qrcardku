@@ -79,6 +79,28 @@
         margin-top: 24px;
     }
     .btn-pay:hover { opacity: 0.9; }
+
+    .duration-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+    .duration-card {
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        background: rgba(255,255,255,0.03);
+        transition: all 0.2s;
+    }
+    .duration-card.selected {
+        border-color: var(--primary);
+        background: rgba(235, 168, 27, 0.05);
+    }
+    .duration-title { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .duration-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .duration-disc { font-size: 11px; color: #22c55e; margin-top: 4px; font-weight: 600; }
 </style>
 {% endblock %}
 
@@ -91,6 +113,7 @@
 <form method="POST" action="/user/plans/checkout">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan_id" value="{{ plan.plan_id }}">
+    <input type="hidden" name="purchase_months" id="val-purchase-months" value="1">
     
     <div class="checkout-wrap">
         <div class="checkout-left">
@@ -116,6 +139,31 @@
                 <p style="margin-top: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
                     By confirming this payment, the quotas above will be instantly activated and added to your total active capacity. The subscription will be valid for <strong>{{ plan.period_days }} days</strong>.
                 </p>
+
+                <div style="margin-top: 18px;">
+                    <div class="section-title" style="font-size: 14px; margin-bottom: 10px;">
+                        <i class="fa-regular fa-calendar" style="color: var(--primary);"></i>
+                        Subscription Duration
+                    </div>
+                    <div class="duration-grid">
+                        {% for opt in duration_options %}
+                        <div class="duration-card {% if opt.months == 1 %}selected{% endif %}"
+                             data-months="{{ opt.months }}"
+                             data-price-idr="{{ opt.final_price_idr }}"
+                             data-subtotal-idr="{{ opt.subtotal_idr }}"
+                             data-discount-idr="{{ opt.discount_idr }}"
+                             data-discount-pct="{{ opt.discount_pct }}"
+                             data-period-days="{{ opt.period_days }}"
+                             onclick="selectDuration(this)">
+                            <div class="duration-title">{{ opt.months }} Month{{ 's' if opt.months != 1 else '' }}</div>
+                            <div class="duration-sub">Rp {{ "{:,.0f}".format(opt.final_price_idr).replace(',', '.') }}</div>
+                            <div class="duration-disc">
+                                {% if opt.discount_pct > 0 %}Save {{ opt.discount_pct }}%{% else %}No discount{% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             
             <div class="section-box">
@@ -191,13 +239,21 @@
                     <div class="payment-category-title">{{ category.name }}</div>
                     <div class="payment-grid">
                         {% for payment in category.payments %}
-                        <div class="pm-card" data-code="{{ payment.merchants[0].id }}" onclick="selectPayment(this)">
+                        <div class="pm-card"
+                             data-code="{{ payment.method_code }}"
+                             data-fee-idr="{{ payment.fee_idr }}"
+                             data-fee-map='{{ payment.fee_idr_by_month | tojson }}'
+                             data-label="{{ payment.display_label | e }}"
+                             onclick="selectPayment(this)">
                             <div class="pm-card-merchants">
                                 {% for m in payment.merchants %}
                                 <img src="{{ m.icon }}" alt="{{ m.name }}" title="{{ m.name }}">
                                 {% endfor %}
                             </div>
                             <div class="fee">+ {{ payment.fee }}</div>
+                            {% if payment.fee_idr %}
+                            <div class="fee" style="margin-top: 2px;">Rp {{ "{:,.0f}".format(payment.fee_idr).replace(',', '.') }}</div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -205,18 +261,73 @@
                 {% endfor %}
 
                 <script>
+                    window.__checkoutState = {
+                        months: 1,
+                        basePrice: {{ plan.price_idr | int }},
+                        subtotal: {{ plan.price_idr | int }},
+                        discountIdr: 0,
+                        discountPct: 0,
+                        periodDays: {{ plan.period_days | int }},
+                        selectedPaymentEl: null
+                    };
+                    function formatIdr(n) {
+                        var x = Math.round(Number(n) || 0);
+                        return 'Rp ' + x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    }
+                    function renderCheckoutSummary() {
+                        var st = window.__checkoutState;
+                        var feeIdr = 0;
+                        var label = '';
+                        if (st.selectedPaymentEl) {
+                            var feeMapRaw = st.selectedPaymentEl.getAttribute('data-fee-map') || '{}';
+                            var feeMap = {};
+                            try { feeMap = JSON.parse(feeMapRaw); } catch (e) {}
+                            feeIdr = parseInt(feeMap[String(st.months)] || st.selectedPaymentEl.getAttribute('data-fee-idr') || '0', 10) || 0;
+                            label = st.selectedPaymentEl.getAttribute('data-label') || '';
+                        }
+                        var total = st.basePrice + feeIdr;
+                        document.getElementById('summary-plan-price').textContent = formatIdr(st.subtotal);
+                        document.getElementById('summary-duration').textContent = st.periodDays + ' Days (' + st.months + ' month' + (st.months > 1 ? 's' : '') + ')';
+                        document.getElementById('summary-discount').textContent = st.discountIdr > 0 ? ('-' + formatIdr(st.discountIdr) + ' (' + st.discountPct + '%)') : 'Rp 0';
+                        document.getElementById('summary-base-after-discount').textContent = formatIdr(st.basePrice);
+                        document.getElementById('summary-admin-fee').textContent = formatIdr(feeIdr);
+                        document.getElementById('summary-total').textContent = formatIdr(total);
+
+                        var pmRow = document.getElementById('summary-payment-method-row');
+                        if (pmRow) {
+                            pmRow.style.display = label ? 'flex' : 'none';
+                            if (label) document.getElementById('summary-payment-label').textContent = label;
+                        }
+                    }
+                    function selectDuration(element) {
+                        document.querySelectorAll('.duration-card').forEach(function(c) {
+                            c.classList.remove('selected');
+                        });
+                        element.classList.add('selected');
+                        var st = window.__checkoutState;
+                        st.months = parseInt(element.getAttribute('data-months') || '1', 10) || 1;
+                        st.basePrice = parseInt(element.getAttribute('data-price-idr') || '0', 10) || 0;
+                        st.subtotal = parseInt(element.getAttribute('data-subtotal-idr') || '0', 10) || 0;
+                        st.discountIdr = parseInt(element.getAttribute('data-discount-idr') || '0', 10) || 0;
+                        st.discountPct = parseInt(element.getAttribute('data-discount-pct') || '0', 10) || 0;
+                        st.periodDays = parseInt(element.getAttribute('data-period-days') || '0', 10) || 0;
+                        document.getElementById('val-purchase-months').value = String(st.months);
+                        renderCheckoutSummary();
+                    }
                     function selectPayment(element) {
                         document.querySelectorAll('.pm-card').forEach(function(c) {
                             c.classList.remove('selected');
                         });
                         element.classList.add('selected');
                         document.getElementById('val-payment-method').value = element.getAttribute('data-code');
-                        
-                        // Unlock checkout button
+                        window.__checkoutState.selectedPaymentEl = element;
+                        renderCheckoutSummary();
+
                         document.getElementById('btn-submit').removeAttribute('disabled');
                         document.getElementById('btn-submit').style.opacity = '1';
                         document.getElementById('btn-submit').style.cursor = 'pointer';
                     }
+                    renderCheckoutSummary();
                 </script>
 
             </div>
@@ -228,20 +339,32 @@
                 
                 <div class="summary-item">
                     <span>{{ plan.name }} Package</span>
-                    <span class="summary-val">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                    <span class="summary-val" id="summary-plan-price">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
                 </div>
                 <div class="summary-item">
                     <span>Duration</span>
-                    <span class="summary-val">{{ plan.period_days }} Days</span>
+                    <span class="summary-val" id="summary-duration">{{ plan.period_days }} Days (1 month)</span>
+                </div>
+                <div class="summary-item">
+                    <span>Discount</span>
+                    <span class="summary-val" id="summary-discount">Rp 0</span>
+                </div>
+                <div class="summary-item">
+                    <span>Plan Total</span>
+                    <span class="summary-val" id="summary-base-after-discount">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                </div>
+                <div class="summary-item" id="summary-payment-method-row" style="display: none;">
+                    <span>Payment method</span>
+                    <span class="summary-val" id="summary-payment-label">—</span>
                 </div>
                 <div class="summary-item">
                     <span>Admin Fee</span>
-                    <span class="summary-val">Rp 0</span>
+                    <span class="summary-val" id="summary-admin-fee">Rp 0</span>
                 </div>
                 
                 <div class="summary-item total">
                     <span>Total</span>
-                    <span class="summary-val">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                    <span class="summary-val" id="summary-total">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
                 </div>
                 
                 <button type="submit" class="btn-pay" id="btn-submit" disabled style="opacity: 0.5; cursor: not-allowed;">

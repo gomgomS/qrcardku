@@ -156,7 +156,9 @@
                 <p class="muted">Payment Due: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.payment_due_timestamp if transaction.payment_due_timestamp else (transaction.timestamp + 3600) }}"></span></p>
                 <p class="muted" style="{% if not transaction.started_at %}opacity:0.4;{% endif %}">Paid Off: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.started_at }}"></span></p>
                 <p class="muted" style="{% if not transaction.expires_at %}opacity:0.4;{% endif %}">Expires: <span style="color: var(--text-main); font-weight: 500;" class="ts-disp" data-ts="{{ transaction.expires_at }}"></span></p>
-                <p class="muted" style="margin-top: 8px;">Method: <span style="color: var(--text-main); font-weight: 500;">{{ transaction.payment_method }}</span></p>
+                <p class="muted" style="margin-top: 8px;">Method: <span style="color: var(--text-main); font-weight: 500;">{{ transaction.payment_method_label or transaction.payment_method }}</span></p>
+                <p class="muted">Method Code: <span style="color: var(--text-main); font-weight: 500;">{{ transaction.payment_method }}</span></p>
+                <p class="muted">Method Fee Rule: <span style="color: var(--text-main); font-weight: 500;">{{ transaction.payment_method_fee_label }}</span></p>
             </div>
         </div>
 
@@ -175,8 +177,8 @@
                             <strong>{{ transaction.plan_name }} Package</strong><br>
                             <span style="font-size: 13px; color: var(--text-muted);">Includes {{ transaction.max_qr }} QR Slot(s) & {{ transaction.max_storage_mb }} MB Storage Allocation</span>
                         </td>
-                        <td>{{ transaction.period_days }} Days</td>
-                        <td class="amount">Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</td>
+                        <td>{{ transaction.period_days }} Days ({{ transaction.purchase_months if transaction.purchase_months else 1 }} month{{ 's' if (transaction.purchase_months if transaction.purchase_months else 1) != 1 else '' }})</td>
+                        <td class="amount">Rp {{ "{:,.0f}".format(transaction.subtotal_price_idr).replace(',', '.') }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -185,11 +187,19 @@
         <div class="totals">
             <div class="total-row">
                 <span>Subtotal</span>
-                <span>Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</span>
+                <span>Rp {{ "{:,.0f}".format(transaction.subtotal_price_idr).replace(',', '.') }}</span>
+            </div>
+            <div class="total-row">
+                <span>Discount{% if transaction.discount_percent %} ({{ transaction.discount_percent }}%){% endif %}</span>
+                <span>- Rp {{ "{:,.0f}".format(transaction.discount_amount_idr).replace(',', '.') }}</span>
+            </div>
+            <div class="total-row">
+                <span>Plan Total</span>
+                <span>Rp {{ "{:,.0f}".format(transaction.plan_price_idr).replace(',', '.') }}</span>
             </div>
             <div class="total-row">
                 <span>Admin Fee</span>
-                <span>Rp 0</span>
+                <span>Rp {{ "{:,.0f}".format(transaction.admin_fee_idr).replace(',', '.') }}</span>
             </div>
             <div class="total-row grand">
                 <span>Grand Total</span>

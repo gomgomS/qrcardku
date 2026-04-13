@@ -800,6 +800,12 @@ db = {
         "max_storage_mb"    : 0,        # max storage in MB
         "description"       : "",       # short marketing description
         "features"          : [],       # list of feature strings for display
+        "duration_discounts": {         # checkout discounts by month duration (percent)
+            "1": 0,
+            "3": 20,
+            "6": 30,
+            "12": 50,
+        },
         "status"            : "ACTIVE", # ACTIVE | INACTIVE
         "created_at"        : "",
         "timestamp"         : 0,
@@ -812,6 +818,10 @@ db = {
         "fk_user_id"        : "",       # owner
         "plan_id"           : "",       # single | team | corporate
         "plan_name"         : "",       # snapshot of plan name at purchase time
+        "purchase_months"   : 1,        # selected duration in months
+        "subtotal_price_idr": 0,        # base monthly price * months before discount
+        "discount_percent"  : 0,        # plan discount percent for selected duration
+        "discount_amount_idr": 0,       # discount value in IDR
         "price_paid_idr"    : 0,        # actual amount paid
         "max_qr"            : 0,        # snapshot of QR quota at purchase time
         "max_storage_mb"    : 0,        # snapshot of storage quota at purchase time

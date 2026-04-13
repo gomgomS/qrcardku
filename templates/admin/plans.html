@@ -288,6 +288,35 @@
             </div>
         </div>
 
+        <div class="field-row">
+            <div class="field-label">Duration Discounts (%)</div>
+            <div class="field-row-2">
+                <div class="field-row">
+                    <div class="field-label">1 Month</div>
+                    <input class="field-input" type="number" id="disc-1-{{ plan.plan_id }}"
+                        value="{{ (plan.duration_discounts or {}).get('1', 0) }}" min="0" max="100">
+                </div>
+                <div class="field-row">
+                    <div class="field-label">3 Months</div>
+                    <input class="field-input" type="number" id="disc-3-{{ plan.plan_id }}"
+                        value="{{ (plan.duration_discounts or {}).get('3', 20) }}" min="0" max="100">
+                </div>
+            </div>
+            <div class="field-row-2">
+                <div class="field-row">
+                    <div class="field-label">6 Months</div>
+                    <input class="field-input" type="number" id="disc-6-{{ plan.plan_id }}"
+                        value="{{ (plan.duration_discounts or {}).get('6', 30) }}" min="0" max="100">
+                </div>
+                <div class="field-row">
+                    <div class="field-label">12 Months</div>
+                    <input class="field-input" type="number" id="disc-12-{{ plan.plan_id }}"
+                        value="{{ (plan.duration_discounts or {}).get('12', 50) }}" min="0" max="100">
+                </div>
+            </div>
+            <div class="field-hint">Example: 3 months = 20 means 20% discount. 1 month is always treated as 0% at checkout.</div>
+        </div>
+
         <!-- QR + Storage -->
         <div class="field-row-2">
             <div class="field-row">
@@ -358,6 +387,10 @@
         var period      = parseInt(document.getElementById('period-' + planId).value) || 30;
         var maxQr       = parseInt(document.getElementById('max-qr-' + planId).value) || 0;
         var maxStorage  = parseInt(document.getElementById('max-storage-' + planId).value) || 0;
+        var disc1       = parseInt(document.getElementById('disc-1-' + planId).value) || 0;
+        var disc3       = parseInt(document.getElementById('disc-3-' + planId).value) || 0;
+        var disc6       = parseInt(document.getElementById('disc-6-' + planId).value) || 0;
+        var disc12      = parseInt(document.getElementById('disc-12-' + planId).value) || 0;
         var featuresRaw = document.getElementById('features-' + planId).value;
         var features    = featuresRaw.split('\n').map(function(f) { return f.trim(); }).filter(Boolean);
         var status      = document.getElementById('toggle-' + planId).checked ? 'ACTIVE' : 'INACTIVE';
@@ -370,6 +403,7 @@
                 plan_id: planId, name: name, description: desc,
                 price_idr: price, period_days: period,
                 max_qr: maxQr, max_storage_mb: maxStorage,
+                duration_discounts: { "1": disc1, "3": disc3, "6": disc6, "12": disc12 },
                 features: features, status: status
             })
         })

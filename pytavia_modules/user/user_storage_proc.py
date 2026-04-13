@@ -49,6 +49,28 @@ def _fmt_size(n: int) -> str:
     return f"{n} B"
 
 
+def _resolve_storage_group(qr_type: str, r2_key: str) -> str:
+    """
+    Group files for storage filter:
+    - template: frame assets
+    - generated: QR render outputs (qr image/composite)
+    - assets: everything else uploaded as QR content
+    """
+    qt = (qr_type or "").strip().lower()
+    key = (r2_key or "").strip().lower()
+
+    if qt == "frame":
+        return "template"
+
+    if qt in {"composite", "qr_image"}:
+        return "generated"
+
+    if key.startswith("qr-images/") or key.startswith("qr-composites/"):
+        return "generated"
+
+    return "assets"
+
+
 class user_storage_proc:
 
     mgdDB = database.get_db_conn(config.mainDB)
@@ -212,12 +234,7 @@ class user_storage_proc:
                 total_bytes += size
                 tracked_qrs.add(qid)
                 qr_type = doc.get("qr_type", meta.get("qr_type", ""))
-                if qr_type == "frame":
-                    storage_group = "template"
-                elif qr_type == "composite":
-                    storage_group = "generated"
-                else:
-                    storage_group = "assets"
+                storage_group = _resolve_storage_group(qr_type, key)
                 files.append({
                     "key":           key,
                     "url":           _r2.public_url(key),
@@ -249,7 +266,7 @@ class user_storage_proc:
                         key      = obj["key"]
                         size     = obj["size"]
                         _qt      = meta["qr_type"]
-                        _sg      = "template" if _qt == "frame" else "generated" if _qt == "composite" else "assets"
+                        _sg      = _resolve_storage_group(_qt, key)
                         total_bytes += size
                         files.append({
                             "key":           key,

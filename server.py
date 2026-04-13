@@ -686,6 +686,7 @@ _PLAN_DEFAULTS = [
         "max_storage_mb": 30,
         "description": "Perfect for individuals who need one dynamic QR.",
         "features": ["1 QR card slot", "30 MB storage", "All QR types", "Scan analytics"],
+        "duration_discounts": {"1": 0, "3": 20, "6": 30, "12": 50},
         "status": "ACTIVE",
     },
     {
@@ -697,6 +698,7 @@ _PLAN_DEFAULTS = [
         "max_storage_mb": 250,
         "description": "Great for small teams managing multiple QR cards.",
         "features": ["10 QR card slots", "250 MB storage", "All QR types", "Scan analytics", "Priority support"],
+        "duration_discounts": {"1": 0, "3": 20, "6": 30, "12": 50},
         "status": "ACTIVE",
     },
     {
@@ -708,6 +710,7 @@ _PLAN_DEFAULTS = [
         "max_storage_mb": 500,
         "description": "For large organizations with high-volume QR needs.",
         "features": ["40 QR card slots", "500 MB storage", "All QR types", "Scan analytics", "Priority support", "Dedicated account manager"],
+        "duration_discounts": {"1": 0, "3": 20, "6": 30, "12": 50},
         "status": "ACTIVE",
     },
 ]
@@ -724,6 +727,48 @@ def _get_plans_from_db(db):
         else:
             result.append(plans[d["plan_id"]])
     return result
+
+
+def _normalize_duration_discounts(raw):
+    defaults = {"1": 0, "3": 20, "6": 30, "12": 50}
+    out = dict(defaults)
+    if not isinstance(raw, dict):
+        return out
+    for key in ("1", "3", "6", "12"):
+        try:
+            out[key] = max(0, min(100, int(raw.get(key, out[key]))))
+        except Exception:
+            out[key] = defaults[key]
+    out["1"] = 0
+    return out
+
+
+def _build_checkout_duration_options(plan_doc):
+    base_price = max(0, int(plan_doc.get("price_idr", 0)))
+    base_days = max(1, int(plan_doc.get("period_days", 30)))
+    discounts = _normalize_duration_discounts(plan_doc.get("duration_discounts", {}))
+    options = []
+    for months in (1, 3, 6, 12):
+        discount_pct = discounts.get(str(months), 0)
+        subtotal = base_price * months
+        discount_amount = int(round(subtotal * (discount_pct / 100.0)))
+        final_price = max(0, subtotal - discount_amount)
+        options.append({
+            "months": months,
+            "discount_pct": discount_pct,
+            "subtotal_idr": subtotal,
+            "discount_idr": discount_amount,
+            "final_price_idr": final_price,
+            "period_days": base_days * months,
+        })
+    return options
+
+
+def _find_duration_option(options, months):
+    for opt in options:
+        if int(opt.get("months", 0)) == int(months):
+            return opt
+    return None
 @app.route("/admin/transactions")
 def admin_transactions():
     if "fk_admin_id" not in session:
@@ -800,6 +845,8 @@ def admin_plans_save():
     if isinstance(features_raw, str):
         features_raw = [f.strip() for f in features_raw.splitlines() if f.strip()]
 
+    duration_discounts = _normalize_duration_discounts(data.get("duration_discounts", {}))
+
     update = {
         "name":            str(data.get("name", "")).strip(),
         "price_idr":       max(0, int(data.get("price_idr", 0))),
@@ -808,6 +855,7 @@ def admin_plans_save():
         "max_storage_mb":  max(0, int(data.get("max_storage_mb", 0))),
         "description":     str(data.get("description", "")).strip(),
         "features":        features_raw,
+        "duration_discounts": duration_discounts,
         "status":          "ACTIVE" if data.get("status") == "ACTIVE" else "INACTIVE",
         "updated_at":      time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
     }
@@ -8117,6 +8165,99 @@ def user_frames_delete(frame_id):
     return redirect(url_for("user_templates"))
 
 
+def _parse_rp_idr(s):
+    """Parse Indonesian Rupiah display like 'Rp 4.400' to integer IDR."""
+    s = (s or "").strip()
+    if s.lower().startswith("rp"):
+        s = s[2:].lstrip(". ").strip()
+    s = s.replace(" ", "").replace(".", "")
+    if s.isdigit():
+        return int(s)
+    return 0
+
+
+def _compute_admin_fee_idr_for_payment(base_idr, fee_str):
+    """Admin/payment fee in IDR from labels in payment-methods.json (e.g. '1,67%', 'Rp 4.400', '2,90% + Rp 2.500')."""
+    if not fee_str or not str(fee_str).strip():
+        return 0
+    s = str(fee_str).strip()
+    if "+" in s:
+        return sum(
+            _fee_part_idr(base_idr, p.strip()) for p in s.split("+")
+        )
+    return _fee_part_idr(base_idr, s)
+
+
+def _fee_part_idr(base_idr, part):
+    part = (part or "").strip()
+    if not part:
+        return 0
+    if "%" in part:
+        num = part.replace("%", "").replace(",", ".").strip()
+        try:
+            pct = float(num) / 100.0
+        except ValueError:
+            return 0
+        return int(round(base_idr * pct))
+    return _parse_rp_idr(part)
+
+
+def _load_payment_methods_json(root_path):
+    import os
+    json_path = os.path.join(root_path, "static", "json_file", "payment-methods.json")
+    if not os.path.exists(json_path):
+        return []
+    with open(json_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _enrich_payment_categories_with_fees(categories, duration_options):
+    """Attach fee map per duration, method metadata for checkout."""
+    out = []
+    duration_options = duration_options or []
+    default_option = _find_duration_option(duration_options, 1) or (duration_options[0] if duration_options else {})
+    for cat in categories or []:
+        row = {"name": cat.get("name", ""), "payments": []}
+        for pay in cat.get("payments", []):
+            fee_str = pay.get("fee", "")
+            fee_map = {}
+            for opt in duration_options:
+                m = str(int(opt.get("months", 0)))
+                fee_map[m] = _compute_admin_fee_idr_for_payment(int(opt.get("final_price_idr", 0)), fee_str)
+            fee_idr = fee_map.get("1", _compute_admin_fee_idr_for_payment(int(default_option.get("final_price_idr", 0)), fee_str))
+            merchants = pay.get("merchants") or []
+            code = merchants[0].get("id", "") if merchants else ""
+            label = ", ".join(m.get("name", "") for m in merchants) or code
+            row["payments"].append({
+                "merchants": merchants,
+                "fee": fee_str,
+                "fee_idr": fee_idr,
+                "fee_idr_by_month": fee_map,
+                "method_code": code,
+                "display_label": label,
+            })
+        out.append(row)
+    return out
+
+
+def _fee_string_for_payment_method(categories, method_code):
+    for cat in categories or []:
+        for pay in cat.get("payments", []):
+            merchants = pay.get("merchants") or []
+            if merchants and merchants[0].get("id") == method_code:
+                return pay.get("fee", "")
+    return None
+
+
+def _payment_method_label_for_code(categories, method_code):
+    for cat in categories or []:
+        for pay in cat.get("payments", []):
+            merchants = pay.get("merchants") or []
+            if merchants and merchants[0].get("id") == method_code:
+                return ", ".join(m.get("name", "") for m in merchants) or method_code
+    return method_code or "-"
+
+
 @app.route("/user/plans/checkout", methods=["GET", "POST"])
 def user_plans_checkout():
     if "fk_user_id" not in session:
@@ -8130,22 +8271,44 @@ def user_plans_checkout():
     if request.method == "POST":
         plan_id = request.form.get("plan_id", "")
         payment_method = request.form.get("payment_method", "")
+        try:
+            purchase_months = int(request.form.get("purchase_months", "1"))
+        except Exception:
+            purchase_months = 1
         plan_doc = _db.db_plan_definition.find_one({"plan_id": plan_id})
         
         if not plan_doc or not payment_method:
             return redirect(url_for("user_plans"))
+        duration_options = _build_checkout_duration_options(plan_doc)
+        selected_duration = _find_duration_option(duration_options, purchase_months)
+        if not selected_duration:
+            selected_duration = _find_duration_option(duration_options, 1)
+        if not selected_duration:
+            return redirect(url_for("user_plans"))
+
+        purchase_months = int(selected_duration.get("months", 1))
+        plan_price_idr = int(selected_duration.get("final_price_idr", 0))
+        subtotal_price_idr = int(selected_duration.get("subtotal_idr", plan_price_idr))
+        discount_idr = int(selected_duration.get("discount_idr", 0))
+        discount_pct = int(selected_duration.get("discount_pct", 0))
+        period_days = int(selected_duration.get("period_days", int(plan_doc.get("period_days", 30))))
+
+        pm_categories = _load_payment_methods_json(app.root_path)
+        fee_label = _fee_string_for_payment_method(pm_categories, payment_method)
+        if fee_label is None:
+            return redirect(url_for("user_plans"))
+        admin_fee_idr = _compute_admin_fee_idr_for_payment(plan_price_idr, fee_label)
+        amount_idr = plan_price_idr + admin_fee_idr
         
         user_doc = _db.db_user.find_one({"pkey": fk_user_id})
         user_email = user_doc.get("email", "user@qrkartu.com") if user_doc else "user@qrkartu.com"
         
         sub_id = idgen._get_api_call_id()
         now_ts = int(time.time())
-        amount_idr = int(plan_doc.get("price_idr", 0))
         
         # --- Duitku API Integration ---
         import requests
         import hashlib
-        import json
         
         merchant_code = getattr(_cfg_plans, "G_DUITKU_MERCHANT_CODE", "")
         api_key = getattr(_cfg_plans, "G_DUITKU_MERCHANT_KEY", "")
@@ -8196,10 +8359,16 @@ def user_plans_checkout():
             "user_name": user_doc.get("name", "") if user_doc else "",
             "plan_id": plan_id,
             "plan_name": plan_doc.get("name", ""),
+            "purchase_months": purchase_months,
+            "subtotal_price_idr": subtotal_price_idr,
+            "discount_percent": discount_pct,
+            "discount_amount_idr": discount_idr,
+            "plan_price_idr": plan_price_idr,
+            "admin_fee_idr": admin_fee_idr,
             "price_paid_idr": amount_idr,
             "max_qr": plan_doc.get("max_qr", 0),
             "max_storage_mb": plan_doc.get("max_storage_mb", 0),
-            "period_days": plan_doc.get("period_days", 30),
+            "period_days": period_days,
             "started_at": 0,
             "expires_at": 0,
             "payment_ref": duitku_ref,
@@ -8226,18 +8395,19 @@ def user_plans_checkout():
     if not plan_doc:
         return redirect(url_for("user_plans"))
         
-    payment_methods_data = []
     try:
-        import json
-        import os
-        json_path = os.path.join(app.root_path, "static", "json_file", "payment-methods.json")
-        if os.path.exists(json_path):
-            with open(json_path, "r", encoding="utf-8") as f:
-                payment_methods_data = json.load(f)
+        raw_pm = _load_payment_methods_json(app.root_path)
     except Exception as e:
         app.logger.error(f"Error loading payment methods JSON: {e}")
-        
-    return render_template("user/checkout.html", plan=plan_doc, payment_categories=payment_methods_data)
+        raw_pm = []
+    duration_options = _build_checkout_duration_options(plan_doc)
+    payment_methods_data = _enrich_payment_categories_with_fees(raw_pm, duration_options)
+    return render_template(
+        "user/checkout.html",
+        plan=plan_doc,
+        payment_categories=payment_methods_data,
+        duration_options=duration_options,
+    )
 
 
 @app.route("/user/plans/success")
@@ -8405,9 +8575,41 @@ def user_transactions_invoice(sub_id):
     transaction = _db.db_user_subscription.find_one({"subscription_id": sub_id, "fk_user_id": session["fk_user_id"]})
     if not transaction:
         return "Transaction not found", 404
-        
-    user = _db.db_user.find_one({"fk_user_id": session["fk_user_id"]})
-        
+
+    user = _db.db_user.find_one({"pkey": session["fk_user_id"]})
+
+    # Enrich transaction snapshot for invoice display consistency
+    try:
+        pm_categories = _load_payment_methods_json(app.root_path)
+    except Exception:
+        pm_categories = []
+    payment_code = transaction.get("payment_method", "")
+    transaction["payment_method_label"] = _payment_method_label_for_code(pm_categories, payment_code)
+    transaction["payment_method_fee_label"] = _fee_string_for_payment_method(pm_categories, payment_code) or "-"
+
+    subtotal_price_idr = int(transaction.get("subtotal_price_idr", 0) or 0)
+    discount_amount_idr = int(transaction.get("discount_amount_idr", 0) or 0)
+    plan_price_idr = int(transaction.get("plan_price_idr", 0) or 0)
+    admin_fee_idr = int(transaction.get("admin_fee_idr", 0) or 0)
+    paid_idr = int(transaction.get("price_paid_idr", 0) or 0)
+
+    # Backward compatibility for old subscriptions before new checkout fields existed
+    if subtotal_price_idr <= 0:
+        subtotal_price_idr = plan_price_idr if plan_price_idr > 0 else max(0, paid_idr - admin_fee_idr)
+    if plan_price_idr <= 0:
+        plan_price_idr = max(0, subtotal_price_idr - discount_amount_idr)
+    if admin_fee_idr <= 0:
+        admin_fee_idr = max(0, paid_idr - plan_price_idr)
+    if discount_amount_idr <= 0:
+        discount_amount_idr = max(0, subtotal_price_idr - plan_price_idr)
+
+    transaction["subtotal_price_idr"] = subtotal_price_idr
+    transaction["plan_price_idr"] = plan_price_idr
+    transaction["discount_amount_idr"] = discount_amount_idr
+    transaction["admin_fee_idr"] = admin_fee_idr
+    transaction["purchase_months"] = int(transaction.get("purchase_months", 1) or 1)
+    transaction["discount_percent"] = int(transaction.get("discount_percent", 0) or 0)
+
     return render_template("user/invoice.html", transaction=transaction, user=user)
 
 
