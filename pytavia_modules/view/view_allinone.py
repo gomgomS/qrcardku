@@ -32,7 +32,11 @@ class view_allinone:
                             qr_encode_url=None, msg=None, error_msg=None, allinone_data=None,
                             qrcard_id=None):
         try:
+            is_update = bool(qrcard_id)
             form_action = f"/qr/update/save/allinone/{qrcard_id}" if qrcard_id else "/qr/save/allinone"
+            back_url = f"/qr/update/allinone/{qrcard_id}" if qrcard_id else "/qr/new/allinone"
+            step1_url = "/qr/list" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/allinone/{qrcard_id}" if qrcard_id else "/qr/new/allinone"
             return render_template(
                 "/user/new_qr_design_allinone.html",
                 qr_type="allinone",
@@ -45,6 +49,10 @@ class view_allinone:
                 allinone_data=allinone_data or {},
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
             )
         except Exception:
             if self.webapp:

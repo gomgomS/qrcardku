@@ -297,7 +297,7 @@
 
 <form id="content-form" method="POST" action="{{ form_action | default('/qr/new/allinone/qr-design') }}"
     enctype="multipart/form-data"
-    onsubmit="if(event.isTrusted){event.preventDefault();saveAndNext();}">
+    onsubmit="event.preventDefault();if(event.isTrusted){saveAndNext();}return false;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="page-title" style="margin-bottom: 24px;" data-i18n="nc_page_title">Complete the content of the QR</div>
 

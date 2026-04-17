@@ -373,7 +373,7 @@ def _get_user_qr_quota(fk_user_id):
         ))
         total_max_qr = sum(s.get("max_qr", 0) for s in subs)
         used_qr = _db.db_qr_index.count_documents(
-            {"fk_user_id": fk_user_id, "status": {"$nin": ["DELETED", "SOFT_DELETED"]}}
+            {"fk_user_id": fk_user_id, "status": {"$nin": ["DELETED", "SOFT_DELETED", "DRAFT"]}}
         )
         remaining = max(0, total_max_qr - used_qr)
         return {
@@ -386,10 +386,91 @@ def _get_user_qr_quota(fk_user_id):
     except Exception:
         return {"total_max_qr": 0, "used_qr": 0, "remaining_qr": 0, "has_active": False, "exceeded": True}
 
+
+_QR_TYPE_COLLECTION_MAP = {
+    "pdf": "db_qrcard_pdf",
+    "web-static": "db_qrcard_web_static",
+    "text": "db_qrcard_text",
+    "wa-static": "db_qrcard_wa_static",
+    "email-static": "db_qrcard_email_static",
+    "vcard-static": "db_qrcard_vcard_static",
+    "allinone": "db_qrcard_allinone",
+    "images": "db_qrcard_images",
+    "video": "db_qrcard_video",
+    "special": "db_qrcard_special",
+}
+
+
+def _sync_user_qr_activation_quota(fk_user_id, mgdDB=None):
+    """
+    Keep only the newest QRs ACTIVE according to currently available QR quota.
+    This runs on backend so expired subscriptions automatically deactivate excess QRs.
+    """
+    import time as _t
+    try:
+        _db = mgdDB or database.get_db_conn(config.mainDB)
+        now = int(_t.time())
+
+        _db.db_user_subscription.update_many(
+            {"fk_user_id": fk_user_id, "status": "ACTIVE", "expires_at": {"$lt": now, "$gt": 0}},
+            {"$set": {"status": "EXPIRED"}},
+        )
+
+        subs = list(_db.db_user_subscription.find(
+            {"fk_user_id": fk_user_id, "status": "ACTIVE", "is_deleted": {"$ne": True}, "expires_at": {"$gt": now}},
+            {"_id": 0, "max_qr": 1},
+        ))
+        total_max_qr = sum(int(s.get("max_qr", 0) or 0) for s in subs)
+
+        qr_docs = list(_db.db_qr_index.find(
+            {"fk_user_id": fk_user_id, "status": {"$in": ["ACTIVE", "INACTIVE"]}},
+            {"_id": 0, "qrcard_id": 1, "qr_type": 1, "status": 1, "timestamp": 1},
+        ).sort("timestamp", -1))
+
+        allowed_ids = set(d.get("qrcard_id") for d in qr_docs[:total_max_qr]) if total_max_qr > 0 else set()
+        active_count = 0
+
+        for doc in qr_docs:
+            qrcard_id = doc.get("qrcard_id")
+            if not qrcard_id:
+                continue
+            desired_status = "ACTIVE" if qrcard_id in allowed_ids else "INACTIVE"
+            if desired_status == "ACTIVE":
+                active_count += 1
+            if doc.get("status") == desired_status:
+                continue
+
+            set_op = {"$set": {"status": desired_status}}
+            _db.db_qr_index.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, set_op)
+            _db.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, set_op)
+
+            col_name = _QR_TYPE_COLLECTION_MAP.get(doc.get("qr_type", ""))
+            if col_name:
+                getattr(_db, col_name).update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                    set_op,
+                )
+
+        return {
+            "total_max_qr": total_max_qr,
+            "active_qr": active_count,
+            "allowed_ids": allowed_ids,
+            "has_active": total_max_qr > 0,
+        }
+    except Exception:
+        return {
+            "total_max_qr": 0,
+            "active_qr": 0,
+            "allowed_ids": set(),
+            "has_active": False,
+        }
+
 @app.before_request
 def _check_qr_quota_on_save():
     """Block QR creation if user has exceeded their accumulated quota."""
     from flask import request as _req
+    if "fk_user_id" in session:
+        _sync_user_qr_activation_quota(session["fk_user_id"])
     if _req.method == "POST" and _req.path.startswith("/qr/save/"):
         if "fk_user_id" not in session:
             return
@@ -1747,10 +1828,12 @@ def qr_images_redirect(short_code):
     _mgd = _db_img.get_db_conn(_cfg_img.mainDB)
     qrcard = _mgd.db_qrcard.find_one({"short_code": short_code, "qr_type": "images", "status": "ACTIVE"})
     if not qrcard:
-        abort(404)
+        return render_template("user/public_not_found.html"), 404
     # Merge images-specific doc
     qrcard = _merge_images_into_qrcard(_mgd, qrcard.get("fk_user_id"), qrcard["qrcard_id"], qrcard)
     qrcard = enforce_scan_limit_and_increment(qrcard, _mgd, app)
+    if not qrcard:
+        return render_template("user/public_not_found.html"), 404
     _mgd.db_qrcard_images.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
     return render_template("user/public_images.html", qrcard=qrcard)
 
@@ -1763,9 +1846,11 @@ def qr_video_redirect(short_code):
     _mgd = _db_vid.get_db_conn(_cfg_vid.mainDB)
     qrcard = _mgd.db_qrcard.find_one({"short_code": short_code, "qr_type": "video", "status": "ACTIVE"})
     if not qrcard:
-        abort(404)
+        return render_template("user/public_not_found.html"), 404
     qrcard = _merge_video_into_qrcard(_mgd, qrcard.get("fk_user_id"), qrcard["qrcard_id"], qrcard)
     qrcard = enforce_scan_limit_and_increment(qrcard, _mgd, app)
+    if not qrcard:
+        return render_template("user/public_not_found.html"), 404
     _mgd.db_qrcard_video.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
     return render_template("user/public_video.html", qrcard=qrcard)
 
@@ -1780,7 +1865,7 @@ def qr_special_redirect(short_code):
     if not qrcard:
         qrcard = _mgd.db_qrcard.find_one({"short_code": short_code, "qr_type": "special", "status": "ACTIVE"})
     if not qrcard:
-        abort(404)
+        return render_template("user/public_not_found.html"), 404
     _base_sp = _mgd.db_qrcard.find_one({"qrcard_id": qrcard.get("qrcard_id")})
     if _base_sp:
         _merged_sp = dict(qrcard)
@@ -1789,6 +1874,8 @@ def qr_special_redirect(short_code):
                 _merged_sp[_k] = _base_sp[_k]
         qrcard = _merged_sp
     qrcard = enforce_scan_limit_and_increment(qrcard, _mgd, app)
+    if not qrcard:
+        return render_template("user/public_not_found.html"), 404
     _mgd.db_qrcard_special.update_one({"qrcard_id": qrcard["qrcard_id"]}, {"$inc": {"stats.scan_count": 1}})
     # special_sections is stored as a JSON string; parse it back to a list
     import json as _json_sp
@@ -1883,6 +1970,7 @@ def qr_toggle_status(qrcard_id):
     from pytavia_core import database as _db_tog, config as _cfg_tog
     _mgd_tog = _db_tog.get_db_conn(_cfg_tog.mainDB)
     fk_user_id = session.get("fk_user_id")
+    quota_sync = _sync_user_qr_activation_quota(fk_user_id, _mgd_tog)
 
     # Verify ownership and get qr_type from db_qr_index
     idx = _mgd_tog.db_qr_index.find_one(
@@ -1927,6 +2015,12 @@ def qr_toggle_status(qrcard_id):
 
     if cur_status == "DRAFT":
         return redirect(url_for("user_qr_list"))
+
+    if cur_status == "INACTIVE":
+        total_quota = int(quota_sync.get("total_max_qr", 0) or 0)
+        active_qr = int(quota_sync.get("active_qr", 0) or 0)
+        if total_quota <= 0 or active_qr >= total_quota:
+            return redirect(url_for("user_qr_list", error_msg="Sorry oops, you don't have a quota."))
 
     new_status = "INACTIVE" if cur_status == "ACTIVE" else "ACTIVE"
     set_op = {"$set": {"status": new_status}}
@@ -2235,7 +2329,7 @@ def qr_update_design_pdf(qrcard_id):
         return redirect(url_for("login_view"))
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_pdf_proc as _qrp
-    qrcard = _qrp.qr_pdf_proc(app).get_qrcard(fk_user_id, qrcard_id)
+    qrcard = _qrp.qr_pdf_proc(app).get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     if request.method == "POST":
@@ -2323,7 +2417,7 @@ def qr_update_design_ecard(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_ecard_proc as _qre
     proc = _qre.qr_ecard_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -2332,7 +2426,7 @@ def qr_update_design_ecard(qrcard_id):
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
-            
+
         extra_data = {}
         for key in request.form:
             if key not in ["csrf_token", "url_content", "qr_name", "short_code", "back_from_design"]:
@@ -2341,7 +2435,7 @@ def qr_update_design_ecard(qrcard_id):
                     extra_data[key] = val_list
                 else:
                     extra_data[key] = val_list[0] if val_list else ""
-                    
+
         import os, uuid as _uuid
         _r2 = r2_mod.r2_storage_proc()
 
@@ -2504,7 +2598,7 @@ def qr_update_content_pdf(qrcard_id):
         return redirect(url_for("login_view"))
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_pdf_proc as _qrp
-    qrcard = _qrp.qr_pdf_proc(app).get_qrcard(fk_user_id, qrcard_id)
+    qrcard = _qrp.qr_pdf_proc(app).get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     if request.method == "POST":
@@ -2988,7 +3082,7 @@ def qr_update_content_ecard(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_ecard_proc as _qre
     proc = _qre.qr_ecard_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_ecard_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -3369,6 +3463,12 @@ def user_new_qr_design_pdf():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/pdf/" + short_code
+
+        # Save as draft so design page has a qrcard_id for proper back navigation
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_pdf_design_draft", qrcard_id=draft_result["qrcard_id"]))
+
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, pdf_data=pdf_data)
 
 @app.route("/qr/new/text")
@@ -4696,6 +4796,10 @@ def user_new_qr_design_ecard():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/ecard/" + short_code
+        # Save as draft so design page has a qrcard_id for proper back navigation
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_ecard_design_draft", qrcard_id=draft_result["qrcard_id"]))
         # Put tmp image public URLs into ecard_data so the Back form includes them
         if session.get("cover_img_tmp_key") and session.get("cover_img_tmp_name"):
             _cover_url = _r2.public_url("ecard/_tmp/{}/{}".format(
@@ -4952,6 +5056,10 @@ def user_new_qr_design_links():
             links_data["Links_cover_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_cover_tmp_key"], session["links_cover_tmp_name"]))
         if session.get("links_welcome_tmp_key") and session.get("links_welcome_tmp_name"):
             links_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("links/_tmp/{}/{}".format(session["links_welcome_tmp_key"], session["links_welcome_tmp_name"]))
+        # Save draft so Back button can navigate to edit content page
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_links_design_draft", qrcard_id=draft_result["qrcard_id"]))
     stats_carry = None
     if links_data and any(k in links_data for k in ("scan_limit_enabled", "scan_limit_value", "schedule_enabled", "schedule_since", "schedule_until")):
         from pytavia_modules.qr.qr_links_proc import _schedule_date_for_html_input as _links_sched_norm
@@ -5028,7 +5136,7 @@ def qr_update_content_links(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_links_proc as _qrl
     proc = _qrl.qr_links_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_links_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -5201,7 +5309,7 @@ def qr_update_design_links(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_links_proc as _qrl
     proc = _qrl.qr_links_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_links_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -5397,6 +5505,10 @@ def user_new_qr_design_sosmed():
             sosmed_data["Sosmed_cover_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_cover_tmp_key"], session["sosmed_cover_tmp_name"]))
         if session.get("sosmed_welcome_tmp_key") and session.get("sosmed_welcome_tmp_name"):
             sosmed_data["welcome_img_url"] = r2_mod.r2_storage_proc().public_url("sosmed/_tmp/{}/{}".format(session["sosmed_welcome_tmp_key"], session["sosmed_welcome_tmp_name"]))
+        # Save draft so Back button can navigate to edit content page
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_sosmed_design_draft", qrcard_id=draft_result["qrcard_id"]))
     stats_carry = None
     if sosmed_data and any(k in sosmed_data for k in ("scan_limit_enabled", "scan_limit_value", "schedule_enabled", "schedule_since", "schedule_until")):
         from pytavia_modules.qr.qr_sosmed_proc import _schedule_date_for_html_input as _sosmed_sched_norm
@@ -5492,7 +5604,7 @@ def qr_update_content_sosmed(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_sosmed_proc as _qrs
     proc = _qrs.qr_sosmed_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_sosmed_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -5642,7 +5754,7 @@ def qr_update_design_sosmed(qrcard_id):
     fk_user_id = session.get("fk_user_id")
     from pytavia_modules.qr import qr_sosmed_proc as _qrs
     proc = _qrs.qr_sosmed_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_sosmed_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
@@ -5835,6 +5947,14 @@ def user_new_qr_design_allinone():
         if session.get("allinone_cover_r2_url"):
             allinone_data["Allinone_cover_img_url"] = session["allinone_cover_r2_url"]
         allinone_data["Allinone_sections"] = sections
+        # Save draft so Back button can navigate to edit content page
+        try:
+            draft_result = proc.save_draft(request, session, app.root_path)
+        except Exception:
+            app.logger.exception("allinone save_draft error in qr-design handler")
+            draft_result = {"status": "error"}
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_allinone_design_draft", qrcard_id=draft_result["qrcard_id"]))
     return v.new_qr_design_html(url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url, error_msg=error_msg, allinone_data=allinone_data)
 
 
@@ -5846,7 +5966,11 @@ def qr_new_allinone_save_draft():
         return _json.dumps({"status": "error", "message_desc": "Not authenticated"}), 401, {"Content-Type": "application/json"}
     from pytavia_modules.qr import qr_allinone_proc
     proc = qr_allinone_proc.qr_allinone_proc(app)
-    response = proc.save_draft(request, session, app.root_path)
+    try:
+        response = proc.save_draft(request, session, app.root_path)
+    except Exception:
+        app.logger.exception("allinone save_draft unexpected error")
+        response = {"status": "error", "message_desc": "An internal error occurred while saving."}
     if response.get("status") != "ok":
         return _json.dumps({"status": "error", "message_desc": response.get("message_desc", "Save failed.")}), 400, {"Content-Type": "application/json"}
     return _json.dumps({
@@ -6333,6 +6457,10 @@ def qr_update_content_allinone(qrcard_id):
         return redirect(url_for("user_qr_list"))
     qrcard = _merge_allinone_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     if request.method == "POST":
+        if request.form.get("back_from_design"):
+            return view_update_allinone.view_update_allinone(app).update_qr_content_html(
+                qrcard=qrcard, base_url=config.G_BASE_URL
+            )
         _mgd_aio = database.get_db_conn(config.mainDB)
         if request.form.get("reset_qr_style") == "1":
             _qr_unset_aio = {
@@ -7066,6 +7194,11 @@ def user_new_qr_design_images():
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/images/" + short_code
 
+        # Save as draft so design page has a qrcard_id for proper back navigation
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_images_design_draft", qrcard_id=draft_result["qrcard_id"]))
+
         return v.new_qr_design_html(
             url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url,
             error_msg=error_msg, images_data=images_data, stats_carry=_stats_carry_legacy,
@@ -7267,6 +7400,10 @@ def user_new_qr_design_video():
             while not proc.is_short_code_unique(short_code):
                 short_code = proc._generate_short_code()
         qr_encode_url = config.G_BASE_URL + "/video/" + short_code
+        # Save as draft so design page has a qrcard_id for proper back navigation
+        draft_result = proc.save_draft(request, session, app.root_path)
+        if draft_result.get("status") == "ok":
+            return redirect(url_for("qr_new_video_design_draft", qrcard_id=draft_result["qrcard_id"]))
 
     return v.new_qr_design_html(
         url_content=url_content, qr_name=qr_name, short_code=short_code, qr_encode_url=qr_encode_url,
@@ -7305,10 +7442,10 @@ def qr_update_content_images(qrcard_id):
     from pytavia_modules.qr import qr_images_proc as _qrp
     from pytavia_modules.view import view_update_images
     proc = _qrp.qr_images_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard: return redirect(url_for("user_qr_list"))
     qrcard = _merge_images_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
-    
+
     if request.method == "POST":
         if request.form.get("back_from_design"):
             existing_draft = _get_qr_draft(session, qrcard_id) or {}
@@ -7459,10 +7596,10 @@ def qr_update_design_images(qrcard_id):
     from pytavia_modules.qr import qr_images_proc as _qrp
     from pytavia_modules.view import view_update_images
     proc = _qrp.qr_images_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard: return redirect(url_for("user_qr_list"))
     qrcard = _merge_images_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
-    
+
     if request.method == "POST":
         url_content = (request.form.get("url_content") or "").strip() or qrcard.get("url_content") or "QRkartu"
         qr_name = (request.form.get("qr_name") or "").strip() or qrcard.get("name") or "Untitled QR"
@@ -7569,7 +7706,7 @@ def qr_update_content_video(qrcard_id):
     from pytavia_modules.qr import qr_video_proc as _qrp
     from pytavia_modules.view import view_update_video
     proc = _qrp.qr_video_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard: return redirect(url_for("user_qr_list"))
     qrcard = _merge_video_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     
@@ -7748,7 +7885,7 @@ def qr_update_design_video(qrcard_id):
     from pytavia_modules.qr import qr_video_proc as _qrp
     from pytavia_modules.view import view_update_video
     proc = _qrp.qr_video_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard: return redirect(url_for("user_qr_list"))
     qrcard = _merge_video_into_qrcard(database.get_db_conn(config.mainDB), fk_user_id, qrcard_id, qrcard)
     
@@ -7928,7 +8065,12 @@ def user_qr_list():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     from pytavia_modules.view import view_qr_list
-    return view_qr_list.view_qr_list(app).my_qr_codes_html(fk_user_id=session.get("fk_user_id"))
+    fk_user_id = session.get("fk_user_id")
+    _sync_user_qr_activation_quota(fk_user_id)
+    return view_qr_list.view_qr_list(app).my_qr_codes_html(
+        fk_user_id=fk_user_id,
+        error_msg=request.args.get("error_msg"),
+    )
 
 @app.route("/user/stats")
 def user_stats():
@@ -7937,7 +8079,7 @@ def user_stats():
     fk_user_id = session["fk_user_id"]
     _db = database.get_db_conn(config.mainDB)
     qrcards = list(_db.db_qrcard.find(
-        {"fk_user_id": fk_user_id},
+        {"fk_user_id": fk_user_id, "status": {"$nin": ["DELETED", "SOFT_DELETED", "DRAFT"]}},
         {"_id": 0, "stats": 1, "created_at": 1}
     ))
     total_qr = len(qrcards)

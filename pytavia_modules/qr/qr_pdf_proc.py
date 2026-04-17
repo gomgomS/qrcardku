@@ -215,20 +215,21 @@ class qr_pdf_proc:
             self.webapp.logger.debug("qr_pdf_proc.get_qrcard_by_user failed", exc_info=True)
             return []
 
-    def get_qrcard(self, fk_user_id, qrcard_id):
+    def get_qrcard(self, fk_user_id, qrcard_id, allow_draft=False):
         try:
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
             doc = self.mgdDB.db_qrcard_pdf.find_one(
                 {
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
-                    "status": "ACTIVE",
+                    "status": status_filter,
                 }
             )
             base_doc = self.mgdDB.db_qrcard.find_one(
                 {
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
-                    "status": "ACTIVE",
+                    "status": status_filter,
                 }
             )
             if doc and base_doc:

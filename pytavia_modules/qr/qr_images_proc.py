@@ -231,11 +231,12 @@ class qr_images_proc:
         except Exception:
             self.webapp.logger.debug("merge_stats_from_images_row failed", exc_info=True)
 
-    def get_qrcard(self, fk_user_id, qrcard_id):
+    def get_qrcard(self, fk_user_id, qrcard_id, allow_draft=False):
         """Return images doc for edit."""
         try:
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
             doc = self.mgdDB.db_qrcard_images.find_one(
-                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": status_filter}
             )
             if doc:
                 self._merge_schedule_from_main_qrcard(fk_user_id, qrcard_id, doc)
@@ -248,7 +249,7 @@ class qr_images_proc:
                     "fk_user_id": fk_user_id,
                     "qrcard_id": qrcard_id,
                     "qr_type": "images",
-                    "status": "ACTIVE",
+                    "status": status_filter,
                 }
             )
             if doc:

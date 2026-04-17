@@ -2,7 +2,6 @@
 Shared helper for public QR visual procs. No base class — each type proc is standalone.
 """
 import ast
-from flask import abort
 
 
 def _parse_contact_item(item, value_key, label_key="label"):
@@ -73,11 +72,67 @@ def normalize_ecard_contact_lists(qrcard):
 
 def enforce_scan_limit_and_increment(qrcard, mgdDB, webapp):
     """
-    Return qrcard if scan is allowed; abort(404) if no qrcard, scan limit reached, or outside schedule.
+    Return qrcard if scan is allowed; otherwise return None when:
+    - no qrcard
+    - outside schedule window
+    - scan limit reached
     Increments stats.scan_count in db_qrcard.
     """
     if not qrcard:
-        abort(404)
+        return None
+    try:
+        now_ts = int(__import__("time").time())
+        fk_user_id = qrcard.get("fk_user_id")
+        if fk_user_id:
+            mgdDB.db_user_subscription.update_many(
+                {"fk_user_id": fk_user_id, "status": "ACTIVE", "expires_at": {"$lt": now_ts, "$gt": 0}},
+                {"$set": {"status": "EXPIRED"}},
+            )
+            active_subs = list(mgdDB.db_user_subscription.find(
+                {"fk_user_id": fk_user_id, "status": "ACTIVE", "is_deleted": {"$ne": True}, "expires_at": {"$gt": now_ts}},
+                {"_id": 0, "max_qr": 1},
+            ))
+            total_max_qr = sum(int(s.get("max_qr", 0) or 0) for s in active_subs)
+            allowed_ids = set()
+            if total_max_qr > 0:
+                idx_docs = list(mgdDB.db_qr_index.find(
+                    {"fk_user_id": fk_user_id, "status": {"$in": ["ACTIVE", "INACTIVE"]}},
+                    {"_id": 0, "qrcard_id": 1, "timestamp": 1},
+                ).sort("timestamp", -1).limit(total_max_qr))
+                allowed_ids = set(d.get("qrcard_id") for d in idx_docs if d.get("qrcard_id"))
+            if qrcard.get("qrcard_id") not in allowed_ids:
+                set_op = {"$set": {"status": "INACTIVE"}}
+                mgdDB.db_qr_index.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard.get("qrcard_id")},
+                    set_op,
+                )
+                mgdDB.db_qrcard.update_one(
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard.get("qrcard_id")},
+                    set_op,
+                )
+                qr_type = qrcard.get("qr_type", "")
+                type_col_map = {
+                    "pdf": "db_qrcard_pdf",
+                    "web-static": "db_qrcard_web_static",
+                    "text": "db_qrcard_text",
+                    "wa-static": "db_qrcard_wa_static",
+                    "email-static": "db_qrcard_email_static",
+                    "vcard-static": "db_qrcard_vcard_static",
+                    "allinone": "db_qrcard_allinone",
+                    "images": "db_qrcard_images",
+                    "video": "db_qrcard_video",
+                    "special": "db_qrcard_special",
+                }
+                col_name = type_col_map.get(qr_type)
+                if col_name:
+                    getattr(mgdDB, col_name).update_one(
+                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard.get("qrcard_id")},
+                        set_op,
+                    )
+                return None
+    except Exception:
+        if webapp:
+            webapp.logger.debug("public quota sync failed", exc_info=True)
     # Schedule enforcement
     if qrcard.get("schedule_enabled"):
         from datetime import date
@@ -86,12 +141,12 @@ def enforce_scan_limit_and_increment(qrcard, mgdDB, webapp):
         until = (qrcard.get("schedule_until") or "").strip()
         try:
             if since and today < date.fromisoformat(since):
-                abort(404)
+                return None
         except ValueError:
             pass
         try:
             if until and today > date.fromisoformat(until):
-                abort(404)
+                return None
         except ValueError:
             pass
     stats = qrcard.get("stats") or {}
@@ -99,7 +154,7 @@ def enforce_scan_limit_and_increment(qrcard, mgdDB, webapp):
     limit_enabled = bool(qrcard.get("scan_limit_enabled"))
     limit_value = int(qrcard.get("scan_limit_value", 0) or 0)
     if limit_enabled and limit_value > 0 and current_scans >= limit_value:
-        abort(404)
+        return None
     try:
         mgdDB.db_qrcard.update_one(
             {

@@ -157,11 +157,12 @@ class qr_sosmed_proc:
         for k, v in base.items():
             out[k] = v
 
-    def get_qrcard(self, fk_user_id, qrcard_id):
+    def get_qrcard(self, fk_user_id, qrcard_id, allow_draft=False):
         try:
-            doc = self.mgdDB.db_qrcard_sosmed.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"})
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
+            doc = self.mgdDB.db_qrcard_sosmed.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": status_filter})
             base_doc = self.mgdDB.db_qrcard.find_one(
-                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "status": "ACTIVE"}
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "status": status_filter}
             )
             out = None
             if doc:

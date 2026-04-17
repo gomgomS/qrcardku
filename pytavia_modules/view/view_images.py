@@ -29,7 +29,11 @@ class view_images:
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, images_data=None, qrcard_id=None, stats_carry=None):
         try:
+            is_update = bool(qrcard_id)
             form_action = f"/qr/update/save/images/{qrcard_id}" if qrcard_id else "/qr/save/images"
+            back_url = f"/qr/update/images/{qrcard_id}" if qrcard_id else "/qr/new/images"
+            step1_url = "/qr/list" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/images/{qrcard_id}" if qrcard_id else "/qr/new/images"
             return render_template(
                 "/user/new_qr_design_images.html",
                 qr_type="images",
@@ -43,6 +47,10 @@ class view_images:
                 stats_carry=stats_carry,
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
             )
         except Exception:
             if self.webapp:

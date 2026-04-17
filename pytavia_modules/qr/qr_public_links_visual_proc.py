@@ -2,7 +2,7 @@ import sys
 
 sys.path.append("pytavia_core")
 
-from flask import abort, render_template
+from flask import render_template
 from pytavia_core import database, config
 
 from .qr_public_visual_helper import enforce_scan_limit_and_increment
@@ -27,7 +27,7 @@ class qr_public_links_visual_proc:
         qrcard = self.get_qrcard_by_short_code(short_code)
         qrcard = enforce_scan_limit_and_increment(qrcard, self.mgdDB, self.webapp)
         if not qrcard or (qrcard.get("qr_type") or "") != "links":
-            abort(404)
+            return render_template("user/public_not_found.html"), 404
         try:
             links_doc = self.mgdDB.db_qrcard_links.find_one({"qrcard_id": qrcard.get("qrcard_id")})
             if links_doc:

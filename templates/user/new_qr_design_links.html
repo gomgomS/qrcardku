@@ -143,13 +143,13 @@
         </span>
     </div>
     <div class="new-qr-step-nav">
-        <form id="design-back-form" method="POST" action="/qr/new/links/back" style="display: inline;">
+        {% if is_update and back_url %}
+        <form id="design-back-form" method="POST" action="{{ back_url }}" style="display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="back_from_design" value="1" />
             <input type="hidden" name="url_content" value="{{ url_content | e }}" />
             <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
             {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
-
             {% if links_data %}
             {% for key, val in links_data.items() %}
             {% if val is iterable and val is not string %}
@@ -167,9 +167,35 @@
             <input type="hidden" name="schedule_enabled" value="{% if _sctx.get('schedule_enabled') %}on{% endif %}">
             <input type="hidden" name="schedule_since" value="{{ (_sctx.get('schedule_since', '') or '') | e }}">
             <input type="hidden" name="schedule_until" value="{{ (_sctx.get('schedule_until', '') or '') | e }}">
-
             <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
         </form>
+        {% else %}
+        <form id="design-back-form" method="POST" action="/qr/new/links/back" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="back_from_design" value="1" />
+            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
+            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
+            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
+            {% if links_data %}
+            {% for key, val in links_data.items() %}
+            {% if val is iterable and val is not string %}
+            {% for item in val %}
+            <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
+            {% endfor %}
+            {% else %}
+            <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% set _sctx = stats_carry if stats_carry else {} %}
+            <input type="hidden" name="scan_limit_enabled" value="{% if _sctx.get('scan_limit_enabled') %}on{% endif %}">
+            <input type="hidden" name="scan_limit_value" value="{{ _sctx.get('scan_limit_value', '') | e }}">
+            <input type="hidden" name="schedule_enabled" value="{% if _sctx.get('schedule_enabled') %}on{% endif %}">
+            <input type="hidden" name="schedule_since" value="{{ (_sctx.get('schedule_since', '') or '') | e }}">
+            <input type="hidden" name="schedule_until" value="{{ (_sctx.get('schedule_until', '') or '') | e }}">
+            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
+        </form>
+        {% endif %}
         <button type="button" class="btn-next" onclick="submitDesignWithOverlay()"><span data-i18n="nd_complete">Complete</span></button>
     </div>
 </div>

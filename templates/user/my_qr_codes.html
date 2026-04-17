@@ -86,6 +86,19 @@
         background-color: #252619 !important;
     }
 
+    .toggle-status-btn {
+        width: 100%;
+        text-align: left;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        border-top: 1px solid var(--border-color);
+        cursor: pointer;
+        font-size: 13px;
+    }
+    .toggle-status-btn.activate { color: #16a34a; }
+    .toggle-status-btn.deactivate { color: #b45309; }
+
     /* QR scan icon: hover ring + tooltip */
     .qr-scan-trigger {
         display: inline-flex;
@@ -1164,6 +1177,14 @@
 </div>
 {% endif %}
 
+{% if error_msg %}
+<div class="card" style="margin-bottom: 24px; background-color: #2d1a1a; border-color: #dc2626; padding: 12px 16px;">
+    <span style="color: #fca5a5; font-size: 13px;">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ error_msg }}
+    </span>
+</div>
+{% endif %}
+
 <form id="bulk-delete-form" method="POST" action="/qr/delete/bulk" style="margin: 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <table class="qr-table">
@@ -1260,8 +1281,7 @@
                             <a href="/qr/update/{{ qr.qr_type or 'web' }}/{{ qr.qrcard_id }}"
                                 style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; color: var(--text-main); font-size: 13px; display: block; text-decoration: none;"><i
                                     class="fa-solid fa-pen"></i> <span data-i18n="mq_edit">Edit</span></a>
-                            <button type="button"
-                                    style="width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; border-top: 1px solid var(--border-color); cursor: pointer; font-size: 13px; {% if qr.status == 'INACTIVE' %}color: #16a34a;{% else %}color: #b45309;{% endif %}"
+                            <button type="button" class="toggle-status-btn {{ 'activate' if qr.status == 'INACTIVE' else 'deactivate' }}"
                                     onclick="submitToggleStatus('{{ qr.qrcard_id }}')">
                                     {% if qr.status == 'INACTIVE' %}
                                     <i class="fa-solid fa-circle-play"></i> Set Active

@@ -28,6 +28,10 @@ class view_pdf:
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, pdf_data=None, qrcard_id=None):
         try:
             form_action = f"/qr/update/save/pdf/{qrcard_id}" if qrcard_id else "/qr/save/pdf"
+            is_update = bool(qrcard_id)
+            back_url = f"/qr/update/pdf/{qrcard_id}" if qrcard_id else f"/qr/new/{'pdf'}"
+            step1_url = f"/qr/update/pdf/{qrcard_id}" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/pdf/{qrcard_id}" if qrcard_id else f"/qr/new/{'pdf'}"
             return render_template(
                 "/user/new_qr_design_pdf.html",
                 qr_type="pdf",
@@ -40,6 +44,10 @@ class view_pdf:
                 pdf_data=pdf_data,
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
             )
         except Exception:
             if self.webapp:

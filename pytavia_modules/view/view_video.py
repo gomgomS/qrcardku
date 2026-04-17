@@ -29,7 +29,11 @@ class view_video:
 
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None, qr_encode_url=None, msg=None, error_msg=None, video_data=None, qrcard_id=None, stats_carry=None):
         try:
+            is_update = bool(qrcard_id)
             form_action = f"/qr/update/save/video/{qrcard_id}" if qrcard_id else "/qr/save/video"
+            back_url = f"/qr/update/video/{qrcard_id}" if qrcard_id else "/qr/new/video"
+            step1_url = "/qr/list" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/video/{qrcard_id}" if qrcard_id else "/qr/new/video"
             return render_template(
                 "/user/new_qr_design_video.html",
                 qr_type="video",
@@ -43,6 +47,10 @@ class view_video:
                 stats_carry=stats_carry,
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
             )
         except Exception:
             if self.webapp:

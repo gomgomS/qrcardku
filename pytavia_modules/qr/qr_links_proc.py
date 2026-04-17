@@ -132,12 +132,13 @@ class qr_links_proc:
             self.webapp.logger.debug(err)
             return {"message_action": "ADD_QRCARD_FAILED", "message_desc": "An internal error occurred.", "message_data": {}}
 
-    def get_qrcard(self, fk_user_id, qrcard_id):
+    def get_qrcard(self, fk_user_id, qrcard_id, allow_draft=False):
         """Prefer links row; merge scan/schedule and shell fields from db_qrcard when both exist."""
         try:
-            doc = self.mgdDB.db_qrcard_links.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"})
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
+            doc = self.mgdDB.db_qrcard_links.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": status_filter})
             base_doc = self.mgdDB.db_qrcard.find_one(
-                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "status": "ACTIVE"}
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "status": status_filter}
             )
             out = None
             if doc and base_doc:

@@ -31,7 +31,11 @@ class view_sosmed:
     def new_qr_design_html(self, url_content=None, qr_name=None, short_code=None,
                             qr_encode_url=None, msg=None, error_msg=None, sosmed_data=None, qrcard_id=None, stats_carry=None):
         try:
+            is_update = bool(qrcard_id)
             form_action = f"/qr/update/save/sosmed/{qrcard_id}" if qrcard_id else "/qr/save/sosmed"
+            back_url = f"/qr/update/sosmed/{qrcard_id}" if qrcard_id else "/qr/new/sosmed"
+            step1_url = "/qr/list" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/sosmed/{qrcard_id}" if qrcard_id else "/qr/new/sosmed"
             return render_template(
                 "/user/new_qr_design_sosmed.html",
                 qr_type="sosmed",
@@ -44,6 +48,10 @@ class view_sosmed:
                 sosmed_data=sosmed_data or {},
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
                 stats_carry=stats_carry,
             )
         except Exception:
