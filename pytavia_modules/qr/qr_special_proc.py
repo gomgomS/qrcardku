@@ -260,15 +260,16 @@ class qr_special_proc:
                 "message_data": {"trace": err_trace},
             }
 
-    def get_qrcard(self, fk_user_id, qrcard_id):
+    def get_qrcard(self, fk_user_id, qrcard_id, allow_draft=False):
         """Return special doc for edit."""
         try:
+            status_filter = {"$in": ["ACTIVE", "DRAFT"]} if allow_draft else "ACTIVE"
             doc = self.mgdDB.db_qrcard_special.find_one(
-                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": "ACTIVE"}
+                {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "status": status_filter}
             )
             if not doc:
                 doc = self.mgdDB.db_qrcard.find_one(
-                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "special", "status": "ACTIVE"}
+                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "special", "status": status_filter}
                 )
             if doc:
                 # special_sections is stored as a JSON string; parse it back to a list for templates

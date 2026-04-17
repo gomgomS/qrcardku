@@ -33,7 +33,11 @@ class view_special:
                            qr_encode_url=None, msg=None, error_msg=None,
                            special_sections=None, qrcard_id=None, stats_carry=None):
         try:
+            is_update = bool(qrcard_id)
             form_action = f"/qr/update/save/special/{qrcard_id}" if qrcard_id else "/qr/save/special"
+            back_url = f"/qr/update/special/{qrcard_id}" if qrcard_id else "/qr/new/special"
+            step1_url = "/qr/list" if qrcard_id else "/qr/new"
+            step2_url = f"/qr/update/special/{qrcard_id}" if qrcard_id else "/qr/new/special"
             return render_template(
                 "/user/new_qr_design_special.html",
                 qr_type="special",
@@ -46,6 +50,10 @@ class view_special:
                 special_sections=special_sections or [],
                 form_action=form_action,
                 qrcard_id=qrcard_id or "",
+                is_update=is_update,
+                back_url=back_url,
+                step1_url=step1_url,
+                step2_url=step2_url,
                 stats_carry=stats_carry or {},
             )
         except Exception:

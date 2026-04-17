@@ -6806,7 +6806,7 @@ def qr_update_content_special(qrcard_id):
     from pytavia_modules.qr import qr_special_proc
     from pytavia_modules.view import view_update_special
     proc = qr_special_proc.qr_special_proc(app)
-    qrcard = proc.get_qrcard(fk_user_id, qrcard_id)
+    qrcard = proc.get_qrcard(fk_user_id, qrcard_id, allow_draft=True)
     if not qrcard:
         return redirect(url_for("user_qr_list"))
     if request.method == "POST":
