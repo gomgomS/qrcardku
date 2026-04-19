@@ -115,6 +115,7 @@ class user_storage_proc:
             scan_collections = [
                 "db_qrcard", "db_qrcard_pdf", "db_qrcard_allinone",
                 "db_qrcard_images", "db_qrcard_video", "db_qrcard_ecard",
+                "db_qrcard_links", "db_qrcard_sosmed",
                 "db_qr_frame",
             ]
             for col_name in scan_collections:
@@ -231,6 +232,8 @@ class user_storage_proc:
                 meta  = qr_meta.get(qid) or frame_meta.get(qid) or {}
                 size  = doc.get("file_size", 0)
                 key   = doc.get("r2_key", "")
+                if not meta:
+                    continue
                 total_bytes += size
                 tracked_qrs.add(qid)
                 qr_type = doc.get("qr_type", meta.get("qr_type", ""))
