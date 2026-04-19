@@ -480,18 +480,96 @@ class qr_ecard_proc:
         saved_item_descs = session.pop("pdf_item_descs", [])
         gallery_tmp_files = session.pop("ecard_gallery_tmp_files", [])
         session.modified = True
+        # ── Build parallel move specs ───────────────────────────────────────────
+        _move_specs = []  # (src, dst, meta, kind, idx_or_none)
+        _db_updates = {}
+
         if welcome_tmp_key:
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
             src_key = f"ecard/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"ecard/{new_qrcard_id}/welcome{ext}"
-            try:
-                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"welcome{ext}"})
-                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
-            except Exception:
-                pass
-        else:
-            # Priority: direct file upload from request (when user uploads their own welcome image)
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": f"welcome{ext}"},
+                "welcome", None,
+            ))
+
+        if cover_tmp_key:
+            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            src_key = f"ecard/_tmp/{cover_tmp_key}/{cover_tmp_name}"
+            unique_cover_name = f"profile_img_{uuid.uuid4().hex[:12]}{ext}"
+            dst_key = f"ecard/{new_qrcard_id}/{unique_cover_name}"
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": unique_cover_name},
+                "cover", None,
+            ))
+
+        saved_files = []
+        if tmp_key and tmp_files:
+            for idx, f_info in enumerate(tmp_files):
+                src_key = f"ecard/_tmp/{tmp_key}/{f_info['safe_name']}"
+                dst_key = f"ecard/{new_qrcard_id}/{f_info['safe_name']}"
+                _move_specs.append((
+                    src_key, dst_key, None,
+                    "pdf_file", idx,
+                ))
+
+        # Gallery tmp files
+        _gallery_move_indices = []
+        for gi, g_info in enumerate(gallery_tmp_files):
+            g_tmp_key = g_info.get("tmp_key")
+            g_safe_name = g_info.get("safe_name")
+            if not g_tmp_key or not g_safe_name:
+                continue
+            src_key = f"ecard/_tmp/{g_tmp_key}/{g_safe_name}"
+            dst_key = f"ecard/{new_qrcard_id}/gallery/{g_safe_name}"
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": g_safe_name},
+                "gallery", gi,
+            ))
+            _gallery_move_indices.append(gi)
+
+        # ── Execute all moves in parallel ──────────────────────────────────────
+        if _move_specs:
+            _plain_specs = [(s[0], s[1], s[2]) for s in _move_specs]
+            _move_results = r2.move_files_parallel(_plain_specs, max_workers=5)
+
+            for mi, result in enumerate(_move_results):
+                if result["status"] != "success":
+                    continue
+                kind = _move_specs[mi][3]
+                extra = _move_specs[mi][4]
+
+                if kind == "welcome":
+                    _db_updates["welcome_img_url"] = result["url"]
+                elif kind == "cover":
+                    _db_updates["E-card_t1_header_img_url"] = result["url"]
+                    _db_updates["E-card_t3_circle_img_url"] = result["url"]
+                    _db_updates["E-card_t4_circle_img_url"] = result["url"]
+                elif kind == "pdf_file":
+                    idx = extra
+                    f_info = tmp_files[idx]
+                    entry = {"name": f_info["name"], "url": result["url"]}
+                    if idx < len(saved_display_names) and saved_display_names[idx].strip():
+                        entry["display_name"] = saved_display_names[idx].strip()
+                    if idx < len(saved_item_descs):
+                        entry["item_desc"] = saved_item_descs[idx].strip()
+                    saved_files.append(entry)
+                elif kind == "gallery":
+                    _db_updates.setdefault("_gallery", []).append({"url": result["url"]})
+
+            if _db_updates:
+                gallery = _db_updates.pop("_gallery", None)
+                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": _db_updates})
+                self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": _db_updates}, upsert=True)
+                if gallery:
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"ecard_gallery_files": gallery}})
+                    self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"ecard_gallery_files": gallery}}, upsert=True)
+
+        # ── Fallback: non-tmp welcome image ─────────────────────────────────────
+        if not welcome_tmp_key:
             _direct_welcome = request.files.get("E-card_welcome_img") if request.files else None
             if _direct_welcome and _direct_welcome.filename:
                 _direct_welcome.seek(0, 2)
@@ -509,7 +587,6 @@ class qr_ecard_proc:
                     except Exception:
                         pass
             else:
-                # Handle autocomplete/static welcome image selection
                 ac_welcome = (request.form.get("ecard_welcome_img_autocomplete_url", "")
                               or session.pop("ecard_welcome_img_autocomplete_url", "")).strip()
                 if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
@@ -519,10 +596,9 @@ class qr_ecard_proc:
                     except Exception:
                         pass
                 elif ac_welcome and ac_welcome.startswith("/static/"):
-                    import os as _os
-                    ext = _os.path.splitext(ac_welcome)[1] or ".jpg"
-                    local_path = _os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", _os.sep))
-                    if _os.path.isfile(local_path):
+                    ext = os.path.splitext(ac_welcome)[1] or ".jpg"
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_welcome.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
                         try:
                             unique_welcome_name = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
                             with open(local_path, "rb") as f:
@@ -531,26 +607,9 @@ class qr_ecard_proc:
                             self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
                         except Exception:
                             pass
-        if cover_tmp_key:
-            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
-            src_key = f"ecard/_tmp/{cover_tmp_key}/{cover_tmp_name}"
-            unique_cover_name = f"profile_img_{uuid.uuid4().hex[:12]}{ext}"
-            dst_key = f"ecard/{new_qrcard_id}/{unique_cover_name}"
-            try:
-                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": unique_cover_name})
-                self.mgdDB.db_qrcard.update_one(
-                    {"qrcard_id": new_qrcard_id},
-                    {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
-                )
-                self.mgdDB.db_qrcard_ecard.update_one(
-                    {"qrcard_id": new_qrcard_id},
-                    {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}},
-                    upsert=True,
-                )
-            except Exception:
-                pass
-        else:
-            # Priority: direct file upload from request (when user uploads their own profile image)
+
+        # ── Fallback: non-tmp cover image ───────────────────────────────────────
+        if not cover_tmp_key:
             _direct_cover = request.files.get("E-card_profile_img") if request.files else None
             if _direct_cover and _direct_cover.filename:
                 _direct_cover.seek(0, 2)
@@ -569,11 +628,9 @@ class qr_ecard_proc:
                     except Exception:
                         pass
             else:
-                # Handle autocomplete image (asset picker or legacy static path)
                 ac_url = (request.form.get("ecard_cover_img_autocomplete_url", "")
                           or session.pop("ecard_cover_img_autocomplete_url", "")).strip()
                 if ac_url and (ac_url.startswith("http://") or ac_url.startswith("https://")):
-                    # Existing R2 asset URL — store directly, no re-upload
                     try:
                         img_update = {"E-card_t1_header_img_url": ac_url, "E-card_t3_circle_img_url": ac_url, "E-card_t4_circle_img_url": ac_url}
                         self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update})
@@ -581,10 +638,9 @@ class qr_ecard_proc:
                     except Exception:
                         pass
                 elif ac_url and ac_url.startswith("/static/"):
-                    import os as _os
-                    ext = _os.path.splitext(ac_url)[1] or ".jpg"
-                    local_path = _os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", _os.sep))
-                    if _os.path.isfile(local_path):
+                    ext = os.path.splitext(ac_url)[1] or ".jpg"
+                    local_path = os.path.join(root_path or config.G_HOME_PATH, ac_url.lstrip("/").replace("/", os.sep))
+                    if os.path.isfile(local_path):
                         try:
                             unique_cover_name = f"profile_img_{uuid.uuid4().hex[:12]}{ext}"
                             with open(local_path, "rb") as f:
@@ -594,38 +650,9 @@ class qr_ecard_proc:
                             self.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": new_qrcard_id}, {"$set": img_update}, upsert=True)
                         except Exception:
                             pass
-        saved_files = []
-        if tmp_key and tmp_files:
-            for idx, f_info in enumerate(tmp_files):
-                src_key = f"ecard/_tmp/{tmp_key}/{f_info['safe_name']}"
-                dst_key = f"ecard/{new_qrcard_id}/{f_info['safe_name']}"
-                try:
-                    file_url = r2.move_file(src_key, dst_key)
-                    entry = {"name": f_info["name"], "url": file_url}
-                    if idx < len(saved_display_names) and saved_display_names[idx].strip():
-                        entry["display_name"] = saved_display_names[idx].strip()
-                    if idx < len(saved_item_descs):
-                        entry["item_desc"] = saved_item_descs[idx].strip()
-                    saved_files.append(entry)
-                except Exception:
-                    pass
-            try:
-                r2.delete_prefix(f"ecard/_tmp/{tmp_key}/")
-            except Exception:
-                pass
-        elif tmp_key:
-            try:
-                r2.delete_prefix(f"ecard/_tmp/{tmp_key}/")
-            except Exception:
-                pass
-        if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
-            try:
-                r2.delete_prefix(f"ecard/_tmp/{welcome_tmp_key}/")
-            except Exception:
-                pass
+
+        # ── Persist saved files ─────────────────────────────────────────────────
         if saved_files:
-            # For e-card we keep legacy pdf_files on main doc for reuse,
-            # but normalized list lives under E-card_files in db_qrcard_ecard.
             self.mgdDB.db_qrcard.update_one(
                 {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id},
                 {"$set": {"pdf_files": saved_files}},
@@ -635,22 +662,21 @@ class qr_ecard_proc:
                 {"$set": {"E-card_files": saved_files}},
                 upsert=True,
             )
-        # Handle gallery images
-        saved_gallery = []
-        # Real uploaded files (moved from tmp storage)
-        for g_info in gallery_tmp_files:
-            g_tmp_key = g_info.get("tmp_key")
-            g_safe_name = g_info.get("safe_name")
-            if not g_tmp_key or not g_safe_name:
-                continue
-            src_key = f"ecard/_tmp/{g_tmp_key}/{g_safe_name}"
-            dst_key = f"ecard/{new_qrcard_id}/gallery/{g_safe_name}"
+
+        # ── Cleanup tmp dirs ────────────────────────────────────────────────────
+        if tmp_key:
             try:
-                file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "ecard", "file_name": g_safe_name})
-                saved_gallery.append({"url": file_url})
+                r2.delete_prefix(f"ecard/_tmp/{tmp_key}/")
             except Exception:
                 pass
-        # Autocomplete gallery images (asset picker URLs or static paths)
+        if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
+            try:
+                r2.delete_prefix(f"ecard/_tmp/{welcome_tmp_key}/")
+            except Exception:
+                pass
+
+        # ── Autocomplete gallery images (non-tmp) ───────────────────────────────
+        saved_gallery = []
         ac_gallery_urls = request.form.getlist("ecard_gallery_autocomplete_url[]")
         for ac_url in ac_gallery_urls:
             if not ac_url:

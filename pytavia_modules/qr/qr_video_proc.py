@@ -426,59 +426,46 @@ class qr_video_proc:
             _wext = _os.path.splitext(w_tmp_name)[1] or ".jpg"
             src_key = f"video/_tmp/{w_tmp_key}/welcome{_wext}"
             dst_key = f"video/{new_qrcard_id}/welcome{_wext}"
-            try:
-                welcome_img_url = r2.move_file(src_key, dst_key)
-            except Exception:
-                pass
-            try:
-                r2.delete_prefix(f"video/_tmp/{w_tmp_key}/")
-            except Exception:
-                pass
+            _w_meta = {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": f"welcome{_wext}"}
         else:
-            # Welcome image selected from assets (autocomplete/static)
-            import os as _os
-            ac_welcome = (request.form.get("video_welcome_img_autocomplete_url")
-                          or session.pop("video_welcome_img_autocomplete_url", "")).strip()
-            if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
-                welcome_img_url = ac_welcome
-            elif ac_welcome and ac_welcome.startswith("/static/"):
-                base = root_path or config.G_HOME_PATH
-                local_path = _os.path.join(base, ac_welcome.lstrip("/").replace("/", _os.sep))
-                _wext = _os.path.splitext(ac_welcome)[1] or ".jpg"
-                unique_welcome = f"welcome_{uuid.uuid4().hex[:12]}{_wext}"
-                dst_key = f"video/{new_qrcard_id}/{unique_welcome}"
-                try:
-                    with open(local_path, "rb") as f_static:
-                        welcome_img_url = r2.upload_file(
-                            f_static,
-                            dst_key,
-                            track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": unique_welcome},
-                        )
-                except Exception:
-                    pass
-        if welcome_img_url:
-            design_update["welcome_img_url"] = welcome_img_url
+            _wext = None
+            _w_meta = None
 
-        session.modified = True
-
-        video_links = []
-
+        # Build parallel move specs for welcome + all video tmp files
+        move_specs = []
+        if w_tmp_key and w_tmp_name:
+            move_specs.append(("welcome", src_key, dst_key, _w_meta))
+        upload_gallery = []
         if tmp_key and tmp_gallery:
             for f_info in tmp_gallery:
                 if f_info.get("type") == "upload":
-                    src_key = f"videos/_tmp/{tmp_key}/{f_info['safe_name']}"
-                    dst_key = f"videos/{new_qrcard_id}/{f_info['safe_name']}"
-                    try:
-                        file_url = r2.move_file(src_key, dst_key)
-                        video_links.append({
-                            "url": file_url,
-                            "name": f_info.get("name", ""),
-                            "desc": f_info.get("desc", ""),
-                            "type": "upload"
-                        })
-                    except Exception:
-                        pass
-                else:
+                    _s = f"videos/_tmp/{tmp_key}/{f_info['safe_name']}"
+                    _d = f"videos/{new_qrcard_id}/{f_info['safe_name']}"
+                    _m = {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": f_info['safe_name']}
+                    move_specs.append(("video", _s, _d, _m))
+                    upload_gallery.append(f_info)
+
+        video_links = []
+
+        if move_specs:
+            _move_results = r2.move_files_parallel(
+                [(s[1], s[2], s[3]) for s in move_specs]
+            )
+            for idx, _mr in enumerate(_move_results):
+                _tag = move_specs[idx][0]
+                if _tag == "welcome" and _mr["status"] == "success":
+                    welcome_img_url = _mr["url"]
+                elif _tag == "video" and _mr["status"] == "success":
+                    _fi = upload_gallery[idx - (1 if (w_tmp_key and w_tmp_name) else 0)]
+                    video_links.append({
+                        "url": _mr["url"],
+                        "name": _fi.get("name", ""),
+                        "desc": _fi.get("desc", ""),
+                        "type": "upload"
+                    })
+            # Add link-type gallery entries that weren't moved
+            for f_info in tmp_gallery:
+                if f_info.get("type") != "upload":
                     video_links.append({
                         "url": f_info.get("url", ""),
                         "name": f_info.get("name", ""),
@@ -486,10 +473,37 @@ class qr_video_proc:
                         "type": "link"
                     })
             try:
+                r2.delete_prefix(f"video/_tmp/{w_tmp_key}/")
+            except Exception:
+                pass
+            try:
                 r2.delete_prefix(f"videos/_tmp/{tmp_key}/")
             except Exception:
                 pass
         else:
+            # No tmp move specs — handle autocomplete/static welcome + direct upload path
+            if not (w_tmp_key and w_tmp_name):
+                import os as _os
+                ac_welcome = (request.form.get("video_welcome_img_autocomplete_url")
+                              or session.pop("video_welcome_img_autocomplete_url", "")).strip()
+                if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
+                    welcome_img_url = ac_welcome
+                elif ac_welcome and ac_welcome.startswith("/static/"):
+                    base = root_path or config.G_HOME_PATH
+                    local_path = _os.path.join(base, ac_welcome.lstrip("/").replace("/", _os.sep))
+                    _wext = _os.path.splitext(ac_welcome)[1] or ".jpg"
+                    unique_welcome = f"welcome_{uuid.uuid4().hex[:12]}{_wext}"
+                    dst_key = f"video/{new_qrcard_id}/{unique_welcome}"
+                    try:
+                        with open(local_path, "rb") as f_static:
+                            welcome_img_url = r2.upload_file(
+                                f_static,
+                                dst_key,
+                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": unique_welcome},
+                            )
+                    except Exception:
+                        pass
+
             # Direct upload path: save-draft called without prior session tmp setup
             import os as _os
             video_types = request.form.getlist("video_type[]")
@@ -499,12 +513,15 @@ class qr_video_proc:
             video_files = request.files.getlist("video_files")
             file_idx = 0
             from itertools import zip_longest
+
+            # Collect upload specs for parallel execution
+            _upload_specs = []
+            _upload_meta = []
             for i, (vtype, u, n, d) in enumerate(zip_longest(video_types, url_list, name_list, desc_list, fillvalue="")):
                 u = (u or "").strip()
                 n = (n or "").strip()
                 d = (d or "").strip()
                 if vtype == "upload":
-                    # Try uploaded file first
                     fobj = video_files[file_idx] if file_idx < len(video_files) else None
                     file_idx += 1
                     if fobj and fobj.filename:
@@ -514,22 +531,20 @@ class qr_video_proc:
                             ext = _os.path.splitext(fobj.filename)[1].lower() or ".mp4"
                             safe_name = uuid.uuid4().hex + ext
                             r2_key = f"videos/{new_qrcard_id}/{safe_name}"
-                            try:
-                                file_url = r2.upload_file(fobj, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name})
-                                video_links.append({"url": file_url, "name": n, "desc": d, "type": "upload"})
-                            except Exception:
-                                pass
+                            _meta = {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name}
+                            _upload_specs.append((fobj, r2_key, _meta))
+                            _upload_meta.append({"name": n, "desc": d, "type": "upload"})
                     elif u.startswith("/static/"):
-                        # Autocomplete static file — upload from disk to R2
                         base = root_path or config.G_HOME_PATH
                         local_path = _os.path.join(base, u.lstrip("/").replace("/", _os.sep))
                         ext = _os.path.splitext(u)[1].lower() or ".mp4"
                         safe_name = uuid.uuid4().hex + ext
                         r2_key = f"videos/{new_qrcard_id}/{safe_name}"
+                        _meta = {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name}
                         try:
                             with open(local_path, "rb") as f_static:
-                                file_url = r2.upload_file(f_static, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "video", "file_name": safe_name})
-                            video_links.append({"url": file_url, "name": n, "desc": d, "type": "upload"})
+                                _upload_specs.append((f_static, r2_key, _meta))
+                                _upload_meta.append({"name": n, "desc": d, "type": "upload"})
                         except Exception:
                             pass
                     elif u.startswith("http"):
@@ -537,6 +552,13 @@ class qr_video_proc:
                 else:
                     if u:
                         video_links.append({"url": u, "name": n, "desc": d, "type": "link"})
+
+            if _upload_specs:
+                _up_results = r2.upload_files_parallel(_upload_specs)
+                for idx, _ur in enumerate(_up_results):
+                    if _ur["status"] == "success":
+                        _m = _upload_meta[idx]
+                        video_links.append({"url": _ur["url"], "name": _m["name"], "desc": _m["desc"], "type": _m["type"]})
 
         # Store into main and video-specific collections
         full_update = {**about_update, **design_update, "video_links": video_links}

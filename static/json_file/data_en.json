@@ -249,7 +249,7 @@
     "nc_autofill_sub_video": "Auto-fills appearance and gallery title/description",
     "nc_preview_disclaimer": "IMPORTANT: Don't forget to test your QR card",
     "nc_saving": "Saving your content\u2026",
-    "nc_saving_sub": "Please wait, uploading assets to the cloud",
+    "nc_saving_sub": "Please wait.....",
     "nc_generating": "Generating your QR code\u2026",
     "nc_generating_sub": "Almost done, setting up your design step",
     "nc_save_error": "An error occurred while saving. Please try again.",

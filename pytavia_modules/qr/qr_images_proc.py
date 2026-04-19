@@ -441,18 +441,59 @@ class qr_images_proc:
         welcome_tmp_name = session.pop("welcome_img_tmp_name", "welcome.jpg")
         session.modified = True
 
-        # Welcome image
+        # ── Build parallel move specs ───────────────────────────────────────────
+        _move_specs = []  # (src, dst, meta, kind, idx_or_none)
+        _db_updates = {}
+
         if welcome_tmp_key:
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
             src_key = f"images/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"images/{new_qrcard_id}/welcome{ext}"
-            try:
-                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f"welcome{ext}"})
-                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}}, upsert=True)
-            except Exception:
-                pass
-        else:
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f"welcome{ext}"},
+                "welcome", None,
+            ))
+
+        saved_gallery = []
+        if tmp_key and tmp_gallery:
+            for idx, f_info in enumerate(tmp_gallery):
+                src_key = f"images/_tmp/{tmp_key}/{f_info['safe_name']}"
+                dst_key = f"images/{new_qrcard_id}/{f_info['safe_name']}"
+                _move_specs.append((
+                    src_key, dst_key,
+                    {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f_info["safe_name"]},
+                    "gallery", idx,
+                ))
+
+        # ── Execute all moves in parallel ──────────────────────────────────────
+        if _move_specs:
+            _plain_specs = [(s[0], s[1], s[2]) for s in _move_specs]
+            _move_results = r2.move_files_parallel(_plain_specs, max_workers=5)
+
+            for mi, result in enumerate(_move_results):
+                if result["status"] != "success":
+                    continue
+                kind = _move_specs[mi][3]
+                extra = _move_specs[mi][4]
+
+                if kind == "welcome":
+                    _db_updates["welcome_img_url"] = result["url"]
+                elif kind == "gallery":
+                    idx = extra
+                    f_info = tmp_gallery[idx]
+                    saved_gallery.append({
+                        "url": result["url"],
+                        "name": f_info.get("name", ""),
+                        "desc": f_info.get("desc", ""),
+                    })
+
+            if _db_updates:
+                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": _db_updates})
+                self.mgdDB.db_qrcard_images.update_one({"qrcard_id": new_qrcard_id}, {"$set": _db_updates}, upsert=True)
+
+        # ── Fallback: non-tmp welcome image ─────────────────────────────────────
+        if not welcome_tmp_key:
             ac_welcome = (request.form.get("images_welcome_img_autocomplete_url", "")
                           or session.pop("images_welcome_img_autocomplete_url", "")).strip()
             if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
@@ -462,33 +503,19 @@ class qr_images_proc:
                 except Exception:
                     pass
 
-        # Gallery images
-        saved_gallery = []
-        if tmp_key and tmp_gallery:
-            for f_info in tmp_gallery:
-                src_key = f"images/_tmp/{tmp_key}/{f_info['safe_name']}"
-                dst_key = f"images/{new_qrcard_id}/{f_info['safe_name']}"
-                try:
-                    file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f_info["safe_name"]})
-                    saved_gallery.append({
-                        "url": file_url,
-                        "name": f_info.get("name", ""),
-                        "desc": f_info.get("desc", ""),
-                    })
-                except Exception:
-                    pass
+        # ── Cleanup tmp dirs ────────────────────────────────────────────────────
+        if tmp_key:
             try:
                 r2.delete_prefix(f"images/_tmp/{tmp_key}/")
             except Exception:
                 pass
-
         if welcome_tmp_key and (not tmp_key or welcome_tmp_key != tmp_key):
             try:
                 r2.delete_prefix(f"images/_tmp/{welcome_tmp_key}/")
             except Exception:
                 pass
 
-        # Autocomplete images (asset picker URLs or static paths) — always process alongside uploads
+        # ── Autocomplete images (asset picker URLs or static paths) ─────────────
         ac_urls = request.form.getlist("images_autocomplete_urls[]") or session.pop("images_autocomplete_urls", []) or []
         ac_names = request.form.getlist("images_autocomplete_names[]") or session.pop("images_autocomplete_names", []) or []
         ac_descs = request.form.getlist("images_autocomplete_descs[]") or session.pop("images_autocomplete_descs", []) or []

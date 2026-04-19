@@ -2277,17 +2277,22 @@ def qr_update_save_ecard(qrcard_id):
         r2 = _r2m.r2_storage_proc()
         existing_doc = proc.mgdDB.db_qrcard_ecard.find_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"ecard_gallery_files": 1}) or {}
         saved_gallery = list(existing_doc.get("ecard_gallery_files") or [])
-        for gfile in gallery_files:
-            if not gfile or not gfile.filename:
-                continue
-            ext = os.path.splitext(gfile.filename)[1].lower() or ".jpg"
-            safe_name = _uuid.uuid4().hex + ext
-            try:
-                data = gfile.read()
-                file_url = r2.upload_bytes(data, f"ecard/{qrcard_id}/gallery/{safe_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": safe_name})
-                saved_gallery.append({"url": file_url})
-            except Exception:
-                pass
+        _valid_gallery = [(gfile, _uuid.uuid4().hex + (os.path.splitext(gfile.filename)[1].lower() or ".jpg")) for gfile in gallery_files if gfile and gfile.filename]
+        if _valid_gallery:
+            _gallery_specs = []
+            for gfile, safe_name in _valid_gallery:
+                try:
+                    gfile.seek(0, 2)
+                    data = gfile.read()
+                    gfile.seek(0)
+                    _gallery_specs.append((data, f"ecard/{qrcard_id}/gallery/{safe_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": safe_name}))
+                except Exception:
+                    pass
+            if _gallery_specs:
+                _gallery_results = r2.upload_files_parallel(_gallery_specs, max_workers=5)
+                for gr in _gallery_results:
+                    if gr["status"] == "success":
+                        saved_gallery.append({"url": gr["url"]})
         if saved_gallery:
             proc.mgdDB.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}})
             proc.mgdDB.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": saved_gallery}}, upsert=True)
@@ -2450,18 +2455,16 @@ def qr_update_design_ecard(qrcard_id):
             except Exception: pass
         else:
             welcome_img = request.files.get("E-card_welcome_img")
+            _has_welcome_upload = False
+            _welcome_upload_spec = None
             if welcome_img and welcome_img.filename:
                 welcome_img.seek(0, 2)
                 if welcome_img.tell() <= 1024 * 1024:
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
-                    extra_data["welcome_img_url"] = welcome_url
-                    qrcard["welcome_img_url"] = welcome_url
-                    _mgd_ew = database.get_db_conn(config.mainDB)
-                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _has_welcome_upload = True
+                    _welcome_upload_spec = (welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
             elif request.form.get("ecard_welcome_img_autocomplete_url", "").strip():
                 welcome_url = request.form.get("ecard_welcome_img_autocomplete_url").strip()
                 extra_data["welcome_img_url"] = welcome_url
@@ -2472,15 +2475,18 @@ def qr_update_design_ecard(qrcard_id):
             elif qrcard.get("welcome_img_url"):
                 extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
+        _has_cover_upload = False
+        _cover_upload_spec = None
+        _cover_img_fields = ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]
         if request.form.get("E-card_profile_img_delete") == "1":
-            for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+            for f in _cover_img_fields:
                 extra_data[f] = ""
                 qrcard[f] = ""
             try:
                 from pytavia_core import database as _db_c, config as _cfg_c
                 _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
-                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
-                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in _cover_img_fields}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in _cover_img_fields}})
             except Exception: pass
         else:
             cover_img = request.files.get("E-card_profile_img")
@@ -2490,13 +2496,9 @@ def qr_update_design_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    unique_cover_name = f"ecard_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
-                    for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
-                        extra_data[f] = cover_url
-                        qrcard[f] = cover_url
-                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
-                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    unique_cover_name = f"ecard_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                    _has_cover_upload = True
+                    _cover_upload_spec = (cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
             elif request.form.get("ecard_cover_img_autocomplete_url", "").strip():
                 cover_url = request.form.get("ecard_cover_img_autocomplete_url").strip()
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
@@ -2507,6 +2509,33 @@ def qr_update_design_ecard(qrcard_id):
             else:
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     if qrcard.get(f): extra_data[f] = qrcard[f]
+
+        # ── Parallel upload: welcome + cover images ──
+        _img_specs = []
+        if _has_welcome_upload:
+            _img_specs.append(("welcome", _welcome_upload_spec))
+        if _has_cover_upload:
+            _img_specs.append(("cover", _cover_upload_spec))
+        if _img_specs:
+            _img_results = _r2.upload_files_parallel([s[1] for s in _img_specs])
+            for idx, _ir in enumerate(_img_results):
+                _tag = _img_specs[idx][0]
+                if _ir["status"] != "success":
+                    continue
+                if _tag == "welcome":
+                    welcome_url = _ir["url"]
+                    extra_data["welcome_img_url"] = welcome_url
+                    qrcard["welcome_img_url"] = welcome_url
+                    _mgd_ew = database.get_db_conn(config.mainDB)
+                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                elif _tag == "cover":
+                    cover_url = _ir["url"]
+                    for f in _cover_img_fields:
+                        extra_data[f] = cover_url
+                        qrcard[f] = cover_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
 
         # Gallery images update from existing + uploads + autocomplete assets
         existing_gallery = request.form.getlist("ecard_gallery_existing_urls[]")
@@ -2524,29 +2553,18 @@ def qr_update_design_ecard(qrcard_id):
                     continue
                 seen_urls.add(url)
                 gallery_items.append({"url": url})
-            for gf in uploaded_gallery:
-                if not gf or not gf.filename:
-                    continue
-                try:
-                    ext = os.path.splitext(gf.filename)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_name = f"gallery_{uuid.uuid4().hex[:12]}{ext}"
-                    g_url = _r2.upload_file(
-                        gf,
-                        f"ecard/{qrcard_id}/gallery/{unique_name}",
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name},
-                    )
-                    if g_url and g_url not in seen_urls:
-                        seen_urls.add(g_url)
-                        gallery_items.append({"url": g_url})
-                except Exception:
-                    pass
+
+            # Collect all upload specs: file uploads + autocomplete static uploads
+            _all_gf_specs = []
+            _all_gf_meta = []  # "file" | "static" | ("http", url)
+            _valid_gf = [(gf, f"gallery_{uuid.uuid4().hex[:12]}{(os.path.splitext(gf.filename)[1].lower() or '.jpg')}") for gf in uploaded_gallery if gf and gf.filename]
+            for gf, name in _valid_gf:
+                _all_gf_specs.append((gf, f"ecard/{qrcard_id}/gallery/{name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": name}))
+                _all_gf_meta.append("file")
             for ac_url in autocomplete_gallery:
                 ac_url = (ac_url or "").strip()
                 if not ac_url:
                     continue
-                final_url = ac_url
                 if ac_url.startswith("/static/"):
                     try:
                         ext = os.path.splitext(ac_url)[1] or ".jpg"
@@ -2554,18 +2572,36 @@ def qr_update_design_ecard(qrcard_id):
                         if os.path.isfile(local_path):
                             unique_name = f"gallery_{uuid.uuid4().hex[:12]}{ext}"
                             with open(local_path, "rb") as fp:
-                                final_url = _r2.upload_bytes(
-                                    fp.read(),
-                                    f"ecard/{qrcard_id}/gallery/{unique_name}",
-                                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name},
-                                )
+                                _all_gf_specs.append((fp, f"ecard/{qrcard_id}/gallery/{unique_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name}))
+                                _all_gf_meta.append("static")
+                        else:
+                            _all_gf_specs.append(None)
+                            _all_gf_meta.append(("http", ac_url))
                     except Exception:
-                        final_url = ""
-                if final_url and final_url not in seen_urls and (
-                    final_url.startswith("http://") or final_url.startswith("https://")
-                ):
-                    seen_urls.add(final_url)
-                    gallery_items.append({"url": final_url})
+                        _all_gf_specs.append(None)
+                        _all_gf_meta.append(("http", ac_url))
+                elif ac_url.startswith("http://") or ac_url.startswith("https://"):
+                    _all_gf_specs.append(None)
+                    _all_gf_meta.append(("http", ac_url))
+
+            # Execute all uploads in parallel
+            _upload_only_specs = [s for s in _all_gf_specs if s is not None]
+            if _upload_only_specs:
+                _gf_results = _r2.upload_files_parallel(_upload_only_specs, max_workers=5)
+                _upload_idx = 0
+                for i, meta in enumerate(_all_gf_meta):
+                    if meta == "file" or meta == "static":
+                        if _upload_idx < len(_gf_results) and _gf_results[_upload_idx]["status"] == "success":
+                            _url = _gf_results[_upload_idx]["url"]
+                            if _url not in seen_urls:
+                                seen_urls.add(_url)
+                                gallery_items.append({"url": _url})
+                        _upload_idx += 1
+                    elif isinstance(meta, tuple) and meta[0] == "http":
+                        if meta[1] not in seen_urls:
+                            seen_urls.add(meta[1])
+                            gallery_items.append({"url": meta[1]})
+
             extra_data["ecard_gallery_files"] = gallery_items
             _mgd_g = database.get_db_conn(config.mainDB)
             _mgd_g.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": gallery_items}})
@@ -2630,6 +2666,8 @@ def qr_update_content_pdf(qrcard_id):
                 app.logger.exception("Failed to clear welcome_img_url for qrcard %s", qrcard_id)
         else:
             welcome_img = request.files.get("pdf_welcome_img")
+            _has_welcome_upload = False
+            _welcome_upload_spec = None
             if welcome_img and welcome_img.filename:
                 welcome_img.seek(0, 2)
                 welcome_size = welcome_img.tell()
@@ -2642,21 +2680,9 @@ def qr_update_content_pdf(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                _r2 = r2_mod.r2_storage_proc()
                 _wts = int(time.time())
-                welcome_url = _r2.upload_file(welcome_img, f"pdf/{qrcard_id}/welcome_{_wts}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
-                ecard_data["welcome_img_url"] = welcome_url
-                qrcard["welcome_img_url"] = welcome_url
-                from pytavia_core import database as _db_w, config as _cfg_w
-                _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
-                _mgd.db_qrcard.update_one(
-                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                    {"$set": {"welcome_img_url": welcome_url}},
-                )
-                _mgd.db_qrcard_pdf.update_one(
-                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                    {"$set": {"welcome_img_url": welcome_url}},
-                )
+                _has_welcome_upload = True
+                _welcome_upload_spec = (welcome_img, f"pdf/{qrcard_id}/welcome_{_wts}{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
             else:
                 # Check if user picked an existing asset URL instead of uploading
                 _asset_welcome_url = request.form.get("welcome_img_autocomplete_url", "").strip()
@@ -2678,6 +2704,8 @@ def qr_update_content_pdf(qrcard_id):
         _cover_img_fields = ["pdf_t1_header_img_url", "pdf_t3_circle_img_url", "pdf_t4_circle_img_url"]
         cover_img = request.files.get("pdf_t1_header_img")
         cover_delete = request.form.get("pdf_t1_header_img_delete") == "1"
+        _has_cover_upload = False
+        _cover_upload_spec = None
         if cover_delete:
             for _f in _cover_img_fields:
                 ecard_data[_f] = ""
@@ -2696,22 +2724,9 @@ def qr_update_content_pdf(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                _r2 = r2_mod.r2_storage_proc()
                 unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
-                cover_url = _r2.upload_file(cover_img, f"pdf/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
-                for _f in _cover_img_fields:
-                    ecard_data[_f] = cover_url
-                    qrcard[_f] = cover_url
-                from pytavia_core import database as _db_c, config as _cfg_c
-                _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
-                _mgd.db_qrcard.update_one(
-                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                    {"$set": {_f: cover_url for _f in _cover_img_fields}},
-                )
-                _mgd.db_qrcard_pdf.update_one(
-                    {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                    {"$set": {_f: cover_url for _f in _cover_img_fields}},
-                )
+                _has_cover_upload = True
+                _cover_upload_spec = (cover_img, f"pdf/{qrcard_id}/{unique_cover_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf"})
         else:
             # Check if user picked an existing asset URL instead of uploading
             _asset_cover_url = request.form.get("pdf_t1_header_img_autocomplete_url", "").strip()
@@ -2735,6 +2750,50 @@ def qr_update_content_pdf(qrcard_id):
                 for _f in _cover_img_fields:
                     ecard_data[_f] = existing_cover
                     qrcard[_f] = existing_cover
+
+        # ── Parallel upload: welcome image + cover image ──
+        _r2 = r2_mod.r2_storage_proc()
+        _img_specs = []
+        if _has_welcome_upload:
+            _img_specs.append(("welcome", _welcome_upload_spec))
+        if _has_cover_upload:
+            _img_specs.append(("cover", _cover_upload_spec))
+        if _img_specs:
+            _img_results = _r2.upload_files_parallel([s[1] for s in _img_specs])
+            for idx, _ir in enumerate(_img_results):
+                _tag = _img_specs[idx][0]
+                if _ir["status"] != "success":
+                    continue
+                if _tag == "welcome":
+                    welcome_url = _ir["url"]
+                    ecard_data["welcome_img_url"] = welcome_url
+                    qrcard["welcome_img_url"] = welcome_url
+                    from pytavia_core import database as _db_w, config as _cfg_w
+                    _mgd = _db_w.get_db_conn(_cfg_w.mainDB)
+                    _mgd.db_qrcard.update_one(
+                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                        {"$set": {"welcome_img_url": welcome_url}},
+                    )
+                    _mgd.db_qrcard_pdf.update_one(
+                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                        {"$set": {"welcome_img_url": welcome_url}},
+                    )
+                elif _tag == "cover":
+                    cover_url = _ir["url"]
+                    for _f in _cover_img_fields:
+                        ecard_data[_f] = cover_url
+                        qrcard[_f] = cover_url
+                    from pytavia_core import database as _db_c, config as _cfg_c
+                    _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
+                    _mgd.db_qrcard.update_one(
+                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                        {"$set": {_f: cover_url for _f in _cover_img_fields}},
+                    )
+                    _mgd.db_qrcard_pdf.update_one(
+                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                        {"$set": {_f: cover_url for _f in _cover_img_fields}},
+                    )
+
         if request.form.get("back_from_design"):
             existing_draft = _get_qr_draft(session, qrcard_id) or {}
             ecard_data["pdf_display_names"] = existing_draft.get("pdf_display_names", [])
@@ -2802,6 +2861,8 @@ def qr_update_content_pdf(qrcard_id):
             _new_file_idx = 0
             seen_upload_names = set()
             duplicate_name = None
+            _valid_pdf_files = []
+            _valid_pdf_meta = []
             for f in pdf_file_list:
                 if f and f.filename and f.filename.lower().endswith(".pdf"):
                     original_name = f.filename
@@ -2811,15 +2872,9 @@ def qr_update_content_pdf(qrcard_id):
                         break
                     seen_upload_names.add(original_name)
                     r2_key = f"pdf/{qrcard_id}/{safe_name}"
-                    file_url = _r2_pdf.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": original_name})
-                    file_entry = {"name": original_name, "url": file_url}
-                    form_idx = _new_file_offset + _new_file_idx
-                    if form_idx < len(_step_display_names) and _step_display_names[form_idx].strip():
-                        file_entry["display_name"] = _step_display_names[form_idx].strip()
-                    if form_idx < len(_step_item_descs) and _step_item_descs[form_idx].strip():
-                        file_entry["item_desc"] = _step_item_descs[form_idx].strip()
+                    _valid_pdf_files.append(f)
+                    _valid_pdf_meta.append({"original_name": original_name, "safe_name": safe_name, "r2_key": r2_key, "form_idx": _new_file_offset + _new_file_idx})
                     _new_file_idx += 1
-                    existing_files.append(file_entry)
                     existing_names.add(original_name)
                     existing_safe_names.add(safe_name)
             if duplicate_name:
@@ -2829,6 +2884,20 @@ def qr_update_content_pdf(qrcard_id):
                     error_msg=f"Oops, a PDF named '{duplicate_name}' is already attached to this QR card. Please rename the file or choose a different PDF.",
                     base_url=config.G_BASE_URL,
                 )
+            if _valid_pdf_files:
+                _pdf_specs = [(f, m["r2_key"], {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": m["original_name"]}) for f, m in zip(_valid_pdf_files, _valid_pdf_meta)]
+                _pdf_results = _r2_pdf.upload_files_parallel(_pdf_specs)
+                for idx, _pr in enumerate(_pdf_results):
+                    if _pr["status"] != "success":
+                        continue
+                    m = _valid_pdf_meta[idx]
+                    file_entry = {"name": m["original_name"], "url": _pr["url"]}
+                    form_idx = m["form_idx"]
+                    if form_idx < len(_step_display_names) and _step_display_names[form_idx].strip():
+                        file_entry["display_name"] = _step_display_names[form_idx].strip()
+                    if form_idx < len(_step_item_descs) and _step_item_descs[form_idx].strip():
+                        file_entry["item_desc"] = _step_item_descs[form_idx].strip()
+                    existing_files.append(file_entry)
             proc.update_pdf_files(fk_user_id, qrcard_id, existing_files)
             ecard_data["pdf_existing_urls"] = [f.get("url") for f in existing_files if f.get("url")]
             ecard_data["pdf_display_names"] = [f.get("display_name", f.get("name", "")) for f in existing_files]
@@ -3175,18 +3244,16 @@ def qr_update_content_ecard(qrcard_id):
             except Exception: pass
         else:
             welcome_img = request.files.get("E-card_welcome_img")
+            _has_welcome_upload = False
+            _welcome_upload_spec = None
             if welcome_img and welcome_img.filename:
                 welcome_img.seek(0, 2)
                 if welcome_img.tell() <= 1024 * 1024:
                     welcome_img.seek(0)
                     ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    welcome_url = _r2.upload_file(welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
-                    extra_data["welcome_img_url"] = welcome_url
-                    qrcard["welcome_img_url"] = welcome_url
-                    _mgd_ew = database.get_db_conn(config.mainDB)
-                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _has_welcome_upload = True
+                    _welcome_upload_spec = (welcome_img, f"ecard/{qrcard_id}/welcome_{int(time.time())}{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
             elif request.form.get("ecard_welcome_img_autocomplete_url", "").strip():
                 welcome_url = request.form.get("ecard_welcome_img_autocomplete_url").strip()
                 extra_data["welcome_img_url"] = welcome_url
@@ -3197,15 +3264,18 @@ def qr_update_content_ecard(qrcard_id):
             elif qrcard.get("welcome_img_url"):
                 extra_data["welcome_img_url"] = qrcard["welcome_img_url"]
 
+        _has_cover_upload = False
+        _cover_upload_spec = None
+        _cover_img_fields = ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]
         if request.form.get("E-card_profile_img_delete") == "1":
-            for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
+            for f in _cover_img_fields:
                 extra_data[f] = ""
                 qrcard[f] = ""
             try:
                 from pytavia_core import database as _db_c, config as _cfg_c
                 _mgd = _db_c.get_db_conn(_cfg_c.mainDB)
-                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
-                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]}})
+                _mgd.db_qrcard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in _cover_img_fields}})
+                _mgd.db_qrcard_ecard.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {_f: "" for _f in _cover_img_fields}})
             except Exception: pass
         else:
             cover_img = request.files.get("E-card_profile_img")
@@ -3215,14 +3285,9 @@ def qr_update_content_ecard(qrcard_id):
                     cover_img.seek(0)
                     ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                     if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"): ext = ".jpg"
-                    import uuid as _uuid_local
-                    unique_cover_name = f"ecard_cover_img_{_uuid_local.uuid4().hex[:12]}{ext}"
-                    cover_url = _r2.upload_file(cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
-                    for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
-                        extra_data[f] = cover_url
-                        qrcard[f] = cover_url
-                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
-                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    unique_cover_name = f"ecard_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                    _has_cover_upload = True
+                    _cover_upload_spec = (cover_img, f"ecard/{qrcard_id}/{unique_cover_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard"})
             elif request.form.get("ecard_cover_img_autocomplete_url", "").strip():
                 cover_url = request.form.get("ecard_cover_img_autocomplete_url").strip()
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
@@ -3233,6 +3298,33 @@ def qr_update_content_ecard(qrcard_id):
             else:
                 for f in ["E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
                     if qrcard.get(f): extra_data[f] = qrcard[f]
+
+        # ── Parallel upload: welcome + cover images ──
+        _img_specs = []
+        if _has_welcome_upload:
+            _img_specs.append(("welcome", _welcome_upload_spec))
+        if _has_cover_upload:
+            _img_specs.append(("cover", _cover_upload_spec))
+        if _img_specs:
+            _img_results = _r2.upload_files_parallel([s[1] for s in _img_specs])
+            for idx, _ir in enumerate(_img_results):
+                _tag = _img_specs[idx][0]
+                if _ir["status"] != "success":
+                    continue
+                if _tag == "welcome":
+                    welcome_url = _ir["url"]
+                    extra_data["welcome_img_url"] = welcome_url
+                    qrcard["welcome_img_url"] = welcome_url
+                    _mgd_ew = database.get_db_conn(config.mainDB)
+                    _mgd_ew.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                    _mgd_ew.db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
+                elif _tag == "cover":
+                    cover_url = _ir["url"]
+                    for f in _cover_img_fields:
+                        extra_data[f] = cover_url
+                        qrcard[f] = cover_url
+                    database.get_db_conn(config.mainDB).db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
+                    database.get_db_conn(config.mainDB).db_qrcard_ecard.update_one({"qrcard_id": qrcard_id}, {"$set": {"E-card_t1_header_img_url": cover_url, "E-card_t3_circle_img_url": cover_url, "E-card_t4_circle_img_url": cover_url}})
 
         # Gallery images update from existing + uploads + autocomplete assets
         existing_gallery = request.form.getlist("ecard_gallery_existing_urls[]")
@@ -3250,29 +3342,18 @@ def qr_update_content_ecard(qrcard_id):
                     continue
                 seen_urls.add(url)
                 gallery_items.append({"url": url})
-            for gf in uploaded_gallery:
-                if not gf or not gf.filename:
-                    continue
-                try:
-                    ext = os.path.splitext(gf.filename)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_name = f"gallery_{uuid.uuid4().hex[:12]}{ext}"
-                    g_url = _r2.upload_file(
-                        gf,
-                        f"ecard/{qrcard_id}/gallery/{unique_name}",
-                        track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name},
-                    )
-                    if g_url and g_url not in seen_urls:
-                        seen_urls.add(g_url)
-                        gallery_items.append({"url": g_url})
-                except Exception:
-                    pass
+
+            # Collect all upload specs: file uploads + autocomplete static uploads
+            _all_gf_specs = []
+            _all_gf_meta = []  # "file" | "static" | ("http", url)
+            _valid_gf = [(gf, f"gallery_{uuid.uuid4().hex[:12]}{(os.path.splitext(gf.filename)[1].lower() or '.jpg')}") for gf in uploaded_gallery if gf and gf.filename]
+            for gf, name in _valid_gf:
+                _all_gf_specs.append((gf, f"ecard/{qrcard_id}/gallery/{name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": name}))
+                _all_gf_meta.append("file")
             for ac_url in autocomplete_gallery:
                 ac_url = (ac_url or "").strip()
                 if not ac_url:
                     continue
-                final_url = ac_url
                 if ac_url.startswith("/static/"):
                     try:
                         ext = os.path.splitext(ac_url)[1] or ".jpg"
@@ -3280,18 +3361,36 @@ def qr_update_content_ecard(qrcard_id):
                         if os.path.isfile(local_path):
                             unique_name = f"gallery_{uuid.uuid4().hex[:12]}{ext}"
                             with open(local_path, "rb") as fp:
-                                final_url = _r2.upload_bytes(
-                                    fp.read(),
-                                    f"ecard/{qrcard_id}/gallery/{unique_name}",
-                                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name},
-                                )
+                                _all_gf_specs.append((fp, f"ecard/{qrcard_id}/gallery/{unique_name}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "ecard", "file_name": unique_name}))
+                                _all_gf_meta.append("static")
+                        else:
+                            _all_gf_specs.append(None)
+                            _all_gf_meta.append(("http", ac_url))
                     except Exception:
-                        final_url = ""
-                if final_url and final_url not in seen_urls and (
-                    final_url.startswith("http://") or final_url.startswith("https://")
-                ):
-                    seen_urls.add(final_url)
-                    gallery_items.append({"url": final_url})
+                        _all_gf_specs.append(None)
+                        _all_gf_meta.append(("http", ac_url))
+                elif ac_url.startswith("http://") or ac_url.startswith("https://"):
+                    _all_gf_specs.append(None)
+                    _all_gf_meta.append(("http", ac_url))
+
+            # Execute all uploads in parallel
+            _upload_only_specs = [s for s in _all_gf_specs if s is not None]
+            if _upload_only_specs:
+                _gf_results = _r2.upload_files_parallel(_upload_only_specs, max_workers=5)
+                _upload_idx = 0
+                for i, meta in enumerate(_all_gf_meta):
+                    if meta == "file" or meta == "static":
+                        if _upload_idx < len(_gf_results) and _gf_results[_upload_idx]["status"] == "success":
+                            _url = _gf_results[_upload_idx]["url"]
+                            if _url not in seen_urls:
+                                seen_urls.add(_url)
+                                gallery_items.append({"url": _url})
+                        _upload_idx += 1
+                    elif isinstance(meta, tuple) and meta[0] == "http":
+                        if meta[1] not in seen_urls:
+                            seen_urls.add(meta[1])
+                            gallery_items.append({"url": meta[1]})
+
             extra_data["ecard_gallery_files"] = gallery_items
             _mgd_g = database.get_db_conn(config.mainDB)
             _mgd_g.db_qrcard.update_one({"qrcard_id": qrcard_id}, {"$set": {"ecard_gallery_files": gallery_items}})
@@ -5007,6 +5106,9 @@ def user_new_qr_design_links():
         session["links_tmp_key"] = tmp_key
         session.modified = True
         _r2 = r2_mod.r2_storage_proc()
+        _upload_specs = []
+        _welcome_tmp_name = None
+        _cover_tmp_name = None
         welcome_img = request.files.get("Links_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -5016,10 +5118,8 @@ def user_new_qr_design_links():
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 fname = "welcome" + ext
-                _r2.upload_file(welcome_img, f"links/_tmp/{tmp_key}/{fname}")
-                session["links_welcome_tmp_key"] = tmp_key
-                session["links_welcome_tmp_name"] = fname
-                session.modified = True
+                _upload_specs.append((welcome_img, f"links/_tmp/{tmp_key}/{fname}", {}))
+                _welcome_tmp_name = fname
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
         cover_img = request.files.get("Links_profile_img")
@@ -5031,10 +5131,18 @@ def user_new_qr_design_links():
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 fname = "links_cover_img" + ext
-                _r2.upload_file(cover_img, f"links/_tmp/{tmp_key}/{fname}")
-                session["links_cover_tmp_key"] = tmp_key
-                session["links_cover_tmp_name"] = fname
-                session.modified = True
+                _upload_specs.append((cover_img, f"links/_tmp/{tmp_key}/{fname}", {}))
+                _cover_tmp_name = fname
+        if _upload_specs:
+            _r2.upload_files_parallel(_upload_specs, max_workers=5)
+        if _welcome_tmp_name:
+            session["links_welcome_tmp_key"] = tmp_key
+            session["links_welcome_tmp_name"] = _welcome_tmp_name
+            session.modified = True
+        if _cover_tmp_name:
+            session["links_cover_tmp_key"] = tmp_key
+            session["links_cover_tmp_name"] = _cover_tmp_name
+            session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
@@ -5158,7 +5266,7 @@ def qr_update_content_links(qrcard_id):
             draft["short_code"] = (request.form.get("short_code") or draft.get("short_code") or "").strip()
             return view_update_links.view_update_links(app).update_qr_content_html(qrcard=draft, base_url=config.G_BASE_URL)
         # Normal POST: save content + go to design
-        import os, uuid as _uuid
+        import os, io, uuid as _uuid
         url_content = (request.form.get("url_content") or "").strip()
         if url_content and not url_content.startswith("http://") and not url_content.startswith("https://"):
             url_content = "https://" + url_content
@@ -5223,8 +5331,16 @@ def qr_update_content_links(qrcard_id):
         if request.form.get("welcome_img_delete") == "1":
             _mgd.db_qrcard_links.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
             content_update["welcome_img_url"] = ""
-        # Handle cover image upload
+
+        # --- Parallel R2 uploads for cover + welcome images ---
         _r2 = r2_mod.r2_storage_proc()
+        _upload_specs = []  # (kind, file_obj, key, meta)
+        _has_cover_file = False
+        _has_cover_static = False
+        _has_welcome_file = False
+        _has_welcome_static = False
+
+        # Cover image file upload
         cover_img = request.files.get("Links_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -5233,31 +5349,27 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["Links_cover_img_url"] = _r2.upload_file(cover_img, f"links/{qrcard_id}/links_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
-        # Handle cover delete
-        if request.form.get("Links_profile_img_delete") == "1":
-            content_update["Links_cover_img_url"] = ""
+                _has_cover_file = True
+                _upload_specs.append(("cover_file", cover_img, f"links/{qrcard_id}/links_cover_img{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"}))
+        # Cover delete
+        _cover_delete = request.form.get("Links_profile_img_delete") == "1"
+        # Cover autocomplete
         cover_asset_url = (request.form.get("links_cover_img_autocomplete_url") or "").strip()
-        if cover_asset_url:
-            if cover_asset_url.startswith("http://") or cover_asset_url.startswith("https://"):
-                content_update["Links_cover_img_url"] = cover_asset_url
-            elif cover_asset_url.startswith("/static/"):
-                local_path = os.path.join(app.root_path, cover_asset_url.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
-                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_cover = f"links_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
-                    try:
-                        with open(local_path, "rb") as f:
-                            content_update["Links_cover_img_url"] = _r2.upload_bytes(
-                                f.read(),
-                                f"links/{qrcard_id}/{unique_cover}",
-                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "file_name": unique_cover}
-                            )
-                    except Exception:
-                        pass
-        # Handle welcome image upload
+        if cover_asset_url and cover_asset_url.startswith("/static/"):
+            local_path = os.path.join(app.root_path, cover_asset_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                unique_cover = f"links_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
+                try:
+                    with open(local_path, "rb") as f:
+                        _bio = io.BytesIO(f.read())
+                    _upload_specs.append(("cover_static", _bio, f"links/{qrcard_id}/{unique_cover}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "file_name": unique_cover}))
+                    _has_cover_static = True
+                except Exception:
+                    pass
+        # Welcome image file upload
         welcome_img = request.files.get("Links_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -5266,27 +5378,57 @@ def qr_update_content_links(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"links/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"})
+                _has_welcome_file = True
+                _upload_specs.append(("welcome_file", welcome_img, f"links/{qrcard_id}/welcome_{int(time.time())}{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links"}))
+        # Welcome autocomplete
         welcome_asset_url = (request.form.get("links_welcome_img_autocomplete_url") or "").strip()
+        if welcome_asset_url and welcome_asset_url.startswith("/static/"):
+            local_path = os.path.join(app.root_path, welcome_asset_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                unique_welcome = f"welcome_{_uuid.uuid4().hex[:12]}{ext}"
+                try:
+                    with open(local_path, "rb") as f:
+                        _bio = io.BytesIO(f.read())
+                    _upload_specs.append(("welcome_static", _bio, f"links/{qrcard_id}/{unique_welcome}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "file_name": unique_welcome}))
+                    _has_welcome_static = True
+                except Exception:
+                    pass
+
+        # Execute all uploads in parallel
+        _cover_result_url = None
+        _welcome_result_url = None
+        if _upload_specs:
+            _r2_specs = [(s[1], s[2], s[3]) for s in _upload_specs]
+            _upload_results = _r2.upload_files_parallel(_r2_specs, max_workers=5)
+            for j, (kind, _, _, _) in enumerate(_upload_specs):
+                if j < len(_upload_results) and _upload_results[j]["status"] == "success":
+                    url = _upload_results[j]["url"]
+                    if kind in ("cover_file", "cover_static"):
+                        _cover_result_url = url
+                    elif kind in ("welcome_file", "welcome_static"):
+                        _welcome_result_url = url
+
+        # Apply results with correct priority: autocomplete > delete > file upload
+        if cover_asset_url:
+            if cover_asset_url.startswith("http://") or cover_asset_url.startswith("https://"):
+                content_update["Links_cover_img_url"] = cover_asset_url
+            elif _has_cover_static and _cover_result_url:
+                content_update["Links_cover_img_url"] = _cover_result_url
+        elif _cover_delete:
+            content_update["Links_cover_img_url"] = ""
+        elif _has_cover_file and _cover_result_url:
+            content_update["Links_cover_img_url"] = _cover_result_url
+
         if welcome_asset_url:
             if welcome_asset_url.startswith("http://") or welcome_asset_url.startswith("https://"):
                 content_update["welcome_img_url"] = welcome_asset_url
-            elif welcome_asset_url.startswith("/static/"):
-                local_path = os.path.join(app.root_path, welcome_asset_url.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
-                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_welcome = f"welcome_{_uuid.uuid4().hex[:12]}{ext}"
-                    try:
-                        with open(local_path, "rb") as f:
-                            content_update["welcome_img_url"] = _r2.upload_bytes(
-                                f.read(),
-                                f"links/{qrcard_id}/{unique_welcome}",
-                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "links", "file_name": unique_welcome}
-                            )
-                    except Exception:
-                        pass
+            elif _has_welcome_static and _welcome_result_url:
+                content_update["welcome_img_url"] = _welcome_result_url
+        elif _has_welcome_file and _welcome_result_url:
+            content_update["welcome_img_url"] = _welcome_result_url
         _raw_scan_lim = (request.form.get("scan_limit_value") or "").strip()
         content_update["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
         content_update["scan_limit_value"] = int(_raw_scan_lim) if _raw_scan_lim.isdigit() else 0
@@ -5456,6 +5598,9 @@ def user_new_qr_design_sosmed():
         session["sosmed_tmp_key"] = tmp_key
         session.modified = True
         _r2 = r2_mod.r2_storage_proc()
+        _upload_specs = []
+        _welcome_tmp_name = None
+        _cover_tmp_name = None
         welcome_img = request.files.get("Sosmed_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -5465,10 +5610,8 @@ def user_new_qr_design_sosmed():
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 fname = "welcome" + ext
-                _r2.upload_file(welcome_img, f"sosmed/_tmp/{tmp_key}/{fname}")
-                session["sosmed_welcome_tmp_key"] = tmp_key
-                session["sosmed_welcome_tmp_name"] = fname
-                session.modified = True
+                _upload_specs.append((welcome_img, f"sosmed/_tmp/{tmp_key}/{fname}", {}))
+                _welcome_tmp_name = fname
             else:
                 error_msg = "Welcome image must be 1 MB or smaller."
         cover_img = request.files.get("Sosmed_profile_img")
@@ -5480,10 +5623,18 @@ def user_new_qr_design_sosmed():
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
                 fname = "sosmed_cover_img" + ext
-                _r2.upload_file(cover_img, f"sosmed/_tmp/{tmp_key}/{fname}")
-                session["sosmed_cover_tmp_key"] = tmp_key
-                session["sosmed_cover_tmp_name"] = fname
-                session.modified = True
+                _upload_specs.append((cover_img, f"sosmed/_tmp/{tmp_key}/{fname}", {}))
+                _cover_tmp_name = fname
+        if _upload_specs:
+            _r2.upload_files_parallel(_upload_specs, max_workers=5)
+        if _welcome_tmp_name:
+            session["sosmed_welcome_tmp_key"] = tmp_key
+            session["sosmed_welcome_tmp_name"] = _welcome_tmp_name
+            session.modified = True
+        if _cover_tmp_name:
+            session["sosmed_cover_tmp_key"] = tmp_key
+            session["sosmed_cover_tmp_name"] = _cover_tmp_name
+            session.modified = True
         if error_msg:
             return v.new_qr_content_html(error_msg=error_msg, base_url=config.G_BASE_URL, url_content=url_content, qr_name=qr_name, short_code=short_code)
         if not proc.is_name_unique(session.get("fk_user_id"), qr_name):
@@ -5670,7 +5821,15 @@ def qr_update_content_sosmed(qrcard_id):
         if request.form.get("welcome_img_delete") == "1":
             _mgd.db_qrcard_sosmed.update_one({"fk_user_id": fk_user_id, "qrcard_id": qrcard_id}, {"$set": {"welcome_img_url": ""}})
             content_update["welcome_img_url"] = ""
+        # --- Parallel R2 uploads for cover + welcome images ---
+        import io
         _r2 = r2_mod.r2_storage_proc()
+        _upload_specs = []  # (kind, file_obj, key, meta)
+        _has_cover_file = False
+        _has_cover_static = False
+        _has_welcome_file = False
+        _has_welcome_static = False
+
         cover_img = request.files.get("Sosmed_profile_img")
         if cover_img and cover_img.filename:
             cover_img.seek(0, 2)
@@ -5679,29 +5838,24 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(cover_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["Sosmed_cover_img_url"] = _r2.upload_file(cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
-        if request.form.get("Sosmed_profile_img_delete") == "1":
-            content_update["Sosmed_cover_img_url"] = ""
+                _has_cover_file = True
+                _upload_specs.append(("cover_file", cover_img, f"sosmed/{qrcard_id}/sosmed_cover_img{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"}))
+        _cover_delete = request.form.get("Sosmed_profile_img_delete") == "1"
         cover_asset_url = (request.form.get("sosmed_cover_img_autocomplete_url") or "").strip()
-        if cover_asset_url:
-            if cover_asset_url.startswith("http://") or cover_asset_url.startswith("https://"):
-                content_update["Sosmed_cover_img_url"] = cover_asset_url
-            elif cover_asset_url.startswith("/static/"):
-                local_path = os.path.join(app.root_path, cover_asset_url.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
-                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_cover = f"sosmed_cover_img_{_uuid.uuid4().hex[:12]}{ext}"
-                    try:
-                        with open(local_path, "rb") as f:
-                            content_update["Sosmed_cover_img_url"] = _r2.upload_bytes(
-                                f.read(),
-                                f"sosmed/{qrcard_id}/{unique_cover}",
-                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_cover}
-                            )
-                    except Exception:
-                        pass
+        if cover_asset_url and cover_asset_url.startswith("/static/"):
+            local_path = os.path.join(app.root_path, cover_asset_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                unique_cover = f"sosmed_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+                try:
+                    with open(local_path, "rb") as f:
+                        _bio = io.BytesIO(f.read())
+                    _upload_specs.append(("cover_static", _bio, f"sosmed/{qrcard_id}/{unique_cover}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_cover}))
+                    _has_cover_static = True
+                except Exception:
+                    pass
         welcome_img = request.files.get("Sosmed_welcome_img")
         if welcome_img and welcome_img.filename:
             welcome_img.seek(0, 2)
@@ -5710,27 +5864,54 @@ def qr_update_content_sosmed(qrcard_id):
                 ext = os.path.splitext(welcome_img.filename)[1].lower() or ".jpg"
                 if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
                     ext = ".jpg"
-                content_update["welcome_img_url"] = _r2.upload_file(welcome_img, f"sosmed/{qrcard_id}/welcome_{int(time.time())}{ext}", track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"})
+                _has_welcome_file = True
+                _upload_specs.append(("welcome_file", welcome_img, f"sosmed/{qrcard_id}/welcome_{int(time.time())}{ext}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed"}))
         welcome_asset_url = (request.form.get("sosmed_welcome_img_autocomplete_url") or "").strip()
+        if welcome_asset_url and welcome_asset_url.startswith("/static/"):
+            local_path = os.path.join(app.root_path, welcome_asset_url.lstrip("/").replace("/", os.sep))
+            if os.path.isfile(local_path):
+                ext = os.path.splitext(local_path)[1].lower() or ".jpg"
+                if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    ext = ".jpg"
+                unique_welcome = f"welcome_{uuid.uuid4().hex[:12]}{ext}"
+                try:
+                    with open(local_path, "rb") as f:
+                        _bio = io.BytesIO(f.read())
+                    _upload_specs.append(("welcome_static", _bio, f"sosmed/{qrcard_id}/{unique_welcome}", {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_welcome}))
+                    _has_welcome_static = True
+                except Exception:
+                    pass
+
+        _cover_result_url = None
+        _welcome_result_url = None
+        if _upload_specs:
+            _r2_specs = [(s[1], s[2], s[3]) for s in _upload_specs]
+            _upload_results = _r2.upload_files_parallel(_r2_specs, max_workers=5)
+            for j, (kind, _, _, _) in enumerate(_upload_specs):
+                if j < len(_upload_results) and _upload_results[j]["status"] == "success":
+                    url = _upload_results[j]["url"]
+                    if kind in ("cover_file", "cover_static"):
+                        _cover_result_url = url
+                    elif kind in ("welcome_file", "welcome_static"):
+                        _welcome_result_url = url
+
+        if cover_asset_url:
+            if cover_asset_url.startswith("http://") or cover_asset_url.startswith("https://"):
+                content_update["Sosmed_cover_img_url"] = cover_asset_url
+            elif _has_cover_static and _cover_result_url:
+                content_update["Sosmed_cover_img_url"] = _cover_result_url
+        elif _cover_delete:
+            content_update["Sosmed_cover_img_url"] = ""
+        elif _has_cover_file and _cover_result_url:
+            content_update["Sosmed_cover_img_url"] = _cover_result_url
+
         if welcome_asset_url:
             if welcome_asset_url.startswith("http://") or welcome_asset_url.startswith("https://"):
                 content_update["welcome_img_url"] = welcome_asset_url
-            elif welcome_asset_url.startswith("/static/"):
-                local_path = os.path.join(app.root_path, welcome_asset_url.lstrip("/").replace("/", os.sep))
-                if os.path.isfile(local_path):
-                    ext = os.path.splitext(local_path)[1].lower() or ".jpg"
-                    if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                        ext = ".jpg"
-                    unique_welcome = f"welcome_{_uuid.uuid4().hex[:12]}{ext}"
-                    try:
-                        with open(local_path, "rb") as f:
-                            content_update["welcome_img_url"] = _r2.upload_bytes(
-                                f.read(),
-                                f"sosmed/{qrcard_id}/{unique_welcome}",
-                                track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "sosmed", "file_name": unique_welcome}
-                            )
-                    except Exception:
-                        pass
+            elif _has_welcome_static and _welcome_result_url:
+                content_update["welcome_img_url"] = _welcome_result_url
+        elif _has_welcome_file and _welcome_result_url:
+            content_update["welcome_img_url"] = _welcome_result_url
         _raw_scan_sos = (request.form.get("scan_limit_value") or "").strip()
         content_update["scan_limit_enabled"] = bool(request.form.get("scan_limit_enabled"))
         content_update["scan_limit_value"] = int(_raw_scan_sos) if _raw_scan_sos.isdigit() else 0
@@ -7319,7 +7500,7 @@ def user_new_qr_design_video():
         video_names = request.form.getlist("video_name[]")
         video_descs = request.form.getlist("video_desc[]")
         video_files = request.files.getlist("video_files")
-        
+
         tmp_key = session.get("video_tmp_key") or _uuid.uuid4().hex
         session["video_tmp_key"] = tmp_key
         _r2 = r2_mod.r2_storage_proc()
@@ -7331,6 +7512,9 @@ def user_new_qr_design_video():
         if not video_types and video_urls:
             video_types = ['link'] * len(video_urls)
 
+        # Collect upload specs for parallel execution
+        _vid_upload_specs = []
+        _vid_upload_meta = []  # (safe_name, name, desc)
         for i, vtype in enumerate(video_types):
             url = video_urls[i] if i < len(video_urls) else ""
             name = video_names[i] if i < len(video_names) else ""
@@ -7346,18 +7530,19 @@ def user_new_qr_design_video():
                             f.seek(0)
                             ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
                             safe_name = _uuid.uuid4().hex + ext
-                            _r2.upload_file(f, f"videos/_tmp/{tmp_key}/{safe_name}")
-                            tmp_gallery.append({"type": "upload", "safe_name": safe_name, "name": name.strip(), "desc": desc.strip()})
+                            _vid_upload_specs.append((f, f"videos/_tmp/{tmp_key}/{safe_name}", None))
+                            _vid_upload_meta.append({"safe_name": safe_name, "name": name.strip(), "desc": desc.strip()})
                         else:
                             error_msg = f"Video {f.filename} exceeds 50MB limit."
             else:
                 if url.strip():
                     embed_url = _get_video_embed_url(url.strip())
                     tmp_gallery.append({"type": "link", "url": embed_url, "name": name.strip(), "desc": desc.strip()})
-                    
-        session["video_tmp_gallery"] = tmp_gallery
 
         # ── Welcome image upload ──
+        _welcome_upload_spec = None
+        _welcome_wkey = None
+        _welcome_wext = None
         if request.form.get("video_welcome_img_delete") == "1":
             session.pop("video_welcome_img_tmp_key", None)
             session.pop("video_welcome_img_tmp_name", None)
@@ -7368,18 +7553,41 @@ def user_new_qr_design_video():
                 welcome_img_file.seek(0, 2)
                 if welcome_img_file.tell() <= 1 * 1024 * 1024:
                     welcome_img_file.seek(0)
-                    import os as _os
-                    _wext = _os.path.splitext(welcome_img_file.filename)[1].lower() or ".jpg"
+                    _wext = os.path.splitext(welcome_img_file.filename)[1].lower() or ".jpg"
                     _wkey = session.get("video_welcome_img_tmp_key") or _uuid.uuid4().hex
                     session["video_welcome_img_tmp_key"] = _wkey
                     session["video_welcome_img_tmp_name"] = "welcome" + _wext
-                    _r2.upload_file(welcome_img_file, f"video/_tmp/{_wkey}/welcome{_wext}")
+                    _welcome_upload_spec = (welcome_img_file, f"video/_tmp/{_wkey}/welcome{_wext}", None)
+                    _welcome_wkey = _wkey
+                    _welcome_wext = _wext
                 else:
                     error_msg = "Welcome image exceeds 1 MB limit."
             # Preserve existing URL if already uploaded previously
             existing_url = session.get("video_welcome_img_url", "")
             if existing_url:
                 video_data["welcome_img_url"] = existing_url
+
+        # Execute all uploads in parallel
+        _all_upload_specs = []
+        if _welcome_upload_spec:
+            _all_upload_specs.append(("welcome", _welcome_upload_spec))
+        for idx, spec in enumerate(_vid_upload_specs):
+            _all_upload_specs.append(("video", spec))
+
+        if _all_upload_specs:
+            _par_results = _r2.upload_files_parallel([s[1] for s in _all_upload_specs])
+            for idx, _pr in enumerate(_par_results):
+                _tag = _all_upload_specs[idx][0]
+                if _tag == "welcome" and _pr["status"] == "success":
+                    pass  # session keys already set above
+                elif _tag == "video" and _pr["status"] == "success":
+                    _vi = _vid_upload_meta[idx - (1 if _welcome_upload_spec else 0)]
+                    tmp_gallery.append({"type": "upload", "safe_name": _vi["safe_name"], "name": _vi["name"], "desc": _vi["desc"]})
+        else:
+            for _vi in _vid_upload_meta:
+                tmp_gallery.append({"type": "upload", "safe_name": _vi["safe_name"], "name": _vi["name"], "desc": _vi["desc"]})
+
+        session["video_tmp_gallery"] = tmp_gallery
         session.modified = True
 
         if error_msg:
@@ -7489,23 +7697,75 @@ def qr_update_content_images(qrcard_id):
             updated_gallery.append(entry)
 
         new_file_offset = len(existing_urls)
+        _valid_new = []
         for i, f in enumerate(new_files):
             if f and f.filename and f.filename.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp")):
                 f.seek(0, 2)
                 if f.tell() <= 2 * 1024 * 1024:
                     f.seek(0)
-                    ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
-                    safe_name = _uuid.uuid4().hex + ext
-                    r2_key = f"images/{qrcard_id}/{safe_name}"
-                    file_url = _r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "images", "file_name": safe_name})
-                    form_idx = new_file_offset + i
-                    name = images_names[form_idx] if form_idx < len(images_names) else ""
-                    desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
-                    updated_gallery.append({
-                        "url": file_url,
-                        "name": name,
-                        "desc": desc
-                    })
+                    _valid_new.append((i, f))
+        # Welcome image: check upload eligibility early so it can join parallel batch
+        _welcome_delete = request.form.get("images_welcome_img_delete") == "1"
+        _welcome_img = request.files.get("images_welcome_img")
+        _welcome_asset_url = (request.form.get("images_welcome_img_autocomplete_url") or "").strip()
+        _welcome_spec = None
+        if not _welcome_delete and _welcome_img and _welcome_img.filename:
+            _welcome_img.seek(0, 2)
+            _welcome_size = _welcome_img.tell()
+            _welcome_img.seek(0)
+            if _welcome_size <= 1024 * 1024:
+                _ext = os.path.splitext(_welcome_img.filename)[1].lower() or ".jpg"
+                if _ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
+                    _ext = ".jpg"
+                _safe = "welcome_" + _uuid.uuid4().hex[:12] + _ext
+                _key = f"images/{qrcard_id}/{_safe}"
+                _welcome_spec = (_welcome_img, _key, {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "images", "file_name": _safe})
+
+        # Build parallel upload specs: gallery files + welcome image
+        _all_specs = []
+        _welcome_spec_idx = None
+        if _valid_new:
+            for i, f in _valid_new:
+                ext = os.path.splitext(f.filename)[1].lower() or ".jpg"
+                safe_name = _uuid.uuid4().hex + ext
+                r2_key = f"images/{qrcard_id}/{safe_name}"
+                _all_specs.append((f, r2_key, {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "images", "file_name": safe_name}))
+        if _welcome_spec:
+            _welcome_spec_idx = len(_all_specs)
+            _all_specs.append(_welcome_spec)
+
+        if _all_specs:
+            _upload_results = _r2.upload_files_parallel(_all_specs, max_workers=5)
+
+        # Process gallery upload results
+        _gallery_results = _upload_results[:len(_valid_new)] if _valid_new else []
+        for j, result in enumerate(_gallery_results):
+            if result["status"] != "success":
+                continue
+            i, f = _valid_new[j]
+            form_idx = new_file_offset + i
+            name = images_names[form_idx] if form_idx < len(images_names) else ""
+            desc = images_descs[form_idx] if form_idx < len(images_descs) else ""
+            updated_gallery.append({
+                "url": result["url"],
+                "name": name,
+                "desc": desc
+            })
+
+        # Process welcome image upload result
+        if _welcome_spec_idx is not None and _welcome_spec_idx < len(_upload_results):
+            _wres = _upload_results[_welcome_spec_idx]
+            if _wres["status"] == "success":
+                images_data["welcome_img_url"] = _wres["url"]
+                qrcard["welcome_img_url"] = _wres["url"]
+
+        # Welcome image: delete or pick-from-assets (non-upload branches)
+        if _welcome_delete:
+            images_data["welcome_img_url"] = ""
+            qrcard["welcome_img_url"] = ""
+        elif _welcome_asset_url and _welcome_spec is None:
+            images_data["welcome_img_url"] = _welcome_asset_url
+            qrcard["welcome_img_url"] = _welcome_asset_url
 
         # Assets picked from "My Assets" gallery picker
         for i, ac_url in enumerate(autocomplete_urls):
@@ -7517,33 +7777,9 @@ def qr_update_content_images(qrcard_id):
             if i < len(autocomplete_descs):
                 entry["desc"] = autocomplete_descs[i]
             updated_gallery.append(entry)
-                    
+
         qrcard["images_gallery_files"] = updated_gallery
         images_data["images_gallery_files"] = updated_gallery
-
-        # Welcome image handling (upload / delete / pick-from-assets)
-        _welcome_delete = request.form.get("images_welcome_img_delete") == "1"
-        _welcome_img = request.files.get("images_welcome_img")
-        _welcome_asset_url = (request.form.get("images_welcome_img_autocomplete_url") or "").strip()
-        if _welcome_delete:
-            images_data["welcome_img_url"] = ""
-            qrcard["welcome_img_url"] = ""
-        elif _welcome_img and _welcome_img.filename:
-            _welcome_img.seek(0, 2)
-            _welcome_size = _welcome_img.tell()
-            _welcome_img.seek(0)
-            if _welcome_size <= 1024 * 1024:
-                _ext = os.path.splitext(_welcome_img.filename)[1].lower() or ".jpg"
-                if _ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp"):
-                    _ext = ".jpg"
-                _safe = "welcome_" + _uuid.uuid4().hex[:12] + _ext
-                _key = f"images/{qrcard_id}/{_safe}"
-                _welcome_url = _r2.upload_file(_welcome_img, _key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "images", "file_name": _safe})
-                images_data["welcome_img_url"] = _welcome_url
-                qrcard["welcome_img_url"] = _welcome_url
-        elif _welcome_asset_url:
-            images_data["welcome_img_url"] = _welcome_asset_url
-            qrcard["welcome_img_url"] = _welcome_asset_url
         
         # Save straight to DB so design step has it
         try:
@@ -7764,25 +8000,88 @@ def qr_update_content_video(qrcard_id):
                     _ext = ".jpg"
                 _safe = "welcome_" + _uuid.uuid4().hex[:12] + _ext
                 _key = f"video/{qrcard_id}/{_safe}"
-                _welcome_url = _r2.upload_file(
-                    _welcome_img,
-                    _key,
-                    track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "video", "file_name": _safe},
-                )
-                video_data["welcome_img_url"] = _welcome_url
-                qrcard["welcome_img_url"] = _welcome_url
-                try:
-                    database.get_db_conn(config.mainDB).db_qrcard.update_one(
-                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                        {"$set": {"welcome_img_url": _welcome_url}},
-                    )
-                    database.get_db_conn(config.mainDB).db_qrcard_video.update_one(
-                        {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
-                        {"$set": {"welcome_img_url": _welcome_url}},
-                        upsert=True,
-                    )
-                except Exception:
-                    pass
+                _welcome_meta = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "video", "file_name": _safe}
+                # Collect for parallel upload — will execute after video specs collected
+                _has_welcome_upload = True
+            else:
+                _has_welcome_upload = False
+        else:
+            _has_welcome_upload = False
+
+        video_files = request.files.getlist("video_files")
+        video_types = request.form.getlist("video_type[]")
+        video_urls = request.form.getlist("video_url[]")
+        video_names = request.form.getlist("video_name[]")
+        video_descs = request.form.getlist("video_desc[]")
+
+        updated_links = []
+        file_idx = 0
+
+        if not video_types and video_urls:
+            video_types = ['link'] * len(video_urls)
+
+        # Collect video upload specs for parallel execution
+        _vid_upload_specs = []
+        _vid_upload_meta = []
+        for i, vtype in enumerate(video_types):
+            url = video_urls[i] if i < len(video_urls) else ""
+            name = video_names[i] if i < len(video_names) else ""
+            desc = video_descs[i] if i < len(video_descs) else ""
+
+            if vtype == 'upload':
+                if url.strip() and not url.startswith('/static/uploads/'):
+                    updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
+                elif url.startswith('/static/uploads/'):
+                    updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
+                else:
+                    if file_idx < len(video_files):
+                        f = video_files[file_idx]
+                        file_idx += 1
+                        if f and f.filename:
+                            f.seek(0, 2)
+                            if f.tell() <= 50 * 1024 * 1024:
+                                f.seek(0)
+                                ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
+                                safe_name = _uuid.uuid4().hex + ext
+                                r2_key = f"videos/{qrcard_id}/{safe_name}"
+                                _v_meta = {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "video", "file_name": safe_name}
+                                _vid_upload_specs.append((f, r2_key, _v_meta))
+                                _vid_upload_meta.append({"name": name.strip(), "desc": desc.strip()})
+            else:
+                if url.strip():
+                    embed_url = _get_video_embed_url(url.strip())
+                    updated_links.append({"url": embed_url, "name": name.strip(), "desc": desc.strip()})
+
+        # Build combined upload list: welcome + video uploads
+        _all_specs = []
+        if _has_welcome_upload:
+            _all_specs.append(("welcome", (_welcome_img, _key, _welcome_meta)))
+        for idx, spec in enumerate(_vid_upload_specs):
+            _all_specs.append(("video", spec))
+
+        if _all_specs:
+            _par_results = _r2.upload_files_parallel([s[1] for s in _all_specs])
+            for idx, _pr in enumerate(_par_results):
+                _tag = _all_specs[idx][0]
+                if _tag == "welcome" and _pr["status"] == "success":
+                    _welcome_url = _pr["url"]
+                    video_data["welcome_img_url"] = _welcome_url
+                    qrcard["welcome_img_url"] = _welcome_url
+                    try:
+                        database.get_db_conn(config.mainDB).db_qrcard.update_one(
+                            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                            {"$set": {"welcome_img_url": _welcome_url}},
+                        )
+                        database.get_db_conn(config.mainDB).db_qrcard_video.update_one(
+                            {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id},
+                            {"$set": {"welcome_img_url": _welcome_url}},
+                            upsert=True,
+                        )
+                    except Exception:
+                        pass
+                elif _tag == "video" and _pr["status"] == "success":
+                    _vm = _vid_upload_meta[idx - (1 if _has_welcome_upload else 0)]
+                    updated_links.append({"url": _pr["url"], "name": _vm["name"], "desc": _vm["desc"]})
         elif _welcome_asset_url:
             video_data["welcome_img_url"] = _welcome_asset_url
             qrcard["welcome_img_url"] = _welcome_asset_url
@@ -7799,47 +8098,6 @@ def qr_update_content_video(qrcard_id):
             except Exception:
                 pass
 
-        video_files = request.files.getlist("video_files")
-        video_types = request.form.getlist("video_type[]")
-        video_urls = request.form.getlist("video_url[]")
-        video_names = request.form.getlist("video_name[]")
-        video_descs = request.form.getlist("video_desc[]")
-
-        updated_links = []
-        file_idx = 0
-
-        if not video_types and video_urls:
-            video_types = ['link'] * len(video_urls)
-
-        for i, vtype in enumerate(video_types):
-            url = video_urls[i] if i < len(video_urls) else ""
-            name = video_names[i] if i < len(video_names) else ""
-            desc = video_descs[i] if i < len(video_descs) else ""
-
-            if vtype == 'upload':
-                if url.strip() and not url.startswith('/static/uploads/'):
-                    # existing R2 URL — keep as-is
-                    updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
-                elif url.startswith('/static/uploads/'):
-                    updated_links.append({"url": url, "name": name.strip(), "desc": desc.strip()})
-                else:
-                    if file_idx < len(video_files):
-                        f = video_files[file_idx]
-                        file_idx += 1
-                        if f and f.filename:
-                            f.seek(0, 2)
-                            if f.tell() <= 50 * 1024 * 1024:
-                                f.seek(0)
-                                ext = os.path.splitext(f.filename)[1].lower() or ".mp4"
-                                safe_name = _uuid.uuid4().hex + ext
-                                r2_key = f"videos/{qrcard_id}/{safe_name}"
-                                file_url = _r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "video", "file_name": safe_name})
-                                updated_links.append({"url": file_url, "name": name.strip(), "desc": desc.strip()})
-            else:
-                if url.strip():
-                    embed_url = _get_video_embed_url(url.strip())
-                    updated_links.append({"url": embed_url, "name": name.strip(), "desc": desc.strip()})
-                    
         qrcard["video_links"] = updated_links
         video_data["video_links"] = updated_links
         

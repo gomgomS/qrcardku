@@ -211,6 +211,54 @@ class r2_storage_proc:
             
         return {"deleted": deleted, "results": results}
 
+    # ── Parallel moves / uploads ────────────────────────────────────────
+
+    def move_files_parallel(self, file_specs: list, max_workers: int = 5) -> list:
+        """Move multiple R2 objects (copy + delete source) in parallel.
+        file_specs: list of (source_key, dest_key, track_meta|None).
+        Returns list of {"source", "dest", "url", "status"} dicts preserving input order.
+        """
+        if not file_specs:
+            return []
+
+        import concurrent.futures
+
+        def _move_single(spec):
+            source_key, dest_key, track_meta = spec
+            try:
+                url = self.move_file(source_key, dest_key, track_meta=track_meta)
+                return {"source": source_key, "dest": dest_key, "url": url, "status": "success"}
+            except Exception as e:
+                return {"source": source_key, "dest": dest_key, "url": None, "status": "error", "error_msg": str(e)}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(_move_single, file_specs))
+
+        return results
+
+    def upload_files_parallel(self, file_specs: list, max_workers: int = 5) -> list:
+        """Upload multiple file-like objects to R2 in parallel.
+        file_specs: list of (file_obj, key, track_meta|None).
+        Returns list of {"key", "url", "status"} dicts preserving input order.
+        """
+        if not file_specs:
+            return []
+
+        import concurrent.futures
+
+        def _upload_single(spec):
+            file_obj, key, track_meta = spec
+            try:
+                url = self.upload_file(file_obj, key, track_meta=track_meta)
+                return {"key": key, "url": url, "status": "success"}
+            except Exception as e:
+                return {"key": key, "url": None, "status": "error", "error_msg": str(e)}
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            results = list(executor.map(_upload_single, file_specs))
+
+        return results
+
     # ── List ────────────────────────────────────────────────────────────
 
     def list_prefix(self, prefix: str) -> list:

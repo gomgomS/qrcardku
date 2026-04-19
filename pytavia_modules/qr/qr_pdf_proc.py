@@ -472,17 +472,79 @@ class qr_pdf_proc:
 
         import os
 
+        saved_files = []
+
+        # ── Build parallel move specs for tmp-based assets ──────────────────────
+        _move_specs = []  # (src, dst, meta, kind, idx_or_none)
+
         if welcome_tmp_key:
             ext = os.path.splitext(welcome_tmp_name)[1] or ".jpg"
             src_key = f"pdf/_tmp/{welcome_tmp_key}/{welcome_tmp_name}"
             dst_key = f"pdf/{new_qrcard_id}/welcome{ext}"
-            try:
-                welcome_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"welcome{ext}"})
-                self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-                self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": welcome_url}})
-            except Exception:
-                pass
-        else:
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f"welcome{ext}"},
+                "welcome", None,
+            ))
+
+        if cover_tmp_key:
+            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
+            src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"
+            unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
+            dst_key = f"pdf/{new_qrcard_id}/{unique_cover_name}"
+            _move_specs.append((
+                src_key, dst_key,
+                {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": unique_cover_name},
+                "cover", None,
+            ))
+
+        if tmp_key and tmp_files:
+            for idx, f_info in enumerate(tmp_files):
+                src_key = f"pdf/_tmp/{tmp_key}/{f_info['safe_name']}"
+                dst_key = f"pdf/{new_qrcard_id}/{f_info['safe_name']}"
+                _move_specs.append((
+                    src_key, dst_key,
+                    {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f_info["safe_name"]},
+                    "pdf_file", idx,
+                ))
+
+        # ── Execute all moves in parallel ──────────────────────────────────────
+        if _move_specs:
+            _plain_specs = [(s[0], s[1], s[2]) for s in _move_specs]
+            _move_results = r2.move_files_parallel(_plain_specs, max_workers=5)
+
+            for i, result in enumerate(_move_results):
+                kind = _move_specs[i][3]
+                extra = _move_specs[i][4]
+                if result["status"] != "success":
+                    continue
+
+                if kind == "welcome":
+                    self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": result["url"]}})
+                    self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": result["url"]}})
+
+                elif kind == "cover":
+                    self.mgdDB.db_qrcard.update_one(
+                        {"qrcard_id": new_qrcard_id},
+                        {"$set": {"pdf_t1_header_img_url": result["url"], "pdf_t3_circle_img_url": result["url"], "pdf_t4_circle_img_url": result["url"]}},
+                    )
+                    self.mgdDB.db_qrcard_pdf.update_one(
+                        {"qrcard_id": new_qrcard_id},
+                        {"$set": {"pdf_t1_header_img_url": result["url"], "pdf_t3_circle_img_url": result["url"], "pdf_t4_circle_img_url": result["url"]}},
+                    )
+
+                elif kind == "pdf_file":
+                    idx = extra
+                    f_info = tmp_files[idx]
+                    entry = {"name": f_info["name"], "url": result["url"]}
+                    if idx < len(saved_display_names) and saved_display_names[idx].strip():
+                        entry["display_name"] = saved_display_names[idx].strip()
+                    if idx < len(saved_item_descs):
+                        entry["item_desc"] = saved_item_descs[idx].strip()
+                    saved_files.append(entry)
+
+        # ── Fallback: non-tmp welcome image (autocomplete URL) ──────────────────
+        if not welcome_tmp_key:
             ac_welcome = (request.form.get("welcome_img_autocomplete_url", "")
                           or session.pop("welcome_img_autocomplete_url", "")).strip()
             if ac_welcome and (ac_welcome.startswith("http://") or ac_welcome.startswith("https://")):
@@ -491,25 +553,9 @@ class qr_pdf_proc:
                     self.mgdDB.db_qrcard_pdf.update_one({"qrcard_id": new_qrcard_id}, {"$set": {"welcome_img_url": ac_welcome}})
                 except Exception:
                     pass
-        if cover_tmp_key:
-            ext = os.path.splitext(cover_tmp_name)[1] or ".jpg"
-            src_key = f"pdf/_tmp/{cover_tmp_key}/{cover_tmp_name}"
-            unique_cover_name = f"pdf_cover_img_{uuid.uuid4().hex[:12]}{ext}"
-            dst_key = f"pdf/{new_qrcard_id}/{unique_cover_name}"
-            try:
-                cover_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": unique_cover_name})
-                self.mgdDB.db_qrcard.update_one(
-                    {"qrcard_id": new_qrcard_id},
-                    {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
-                )
-                self.mgdDB.db_qrcard_pdf.update_one(
-                    {"qrcard_id": new_qrcard_id},
-                    {"$set": {"pdf_t1_header_img_url": cover_url, "pdf_t3_circle_img_url": cover_url, "pdf_t4_circle_img_url": cover_url}},
-                )
-            except Exception:
-                pass
-        else:
-            # Priority: direct file upload from request (when user uploads their own image)
+
+        # ── Fallback: non-tmp cover image ───────────────────────────────────────
+        if not cover_tmp_key:
             _direct_cover = request.files.get("pdf_t1_header_img") if request.files else None
             if _direct_cover and _direct_cover.filename:
                 _direct_cover.seek(0, 2)
@@ -535,7 +581,6 @@ class qr_pdf_proc:
             else:
                 ac_cover = request.form.get("pdf_t1_header_img_autocomplete_url", "").strip() or session.pop("pdf_t1_header_img_autocomplete_url", "") or ""
                 if ac_cover and (ac_cover.startswith("http://") or ac_cover.startswith("https://")):
-                    # Existing R2 asset URL — store directly, no re-upload
                     try:
                         self.mgdDB.db_qrcard.update_one(
                             {"qrcard_id": new_qrcard_id},
@@ -565,26 +610,9 @@ class qr_pdf_proc:
                             )
                         except Exception:
                             pass
-        saved_files = []
-        if tmp_key and tmp_files:
-            for idx, f_info in enumerate(tmp_files):
-                src_key = f"pdf/_tmp/{tmp_key}/{f_info['safe_name']}"
-                dst_key = f"pdf/{new_qrcard_id}/{f_info['safe_name']}"
-                try:
-                    file_url = r2.move_file(src_key, dst_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "pdf", "file_name": f_info["safe_name"]})
-                    entry = {"name": f_info["name"], "url": file_url}
-                    if idx < len(saved_display_names) and saved_display_names[idx].strip():
-                        entry["display_name"] = saved_display_names[idx].strip()
-                    if idx < len(saved_item_descs):
-                        entry["item_desc"] = saved_item_descs[idx].strip()
-                    saved_files.append(entry)
-                except Exception:
-                    pass
-            try:
-                r2.delete_prefix(f"pdf/_tmp/{tmp_key}/")
-            except Exception:
-                pass
-        elif tmp_key:
+
+        # ── Cleanup tmp dirs ───────────────────────────────────────────────────
+        if tmp_key:
             try:
                 r2.delete_prefix(f"pdf/_tmp/{tmp_key}/")
             except Exception:
@@ -750,19 +778,24 @@ class qr_pdf_proc:
         pdf_file_list = request.files.getlist("pdf_files")
         if pdf_file_list and any(f.filename for f in pdf_file_list):
             new_file_offset = len(existing_urls)
-            new_file_idx = 0
-            for f in pdf_file_list:
-                if f and f.filename and f.filename.lower().endswith(".pdf"):
+            _valid_files = [f for f in pdf_file_list if f and f.filename and f.filename.lower().endswith(".pdf")]
+            if _valid_files:
+                _upload_specs = []
+                for f in _valid_files:
                     safe_name = f.filename.replace(" ", "_")
                     r2_key = f"pdf/{qrcard_id}/{safe_name}"
-                    file_url = r2.upload_file(f, r2_key, track_meta={"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": safe_name})
-                    file_entry = {"name": f.filename, "url": file_url}
+                    _upload_specs.append((f, r2_key, {"fk_user_id": fk_user_id, "qrcard_id": qrcard_id, "qr_type": "pdf", "file_name": safe_name}))
+                _upload_results = r2.upload_files_parallel(_upload_specs, max_workers=5)
+                for new_file_idx, result in enumerate(_upload_results):
+                    f = _valid_files[new_file_idx]
+                    if result["status"] != "success":
+                        continue
+                    file_entry = {"name": f.filename, "url": result["url"]}
                     form_idx = new_file_offset + new_file_idx
                     if form_idx < len(display_names) and display_names[form_idx].strip():
                         file_entry["display_name"] = display_names[form_idx].strip()
                     if form_idx < len(item_descs) and item_descs[form_idx].strip():
                         file_entry["item_desc"] = item_descs[form_idx].strip()
-                    new_file_idx += 1
                     if not any(x.get("name") == f.filename for x in existing_files):
                         existing_files.append(file_entry)
         if existing_files:
