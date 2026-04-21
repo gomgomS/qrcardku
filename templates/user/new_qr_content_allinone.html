@@ -1789,8 +1789,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const cropCancel = document.getElementById('allinone-crop-cancel');
     const cropApply = document.getElementById('allinone-crop-apply');
+    function clearAllCoverPreviews() {
+        if (profileInput) profileInput.value = '';
+        if (profilePreview) {
+            profilePreview.innerHTML = '<div style="width:32px;height:32px;background:#2C2D25;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Cover Image</span>';
+        }
+        if (removeBtn) removeBtn.style.display = 'none';
+        const acUrl = document.getElementById('allinone_profile_img_autocomplete_url');
+        if (acUrl) acUrl.value = '';
+        document.getElementById('allinone_profile_img_delete').value = '1';
+        ['allinone-preview-profile-img','allinone-t1-preview-header-img','allinone-t2-preview-circle-img'].forEach(function(id) {
+            const el = document.getElementById(id); if (el) { el.src = ''; el.style.display = 'none'; }
+        });
+        const t1Hdr = document.getElementById('allinone-t1-preview-header');
+        if (t1Hdr) t1Hdr.style.display = 'none';
+        ['allinone-preview-profile-placeholder-icon','allinone-t2-preview-circle-placeholder'].forEach(function(id) {
+            const el = document.getElementById(id); if (el) el.style.display = '';
+        });
+        const t1ThumbImg = document.getElementById('allinone-t1-thumb-header-img');
+        if (t1ThumbImg) { t1ThumbImg.src = ''; t1ThumbImg.style.display = 'none'; }
+        const t1ThumbPh = document.getElementById('allinone-t1-thumb-placeholder');
+        if (t1ThumbPh) t1ThumbPh.style.display = '';
+    }
+
     if (cropCancel) {
         cropCancel.addEventListener('click', function () {
+            clearAllCoverPreviews();
             const cropModal = document.getElementById('allinone-profile-crop-modal');
             if (cropModal) cropModal.style.display = 'none';
             if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
@@ -1812,22 +1836,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 'image/jpeg', 0.88);
         });
     }
-    var _cropInteracting = false;
-    var allinoneCropImg = document.getElementById('allinone-crop-image');
-    if (allinoneCropImg) {
-        allinoneCropImg.addEventListener('mousedown', function () { _cropInteracting = true; });
-        allinoneCropImg.addEventListener('touchstart', function () { _cropInteracting = true; });
-        document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-        document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-    }
+    // Block all clicks on the modal overlay — only Cancel or Apply can close it
     var allinoneCropModal = document.getElementById('allinone-profile-crop-modal');
     if (allinoneCropModal) {
         allinoneCropModal.addEventListener('click', function (e) {
-            if (e.target === allinoneCropModal && !_cropInteracting) {
-                allinoneCropModal.style.display = 'none';
-                if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-                _cropCallback = null;
-            }
+            e.stopPropagation();
+            if (e.target === allinoneCropModal) e.preventDefault();
         });
     }
     if (removeBtn) {

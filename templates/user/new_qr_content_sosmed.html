@@ -1236,28 +1236,56 @@
                 if (cropModal) cropModal.style.display = 'none';
             });
         }
+        function clearAllCoverPreviews() {
+            if (profileInput) profileInput.value = '';
+            var acFieldRm = document.getElementById('sosmed_cover_img_autocomplete_url');
+            if (acFieldRm) acFieldRm.value = '';
+            if (profilePreview) {
+                const img = profilePreview.querySelector('img');
+                if (img) { img.src = ''; img.style.display = 'none'; }
+                const div = profilePreview.querySelector('div');
+                if (div) div.style.display = 'flex';
+                const span = profilePreview.querySelector('span');
+                if (span) span.textContent = 'Upload Cover Image';
+            }
+            if (removeBtn) removeBtn.style.display = 'none';
+            document.getElementById('sosmed_profile_img_delete').value = '1';
+            const previewImg = document.getElementById('sosmed-preview-profile-img');
+            const previewPlaceholder = document.getElementById('sosmed-preview-profile-placeholder-icon');
+            if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; }
+            if (previewPlaceholder) previewPlaceholder.style.display = 'block';
+            ['sosmed-t3-preview-circle-img','sosmed-t4-preview-circle-img'].forEach(function(id) {
+                const el = document.getElementById(id); if (el) { el.src = ''; el.style.display = 'none'; }
+            });
+            ['sosmed-t3-preview-circle-placeholder','sosmed-t4-preview-circle-placeholder'].forEach(function(id) {
+                const el = document.getElementById(id); if (el) el.style.display = 'flex';
+            });
+            ['sosmed-t1-preview-header-img','sosmed-t2-preview-header-img'].forEach(function(id) {
+                const el = document.getElementById(id); if (el) { el.src = ''; el.style.display = 'none'; }
+            });
+            const t1Hdr = document.getElementById('sosmed-t1-preview-header');
+            const t1Body = document.getElementById('sosmed-t1-preview-card-body');
+            if (t1Hdr) t1Hdr.style.display = 'none';
+            if (t1Body) { t1Body.style.borderRadius = '0'; t1Body.style.marginTop = '0'; }
+            const t2Hdr = document.getElementById('sosmed-t2-preview-header');
+            const t2Body = document.getElementById('sosmed-t2-preview-card-body');
+            if (t2Hdr) t2Hdr.style.display = 'none';
+            if (t2Body) { t2Body.style.borderRadius = '0'; t2Body.style.marginTop = '0'; }
+            checkContentValid();
+        }
+
         if (cropCancelBtn) {
             cropCancelBtn.addEventListener('click', function () {
+                clearAllCoverPreviews();
                 if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
                 if (cropModal) cropModal.style.display = 'none';
-                if (profileInput) profileInput.value = '';
             });
         }
-        var _cropInteracting = false;
-        var sosmedCropImg = document.getElementById('sosmed-crop-image');
-        if (sosmedCropImg) {
-            sosmedCropImg.addEventListener('mousedown', function () { _cropInteracting = true; });
-            sosmedCropImg.addEventListener('touchstart', function () { _cropInteracting = true; });
-            document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-            document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-        }
+        // Block all clicks on the modal overlay — only Cancel or Apply can close it
         if (cropModal) {
             cropModal.addEventListener('click', function (e) {
-                if (e.target === cropModal && !_cropInteracting) {
-                    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-                    cropModal.style.display = 'none';
-                    if (profileInput) profileInput.value = '';
-                }
+                e.stopPropagation();
+                if (e.target === cropModal) e.preventDefault();
             });
         }
         if (removeBtn) {

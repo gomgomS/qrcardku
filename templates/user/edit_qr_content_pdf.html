@@ -3090,7 +3090,6 @@
     var cropApplyBtn = document.getElementById('pdf-crop-apply');
     var pdfCropper = null;
     var pdfCropObjectUrl = null;
-    var _cropInteracting = false;
 
     function applyCoverImageToPreviews(url) {
         // Update T1 header preview
@@ -3147,9 +3146,34 @@
         if (pdfCropper) { pdfCropper.destroy(); pdfCropper = null; }
     }
 
+    function clearAllCoverPreviews() {
+        if (t1ImgInput) t1ImgInput.value = '';
+        var t1Img = document.getElementById('t1-preview-header-img');
+        if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+        showT1Header(false);
+        var t3Img = document.getElementById('t3-preview-circle-img');
+        var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
+        if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
+        if (t3Ph)  { t3Ph.style.display = 'flex'; }
+        var t4Img = document.getElementById('t4-preview-circle-img');
+        var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
+        if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
+        if (t4Ph)  { t4Ph.style.display = 'flex'; }
+        var thumb = document.getElementById('cover-img-preview');
+        if (thumb) {
+            thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Cover Image</span>';
+        }
+        var removeBtn = document.getElementById('cover-img-remove-btn');
+        if (removeBtn) removeBtn.style.display = 'none';
+        var delFlag = document.getElementById('pdf_t1_header_img_delete');
+        if (delFlag) delFlag.value = '1';
+        var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+        if (acField) acField.value = '';
+    }
+
     if (cropCancelBtn) {
         cropCancelBtn.addEventListener('click', function () {
-            if (t1ImgInput) t1ImgInput.value = '';
+            clearAllCoverPreviews();
             closePdfCropModal();
         });
     }
@@ -3172,19 +3196,11 @@
         });
     }
 
-    // Prevent modal close during crop resize interactions
-    if (cropImageEl) {
-        cropImageEl.addEventListener('mousedown', function () { _cropInteracting = true; });
-        cropImageEl.addEventListener('touchstart', function () { _cropInteracting = true; });
-        document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-        document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-    }
+    // Block all clicks on the modal overlay — only Cancel or Apply can close it
     if (cropModal) {
         cropModal.addEventListener('click', function (e) {
-            if (e.target === cropModal && !_cropInteracting) {
-                if (t1ImgInput) t1ImgInput.value = '';
-                closePdfCropModal();
-            }
+            e.stopPropagation();
+            if (e.target === cropModal) e.preventDefault();
         });
     }
 

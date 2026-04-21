@@ -3037,9 +3037,42 @@
             if (ecardCropper) { ecardCropper.destroy(); ecardCropper = null; }
         }
 
+        function clearAllProfilePreviews() {
+            window._ecardCurrentProfileUrl = null;
+            if (t1ImgInput) t1ImgInput.value = '';
+            var previewProfileImg = document.getElementById('preview-profile-img');
+            var previewPlaceholder = document.getElementById('preview-profile-placeholder-icon');
+            if (previewProfileImg) { previewProfileImg.src = ''; previewProfileImg.style.display = 'none'; }
+            if (previewPlaceholder) { previewPlaceholder.style.display = 'block'; }
+            var t1Img = document.getElementById('t1-preview-header-img');
+            if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
+            if (typeof showT1Header === 'function') showT1Header(false);
+            var t2Img = document.getElementById('t2-preview-header-img');
+            if (t2Img) { t2Img.src = ''; t2Img.style.display = 'none'; }
+            if (typeof showT2Header === 'function') showT2Header(false);
+            var t3Img = document.getElementById('t3-preview-circle-img');
+            var t3Ph = document.getElementById('t3-preview-circle-placeholder');
+            if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
+            if (t3Ph) t3Ph.style.display = 'flex';
+            var t4Img = document.getElementById('t4-preview-circle-img');
+            var t4Ph = document.getElementById('t4-preview-circle-placeholder');
+            if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
+            if (t4Ph) t4Ph.style.display = 'flex';
+            var thumb = document.getElementById('cover-img-preview');
+            if (thumb) {
+                thumb.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-user" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Profile Image</span>';
+            }
+            var removeBtn = document.getElementById('cover-img-remove-btn');
+            if (removeBtn) removeBtn.style.display = 'none';
+            var delFlag = document.getElementById('E-card_profile_img_delete');
+            if (delFlag) delFlag.value = '1';
+            var acField = document.getElementById('ecard_cover_img_autocomplete_url');
+            if (acField) acField.value = '';
+        }
+
         if (cropCancelBtn) {
             cropCancelBtn.addEventListener('click', function () {
-                if (t1ImgInput) t1ImgInput.value = '';
+                clearAllProfilePreviews();
                 closeCropModal();
             });
         }
@@ -3062,20 +3095,11 @@
                 }, 'image/jpeg', 0.92);
             });
         }
-        // Prevent modal close during crop resize interactions — dragging resize
-        // handles to the edge triggers the overlay click handler.
-        if (cropImageEl) {
-            cropImageEl.addEventListener('mousedown', function () { _cropInteracting = true; });
-            cropImageEl.addEventListener('touchstart', function () { _cropInteracting = true; });
-            document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-            document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
-        }
+        // Block all clicks on the modal overlay — only Cancel or Apply can close it
         if (cropModal) {
             cropModal.addEventListener('click', function (e) {
-                if (e.target === cropModal && !_cropInteracting) {
-                    if (t1ImgInput) t1ImgInput.value = '';
-                    closeCropModal();
-                }
+                e.stopPropagation();
+                if (e.target === cropModal) e.preventDefault();
             });
         }
 
