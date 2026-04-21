@@ -196,54 +196,9 @@
         </span>
     </div>
     <div class="new-qr-step-nav">
-        {% if is_update and back_url %}
-        <form id="design-back-form" method="POST" action="{{ back_url }}" style="display: inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="back_from_design" value="1" />
-            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
-            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
-            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
-        </form>
-        {% elif qrcard_id %}
-        <a href="/qr/update/allinone/{{ qrcard_id }}" class="btn-outline" id="design-back-link">
-            <i class="fa-solid fa-arrow-left"></i> Back
+        <a id="design-back-link" href="/qr/update/allinone/{{ qrcard_id }}" class="btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span>
         </a>
-        <form id="design-back-form" style="display: none;"></form>
-        {% else %}
-        <form id="design-back-form" method="POST" action="/qr/new/allinone/back" style="display: inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="back_from_design" value="1" />
-            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
-            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
-            {% if allinone_data %}
-            {% for key, val in allinone_data.items() %}
-                {% if key == 'Allinone_sections' %}
-                {# sections passed as JSON #}
-                {% elif key in ('scan_limit_enabled', 'scan_limit_value', 'schedule_enabled', 'schedule_since', 'schedule_until', 'stats') %}
-                {# explicit hiddens below #}
-                {% elif val is iterable and val is not string and val is not mapping %}
-                    {% for item in val %}
-                    <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
-                    {% endfor %}
-                {% elif val is not mapping %}
-                    {% if val is not none and val != '' %}
-                    <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
-                    {% endif %}
-                {% endif %}
-            {% endfor %}
-            <input type="hidden" name="allinone_sections_json" value="{{ allinone_data.get('Allinone_sections', []) | tojson | forceescape }}" />
-            {% set _aio = allinone_data %}
-            <input type="hidden" name="scan_limit_enabled" value="{% if _aio.get('scan_limit_enabled') %}on{% endif %}">
-            <input type="hidden" name="scan_limit_value" value="{{ _aio.get('scan_limit_value', '') | e }}">
-            <input type="hidden" name="schedule_enabled" value="{% if _aio.get('schedule_enabled') %}on{% endif %}">
-            <input type="hidden" name="schedule_since" value="{{ (_aio.get('schedule_since', '') or '') | e }}">
-            <input type="hidden" name="schedule_until" value="{{ (_aio.get('schedule_until', '') or '') | e }}">
-            {% endif %}
-            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
-        </form>
-        {% endif %}
         <button type="button" class="btn-next" onclick="submitDesignWithOverlay()"><span data-i18n="nd_complete">Complete</span></button>
     </div>
 </div>
@@ -479,9 +434,9 @@
         <i class="fa-solid fa-arrow-left"></i>
     </a>
     {% else %}
-    <button type="button" class="mobile-bar-arrow" onclick="document.getElementById('design-back-form').submit()" title="Back">
+    <a href="/qr/update/allinone/{{ qrcard_id }}" class="mobile-bar-arrow" title="Back" style="text-decoration:none;">
         <i class="fa-solid fa-arrow-left"></i>
-    </button>
+    </a>
     {% endif %}
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
         <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>

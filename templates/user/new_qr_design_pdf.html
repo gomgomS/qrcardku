@@ -760,33 +760,9 @@ function onQRColorChange(target, value) {
         </span>
     </div>
     <div class="new-qr-step-nav">
-        {% if is_update and back_url %}
-        <form id="design-back-form" method="POST" action="{{ back_url }}" style="display: inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <input type="hidden" name="back_from_design" value="1" />
-            <input type="hidden" name="url_content" value="{{ url_content | e }}" />
-            <input type="hidden" name="qr_name" value="{{ qr_name | e }}" />
-            {% if short_code %}<input type="hidden" name="short_code" value="{{ short_code | e }}" />{% endif %}
-
-            {% set pdf_fields = ['pdf_template', 'pdf_primary_color', 'pdf_secondary_color', 'pdf_title_font',
-            'pdf_title_color', 'pdf_text_font', 'pdf_text_color', 'pdf_company', 'pdf_title', 'pdf_desc', 'pdf_website',
-            'pdf_btn_text', 'welcome_time', 'welcome_bg_color', 'pdf_font_apply_all',
-            'scan_limit_enabled', 'scan_limit_value'] %}
-            {% for field in pdf_fields %}
-            {% set f_val = qrcard.get(field, '') if qrcard else (pdf_data.get(field, '') if pdf_data else '') %}
-            <input type="hidden" name="{{ field }}" value="{{ f_val | e }}" />
-            {% endfor %}
-            {% set _sched_ctx = qrcard if qrcard else pdf_data %}
-            <input type="hidden" name="schedule_enabled" value="{% if _sched_ctx and _sched_ctx.get('schedule_enabled') %}on{% endif %}">
-            <input type="hidden" name="schedule_since" value="{{ (_sched_ctx.get('schedule_since', '') if _sched_ctx else '') | e }}">
-            <input type="hidden" name="schedule_until" value="{{ (_sched_ctx.get('schedule_until', '') if _sched_ctx else '') | e }}">
-
-            <button type="submit" class="btn-outline"><i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span></button>
-        </form>
-        {% else %}
-        <a href="{{ back_url | default('/qr/new/' ~ qr_type) }}" class="btn-outline"><i
-                class="fa-solid fa-arrow-left"></i> Back</a>
-        {% endif %}
+        <a id="design-back-link" href="/qr/update/pdf/{{ qrcard_id }}" class="btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-arrow-left"></i> <span data-i18n="nq_back">Back</span>
+        </a>
         <button type="button" class="btn-next" onclick="submitDesignWithOverlay()"><span data-i18n="nd_complete">Complete</span></button>
     </div>
 </div>
@@ -989,9 +965,9 @@ function onQRColorChange(target, value) {
 
 <!-- Mobile bottom bar -->
 <div class="mobile-bottom-bar">
-    <button type="button" class="mobile-bar-arrow" onclick="document.getElementById('design-back-form').submit()" title="Back">
+    <a href="/qr/update/pdf/{{ qrcard_id }}" class="mobile-bar-arrow" title="Back" style="text-decoration:none;">
         <i class="fa-solid fa-arrow-left"></i>
-    </button>
+    </a>
     <button type="button" class="mobile-bar-preview-btn" id="mobile-preview-btn" onclick="toggleMobilePreview()">
         <i class="fa-regular fa-eye"></i> <span data-i18n="nc_preview_btn">Preview</span>
     </button>

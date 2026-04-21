@@ -1628,6 +1628,12 @@
 
 {% block extra_js %}
 <script>
+    // Force fresh server render when browser restores page from bfcache (Back button)
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted) window.location.reload();
+    });
+</script>
+<script>
     function _escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
@@ -2364,7 +2370,7 @@
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    (function initEcardDraft() {
         // E-card Initialization Block for Edit/Draft Mode
         const qrcard_Ecard_template = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
         const qrcard_Ecard_primary_color = "{{ qrcard.get('E-card_primary_color', '#2F6BFD') if qrcard else '#2F6BFD' }}";
@@ -2414,7 +2420,7 @@
         if (window.updateAllMockups) {
             window.updateAllMockups();
         }
-    });
+    })();
 </script>
 
 <script>
@@ -3194,14 +3200,18 @@
         });
 
         // ── Initialize on page load ───────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', function () {
-            // Ensure the correct radio is checked (Jinja sets it, but sync to be safe)
+        function initTemplatePreview() {
             var savedTemplate = "{{ qrcard.get('E-card_template', 'default') if qrcard else 'default' }}";
             var savedRadio = document.querySelector('input[name="E-card_template"][value="' + savedTemplate + '"]');
             if (savedRadio) savedRadio.checked = true;
             syncTemplateCardBorders();
             switchEcardTemplate(savedTemplate);
-        });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTemplatePreview);
+        } else {
+            initTemplatePreview();
+        }
 
     })();
 
