@@ -33,12 +33,6 @@
     "payments": [
       {
         "merchants": [
-          { "id": "BC", "name": "BCA", "icon": "/static/assets/img/payment-method/bca.png" }
-        ],
-        "fee": "Rp 4.400"
-      },
-      {
-        "merchants": [
           { "id": "M2", "name": "Mandiri", "icon": "/static/assets/img/payment-method/mandiri.png" }
         ],
         "fee": "Rp 4.000"

@@ -524,11 +524,14 @@ def auth_logout():
 
 @app.route('/auth/login/<provider>')
 def auth_social_login(provider):
+    # Use fixed public base URL to avoid http/host mismatch
+    # when running behind reverse proxy / CDN.
+    base_url = (getattr(config, "G_BASE_URL", "") or "").rstrip("/")
     if provider == 'google':
-        redirect_uri = url_for('auth_social_callback', provider='google', _external=True)
+        redirect_uri = (base_url + "/auth/callback/google") if base_url else url_for('auth_social_callback', provider='google', _external=True)
         return oauth.google.authorize_redirect(redirect_uri)
     elif provider == 'linkedin':
-        redirect_uri = url_for('auth_social_callback', provider='linkedin', _external=True)
+        redirect_uri = (base_url + "/auth/callback/linkedin") if base_url else url_for('auth_social_callback', provider='linkedin', _external=True)
         return oauth.linkedin.authorize_redirect(redirect_uri)
     return abort(404)
 
@@ -536,13 +539,16 @@ import traceback
 @app.route('/auth/callback/<provider>')
 def auth_social_callback(provider):
     try:
+        base_url = (getattr(config, "G_BASE_URL", "") or "").rstrip("/")
         if provider == 'google':
-            token = oauth.google.authorize_access_token()
+            redirect_uri = (base_url + "/auth/callback/google") if base_url else None
+            token = oauth.google.authorize_access_token(redirect_uri=redirect_uri)
             user_info = oauth.google.parse_id_token(token, nonce=None)
             if not user_info:
                 user_info = oauth.google.userinfo()
         elif provider == 'linkedin':
-            token = oauth.linkedin.authorize_access_token()
+            redirect_uri = (base_url + "/auth/callback/linkedin") if base_url else None
+            token = oauth.linkedin.authorize_access_token(redirect_uri=redirect_uri)
             resp = oauth.linkedin.get('me?projection=(id,localizedFirstName,localizedLastName)')
             user_info = resp.json()
             email_resp = oauth.linkedin.get('emailAddress?q=members&projection=(elements*(handle~))')
@@ -9108,7 +9114,7 @@ def auth_register():
 def signup_success_view():
     return view_login.view_login().signup_success_html()
 
-@app.route('/auth/login/<provider>')
+@app.route('/auth/v2/login/<provider>')
 def social_login(provider):
     client = oauth.create_client(provider)
     if not client:
@@ -9116,7 +9122,7 @@ def social_login(provider):
     redirect_uri = url_for('social_authorize', provider=provider, _external=True)
     return client.authorize_redirect(redirect_uri)
 
-@app.route('/auth/callback/<provider>')
+@app.route('/auth/v2/callback/<provider>')
 def social_authorize(provider):
     client = oauth.create_client(provider)
     if not client:
