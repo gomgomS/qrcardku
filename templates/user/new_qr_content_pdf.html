@@ -5,6 +5,7 @@
 {% set hide_top_nav = true %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;800&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
     .new-qr-container {
@@ -1573,6 +1574,20 @@
     </div>
 </div>
 </form>
+
+<div id="pdf-cover-crop-modal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--bg-content); border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column;">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 16px;">Resize & crop image</div>
+        <div style="flex: 1; min-height: 300px; max-height: 70vh; background: #111;">
+            <img id="pdf-crop-image" src="" alt="Crop" style="max-width: 100%; max-height: 70vh; display: block;">
+        </div>
+        <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="pdf-crop-cancel" class="btn-outline" style="padding: 8px 16px;">Cancel</button>
+            <button type="button" id="pdf-crop-apply" class="btn-primary" style="padding: 8px 20px;">Apply</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1587,6 +1602,7 @@
     }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Step 2 -> 3: enable Next and step 3 link only when mandatory fields are filled
@@ -2774,9 +2790,43 @@
         });
     }
 
-    // ── Unified cover image upload (one image shared by all templates) ─────────
+    // ── Unified cover image upload with crop (one image shared by all templates) ─────────
     var t1ImgInput = document.getElementById('pdf_t1_header_img_input');
-    if (t1ImgInput) {
+    var cropModal = document.getElementById('pdf-cover-crop-modal');
+    var cropImageEl = document.getElementById('pdf-crop-image');
+    var cropCancelBtn = document.getElementById('pdf-crop-cancel');
+    var cropApplyBtn = document.getElementById('pdf-crop-apply');
+    var pdfCropper = null;
+    var pdfCropObjectUrl = null;
+    var _cropInteracting = false;
+
+    function applyCoverImageToPreviews(url) {
+        // Update T1 header preview
+        var t1Img = document.getElementById('t1-preview-header-img');
+        if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
+        showT1Header(true);
+        // Update T3 circle preview
+        var t3Img = document.getElementById('t3-preview-circle-img');
+        var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
+        if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
+        if (t3Ph)  { t3Ph.style.display = 'none'; }
+        // Update T4 circle preview
+        var t4Img = document.getElementById('t4-preview-circle-img');
+        var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
+        if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
+        if (t4Ph)  { t4Ph.style.display = 'none'; }
+        // Update upload thumb
+        var thumb     = document.getElementById('cover-img-preview');
+        var removeBtn = document.getElementById('cover-img-remove-btn');
+        var delFlag   = document.getElementById('pdf_t1_header_img_delete');
+        if (thumb) {
+            thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
+        }
+        if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
+        if (delFlag)   { delFlag.value = '0'; }
+    }
+
+    if (t1ImgInput && cropModal && cropImageEl) {
         t1ImgInput.addEventListener('change', function () {
             var file = this.files && this.files[0];
             if (!file) return;
@@ -2785,37 +2835,68 @@
                 this.value = '';
                 return;
             }
-            var url = URL.createObjectURL(file);
-            // Update T1 header preview
-            var t1Img = document.getElementById('t1-preview-header-img');
-            if (t1Img) { t1Img.src = url; t1Img.style.display = 'block'; }
-            showT1Header(true);
-            // Update T3 circle preview
-            var t3Img = document.getElementById('t3-preview-circle-img');
-            var t3Ph  = document.getElementById('t3-preview-circle-placeholder');
-            if (t3Img) { t3Img.src = url; t3Img.style.display = 'block'; }
-            if (t3Ph)  { t3Ph.style.display = 'none'; }
-            // Update T4 circle preview
-            var t4Img = document.getElementById('t4-preview-circle-img');
-            var t4Ph  = document.getElementById('t4-preview-circle-placeholder');
-            if (t4Img) { t4Img.src = url; t4Img.style.display = 'block'; }
-            if (t4Ph)  { t4Ph.style.display = 'none'; }
-            // Update upload thumb
-            var thumb     = document.getElementById('cover-img-preview');
-            var removeBtn = document.getElementById('cover-img-remove-btn');
-            var delFlag   = document.getElementById('pdf_t1_header_img_delete');
-            if (thumb) {
-                thumb.innerHTML = '<img src="' + url + '" alt="Cover" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;"><span style="font-size:13px;color:#6b7280;">Selected image</span>';
-            }
-            if (removeBtn) { removeBtn.style.display = 'inline-flex'; }
-            if (delFlag)   { delFlag.value = '0'; }
-            // Clear autocomplete URL so uploaded file takes priority
-            var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
-            if (acField) acField.value = '';
-            // If user is on default template, show template1 preview so cover image is visible
-            var activeTemplate = document.querySelector('input[name="pdf_template"]:checked');
-            if (activeTemplate && activeTemplate.value === 'default') {
-                switchPdfTemplate('template1');
+            if (pdfCropObjectUrl) URL.revokeObjectURL(pdfCropObjectUrl);
+            if (pdfCropper) { pdfCropper.destroy(); pdfCropper = null; }
+            pdfCropObjectUrl = URL.createObjectURL(file);
+            cropImageEl.src = pdfCropObjectUrl;
+            cropModal.style.display = 'flex';
+            cropModal.style.alignItems = 'center';
+            cropModal.style.justifyContent = 'center';
+            cropImageEl.onload = function () {
+                if (pdfCropper) pdfCropper.destroy();
+                pdfCropper = new Cropper(cropImageEl, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.8 });
+            };
+        });
+    }
+
+    function closePdfCropModal() {
+        if (cropModal) cropModal.style.display = 'none';
+        if (pdfCropObjectUrl) { URL.revokeObjectURL(pdfCropObjectUrl); pdfCropObjectUrl = null; }
+        if (pdfCropper) { pdfCropper.destroy(); pdfCropper = null; }
+    }
+
+    if (cropCancelBtn) {
+        cropCancelBtn.addEventListener('click', function () {
+            if (t1ImgInput) t1ImgInput.value = '';
+            closePdfCropModal();
+        });
+    }
+    if (cropApplyBtn && t1ImgInput) {
+        cropApplyBtn.addEventListener('click', function () {
+            if (!pdfCropper) { closePdfCropModal(); return; }
+            pdfCropper.getCroppedCanvas({ maxWidth: 800, maxHeight: 800 }).toBlob(function (blob) {
+                if (!blob) { closePdfCropModal(); return; }
+                var f = new File([blob], 'cover.jpg', { type: blob.type || 'image/jpeg' });
+                var dt = new DataTransfer();
+                dt.items.add(f);
+                t1ImgInput.files = dt.files;
+                var url = URL.createObjectURL(blob);
+                applyCoverImageToPreviews(url);
+                setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
+                closePdfCropModal();
+                var acField = document.getElementById('pdf_t1_header_img_autocomplete_url');
+                if (acField) acField.value = '';
+                // If user is on default template, show template1 preview so cover image is visible
+                var activeTemplate = document.querySelector('input[name="pdf_template"]:checked');
+                if (activeTemplate && activeTemplate.value === 'default') {
+                    switchPdfTemplate('template1');
+                }
+            }, 'image/jpeg', 0.92);
+        });
+    }
+
+    // Prevent modal close during crop resize interactions
+    if (cropImageEl) {
+        cropImageEl.addEventListener('mousedown', function () { _cropInteracting = true; });
+        cropImageEl.addEventListener('touchstart', function () { _cropInteracting = true; });
+        document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+        document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+    }
+    if (cropModal) {
+        cropModal.addEventListener('click', function (e) {
+            if (e.target === cropModal && !_cropInteracting) {
+                if (t1ImgInput) t1ImgInput.value = '';
+                closePdfCropModal();
             }
         });
     }

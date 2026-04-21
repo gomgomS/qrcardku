@@ -1055,7 +1055,10 @@ function onQRColorChange(target, value) {
 {% block extra_js %}
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 <script>
+var _designSubmitting = false;
 function submitDesignWithOverlay() {
+    if (_designSubmitting) return;
+    _designSubmitting = true;
     var overlay = document.getElementById('design-complete-overlay');
     var msgEl = document.getElementById('design-overlay-msg');
     var subEl = document.getElementById('design-overlay-sub');
@@ -1104,6 +1107,8 @@ function submitDesignWithOverlay() {
     var _qrFinalUrl = '';
     var _qrStyle = { dots: 'square', corners: 'square', dotColor: '#000000', bgColor: '#ffffff' };
     var _qrStyling = null;
+    var _prevQrBlobUrl = null;
+    var _qrGenId = 0;
 
     function _buildQROpts() {
         return {
@@ -1120,13 +1125,17 @@ function submitDesignWithOverlay() {
 
     function refreshQRPreview() {
         if (!window.QRCodeStyling) return;
+        var genId = ++_qrGenId;
         if (!_qrStyling) {
             _qrStyling = new QRCodeStyling(_buildQROpts());
         } else {
             _qrStyling.update(_buildQROpts());
         }
         _qrStyling.getRawData('png').then(function(blob) {
+            if (genId !== _qrGenId) return;
+            if (_prevQrBlobUrl) URL.revokeObjectURL(_prevQrBlobUrl);
             var url = URL.createObjectURL(blob);
+            _prevQrBlobUrl = url;
             document.getElementById('qrcode-img').src = url;
         }).catch(function(e){ console.error('QR style:', e); });
     }

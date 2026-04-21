@@ -1628,6 +1628,7 @@
 
 {% block extra_js %}
 <script>
+    function _escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function toggleMobilePreview() {
         var col = document.getElementById('preview-column');
         var btn = document.getElementById('mobile-preview-btn');
@@ -1675,6 +1676,17 @@
         const profileInputCheck = document.querySelector('input[name="E-card_profile_img"]');
         if (profileInputCheck) profileInputCheck.addEventListener('change', checkContentValid);
         checkContentValid();
+        // Restore profile image previews when returning from design step
+        (function() {
+            var coverThumb = document.querySelector('#cover-img-preview img');
+            if (coverThumb && coverThumb.src) {
+                if (typeof window.applyProfileImageToPreviews === 'function') {
+                    window.applyProfileImageToPreviews(coverThumb.src);
+                }
+                var acUrl = document.getElementById('ecard_cover_img_autocomplete_url');
+                if (acUrl) acUrl.value = coverThumb.src;
+            }
+        })();
         // Live URL preview in Stats > URL Config section; restrict to letters, numbers, '-' and '_' only
         (function () {
             var baseUrl = {{ (base_url or '') | tojson
@@ -2104,13 +2116,15 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (evt) {
+                    // Always re-query to avoid stale reference when autocomplete/asset-picker
+                    // already inserted an <img> into #cover-img-preview
+                    profileImgEl = profilePreview ? profilePreview.querySelector('img') : null;
                     if (!profileImgEl) {
                         profileImgEl = document.createElement('img');
                         profileImgEl.style.cssText = 'width: 48px; height: 48px; object-fit: cover; border-radius: 50%; flex-shrink: 0;';
-                        // Insert as first child (or append if none) to avoid DOMException
-                        if (profilePreview) {
-                            profilePreview.insertBefore(profileImgEl, profilePreview.firstChild);
-                        }
+                        // Remove any previous placeholder/icon content first
+                        if (profilePreview) profilePreview.innerHTML = '';
+                        profilePreview.appendChild(profileImgEl);
                     }
                     profileImgEl.src = evt.target.result;
                     profileImgEl.style.display = 'block';
@@ -2188,9 +2202,14 @@
 
         removeProfileBtn.addEventListener('click', function () {
             profileInput.value = ''; // Clear input
+            profileImgEl = profilePreview ? profilePreview.querySelector('img') : null;
             if (profileImgEl) {
-                profileImgEl.src = '';
-                if (profileIcon) profileIcon.style.display = 'block';
+                profileImgEl.remove();
+                profileImgEl = null;
+            }
+            // Restore placeholder
+            if (profilePreview) {
+                profilePreview.innerHTML = '<div style="width:32px;height:32px;background:var(--border-color);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-user" style="color:var(--text-muted);"></i></div><span style="font-size:13px;color:var(--text-muted);">Upload Profile Image</span>';
             }
             this.style.display = 'none';
 
@@ -2942,6 +2961,7 @@
         var cropApplyBtn = document.getElementById('ecard-crop-apply');
         var ecardCropper = null;
         var ecardCropObjectUrl = null;
+        var _cropInteracting = false;
 
         function applyProfileImageToPreviews(url) {
             window._ecardCurrentProfileUrl = url;
@@ -3034,50 +3054,28 @@
                     t1ImgInput.files = dt.files;
                     var url = URL.createObjectURL(blob);
                     applyProfileImageToPreviews(url);
-                    URL.revokeObjectURL(url);
+                    window._ecardCurrentProfileUrl = url;
+                    setTimeout(function() { URL.revokeObjectURL(url); }, 10000);
                     closeCropModal();
+                    var acField = document.getElementById('ecard_cover_img_autocomplete_url');
+                    if (acField) acField.value = '';
                 }, 'image/jpeg', 0.92);
             });
         }
+        // Prevent modal close during crop resize interactions — dragging resize
+        // handles to the edge triggers the overlay click handler.
+        if (cropImageEl) {
+            cropImageEl.addEventListener('mousedown', function () { _cropInteracting = true; });
+            cropImageEl.addEventListener('touchstart', function () { _cropInteracting = true; });
+            document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+            document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+        }
         if (cropModal) {
             cropModal.addEventListener('click', function (e) {
-                if (e.target === cropModal) {
+                if (e.target === cropModal && !_cropInteracting) {
                     if (t1ImgInput) t1ImgInput.value = '';
                     closeCropModal();
                 }
-            });
-        }
-
-        var coverRemoveBtn = document.getElementById('cover-img-remove-btn');
-        if (coverRemoveBtn) {
-            coverRemoveBtn.addEventListener('click', function () {
-                if (t1ImgInput) t1ImgInput.value = '';
-                var delFlag = document.getElementById('E-card_profile_img_delete');
-                // Clear T1 header preview
-                var t1Img = document.getElementById('t1-preview-header-img');
-                if (t1Img) { t1Img.src = ''; t1Img.style.display = 'none'; }
-                showT1Header(false);
-                // Clear T2 header preview
-                var t2Img = document.getElementById('t2-preview-header-img');
-                if (t2Img) { t2Img.src = ''; t2Img.style.display = 'none'; }
-                showT2Header(false);
-                // Clear T3 circle preview
-                var t3Img = document.getElementById('t3-preview-circle-img');
-                var t3Ph = document.getElementById('t3-preview-circle-placeholder');
-                if (t3Img) { t3Img.src = ''; t3Img.style.display = 'none'; }
-                if (t3Ph) { t3Ph.style.display = 'flex'; }
-                // Clear T4 circle preview
-                var t4Img = document.getElementById('t4-preview-circle-img');
-                var t4Ph = document.getElementById('t4-preview-circle-placeholder');
-                if (t4Img) { t4Img.src = ''; t4Img.style.display = 'none'; }
-                if (t4Ph) { t4Ph.style.display = 'flex'; }
-                // Reset thumb
-                var thumb = document.getElementById('cover-img-preview');
-                if (thumb) {
-                    thumb.innerHTML = '<div style="width:32px;height:32px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-regular fa-image" style="color:#6b7280;"></i></div><span style="font-size:13px;color:#6b7280;">Upload Cover Image</span>';
-                }
-                if (delFlag) { delFlag.value = '1'; }
-                this.style.display = 'none';
             });
         }
 
@@ -3629,7 +3627,10 @@
 
 <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 <script>
+var _saveInProgress = false;
 function saveAndNext() {
+    if (_saveInProgress) return;
+    _saveInProgress = true;
     var nameInput = document.getElementById('qr-name-input');
     if (nameInput) {
         var nameVal = nameInput.value.trim();
@@ -3672,9 +3673,13 @@ function saveAndNext() {
         .then(function(data) {
             if (data.status !== 'ok') {
                 overlay.style.display = 'none';
+                _saveInProgress = false;
+                var existingErr = form.querySelector('.save-error-msg');
+                if (existingErr) existingErr.remove();
                 var errDiv = document.createElement('div');
+                errDiv.className = 'save-error-msg';
                 errDiv.style.cssText = 'background:#fee2e2;color:#b91c1c;padding:12px;border-radius:6px;margin-bottom:16px;font-size:13px;';
-                errDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + (data.message_desc || 'Save failed.');
+                errDiv.textContent = '\u26A0 ' + (data.message_desc || 'Save failed.');
                 form.insertBefore(errDiv, form.firstChild);
                 return;
             }
@@ -3684,6 +3689,7 @@ function saveAndNext() {
         })
         .catch(function(err) {
             overlay.style.display = 'none';
+            _saveInProgress = false;
             alert(window.i18nStr ? window.i18nStr('nc_save_error', 'An error occurred while saving. Please try again.') : 'An error occurred while saving. Please try again.');
             console.error(err);
         });
@@ -3781,11 +3787,11 @@ function saveAndNext() {
             item.title = img.file_name;
             item.innerHTML =
                 '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;">' +
-                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                    '<img src="' + _escHtml(img.url) + '" alt="' + _escHtml(img.file_name) + '" loading="lazy" ' +
                         'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
                         'onerror="this.parentNode.innerHTML=\'<i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i>\'">' +
                 '</div>' +
-                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
+                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _escHtml(img.file_name) + '</div>';
             item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
             item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
             item.addEventListener('click', function () { selectAsset(img.url, img.file_name); });
@@ -3927,11 +3933,11 @@ function saveAndNext() {
             item.title = img.file_name;
             item.innerHTML =
                 '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;">' +
-                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                    '<img src="' + _escHtml(img.url) + '" alt="' + _escHtml(img.file_name) + '" loading="lazy" ' +
                         'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
                         'onerror="this.parentNode.innerHTML=\'<i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i>\'">' +
                 '</div>' +
-                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
+                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _escHtml(img.file_name) + '</div>';
             item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
             item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
             item.addEventListener('click', function () { selectWelcomeAsset(img.url, img.file_name); });
@@ -4048,11 +4054,11 @@ function saveAndNext() {
             item.title = img.file_name;
             item.innerHTML =
                 '<div style="width:100%;aspect-ratio:1/1;background:#181914;overflow:hidden;display:flex;align-items:center;justify-content:center;">' +
-                    '<img src="' + img.url + '" alt="' + img.file_name + '" loading="lazy" ' +
+                    '<img src="' + _escHtml(img.url) + '" alt="' + _escHtml(img.file_name) + '" loading="lazy" ' +
                         'style="width:100%;height:100%;object-fit:cover;display:block;" ' +
                         'onerror="this.parentNode.innerHTML=\'<i class=&quot;fa-regular fa-image&quot; style=&quot;color:#3A3B30;font-size:24px;&quot;></i>\'">' +
                 '</div>' +
-                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + img.file_name + '</div>';
+                '<div style="padding:5px 6px;font-size:10px;color:#8A8878;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + _escHtml(img.file_name) + '</div>';
             item.addEventListener('mouseenter', function () { this.style.borderColor = 'var(--primary)'; });
             item.addEventListener('mouseleave', function () { this.style.borderColor = 'transparent'; });
             item.addEventListener('click', function () { selectGalleryAsset(img.url); });

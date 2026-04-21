@@ -1040,7 +1040,10 @@
             : '<i class="fa-regular fa-eye"></i> Preview';
     }
 
+var _designSubmitting = false;
 function submitDesignWithOverlay() {
+    if (_designSubmitting) return;
+    _designSubmitting = true;
     var overlay = document.getElementById('design-complete-overlay');
     if (overlay) overlay.style.display = 'flex';
     if (_keepSavedQR || !_qrStyling) {
@@ -1075,6 +1078,8 @@ function submitDesignWithOverlay() {
     };
     var _qrStyling = null;
     var _keepSavedQR = false;
+    var _prevQrBlobUrl = null;
+    var _qrGenId = 0;
 
     function _buildQROpts() {
         return {
@@ -1091,13 +1096,17 @@ function submitDesignWithOverlay() {
 
     function refreshQRPreview() {
         if (!window.QRCodeStyling) return;
+        var genId = ++_qrGenId;
         if (!_qrStyling) {
             _qrStyling = new QRCodeStyling(_buildQROpts());
         } else {
             _qrStyling.update(_buildQROpts());
         }
         _qrStyling.getRawData('png').then(function(blob) {
+            if (genId !== _qrGenId) return;
+            if (_prevQrBlobUrl) URL.revokeObjectURL(_prevQrBlobUrl);
             var url = URL.createObjectURL(blob);
+            _prevQrBlobUrl = url;
             document.getElementById('qrcode-img').src = url;
         }).catch(function(e){ console.error('QR style:', e); });
     }

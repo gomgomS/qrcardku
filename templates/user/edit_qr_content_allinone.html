@@ -1612,7 +1612,7 @@ document.addEventListener('DOMContentLoaded', function () {
         cropImg.src = src;
         cropModal.style.display = 'flex';
         if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-        cropperInstance = new Cropper(cropImg, { aspectRatio: isNaN(aspectRatio) ? NaN : aspectRatio, viewMode: 1, autoCropArea: 0.9 });
+        cropperInstance = new Cropper(cropImg, { aspectRatio: isNaN(aspectRatio) ? NaN : aspectRatio, viewMode: 1, dragMode: 'move', autoCropArea: 0.9 });
         _cropCallback = onApply;
     }
 
@@ -1678,6 +1678,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (cropModal) cropModal.style.display = 'none';
                 if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
             }, 'image/jpeg', 0.88);
+        });
+    }
+    var _cropInteracting = false;
+    var allinoneCropImg = document.getElementById('allinone-crop-image');
+    if (allinoneCropImg) {
+        allinoneCropImg.addEventListener('mousedown', function () { _cropInteracting = true; });
+        allinoneCropImg.addEventListener('touchstart', function () { _cropInteracting = true; });
+        document.addEventListener('mouseup', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+        document.addEventListener('touchend', function () { setTimeout(function () { _cropInteracting = false; }, 100); });
+    }
+    var allinoneCropModal = document.getElementById('allinone-profile-crop-modal');
+    if (allinoneCropModal) {
+        allinoneCropModal.addEventListener('click', function (e) {
+            if (e.target === allinoneCropModal && !_cropInteracting) {
+                allinoneCropModal.style.display = 'none';
+                if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+                _cropCallback = null;
+            }
         });
     }
     if (removeBtn) {
