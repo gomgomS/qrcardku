@@ -539,16 +539,13 @@ import traceback
 @app.route('/auth/callback/<provider>')
 def auth_social_callback(provider):
     try:
-        base_url = (getattr(config, "G_BASE_URL", "") or "").rstrip("/")
         if provider == 'google':
-            redirect_uri = (base_url + "/auth/callback/google") if base_url else None
-            token = oauth.google.authorize_access_token(redirect_uri=redirect_uri)
+            token = oauth.google.authorize_access_token()
             user_info = oauth.google.parse_id_token(token, nonce=None)
             if not user_info:
                 user_info = oauth.google.userinfo()
         elif provider == 'linkedin':
-            redirect_uri = (base_url + "/auth/callback/linkedin") if base_url else None
-            token = oauth.linkedin.authorize_access_token(redirect_uri=redirect_uri)
+            token = oauth.linkedin.authorize_access_token()
             resp = oauth.linkedin.get('me?projection=(id,localizedFirstName,localizedLastName)')
             user_info = resp.json()
             email_resp = oauth.linkedin.get('emailAddress?q=members&projection=(elements*(handle~))')
