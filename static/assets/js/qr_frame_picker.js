@@ -3,6 +3,7 @@
    Requires: #qrcode-img, #qr-preview-frame, #frame_id (hidden input),
              #custom-frames-grid, #custom-frames-empty in the DOM. */
 (function () {
+    function _escHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     document.addEventListener('DOMContentLoaded', function () {
         var qrImg       = document.getElementById('qrcode-img');
         var frameDiv    = document.getElementById('qr-preview-frame');
@@ -244,7 +245,7 @@
                     d.setAttribute('data-frame-qw',        f.qr_w);
                     d.setAttribute('data-frame-qh',        f.qr_h);
                     d.title = f.name;
-                    d.innerHTML = '<img class="custom-frame-thumb" src="' + f.image_url + '" alt="' + f.name + '"><span class="frame-label">' + f.name + '</span>';
+                    d.innerHTML = '<img class="custom-frame-thumb" src="' + _escHtml(f.image_url) + '" alt="' + _escHtml(f.name) + '"><span class="frame-label">' + _escHtml(f.name) + '</span>';
                     d.addEventListener('click', function () { selectFrame(this); });
                     grid.appendChild(d);
                 });
@@ -274,9 +275,9 @@
                     d.setAttribute('data-frame-qw',        f.qr_w);
                     d.setAttribute('data-frame-qh',        f.qr_h);
                     d.title = f.name;
-                    d.innerHTML = '<img src="' + f.image_url + '" alt="" '
+                    d.innerHTML = '<img src="' + _escHtml(f.image_url) + '" alt="" '
                         + 'style="width:100%;max-width:40px;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:4px;display:block;flex-shrink:0;">'
-                        + '<span class="frame-label" style="margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">' + f.name + '</span>';
+                        + '<span class="frame-label" style="margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;">' + _escHtml(f.name) + '</span>';
                     d.addEventListener('click', function () { selectFrame(this); });
                     grid.appendChild(d);
                 });

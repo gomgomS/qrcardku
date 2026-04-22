@@ -1467,12 +1467,17 @@ function submitToggleStatus(qrcardId) {
         setStorageLoading();
         overlay.classList.add('show');
 
-        // Fetch sizes for all selected IDs in parallel
-        Promise.all(ids.map(function(id) {
-            return fetch('/api/qr/size/' + id).then(function(r){ return r.json(); }).catch(function(){ return {ok:false, bytes:0, files:0}; });
-        })).then(function(results) {
-            var totalBytes = 0, totalFiles = 0;
-            results.forEach(function(d){ if (d.ok) { totalBytes += d.bytes; totalFiles += d.files; } });
+        // Single batch request instead of N individual calls
+        fetch('/api/qr/size/bulk', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ids: ids})
+        }).then(function(r){ return r.json(); }).then(function(data) {
+            var totalBytes = data.bytes || 0;
+            var totalFiles = data.files || 0;
             if (totalBytes > 0) {
                 setStorageResult('Will free ' + fmtSize(totalBytes) + ' (' + totalFiles + ' file' + (totalFiles !== 1 ? 's' : '') + ') across ' + n + ' QR' + (n !== 1 ? 's' : ''));
             } else {

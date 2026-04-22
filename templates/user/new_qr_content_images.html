@@ -1403,7 +1403,7 @@
         var uploadArea = document.getElementById('images-upload-area');
         var fileInput = document.getElementById('images-file-input');
         var itemsList = document.getElementById('gallery-items-list');
-        var galleryImages = []; // [{file, dataUrl, name, desc, cropped}]
+        var galleryImages = window.galleryImages = []; // [{file, dataUrl, name, desc, cropped}]
         var cropperInstance = null;
         var cropTargetIndex = -1;
 
@@ -2092,12 +2092,19 @@ function saveAndNext() {
         if (schedSince) schedSince.disabled = false;
         if (schedUntil) schedUntil.disabled = false;
     }
-    var fd = new FormData(form);
+    var fd = new FormData();
+    new FormData(form).forEach(function(val, key) {
+        if (key !== 'images_files') fd.append(key, val);
+    });
     if (schedToggle && schedToggle.checked) {
         fd.set('schedule_enabled', 'on');
         if (schedSince && schedSince.value) fd.set('schedule_since', schedSince.value);
         if (schedUntil && schedUntil.value) fd.set('schedule_until', schedUntil.value);
     }
+    var _gi = window.galleryImages || [];
+    _gi.forEach(function(img) {
+        if (img.file) fd.append('images_files', img.file, img.file.name);
+    });
     fetch('/qr/new/images/save-draft', { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {

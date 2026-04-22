@@ -1966,6 +1966,47 @@ def api_qr_size(qrcard_id):
         return jsonify({"ok": True, "bytes": 0, "files": 0, "size_fmt": "0 B"})
 
 
+@app.route("/api/qr/size/bulk", methods=["POST"])
+def api_qr_size_bulk():
+    """Return total storage size for multiple QR cards in a single query."""
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False}), 401
+    try:
+        from flask import request
+        ids = request.get_json(force=True).get("ids", [])
+        if not ids:
+            return jsonify({"ok": True, "bytes": 0, "files": 0, "size_fmt": "0 B"})
+        from pytavia_core import database as _db_sz, config as _cfg_sz
+        _mgd = _db_sz.get_db_conn(_cfg_sz.mainDB)
+        # Single query for all IDs
+        docs = list(_mgd.db_qr_assets.find(
+            {"qrcard_id": {"$in": ids}, "status": "ACTIVE"},
+            {"qrcard_id": 1, "file_size": 1, "_id": 0},
+        ))
+        tracked_ids = set()
+        total_bytes, total_files = 0, 0
+        for d in docs:
+            tracked_ids.add(d["qrcard_id"])
+            total_bytes += d["file_size"]
+            total_files += 1
+        untracked = [qid for qid in ids if qid not in tracked_ids]
+        # Fallback R2 listing for legacy untracked QRs
+        if untracked:
+            from pytavia_modules.user.user_storage_proc import _QR_TYPE_PREFIX
+            from storage import r2_storage_proc as _r2_mod
+            for qid in untracked:
+                idx = _mgd.db_qr_index.find_one({"qrcard_id": qid, "fk_user_id": session["fk_user_id"]}) or {}
+                folder = _QR_TYPE_PREFIX.get(idx.get("qr_type", ""), idx.get("qr_type", ""))
+                if folder:
+                    objs = _r2_mod.r2_storage_proc().list_prefix(f"{folder}/{qid}/")
+                    total_bytes += sum(o["size"] for o in objs)
+                    total_files += len(objs)
+        from pytavia_modules.user.user_storage_proc import _fmt_size
+        return jsonify({"ok": True, "bytes": total_bytes, "files": total_files, "size_fmt": _fmt_size(total_bytes)})
+    except Exception:
+        return jsonify({"ok": True, "bytes": 0, "files": 0, "size_fmt": "0 B"})
+
+
 @app.route("/qr/toggle-status/<qrcard_id>", methods=["POST"])
 def qr_toggle_status(qrcard_id):
     if "fk_user_id" not in session:

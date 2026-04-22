@@ -465,28 +465,85 @@ class qr_images_proc:
                     {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": f_info["safe_name"]},
                     "gallery", idx,
                 ))
-
-        # ── Execute all moves in parallel ──────────────────────────────────────
-        if _move_specs:
-            _plain_specs = [(s[0], s[1], s[2]) for s in _move_specs]
-            _move_results = r2.move_files_parallel(_plain_specs, max_workers=5)
-
-            for mi, result in enumerate(_move_results):
-                if result["status"] != "success":
-                    continue
-                kind = _move_specs[mi][3]
-                extra = _move_specs[mi][4]
-
-                if kind == "welcome":
-                    _db_updates["welcome_img_url"] = result["url"]
-                elif kind == "gallery":
-                    idx = extra
-                    f_info = tmp_gallery[idx]
-                    saved_gallery.append({
-                        "url": result["url"],
-                        "name": f_info.get("name", ""),
-                        "desc": f_info.get("desc", ""),
+        elif not tmp_gallery:
+            # No tmp session — files came directly in request.files (AJAX save-draft path)
+            import os as _os
+            direct_files = request.files.getlist("images_files")
+            direct_names = request.form.getlist("images_name[]")
+            direct_descs = request.form.getlist("images_desc[]")
+            for fi, f in enumerate(direct_files):
+                if f and f.filename:
+                    f.seek(0, 2)
+                    if f.tell() > 2 * 1024 * 1024:
+                        f.seek(0)
+                        continue
+                    f.seek(0)
+                    ext = _os.path.splitext(f.filename)[1].lower() or ".jpg"
+                    safe_name = uuid.uuid4().hex + ext
+                    dst_key = f"images/{new_qrcard_id}/{safe_name}"
+                    _move_specs.append((
+                        None, dst_key,
+                        {"fk_user_id": fk_user_id, "qrcard_id": new_qrcard_id, "qr_type": "images", "file_name": safe_name},
+                        "gallery_direct", fi,
+                    ))
+                    # Stash metadata for later use after upload
+                    if not hasattr(request, '_direct_gallery_meta'):
+                        request._direct_gallery_meta = []
+                    request._direct_gallery_meta.append({
+                        "safe_name": safe_name,
+                        "name": direct_names[fi] if fi < len(direct_names) else "",
+                        "desc": direct_descs[fi] if fi < len(direct_descs) else "",
                     })
+
+        # ── Execute all moves/uploads in parallel ──────────────────────────────
+        if _move_specs:
+            # Separate move specs (have src) from direct upload specs (no src)
+            _move_only = [(s[0], s[1], s[2]) for s in _move_specs if s[0]]
+            _direct_uploads = [(s[1], s[2], s[3], s[4]) for s in _move_specs if not s[0]]
+
+            if _move_only:
+                _move_results = r2.move_files_parallel(_move_only, max_workers=5)
+                for mi, result in enumerate(_move_results):
+                    if result["status"] != "success":
+                        continue
+                    kind = _move_specs[mi][3]
+                    extra = _move_specs[mi][4]
+                    if kind == "welcome":
+                        _db_updates["welcome_img_url"] = result["url"]
+                    elif kind == "gallery":
+                        idx = extra
+                        f_info = tmp_gallery[idx]
+                        saved_gallery.append({
+                            "url": result["url"],
+                            "name": f_info.get("name", ""),
+                            "desc": f_info.get("desc", ""),
+                        })
+
+            # Direct uploads (AJAX path — no tmp session)
+            if _direct_uploads:
+                direct_files = request.files.getlist("images_files")
+                _direct_meta = getattr(request, '_direct_gallery_meta', [])
+                for di, (dst_key, meta, kind, fi) in enumerate(_direct_uploads):
+                    if fi < len(direct_files) and direct_files[fi].filename:
+                        try:
+                            direct_files[fi].seek(0)
+                            url = r2.upload_file(direct_files[fi], dst_key)
+                            if url:
+                                dmeta = _direct_meta[di] if di < len(_direct_meta) else {}
+                                saved_gallery.append({
+                                    "url": url,
+                                    "name": dmeta.get("name", ""),
+                                    "desc": dmeta.get("desc", ""),
+                                })
+                                from pytavia_modules.user.asset_tracker_proc import asset_tracker_proc as _atp_d
+                                _atp_d().track(
+                                    fk_user_id=fk_user_id, r2_key=dst_key,
+                                    file_size=direct_files[fi].content_length or 0,
+                                    qrcard_id=new_qrcard_id, qr_type="images",
+                                    file_name=dst_key.split("/")[-1],
+                                )
+                        except Exception:
+                            pass
 
             if _db_updates:
                 self.mgdDB.db_qrcard.update_one({"qrcard_id": new_qrcard_id}, {"$set": _db_updates})
