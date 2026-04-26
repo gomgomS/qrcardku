@@ -1,0 +1,436 @@
+{% extends "admin/base.html" %}
+{% block title %}Vouchers — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .vouchers-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .vouchers-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .btn-add {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 20px;
+        background: var(--primary);
+        color: #111209;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+    .btn-add:hover { opacity: .88; }
+
+    .table-container { margin-bottom: 30px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th {
+        background-color: #252619;
+        color: #8A8878;
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        padding: 12px 16px;
+        text-align: left;
+    }
+    td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #181914;
+        font-size: 13px;
+        color: var(--text-color);
+        vertical-align: middle;
+    }
+    tr:hover td { background-color: #252619; }
+    tr:last-child td { border-bottom: none; }
+
+    .code-badge {
+        display: inline-block;
+        background: rgba(235,168,27,.12);
+        color: var(--primary);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+        font-family: monospace;
+        letter-spacing: .5px;
+    }
+    .type-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .type-badge.percentage { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .type-badge.fixed { background: rgba(34,197,94,.15); color: #4ade80; }
+    .status-active { color: #22c55e; font-weight: 600; font-size: 12px; }
+    .status-inactive { color: #f87171; font-weight: 600; font-size: 12px; }
+
+    .btn-sm {
+        padding: 5px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity .2s;
+    }
+    .btn-sm:hover { opacity: .8; }
+    .btn-edit { background: rgba(235,168,27,.15); color: var(--primary); }
+    .btn-del { background: rgba(239,68,68,.12); color: #f87171; }
+
+    /* Modal Overlay */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.6);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+        background: #1E1F18;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 14px;
+        padding: 28px;
+        width: 480px;
+        max-width: 95vw;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 20px;
+    }
+    .field-group { margin-bottom: 16px; }
+    .field-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #8A8878;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        margin-bottom: 5px;
+    }
+    .field-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text-color);
+        font-size: 13px;
+        font-family: inherit;
+        transition: border-color .2s;
+    }
+    .field-input:focus { outline: none; border-color: var(--primary); }
+    select.field-input { cursor: pointer; }
+    .field-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .field-hint { font-size: 11px; color: #5a5a4a; margin-top: 4px; }
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 24px;
+    }
+    .btn-cancel {
+        padding: 9px 20px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,.15);
+        border-radius: 8px;
+        color: var(--text-color);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,.05); }
+    .btn-save {
+        padding: 9px 20px;
+        background: var(--primary);
+        color: #111209;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .btn-save:hover { opacity: .88; }
+    .btn-save:disabled { opacity: .4; cursor: not-allowed; }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #8A8878;
+    }
+    .empty-state p { margin-top: 8px; font-size: 14px; }
+
+    /* Toast */
+    .toast-wrap {
+        position: fixed; bottom: 28px; right: 28px; z-index: 10000;
+        display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .toast {
+        background: #1E1F18; border: 1px solid rgba(255,255,255,.1);
+        border-radius: 10px; padding: 12px 18px; font-size: 13px;
+        color: var(--text-color); display: flex; align-items: center; gap: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(12px);
+        transition: opacity .3s, transform .3s; pointer-events: auto; min-width: 240px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-left: 3px solid #22c55e; }
+    .toast.error { border-left: 3px solid var(--danger); }
+</style>
+
+<div class="vouchers-header">
+    <div class="vouchers-title">&#127915; Vouchers</div>
+    <button class="btn-add" onclick="openModal()">
+        <i class="fa-solid fa-plus"></i> Add Voucher
+    </button>
+</div>
+
+{% if vouchers %}
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Usage</th>
+                <th>Status</th>
+                <th>Valid</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for v in vouchers %}
+        <tr>
+            <td><span class="code-badge">{{ v.code }}</span></td>
+            <td><span class="type-badge {{ v.discount_type }}">{{ v.discount_type }}</span></td>
+            <td>
+                {% if v.discount_type == 'percentage' %}{{ v.discount_value }}%{% else %}Rp {{ "{:,.0f}".format(v.discount_value).replace(',', '.') }}{% endif %}
+            </td>
+            <td>{{ v.used_count or 0 }}{% if v.max_uses > 0 %} / {{ v.max_uses }}{% else %} / &infin;{% endif %}</td>
+            <td>
+                {% if v.status == 'ACTIVE' %}
+                <span class="status-active">Active</span>
+                {% else %}
+                <span class="status-inactive">Inactive</span>
+                {% endif %}
+            </td>
+            <td style="font-size:12px; color:#8A8878;">
+                {% if v.valid_from or v.valid_until %}
+                {{ v.valid_from or '—' }} ~ {{ v.valid_until or '—' }}
+                {% else %}
+                No expiry
+                {% endif %}
+            </td>
+            <td>
+                <button class="btn-sm btn-edit" onclick='openModal({{ v | tojson(indent=None) }})'>
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="btn-sm btn-del" onclick="deleteVoucher('{{ v.code }}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty-state">
+    <div style="font-size:32px;">&#127915;</div>
+    <p>No vouchers created yet.</p>
+</div>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+        <div class="modal-title" id="modal-title">Add Voucher</div>
+        <input type="hidden" id="m-editing" value="">
+        <div class="field-group">
+            <label class="field-label">Voucher Code</label>
+            <input class="field-input" type="text" id="m-code" placeholder="e.g. HEMAT20" style="text-transform:uppercase;">
+        </div>
+        <div class="field-row-2">
+            <div class="field-group">
+                <label class="field-label">Discount Type</label>
+                <select class="field-input" id="m-type">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed (IDR)</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Discount Value</label>
+                <input class="field-input" type="number" id="m-value" min="1" placeholder="e.g. 20">
+            </div>
+        </div>
+        <div class="field-row-2">
+            <div class="field-group">
+                <label class="field-label">Max Total Uses</label>
+                <input class="field-input" type="number" id="m-max-uses" min="0" value="0">
+                <div class="field-hint">0 = unlimited</div>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Per-User Limit</label>
+                <input class="field-input" type="number" id="m-per-user" min="0" value="1">
+                <div class="field-hint">0 = unlimited</div>
+            </div>
+        </div>
+        <div class="field-row-2">
+            <div class="field-group">
+                <label class="field-label">Valid From</label>
+                <input class="field-input" type="date" id="m-from">
+                <div class="field-hint">Leave empty = no start date</div>
+            </div>
+            <div class="field-group">
+                <label class="field-label">Valid Until</label>
+                <input class="field-input" type="date" id="m-until">
+                <div class="field-hint">Leave empty = no expiry</div>
+            </div>
+        </div>
+        <div class="field-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-color);">
+                <input type="checkbox" id="m-status" checked style="cursor:pointer;">
+                Active
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-save" id="m-btn-save" onclick="saveVoucher()">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+    function showToast(msg, type) {
+        var wrap = document.getElementById('toast-wrap');
+        var t = document.createElement('div');
+        t.className = 'toast ' + (type || 'success');
+        t.innerHTML = '<span>' + (type === 'success' ? '&#10003;' : '&#10005;') + '</span><span>' + msg + '</span>';
+        wrap.appendChild(t);
+        requestAnimationFrame(function() { requestAnimationFrame(function() { t.classList.add('show'); }); });
+        setTimeout(function() {
+            t.classList.remove('show');
+            setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+        }, 3500);
+    }
+
+    function openModal(v) {
+        var overlay = document.getElementById('modal-overlay');
+        overlay.classList.add('open');
+        if (v) {
+            document.getElementById('modal-title').textContent = 'Edit Voucher';
+            document.getElementById('m-editing').value = v.code || '';
+            document.getElementById('m-code').value = v.code || '';
+            document.getElementById('m-code').readOnly = !!v.code;
+            document.getElementById('m-type').value = v.discount_type || 'percentage';
+            document.getElementById('m-value').value = v.discount_value || '';
+            document.getElementById('m-max-uses').value = v.max_uses != null ? v.max_uses : 0;
+            document.getElementById('m-per-user').value = v.per_user_limit != null ? v.per_user_limit : 1;
+            document.getElementById('m-from').value = v.valid_from || '';
+            document.getElementById('m-until').value = v.valid_until || '';
+            document.getElementById('m-status').checked = v.status === 'ACTIVE';
+        } else {
+            document.getElementById('modal-title').textContent = 'Add Voucher';
+            document.getElementById('m-editing').value = '';
+            document.getElementById('m-code').value = '';
+            document.getElementById('m-code').readOnly = false;
+            document.getElementById('m-type').value = 'percentage';
+            document.getElementById('m-value').value = '';
+            document.getElementById('m-max-uses').value = '0';
+            document.getElementById('m-per-user').value = '1';
+            document.getElementById('m-from').value = '';
+            document.getElementById('m-until').value = '';
+            document.getElementById('m-status').checked = true;
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function saveVoucher() {
+        var btn = document.getElementById('m-btn-save');
+        btn.disabled = true;
+        var code = document.getElementById('m-code').value.trim().toUpperCase();
+        if (!code) { showToast('Code is required', 'error'); btn.disabled = false; return; }
+        var payload = {
+            code: code,
+            discount_type: document.getElementById('m-type').value,
+            discount_value: parseInt(document.getElementById('m-value').value) || 0,
+            max_uses: parseInt(document.getElementById('m-max-uses').value) || 0,
+            per_user_limit: parseInt(document.getElementById('m-per-user').value) || 0,
+            valid_from: document.getElementById('m-from').value,
+            valid_until: document.getElementById('m-until').value,
+            status: document.getElementById('m-status').checked ? 'ACTIVE' : 'INACTIVE',
+        };
+        fetch('/admin/vouchers/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            if (data.ok) {
+                showToast('Voucher "' + code + '" saved.', 'success');
+                closeModal();
+                setTimeout(function() { location.reload(); }, 400);
+            } else {
+                showToast('Error: ' + (data.error || 'Save failed'), 'error');
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            showToast('Network error.', 'error');
+        });
+    }
+
+    function deleteVoucher(code) {
+        if (!confirm('Delete voucher "' + code + '"? This cannot be undone.')) return;
+        fetch('/admin/vouchers/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                showToast('Voucher deleted.', 'success');
+                setTimeout(function() { location.reload(); }, 400);
+            } else {
+                showToast('Error: ' + (data.error || 'Delete failed'), 'error');
+            }
+        })
+        .catch(function() { showToast('Network error.', 'error'); });
+    }
+</script>
+{% endblock %}

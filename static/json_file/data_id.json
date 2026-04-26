@@ -594,5 +594,16 @@
     "co_total": "Total",
     "co_reminder": "Pastikan <strong>durasi langganan</strong> dan <strong>metode pembayaran</strong> yang kamu pilih sudah sesuai sebelum melanjutkan.",
     "co_pay_now": "Bayar Sekarang",
-    "co_secure_note": "Pembayaran aman & terenkripsi"
+    "co_secure_note": "Pembayaran aman & terenkripsi",
+    "v_placeholder": "Masukkan kode voucher",
+    "v_apply": "Terapkan",
+    "v_applied": "Diterapkan",
+    "v_remove": "Hapus",
+    "v_invalid": "Kode voucher tidak valid",
+    "v_expired": "Voucher ini sudah kedaluwarsa",
+    "v_limit_reached": "Voucher ini sudah mencapai batas penggunaan",
+    "v_already_used": "Kamu sudah pernah menggunakan voucher ini",
+    "v_summary_voucher": "Voucher",
+    "v_summary_label_pct": "Diskon {pct}%",
+    "v_summary_label_fixed": "-Rp {amount}"
 }

@@ -351,6 +351,87 @@
         border-radius: 6px;
         padding: 3px 7px;
     }
+
+    /* Voucher */
+    .voucher-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.02);
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        padding: 4px 4px 4px 14px;
+        transition: border-color .15s;
+    }
+    .voucher-input-wrap:focus-within {
+        border-color: var(--primary);
+    }
+    .voucher-input-wrap i {
+        color: var(--primary);
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .voucher-input-wrap input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-main);
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        padding: 10px 0;
+    }
+    .voucher-input-wrap input::placeholder { color: var(--text-muted); }
+    .voucher-apply-btn {
+        padding: 10px 18px;
+        border-radius: 8px;
+        border: none;
+        background: var(--primary);
+        color: #111;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: opacity .15s;
+    }
+    .voucher-apply-btn:hover { opacity: .88; }
+    .voucher-apply-btn:disabled { opacity: .35; cursor: not-allowed; }
+    #voucher-message {
+        font-size: 12px;
+        margin-top: 10px;
+        min-height: 0;
+        transition: all .15s;
+    }
+    #voucher-message.error { color: #f87171; }
+    .voucher-applied-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(34,197,94,.08);
+        border: 1px solid rgba(34,197,94,.15);
+    }
+    .voucher-badge-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #22c55e;
+        flex: 1;
+    }
+    .voucher-remove-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 12px;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 2px 0;
+    }
+    .voucher-remove-btn:hover { color: #f87171; }
 </style>
 {% endblock %}
 
@@ -364,14 +445,41 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan_id" value="{{ plan.plan_id }}">
     <input type="hidden" name="purchase_months" id="val-purchase-months" value="1">
+    <input type="hidden" name="voucher_code" id="val-voucher-code" value="">
 
     <div class="checkout-wrap">
         <div class="checkout-left">
 
-            <!-- Step 1: Plan & Duration -->
+            <!-- Step 1: Voucher -->
+            <div class="section-box" id="section-voucher">
+                <div class="section-header" onclick="toggleSection('voucher')">
+                    <div class="step-num">1</div>
+                    <div class="section-title" data-i18n="v_summary_voucher">Voucher</div>
+                    <button type="button" class="section-toggle open" id="toggle-voucher" aria-label="Toggle section">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="section-body" id="body-voucher">
+                    <div class="voucher-input-wrap">
+                        <i class="fa-solid fa-ticket"></i>
+                        <input type="text" id="voucher-input" placeholder="Masukkan kode voucher" data-i18n-placeholder="v_placeholder" maxlength="30" style="text-transform:uppercase;">
+                        <button type="button" class="voucher-apply-btn" id="voucher-btn-apply" onclick="applyVoucher()" data-i18n="v_apply">Terapkan</button>
+                    </div>
+                    <div id="voucher-message"></div>
+                    <div id="voucher-applied-badge" style="display:none;">
+                        <span class="voucher-badge-info">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span id="voucher-badge-text"></span>
+                        </span>
+                        <button type="button" class="voucher-remove-btn" onclick="removeVoucher()" data-i18n="v_remove">Hapus</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Plan & Duration -->
             <div class="section-box" id="section-plan">
                 <div class="section-header" onclick="toggleSection('plan')">
-                    <div class="step-num">1</div>
+                    <div class="step-num">2</div>
                     <div class="section-title" data-i18n="co_step1_title">Paket & Durasi</div>
                     <button type="button" class="section-toggle open" id="toggle-plan" aria-label="Toggle section">
                         <i class="fa-solid fa-chevron-up"></i>
@@ -421,7 +529,7 @@
             <!-- Step 2: Payment Method -->
             <div class="section-box" id="section-payment">
                 <div class="section-header" onclick="toggleSection('payment')">
-                    <div class="step-num">2</div>
+                    <div class="step-num">3</div>
                     <div class="section-title" data-i18n="co_step2_title">Metode Pembayaran</div>
                     <button type="button" class="section-toggle open" id="toggle-payment" aria-label="Toggle section">
                         <i class="fa-solid fa-chevron-up"></i>
@@ -493,6 +601,10 @@
                         <span id="summary-payment-label">—</span>
                     </span>
                 </div>
+                <div class="summary-row discount" id="summary-voucher-row" style="display:none;">
+                    <span class="label" data-i18n="v_summary_voucher">Voucher</span>
+                    <span class="value" id="summary-voucher">Rp 0</span>
+                </div>
                 <div class="summary-row">
                     <span class="label" data-i18n="co_admin_fee">Biaya admin</span>
                     <span class="value" id="summary-admin-fee">Rp 0</span>
@@ -531,14 +643,15 @@
         discountIdr: 0,
         discountPct: 0,
         periodDays: {{ plan.period_days | int }},
-        selectedPaymentEl: null
+        selectedPaymentEl: null,
+        voucher: null
     };
 
     function toggleSection(name) {
         if (window.innerWidth > 768) return;
         var body = document.getElementById('body-' + name);
         var btn = document.getElementById('toggle-' + name);
-        if (!body) return;
+        if (!body || !btn) return;
         if (body.classList.contains('collapsed')) {
             body.classList.remove('collapsed');
             btn.classList.add('open');
@@ -563,7 +676,16 @@
             feeIdr = parseInt(feeMap[String(st.months)] || st.selectedPaymentEl.getAttribute('data-fee-idr') || '0', 10) || 0;
             label = st.selectedPaymentEl.getAttribute('data-label') || '';
         }
-        var total = st.basePrice + feeIdr;
+        var voucherDiscountIdr = 0;
+        if (st.voucher) {
+            if (st.voucher.discount_type === 'percentage') {
+                voucherDiscountIdr = Math.round(st.basePrice * st.voucher.discount_value / 100);
+            } else {
+                voucherDiscountIdr = st.voucher.discount_value;
+            }
+        }
+        var afterVoucher = Math.max(0, st.basePrice - voucherDiscountIdr);
+        var total = afterVoucher + feeIdr;
         document.getElementById('summary-plan-price').textContent = formatIdr(st.subtotal);
         var dayKey = window.__co_days || (localStorage.getItem('lang') === 'en' ? 'Days' : 'Hari');
         var monthUnit = window.__co_month_unit || (localStorage.getItem('lang') === 'en' ? 'month' : 'bulan');
@@ -573,6 +695,15 @@
         document.getElementById('summary-discount').textContent = st.discountIdr > 0 ? ('-' + formatIdr(st.discountIdr) + ' (' + st.discountPct + '%)') : 'Rp 0';
         document.getElementById('summary-base-after-discount').textContent = formatIdr(st.basePrice);
         document.getElementById('summary-admin-fee').textContent = formatIdr(feeIdr);
+
+        var vRow = document.getElementById('summary-voucher-row');
+        if (st.voucher && voucherDiscountIdr > 0) {
+            vRow.style.display = 'flex';
+            document.getElementById('summary-voucher').textContent = '-' + formatIdr(voucherDiscountIdr);
+        } else {
+            vRow.style.display = 'none';
+        }
+
         document.getElementById('summary-total').textContent = formatIdr(total);
 
         var pmRow = document.getElementById('summary-payment-method-row');
@@ -627,6 +758,67 @@
         }
     }
     renderCheckoutSummary();
+
+    function applyVoucher() {
+        var input = document.getElementById('voucher-input');
+        var code = input.value.trim();
+        if (!code) return;
+        var msgEl = document.getElementById('voucher-message');
+        var btn = document.getElementById('voucher-btn-apply');
+        btn.disabled = true;
+        msgEl.className = '';
+        msgEl.textContent = '';
+        fetch('/api/v1/voucher/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code }),
+        })
+        .then(function(r) { return r.json().catch(function() { return { ok: false }; }); })
+        .then(function(data) {
+            btn.disabled = false;
+            if (data.ok) {
+                window.__checkoutState.voucher = {
+                    code: code,
+                    discount_type: data.discount_type,
+                    discount_value: data.discount_value,
+                };
+                document.getElementById('val-voucher-code').value = code.toUpperCase();
+                input.style.display = 'none';
+                btn.style.display = 'none';
+                var badge = document.getElementById('voucher-applied-badge');
+                badge.style.display = 'flex';
+                document.getElementById('voucher-badge-text').textContent = data.label;
+                renderCheckoutSummary();
+            } else {
+                var errKey = data.error || 'v_invalid';
+                msgEl.textContent = window.i18nStr(errKey, data.error || 'Invalid code');
+                msgEl.className = 'error';
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            msgEl.textContent = 'Network error';
+            msgEl.className = 'error';
+        });
+    }
+
+    function removeVoucher() {
+        window.__checkoutState.voucher = null;
+        document.getElementById('val-voucher-code').value = '';
+        var input = document.getElementById('voucher-input');
+        input.style.display = '';
+        input.value = '';
+        document.getElementById('voucher-btn-apply').style.display = '';
+        document.getElementById('voucher-applied-badge').style.display = 'none';
+        document.getElementById('voucher-message').textContent = '';
+        document.getElementById('voucher-message').className = '';
+        renderCheckoutSummary();
+    }
+
+    // Allow Enter key to apply voucher
+    document.getElementById('voucher-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); applyVoucher(); }
+    });
 
     // Patch dynamic i18n text after language switch
     var _origSwitchLang = window.switchLang;

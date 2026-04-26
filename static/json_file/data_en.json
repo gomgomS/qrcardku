@@ -596,5 +596,16 @@
     "co_total": "Total",
     "co_reminder": "Make sure the <strong>subscription duration</strong> and <strong>payment method</strong> you selected are correct before proceeding.",
     "co_pay_now": "Pay Now",
-    "co_secure_note": "Secure & encrypted payment"
+    "co_secure_note": "Secure & encrypted payment",
+    "v_placeholder": "Enter voucher code",
+    "v_apply": "Apply",
+    "v_applied": "Applied",
+    "v_remove": "Remove",
+    "v_invalid": "Invalid voucher code",
+    "v_expired": "This voucher has expired",
+    "v_limit_reached": "This voucher has reached its usage limit",
+    "v_already_used": "You have already used this voucher",
+    "v_summary_voucher": "Voucher",
+    "v_summary_label_pct": "{pct}% off",
+    "v_summary_label_fixed": "-Rp {amount}"
 }

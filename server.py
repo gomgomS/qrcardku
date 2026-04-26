@@ -903,6 +903,80 @@ def admin_transactions():
     )
 
 
+@app.route("/admin/vouchers")
+def admin_vouchers():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    from pytavia_core import database as _db_v, config as _cfg_v
+    _db = _db_v.get_db_conn(_cfg_v.mainDB)
+    vouchers = list(_db.db_vouchers.find({}, {"_id": 0}).sort("created_at", -1))
+    return render_template("admin/vouchers.html",
+        vouchers=vouchers,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+@app.route("/admin/vouchers/save", methods=["POST"])
+@csrf.exempt
+def admin_vouchers_save():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    from pytavia_core import database as _db_vs, config as _cfg_vs
+    import time
+    data = request.get_json(force=True) or {}
+    code = str(data.get("code", "")).strip().upper()
+    if not code:
+        return jsonify({"ok": False, "error": "Code is required"}), 400
+    discount_type = str(data.get("discount_type", "")).strip()
+    if discount_type not in ("percentage", "fixed"):
+        return jsonify({"ok": False, "error": "Invalid discount type"}), 400
+    discount_value = max(0, int(data.get("discount_value", 0)))
+    if discount_value <= 0:
+        return jsonify({"ok": False, "error": "Discount value must be greater than 0"}), 400
+    max_uses = max(0, int(data.get("max_uses", 0)))
+    per_user_limit = max(0, int(data.get("per_user_limit", 1)))
+    valid_from = str(data.get("valid_from", "")).strip()
+    valid_until = str(data.get("valid_until", "")).strip()
+    status = "ACTIVE" if data.get("status") == "ACTIVE" else "INACTIVE"
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+    _db = _db_vs.get_db_conn(_cfg_vs.mainDB)
+    existing = _db.db_vouchers.find_one({"code": code})
+    doc = {
+        "code": code,
+        "discount_type": discount_type,
+        "discount_value": discount_value,
+        "max_uses": max_uses,
+        "per_user_limit": per_user_limit,
+        "valid_from": valid_from,
+        "valid_until": valid_until,
+        "status": status,
+        "updated_at": now_str,
+    }
+    if existing:
+        _db.db_vouchers.update_one({"code": code}, {"$set": doc})
+    else:
+        doc["used_count"] = 0
+        doc["used_by"] = []
+        doc["created_at"] = now_str
+        _db.db_vouchers.insert_one(doc)
+    return jsonify({"ok": True})
+
+@app.route("/admin/vouchers/delete", methods=["POST"])
+@csrf.exempt
+def admin_vouchers_delete():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    from pytavia_core import database as _db_vd, config as _cfg_vd
+    data = request.get_json(force=True) or {}
+    code = str(data.get("code", "")).strip()
+    if not code:
+        return jsonify({"ok": False, "error": "Code is required"}), 400
+    _db = _db_vd.get_db_conn(_cfg_vd.mainDB)
+    _db.db_vouchers.delete_one({"code": code.upper()})
+    return jsonify({"ok": True})
+
+
 @app.route("/admin/plans")
 def admin_plans():
     if "fk_admin_id" not in session:
@@ -8742,6 +8816,41 @@ def user_plans_checkout():
         discount_pct = int(selected_duration.get("discount_pct", 0))
         period_days = int(selected_duration.get("period_days", int(plan_doc.get("period_days", 30))))
 
+        # --- Voucher discount ---
+        voucher_code = str(request.form.get("voucher_code", "")).strip().upper()
+        voucher_discount_idr = 0
+        voucher_doc = None
+        if voucher_code:
+            import datetime as _dt
+            voucher_doc = _db.db_vouchers.find_one({"code": voucher_code})
+            if voucher_doc and voucher_doc.get("status") == "ACTIVE":
+                today_iso = _dt.date.today().isoformat()
+                vf = str(voucher_doc.get("valid_from", "")).strip()
+                vu = str(voucher_doc.get("valid_until", "")).strip()
+                if (not vf or today_iso >= vf) and (not vu or today_iso <= vu):
+                    max_uses = int(voucher_doc.get("max_uses", 0))
+                    per_user_limit = int(voucher_doc.get("per_user_limit", 0))
+                    # Build atomic query: only increment if limits not exceeded
+                    limit_q = {"code": voucher_code, "status": "ACTIVE"}
+                    if max_uses > 0:
+                        limit_q["used_count"] = {"$lt": max_uses}
+                    if per_user_limit > 0:
+                        limit_q["used_by." + str(per_user_limit)] = {"$ne": fk_user_id}
+                    atomic_result = _db.db_vouchers.find_one_and_update(
+                        limit_q,
+                        {"$inc": {"used_count": 1}, "$push": {"used_by": fk_user_id}},
+                        return_document=False,
+                    )
+                    if atomic_result:
+                        v_type = voucher_doc.get("discount_type", "percentage")
+                        v_value = int(voucher_doc.get("discount_value", 0))
+                        if v_type == "percentage":
+                            voucher_discount_idr = int(round(plan_price_idr * v_value / 100))
+                        else:
+                            voucher_discount_idr = v_value
+                        voucher_doc = _db.db_vouchers.find_one({"code": voucher_code})
+        plan_price_idr = max(0, plan_price_idr - voucher_discount_idr)
+
         pm_categories = _load_payment_methods_json(app.root_path)
         fee_label = _fee_string_for_payment_method(pm_categories, payment_method)
         if fee_label is None:
@@ -8823,6 +8932,8 @@ def user_plans_checkout():
             "payment_ref": duitku_ref,
             "payment_method": payment_method,
             "payment_url": payment_url,
+            "voucher_code": voucher_code if voucher_discount_idr > 0 else "",
+            "voucher_discount_idr": voucher_discount_idr,
             "notes": "",
             "status": "PENDING",
             "invoice_number": invoice_number,
@@ -8880,6 +8991,53 @@ def user_plans_failed():
     if "fk_user_id" not in session:
         return redirect(url_for("login_view"))
     return render_template("user/payment_failed.html")
+
+
+@app.route("/api/v1/voucher/validate", methods=["POST"])
+@csrf.exempt
+def api_voucher_validate():
+    if "fk_user_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    from pytavia_core import database as _db_vv, config as _cfg_vv
+    import datetime
+    data = request.get_json(force=True) or {}
+    code = str(data.get("code", "")).strip().upper()
+    if not code:
+        return jsonify({"ok": False, "error": "Code is required"})
+    fk_user_id = session["fk_user_id"]
+    _db = _db_vv.get_db_conn(_cfg_vv.mainDB)
+    voucher = _db.db_vouchers.find_one({"code": code})
+    if not voucher or voucher.get("status") != "ACTIVE":
+        return jsonify({"ok": False, "error": "v_invalid"})
+    today = datetime.date.today().isoformat()
+    valid_from = str(voucher.get("valid_from", "")).strip()
+    valid_until = str(voucher.get("valid_until", "")).strip()
+    if valid_from and today < valid_from:
+        return jsonify({"ok": False, "error": "v_expired"})
+    if valid_until and today > valid_until:
+        return jsonify({"ok": False, "error": "v_expired"})
+    max_uses = int(voucher.get("max_uses", 0))
+    used_count = int(voucher.get("used_count", 0))
+    if max_uses > 0 and used_count >= max_uses:
+        return jsonify({"ok": False, "error": "v_limit_reached"})
+    per_user_limit = int(voucher.get("per_user_limit", 0))
+    used_by = voucher.get("used_by", []) or []
+    if per_user_limit > 0:
+        user_use_count = sum(1 for u in used_by if u == fk_user_id)
+        if user_use_count >= per_user_limit:
+            return jsonify({"ok": False, "error": "v_already_used"})
+    discount_type = voucher.get("discount_type", "percentage")
+    discount_value = int(voucher.get("discount_value", 0))
+    if discount_type == "percentage":
+        label = str(discount_value) + "%"
+    else:
+        label = "Rp {:,.0f}".format(discount_value).replace(",", ".")
+    return jsonify({
+        "ok": True,
+        "discount_type": discount_type,
+        "discount_value": discount_value,
+        "label": label,
+    })
 
 
 @app.route("/api/v1/payment/callback", methods=["POST"])
