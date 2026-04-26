@@ -8901,24 +8901,40 @@ def duitku_callback():
     sig_str = f"{cfg_merchant}{amount}{order_id}{cfg_api_key}"
     calc_sig = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
     
-    if signature == calc_sig:
-        if result_code == "00":
-            _db = _db_c.get_db_conn(_cfg_c.mainDB)
-            sub = _db.db_user_subscription.find_one({"subscription_id": order_id})
-            if sub and sub.get("status") == "PENDING":
-                now_ts = int(time.time())
-                period_days = sub.get("period_days", 30)
-                expires_at = now_ts + (period_days * 86400)
-                
-                _db.db_user_subscription.update_one(
-                    {"subscription_id": order_id},
-                    {"$set": {
-                        "status": "ACTIVE",
-                        "started_at": now_ts,
-                        "expires_at": expires_at
-                    }}
-                )
-    
+    if signature != calc_sig:
+        app.logger.warning(f"Duitku callback: invalid signature for order {order_id}")
+        return "INVALID_SIGNATURE", 400
+
+    _db = _db_c.get_db_conn(_cfg_c.mainDB)
+    sub = _db.db_user_subscription.find_one({"subscription_id": order_id})
+
+    if not sub:
+        app.logger.warning(f"Duitku callback: unknown order {order_id}")
+        return "ORDER_NOT_FOUND", 404
+
+    expected_amount = str(int(sub.get("price_paid_idr", 0)))
+    if amount != expected_amount:
+        app.logger.warning(
+            f"Duitku callback: amount mismatch for order {order_id} "
+            f"(got={amount}, expected={expected_amount})"
+        )
+        return "AMOUNT_MISMATCH", 400
+
+    if result_code == "00" and sub.get("status") == "PENDING":
+        now_ts = int(time.time())
+        period_days = sub.get("period_days", 30)
+        expires_at = now_ts + (period_days * 86400)
+
+        _db.db_user_subscription.update_one(
+            {"subscription_id": order_id},
+            {"$set": {
+                "status": "ACTIVE",
+                "started_at": now_ts,
+                "expires_at": expires_at
+            }}
+        )
+        app.logger.info(f"Duitku callback: subscription {order_id} activated")
+
     return "SUCCESS", 200
 
 

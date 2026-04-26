@@ -778,12 +778,14 @@ function onQRColorChange(target, value) {
 
     {% if ecard_data %}
     {% for key, val in ecard_data.items() %}
+    {% if key != 'E-card_font_apply_all' %}
     {% if val is iterable and val is not string %}
     {% for item in val %}
     <input type="hidden" name="{{ key }}" value="{{ item | e }}" />
     {% endfor %}
     {% else %}
     <input type="hidden" name="{{ key }}" value="{{ val | e }}" />
+    {% endif %}
     {% endif %}
     {% endfor %}
     {% endif %}

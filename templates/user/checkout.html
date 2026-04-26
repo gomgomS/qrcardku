@@ -6,372 +6,669 @@
 {% block extra_css %}
 <style>
     .checkout-wrap {
-        max-width: 800px;
+        max-width: 860px;
         margin: 0 auto;
-        padding-top: 20px;
+        padding-top: 12px;
         display: grid;
         grid-template-columns: 1fr 340px;
-        gap: 30px;
+        gap: 28px;
+        align-items: start;
     }
-    
     @media (max-width: 768px) {
         .checkout-wrap {
             grid-template-columns: 1fr;
+            gap: 12px;
         }
     }
 
+    /* Section Card */
     .section-box {
         background: var(--bg-content);
         border: 1px solid var(--border-color);
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 24px;
-        margin-bottom: 24px;
-    }
-
-    .section-title {
-        font-size: 16px; 
-        font-weight: 700; 
-        color: var(--text-main);
         margin-bottom: 20px;
-        display: flex; 
-        align-items: center; 
-        gap: 10px;
     }
-
-    /* Summary Specifics */
-    .summary-item {
+    @media (max-width: 768px) {
+        .section-box {
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+    }
+    .section-header {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        font-size: 14px;
-        color: var(--text-muted);
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
     }
-    .summary-item.total {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px dashed var(--border-color);
-        color: var(--text-main);
+    .step-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #111;
+        font-size: 12px;
         font-weight: 700;
-        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
     }
-    .summary-val { text-align: right; color: var(--text-main); font-weight: 600; }
+    .section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-main);
+        flex: 1;
+    }
+    .section-body {
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+        max-height: 2000px;
+        opacity: 1;
+    }
+    .section-body.collapsed {
+        max-height: 0;
+        opacity: 0;
+    }
+    .section-toggle {
+        display: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+    .section-toggle:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .section-toggle i {
+        font-size: 11px;
+        transition: transform 0.3s;
+    }
+    .section-toggle.open i {
+        transform: rotate(180deg);
+    }
+    @media (max-width: 768px) {
+        .section-toggle { display: flex; }
+        .section-header { margin-bottom: 16px; cursor: pointer; }
+    }
 
+    /* Plan Preview */
     .plan-preview {
         display: flex;
         align-items: center;
         gap: 16px;
-        background: rgba(255,255,255,0.02);
         padding: 16px;
-        border-radius: 12px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
         border: 1px solid var(--border-color);
     }
-    .plan-preview .icon { font-size: 32px; }
-    .plan-preview .details { flex: 1; }
-    .plan-preview .name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-    .plan-preview .meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .plan-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(235,168,27,0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .plan-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+    .plan-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .plan-note {
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+    .plan-note strong { color: var(--text-main); }
+
+    /* Duration Pills */
+    .duration-section { margin-top: 20px; }
+    .duration-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 10px;
+    }
+    .duration-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .duration-pill {
+        padding: 10px 16px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+        min-width: 90px;
+        background: transparent;
+    }
+    .duration-pill:hover {
+        border-color: rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.02);
+    }
+    .duration-pill.selected {
+        border-color: var(--primary);
+        background: rgba(235,168,27,0.06);
+    }
+    .pill-months { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .pill-price { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .pill-save { font-size: 10px; color: #22c55e; font-weight: 600; margin-top: 1px; }
+    .duration-pill.selected .pill-months { color: var(--primary); }
+
+    /* Payment Grid */
+    .payment-subtitle {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+        line-height: 1.5;
+    }
+    .payment-category { margin-top: 16px; }
+    .payment-category:first-of-type { margin-top: 0; }
+    .payment-category-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+    }
+    .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    @media (max-width: 768px) {
+        .payment-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+        .payment-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .pm-card {
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        padding: 14px 10px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s;
+        background: #ffffff;
+    }
+    .pm-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(235,168,27,0.12);
+    }
+    .pm-card.selected {
+        border-color: var(--primary);
+        background: #fffbeb;
+        box-shadow: 0 0 0 1px var(--primary), 0 2px 12px rgba(235,168,27,0.15);
+    }
+    .pm-card-merchants {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .pm-card img {
+        height: 22px;
+        max-width: 56px;
+        object-fit: contain;
+    }
+    .pm-card .fee {
+        font-size: 10px;
+        color: var(--text-muted);
+        text-align: center;
+        line-height: 1.3;
+    }
+    .pm-card.selected .fee { color: rgba(235,168,27,0.8); }
+
+    /* Trust Badge */
+    .trust-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    .trust-badge i { font-size: 12px; color: #22c55e; }
+
+    /* Right Column — Order Summary */
+    .order-summary {
+        background: var(--bg-content);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        position: sticky;
+        top: 20px;
+    }
+    @media (max-width: 768px) {
+        .order-summary {
+            position: relative;
+            top: 0;
+            border-radius: 10px;
+        }
+    }
+    .summary-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 20px;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        font-size: 13px;
+    }
+    .summary-row .label { color: var(--text-muted); }
+    .summary-row .value { color: var(--text-main); font-weight: 500; text-align: right; }
+    .summary-row.discount .value { color: #22c55e; }
+    .summary-divider {
+        height: 1px;
+        background: var(--border-color);
+        margin: 12px 0;
+    }
+    .summary-row.total {
+        padding: 12px 0 0;
+    }
+    .summary-row.total .label { font-size: 14px; font-weight: 700; color: var(--text-main); }
+    .summary-row.total .value { font-size: 18px; font-weight: 800; color: var(--text-main); }
 
     .btn-pay {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        width: 100%; padding: 14px 0; border-radius: 10px;
-        background: var(--primary); color: #111209;
-        font-size: 14px; font-weight: 700;
-        cursor: pointer; border: none; transition: opacity 0.2s;
-        margin-top: 24px;
-    }
-    .btn-pay:hover { opacity: 0.9; }
-
-    .duration-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        margin-top: 14px;
-    }
-    .duration-card {
-        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px 0;
         border-radius: 10px;
-        padding: 10px;
+        background: var(--primary);
+        color: #111;
+        font-size: 14px;
+        font-weight: 700;
         cursor: pointer;
-        background: rgba(255,255,255,0.03);
-        transition: all 0.2s;
+        border: none;
+        transition: opacity 0.15s, transform 0.1s;
+        margin-top: 20px;
     }
-    .duration-card.selected {
-        border-color: var(--primary);
-        background: rgba(235, 168, 27, 0.05);
+    .btn-pay:hover:not(:disabled) { opacity: 0.92; }
+    .btn-pay:active:not(:disabled) { transform: scale(0.985); }
+    .btn-pay:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .secure-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 12px;
+        font-size: 11px;
+        color: var(--text-muted);
     }
-    .duration-title { font-size: 13px; font-weight: 700; color: var(--text-main); }
-    .duration-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .duration-disc { font-size: 11px; color: #22c55e; margin-top: 4px; font-weight: 600; }
+    .secure-note i { font-size: 11px; color: #22c55e; }
+
+    .summary-reminder {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(235,168,27,0.06);
+        border: 1px solid rgba(235,168,27,0.12);
+        font-size: 11px;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+    .summary-reminder i {
+        color: var(--primary);
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+    .summary-reminder strong { color: var(--text-main); }
+    #summary-payment-icons img {
+        height: 26px;
+        max-width: 54px;
+        object-fit: contain;
+        background: #ffffff;
+        border-radius: 6px;
+        padding: 3px 7px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-title" style="margin-bottom: 20px;">
-    <a href="/user/plans" style="color: var(--text-muted); text-decoration: none; margin-right: 10px;"><i class="fa-solid fa-arrow-left"></i></a>
-    Checkout Summary
+    <a href="/user/plans" style="color: var(--text-muted); text-decoration: none; margin-right: 10px; font-size: 13px;"><i class="fa-solid fa-arrow-left"></i></a>
+    <span data-i18n="co_title">Checkout</span>
 </div>
 
 <form method="POST" action="/user/plans/checkout">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="plan_id" value="{{ plan.plan_id }}">
     <input type="hidden" name="purchase_months" id="val-purchase-months" value="1">
-    
+
     <div class="checkout-wrap">
         <div class="checkout-left">
-            <div class="section-box">
-                <div class="section-title">
-                    <i class="fa-solid fa-box-open" style="color: var(--primary);"></i>
-                    Selected Plan
-                </div>
-                
-                <div class="plan-preview">
-                    {% set icon = '📦' %}
-                    {% if plan.plan_id == 'single' %}{% set icon = '👤' %}{% endif %}
-                    {% if plan.plan_id == 'team' %}{% set icon = '👥' %}{% endif %}
-                    {% if plan.plan_id == 'corporate' %}{% set icon = '🏢' %}{% endif %}
-                    
-                    <div class="icon">{{ icon }}</div>
-                    <div class="details">
-                        <div class="name">{{ plan.name }}</div>
-                        <div class="meta">{{ plan.max_qr }} QR Slot{{ 's' if plan.max_qr != 1 else '' }} • {{ plan.max_storage_mb }} MB Storage</div>
-                    </div>
-                </div>
-                
-                <p style="margin-top: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
-                    By confirming this payment, the quotas above will be instantly activated and added to your total active capacity. The subscription will be valid for <strong>{{ plan.period_days }} days</strong>.
-                </p>
 
-                <div style="margin-top: 18px;">
-                    <div class="section-title" style="font-size: 14px; margin-bottom: 10px;">
-                        <i class="fa-regular fa-calendar" style="color: var(--primary);"></i>
-                        Subscription Duration
-                    </div>
-                    <div class="duration-grid">
-                        {% for opt in duration_options %}
-                        <div class="duration-card {% if opt.months == 1 %}selected{% endif %}"
-                             data-months="{{ opt.months }}"
-                             data-price-idr="{{ opt.final_price_idr }}"
-                             data-subtotal-idr="{{ opt.subtotal_idr }}"
-                             data-discount-idr="{{ opt.discount_idr }}"
-                             data-discount-pct="{{ opt.discount_pct }}"
-                             data-period-days="{{ opt.period_days }}"
-                             onclick="selectDuration(this)">
-                            <div class="duration-title">{{ opt.months }} Month{{ 's' if opt.months != 1 else '' }}</div>
-                            <div class="duration-sub">Rp {{ "{:,.0f}".format(opt.final_price_idr).replace(',', '.') }}</div>
-                            <div class="duration-disc">
-                                {% if opt.discount_pct > 0 %}Save {{ opt.discount_pct }}%{% else %}No discount{% endif %}
-                            </div>
+            <!-- Step 1: Plan & Duration -->
+            <div class="section-box" id="section-plan">
+                <div class="section-header" onclick="toggleSection('plan')">
+                    <div class="step-num">1</div>
+                    <div class="section-title" data-i18n="co_step1_title">Paket & Durasi</div>
+                    <button type="button" class="section-toggle open" id="toggle-plan" aria-label="Toggle section">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                </div>
+
+                <div class="section-body" id="body-plan">
+                    <div class="plan-preview">
+                        {% set icon = '📦' %}
+                        {% if plan.plan_id == 'single' %}{% set icon = '👤' %}{% endif %}
+                        {% if plan.plan_id == 'team' %}{% set icon = '👥' %}{% endif %}
+                        {% if plan.plan_id == 'corporate' %}{% set icon = '🏢' %}{% endif %}
+
+                        <div class="plan-icon">{{ icon }}</div>
+                        <div>
+                            <div class="plan-name">{{ plan.name }}</div>
+                            <div class="plan-meta">{{ plan.max_qr }} QR Slot{{ 's' if plan.max_qr != 1 else '' }} &middot; {{ plan.max_storage_mb }} MB Storage</div>
                         </div>
-                        {% endfor %}
+                    </div>
+
+                    <p class="plan-note" id="co-plan-note">Kuota akan langsung aktif setelah pembayaran berhasil. Berlaku untuk <strong>{{ plan.period_days }} hari</strong>.</p>
+
+                    <div class="duration-section">
+                        <div class="duration-label" data-i18n="co_duration_label">Pilih durasi langganan</div>
+                        <div class="duration-pills">
+                            {% for opt in duration_options %}
+                            <div class="duration-pill {% if opt.months == 1 %}selected{% endif %}"
+                                 data-months="{{ opt.months }}"
+                                 data-price-idr="{{ opt.final_price_idr }}"
+                                 data-subtotal-idr="{{ opt.subtotal_idr }}"
+                                 data-discount-idr="{{ opt.discount_idr }}"
+                                 data-discount-pct="{{ opt.discount_pct }}"
+                                 data-period-days="{{ opt.period_days }}"
+                                 onclick="selectDuration(this)">
+                                <div class="pill-months" data-co-months="{{ opt.months }}">{{ opt.months }} Bulan</div>
+                                <div class="pill-price">Rp {{ "{:,.0f}".format(opt.final_price_idr).replace(',', '.') }}</div>
+                                {% if opt.discount_pct > 0 %}
+                                <div class="pill-save" data-co-save="{{ opt.discount_pct }}">Hemat {{ opt.discount_pct }}%</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="section-box">
-                <div class="section-title">
-                    <i class="fa-regular fa-credit-card" style="color: var(--primary);"></i>
-                    Payment Method
-                </div>
-                <!-- Hidden input mapped to Duitku code mapping -->
-                <input type="hidden" name="payment_method" id="val-payment-method" value="" required>
 
-                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                    <p>Select your preferred payment option below. Powered by <strong>Duitku</strong>.</p>
+            <!-- Step 2: Payment Method -->
+            <div class="section-box" id="section-payment">
+                <div class="section-header" onclick="toggleSection('payment')">
+                    <div class="step-num">2</div>
+                    <div class="section-title" data-i18n="co_step2_title">Metode Pembayaran</div>
+                    <button type="button" class="section-toggle open" id="toggle-payment" aria-label="Toggle section">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
                 </div>
 
-                <style>
-                    .payment-category {
-                        margin-top: 16px;
-                    }
-                    .payment-category-title {
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: var(--text-main);
-                        margin-bottom: 8px;
-                    }
-                    .payment-grid {
-                        display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                        gap: 12px;
-                    }
-                    .pm-card {
-                        background: rgba(255,255,255,0.03);
-                        border: 2px solid var(--border-color);
-                        border-radius: 12px;
-                        padding: 12px;
-                        cursor: pointer;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center; 
-                        justify-content: center;
-                        gap: 8px;
-                        transition: all 0.2s;
-                    }
-                    .pm-card:hover {
-                        border-color: rgba(255,255,255,0.2);
-                        background: rgba(255,255,255,0.06);
-                    }
-                    .pm-card.selected {
-                        border-color: var(--primary);
-                        background: rgba(235, 168, 27, 0.05); /* very light primary */
-                    }
-                    .pm-card-merchants {
-                        display: flex;
-                        gap: 8px;
-                        align-items: center;
-                        justify-content: center;
-                        flex-wrap: wrap;
-                    }
-                    .pm-card img {
-                        height: 24px;
-                        max-width: 60px;
-                        object-fit: contain;
-                        filter: brightness(1.1); /* Slightly pop the images */
-                    }
-                    .pm-card .fee {
-                        font-size: 11px;
-                        color: var(--text-muted);
-                        text-align: center;
-                    }
-                </style>
+                <div class="section-body" id="body-payment">
+                    <div class="payment-subtitle" data-i18n-html="co_payment_subtitle">Pilih metode pembayaran yang kamu inginkan. Diproses secara aman melalui <strong style="color: var(--text-main);">Duitku</strong>.</div>
 
-                {% for category in payment_categories %}
-                <div class="payment-category">
-                    <div class="payment-category-title">{{ category.name }}</div>
-                    <div class="payment-grid">
-                        {% for payment in category.payments %}
-                        <div class="pm-card"
-                             data-code="{{ payment.method_code }}"
-                             data-fee-idr="{{ payment.fee_idr }}"
-                             data-fee-map='{{ payment.fee_idr_by_month | tojson }}'
-                             data-label="{{ payment.display_label | e }}"
-                             onclick="selectPayment(this)">
-                            <div class="pm-card-merchants">
-                                {% for m in payment.merchants %}
-                                <img src="{{ m.icon }}" alt="{{ m.name }}" title="{{ m.name }}">
-                                {% endfor %}
+                    <input type="hidden" name="payment_method" id="val-payment-method" value="" required>
+
+                    {% for category in payment_categories %}
+                    <div class="payment-category">
+                        <div class="payment-category-title">{{ category.name }}</div>
+                        <div class="payment-grid">
+                            {% for payment in category.payments %}
+                            <div class="pm-card"
+                                 data-code="{{ payment.method_code }}"
+                                 data-fee-idr="{{ payment.fee_idr }}"
+                                 data-fee-map='{{ payment.fee_idr_by_month | tojson }}'
+                                 data-label="{{ payment.display_label | e }}"
+                                 data-icons='{{ payment.merchants | map(attribute="icon") | list | tojson }}'
+                                 onclick="selectPayment(this)">
+                                <div class="pm-card-merchants">
+                                    {% for m in payment.merchants %}
+                                    <img src="{{ m.icon }}" alt="{{ m.name }}" title="{{ m.name }}">
+                                    {% endfor %}
+                                </div>
+                                <div class="fee">+ {{ payment.fee }}</div>
                             </div>
-                            <div class="fee">+ {{ payment.fee }}</div>
-                            {% if payment.fee_idr %}
-                            <div class="fee" style="margin-top: 2px;">Rp {{ "{:,.0f}".format(payment.fee_idr).replace(',', '.') }}</div>
-                            {% endif %}
+                            {% endfor %}
                         </div>
-                        {% endfor %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="trust-badge">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span data-i18n="co_trust_badge">Transaksi dienkripsi dan dilindungi</span>
                     </div>
                 </div>
-                {% endfor %}
-
-                <script>
-                    window.__checkoutState = {
-                        months: 1,
-                        basePrice: {{ plan.price_idr | int }},
-                        subtotal: {{ plan.price_idr | int }},
-                        discountIdr: 0,
-                        discountPct: 0,
-                        periodDays: {{ plan.period_days | int }},
-                        selectedPaymentEl: null
-                    };
-                    function formatIdr(n) {
-                        var x = Math.round(Number(n) || 0);
-                        return 'Rp ' + x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                    }
-                    function renderCheckoutSummary() {
-                        var st = window.__checkoutState;
-                        var feeIdr = 0;
-                        var label = '';
-                        if (st.selectedPaymentEl) {
-                            var feeMapRaw = st.selectedPaymentEl.getAttribute('data-fee-map') || '{}';
-                            var feeMap = {};
-                            try { feeMap = JSON.parse(feeMapRaw); } catch (e) {}
-                            feeIdr = parseInt(feeMap[String(st.months)] || st.selectedPaymentEl.getAttribute('data-fee-idr') || '0', 10) || 0;
-                            label = st.selectedPaymentEl.getAttribute('data-label') || '';
-                        }
-                        var total = st.basePrice + feeIdr;
-                        document.getElementById('summary-plan-price').textContent = formatIdr(st.subtotal);
-                        document.getElementById('summary-duration').textContent = st.periodDays + ' Days (' + st.months + ' month' + (st.months > 1 ? 's' : '') + ')';
-                        document.getElementById('summary-discount').textContent = st.discountIdr > 0 ? ('-' + formatIdr(st.discountIdr) + ' (' + st.discountPct + '%)') : 'Rp 0';
-                        document.getElementById('summary-base-after-discount').textContent = formatIdr(st.basePrice);
-                        document.getElementById('summary-admin-fee').textContent = formatIdr(feeIdr);
-                        document.getElementById('summary-total').textContent = formatIdr(total);
-
-                        var pmRow = document.getElementById('summary-payment-method-row');
-                        if (pmRow) {
-                            pmRow.style.display = label ? 'flex' : 'none';
-                            if (label) document.getElementById('summary-payment-label').textContent = label;
-                        }
-                    }
-                    function selectDuration(element) {
-                        document.querySelectorAll('.duration-card').forEach(function(c) {
-                            c.classList.remove('selected');
-                        });
-                        element.classList.add('selected');
-                        var st = window.__checkoutState;
-                        st.months = parseInt(element.getAttribute('data-months') || '1', 10) || 1;
-                        st.basePrice = parseInt(element.getAttribute('data-price-idr') || '0', 10) || 0;
-                        st.subtotal = parseInt(element.getAttribute('data-subtotal-idr') || '0', 10) || 0;
-                        st.discountIdr = parseInt(element.getAttribute('data-discount-idr') || '0', 10) || 0;
-                        st.discountPct = parseInt(element.getAttribute('data-discount-pct') || '0', 10) || 0;
-                        st.periodDays = parseInt(element.getAttribute('data-period-days') || '0', 10) || 0;
-                        document.getElementById('val-purchase-months').value = String(st.months);
-                        renderCheckoutSummary();
-                    }
-                    function selectPayment(element) {
-                        document.querySelectorAll('.pm-card').forEach(function(c) {
-                            c.classList.remove('selected');
-                        });
-                        element.classList.add('selected');
-                        document.getElementById('val-payment-method').value = element.getAttribute('data-code');
-                        window.__checkoutState.selectedPaymentEl = element;
-                        renderCheckoutSummary();
-
-                        document.getElementById('btn-submit').removeAttribute('disabled');
-                        document.getElementById('btn-submit').style.opacity = '1';
-                        document.getElementById('btn-submit').style.cursor = 'pointer';
-                    }
-                    renderCheckoutSummary();
-                </script>
-
             </div>
         </div>
-        
+
+        <!-- Right: Order Summary -->
         <div class="checkout-right">
-            <div class="section-box" style="position: sticky; top: 20px;">
-                <div class="section-title">Order Summary</div>
-                
-                <div class="summary-item">
-                    <span>{{ plan.name }} Package</span>
-                    <span class="summary-val" id="summary-plan-price">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+            <div class="order-summary" id="order-summary">
+                <div class="summary-title" data-i18n="co_summary_title">Ringkasan Pesanan</div>
+
+                <div class="summary-row">
+                    <span class="label">{{ plan.name }}</span>
+                    <span class="value" id="summary-plan-price">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
                 </div>
-                <div class="summary-item">
-                    <span>Duration</span>
-                    <span class="summary-val" id="summary-duration">{{ plan.period_days }} Days (1 month)</span>
+                <div class="summary-row">
+                    <span class="label" data-i18n="co_duration">Durasi</span>
+                    <span class="value" id="summary-duration">{{ plan.period_days }} Hari (1 bulan)</span>
                 </div>
-                <div class="summary-item">
-                    <span>Discount</span>
-                    <span class="summary-val" id="summary-discount">Rp 0</span>
+                <div class="summary-row discount">
+                    <span class="label" data-i18n="co_discount">Diskon</span>
+                    <span class="value" id="summary-discount">Rp 0</span>
                 </div>
-                <div class="summary-item">
-                    <span>Plan Total</span>
-                    <span class="summary-val" id="summary-base-after-discount">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+                <div class="summary-row">
+                    <span class="label" data-i18n="co_subtotal">Subtotal</span>
+                    <span class="value" id="summary-base-after-discount">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
                 </div>
-                <div class="summary-item" id="summary-payment-method-row" style="display: none;">
-                    <span>Payment method</span>
-                    <span class="summary-val" id="summary-payment-label">—</span>
+                <div class="summary-row" id="summary-payment-method-row" style="display: none;">
+                    <span class="label" data-i18n="co_payment_method">Metode bayar</span>
+                    <span class="value" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="summary-payment-icons"></span>
+                        <span id="summary-payment-label">—</span>
+                    </span>
                 </div>
-                <div class="summary-item">
-                    <span>Admin Fee</span>
-                    <span class="summary-val" id="summary-admin-fee">Rp 0</span>
+                <div class="summary-row">
+                    <span class="label" data-i18n="co_admin_fee">Biaya admin</span>
+                    <span class="value" id="summary-admin-fee">Rp 0</span>
                 </div>
-                
-                <div class="summary-item total">
-                    <span>Total</span>
-                    <span class="summary-val" id="summary-total">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
+
+                <div class="summary-divider"></div>
+
+                <div class="summary-row total">
+                    <span class="label" data-i18n="co_total">Total</span>
+                    <span class="value" id="summary-total">Rp {{ "{:,.0f}".format(plan.price_idr).replace(',', '.') }}</span>
                 </div>
-                
-                <button type="submit" class="btn-pay" id="btn-submit" disabled style="opacity: 0.5; cursor: not-allowed;">
-                    Proceed to Payment <i class="fa-solid fa-arrow-right"></i>
+
+                <div class="summary-reminder">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span data-i18n-html="co_reminder">Pastikan <strong>durasi langganan</strong> dan <strong>metode pembayaran</strong> yang kamu pilih sudah sesuai sebelum melanjutkan.</span>
+                </div>
+
+                <button type="submit" class="btn-pay" id="btn-submit" disabled>
+                    <span data-i18n="co_pay_now">Bayar Sekarang</span> <i class="fa-solid fa-arrow-right"></i>
                 </button>
+
+                <div class="secure-note">
+                    <i class="fa-solid fa-lock"></i>
+                    <span data-i18n="co_secure_note">Pembayaran aman & terenkripsi</span>
+                </div>
             </div>
         </div>
     </div>
 </form>
+
+<script>
+    window.__checkoutState = {
+        months: 1,
+        basePrice: {{ plan.price_idr | int }},
+        subtotal: {{ plan.price_idr | int }},
+        discountIdr: 0,
+        discountPct: 0,
+        periodDays: {{ plan.period_days | int }},
+        selectedPaymentEl: null
+    };
+
+    function toggleSection(name) {
+        if (window.innerWidth > 768) return;
+        var body = document.getElementById('body-' + name);
+        var btn = document.getElementById('toggle-' + name);
+        if (!body) return;
+        if (body.classList.contains('collapsed')) {
+            body.classList.remove('collapsed');
+            btn.classList.add('open');
+        } else {
+            body.classList.add('collapsed');
+            btn.classList.remove('open');
+        }
+    }
+
+    function formatIdr(n) {
+        var x = Math.round(Number(n) || 0);
+        return 'Rp ' + x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    function renderCheckoutSummary() {
+        var st = window.__checkoutState;
+        var feeIdr = 0;
+        var label = '';
+        if (st.selectedPaymentEl) {
+            var feeMapRaw = st.selectedPaymentEl.getAttribute('data-fee-map') || '{}';
+            var feeMap = {};
+            try { feeMap = JSON.parse(feeMapRaw); } catch (e) {}
+            feeIdr = parseInt(feeMap[String(st.months)] || st.selectedPaymentEl.getAttribute('data-fee-idr') || '0', 10) || 0;
+            label = st.selectedPaymentEl.getAttribute('data-label') || '';
+        }
+        var total = st.basePrice + feeIdr;
+        document.getElementById('summary-plan-price').textContent = formatIdr(st.subtotal);
+        var dayKey = window.__co_days || (localStorage.getItem('lang') === 'en' ? 'Days' : 'Hari');
+        var monthUnit = window.__co_month_unit || (localStorage.getItem('lang') === 'en' ? 'month' : 'bulan');
+        var monthsUnit = window.__co_months_unit || (localStorage.getItem('lang') === 'en' ? 'months' : 'bulan');
+        var mUnit = st.months === 1 ? monthUnit : monthsUnit;
+        document.getElementById('summary-duration').textContent = st.periodDays + ' ' + dayKey + ' (' + st.months + ' ' + mUnit + ')';
+        document.getElementById('summary-discount').textContent = st.discountIdr > 0 ? ('-' + formatIdr(st.discountIdr) + ' (' + st.discountPct + '%)') : 'Rp 0';
+        document.getElementById('summary-base-after-discount').textContent = formatIdr(st.basePrice);
+        document.getElementById('summary-admin-fee').textContent = formatIdr(feeIdr);
+        document.getElementById('summary-total').textContent = formatIdr(total);
+
+        var pmRow = document.getElementById('summary-payment-method-row');
+        if (pmRow) {
+            pmRow.style.display = label ? 'flex' : 'none';
+            if (label) document.getElementById('summary-payment-label').textContent = label;
+        }
+        if (st.selectedPaymentEl && window.innerWidth <= 768) {
+            var iconsRaw = st.selectedPaymentEl.getAttribute('data-icons') || '[]';
+            var icons = [];
+            try { icons = JSON.parse(iconsRaw); } catch(e) {}
+            var container = document.getElementById('summary-payment-icons');
+            if (container && icons.length) {
+                container.innerHTML = icons.map(function(src) {
+                    return '<img src="' + src + '" alt="">';
+                }).join('');
+            }
+        }
+    }
+    function selectDuration(element) {
+        document.querySelectorAll('.duration-pill').forEach(function(c) {
+            c.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        var st = window.__checkoutState;
+        st.months = parseInt(element.getAttribute('data-months') || '1', 10) || 1;
+        st.basePrice = parseInt(element.getAttribute('data-price-idr') || '0', 10) || 0;
+        st.subtotal = parseInt(element.getAttribute('data-subtotal-idr') || '0', 10) || 0;
+        st.discountIdr = parseInt(element.getAttribute('data-discount-idr') || '0', 10) || 0;
+        st.discountPct = parseInt(element.getAttribute('data-discount-pct') || '0', 10) || 0;
+        st.periodDays = parseInt(element.getAttribute('data-period-days') || '0', 10) || 0;
+        document.getElementById('val-purchase-months').value = String(st.months);
+        renderCheckoutSummary();
+        if (window.innerWidth <= 768) {
+            document.getElementById('order-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    function selectPayment(element) {
+        document.querySelectorAll('.pm-card').forEach(function(c) {
+            c.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        document.getElementById('val-payment-method').value = element.getAttribute('data-code');
+        window.__checkoutState.selectedPaymentEl = element;
+        renderCheckoutSummary();
+
+        document.getElementById('btn-submit').removeAttribute('disabled');
+        document.getElementById('btn-submit').style.opacity = '1';
+        document.getElementById('btn-submit').style.cursor = 'pointer';
+        if (window.innerWidth <= 768) {
+            document.getElementById('order-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    renderCheckoutSummary();
+
+    // Patch dynamic i18n text after language switch
+    var _origSwitchLang = window.switchLang;
+    window.switchLang = function (lang) {
+        _origSwitchLang(lang);
+        setTimeout(function () {
+            var days = window.i18nStr('co_days', 'Hari');
+            var monthUnit = window.i18nStr('co_month_unit', 'bulan');
+            var monthsUnit = window.i18nStr('co_months_unit', 'bulan');
+            window.__co_days = days;
+            window.__co_month_unit = monthUnit;
+            window.__co_months_unit = monthsUnit;
+
+            // Duration pills
+            document.querySelectorAll('[data-co-months]').forEach(function (el) {
+                var n = el.getAttribute('data-co-months');
+                el.textContent = n + ' ' + (parseInt(n) === 1 ? monthUnit : monthsUnit);
+            });
+            // Save pills
+            document.querySelectorAll('[data-co-save]').forEach(function (el) {
+                var pct = el.getAttribute('data-co-save');
+                var saveText = window.i18nStr('co_save', 'Hemat {pct}%');
+                el.textContent = saveText.replace('{pct}', pct);
+            });
+            // Plan note — restore dynamic days value
+            var planNoteEl = document.getElementById('co-plan-note');
+            if (planNoteEl) {
+                var planNoteTpl = window.i18nStr('co_plan_note', '');
+                if (planNoteTpl) {
+                    var periodDays = {{ plan.period_days | int }};
+                    planNoteEl.innerHTML = planNoteTpl.replace(/\{plan\.period_days\}/g, String(periodDays));
+                }
+            }
+            // Re-render summary with new language
+            renderCheckoutSummary();
+        }, 120);
+    };
+    // Also run on initial load
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(function () {
+            window.switchLang(localStorage.getItem('lang') || 'en');
+        }, 150);
+    });
+</script>
 {% endblock %}

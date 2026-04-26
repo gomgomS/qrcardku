@@ -3286,6 +3286,9 @@
                 window.applyProfileImageToPreviews(bi.cover_image);
             }
 
+            // Re-validate so the Next button enables
+            if (typeof checkContentValid === 'function') checkContentValid();
+
             // 6. Apply gallery images
             if (dump.gallery && dump.gallery.length && typeof window.ecardGalleryApplyUrls === 'function') {
                 window.ecardGalleryApplyUrls(dump.gallery);

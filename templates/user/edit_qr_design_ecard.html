@@ -789,7 +789,7 @@
 
     {% if qrcard %}
     {% for key, val in qrcard.items() %}
-    {% if key not in ['scan_limit_enabled', 'scan_limit_value', 'schedule_enabled', 'schedule_since', 'schedule_until'] %}
+    {% if key not in ['scan_limit_enabled', 'scan_limit_value', 'schedule_enabled', 'schedule_since', 'schedule_until', 'E-card_font_apply_all'] %}
     {% if val is iterable and val is not string %}
     {% for item in val %}
     <input type="hidden" name="{{ key }}" value="{{ item | e }}" />

@@ -262,7 +262,10 @@ class qr_ecard_proc:
             
             for key, val in params.items():
                 if key.startswith("E-card_") or key in ["welcome_time", "welcome_bg_color", "welcome_img_url", "E-card_t1_header_img_url", "E-card_t3_circle_img_url", "E-card_t4_circle_img_url"]:
-                    update_data[key] = val
+                    if key == "E-card_font_apply_all":
+                        update_data[key] = val in ("on", "true", "1", "yes", True)
+                    else:
+                        update_data[key] = val
 
             # Support asset-picker fields in edit flow (same output fields as "new")
             cover_ac = (params.get("ecard_cover_img_autocomplete_url") or "").strip()
