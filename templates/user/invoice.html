@@ -198,9 +198,19 @@
                 <span>Rp {{ "{:,.0f}".format(transaction.plan_price_idr).replace(',', '.') }}</span>
             </div>
             <div class="total-row">
-                <span>Admin Fee</span>
-                <span>Rp {{ "{:,.0f}".format(transaction.admin_fee_idr).replace(',', '.') }}</span>
+                <span>Admin Fee{% if transaction.admin_fee_idr == 0 and transaction.get('free_admin_fee') %} (Free){% endif %}</span>
+                <span>{% if transaction.admin_fee_idr == 0 and transaction.get('free_admin_fee') %}
+                    <span style="text-decoration:line-through;color:#9ca3af;font-size:12px;">Waived</span>
+                {% else %}
+                    Rp {{ "{:,.0f}".format(transaction.admin_fee_idr).replace(',', '.') }}
+                {% endif %}</span>
             </div>
+            {% if transaction.voucher_code %}
+            <div class="total-row" style="color:#22c55e;">
+                <span>Voucher ({{ transaction.voucher_code }})</span>
+                <span>- Rp {{ "{:,.0f}".format(transaction.voucher_discount_idr).replace(',', '.') }}</span>
+            </div>
+            {% endif %}
             <div class="total-row grand">
                 <span>Grand Total</span>
                 <span>Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</span>
