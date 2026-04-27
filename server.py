@@ -8849,13 +8849,12 @@ def user_plans_checkout():
                         else:
                             voucher_discount_idr = v_value
                         voucher_doc = _db.db_vouchers.find_one({"code": voucher_code})
-        plan_price_idr = max(0, plan_price_idr - voucher_discount_idr)
-
         pm_categories = _load_payment_methods_json(app.root_path)
         fee_label = _fee_string_for_payment_method(pm_categories, payment_method)
         if fee_label is None:
             return redirect(url_for("user_plans"))
         admin_fee_idr = _compute_admin_fee_idr_for_payment(plan_price_idr, fee_label)
+        plan_price_idr = max(0, plan_price_idr - voucher_discount_idr)
         amount_idr = plan_price_idr + admin_fee_idr
         
         user_doc = _db.db_user.find_one({"pkey": fk_user_id})
