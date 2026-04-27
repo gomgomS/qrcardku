@@ -193,6 +193,12 @@
                 <span>Discount{% if transaction.discount_percent %} ({{ transaction.discount_percent }}%){% endif %}</span>
                 <span>- Rp {{ "{:,.0f}".format(transaction.discount_amount_idr).replace(',', '.') }}</span>
             </div>
+            {% if transaction.voucher_code %}
+            <div class="total-row">
+                <span>Voucher ({{ transaction.voucher_code }})</span>
+                <span>- Rp {{ "{:,.0f}".format(transaction.voucher_discount_idr).replace(',', '.') }}</span>
+            </div>
+            {% endif %}
             <div class="total-row">
                 <span>Plan Total</span>
                 <span>Rp {{ "{:,.0f}".format(transaction.plan_price_idr).replace(',', '.') }}</span>
@@ -205,12 +211,6 @@
                     Rp {{ "{:,.0f}".format(transaction.admin_fee_idr).replace(',', '.') }}
                 {% endif %}</span>
             </div>
-            {% if transaction.voucher_code %}
-            <div class="total-row" style="color:#22c55e;">
-                <span>Voucher ({{ transaction.voucher_code }})</span>
-                <span>- Rp {{ "{:,.0f}".format(transaction.voucher_discount_idr).replace(',', '.') }}</span>
-            </div>
-            {% endif %}
             <div class="total-row grand">
                 <span>Grand Total</span>
                 <span>Rp {{ "{:,.0f}".format(transaction.price_paid_idr).replace(',', '.') }}</span>
