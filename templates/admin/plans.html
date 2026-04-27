@@ -244,6 +244,7 @@
             <span>{{ plan.name }}</span>
             <span class="plan-id-badge {{ plan.plan_id }}">{{ plan.plan_id }}</span>
         </div>
+        <div style="display:flex;align-items:center;gap:16px;">
         <label class="plan-status-toggle">
             <span id="status-label-{{ plan.plan_id }}">{{ 'Active' if plan.status == 'ACTIVE' else 'Inactive' }}</span>
             <div class="toggle-wrap">
@@ -253,6 +254,16 @@
                 <span class="toggle-slider"></span>
             </div>
         </label>
+        <label class="plan-status-toggle">
+            <span id="fee-label-{{ plan.plan_id }}">{{ 'Free Fee' if plan.free_admin_fee else 'Normal Fee' }}</span>
+            <div class="toggle-wrap">
+                <input type="checkbox" id="fee-toggle-{{ plan.plan_id }}"
+                    {% if plan.free_admin_fee %}checked{% endif %}
+                    onchange="onToggleFee('{{ plan.plan_id }}', this)">
+                <span class="toggle-slider"></span>
+            </div>
+        </label>
+        </div>
     </div>
 
     <div class="plan-edit-body">
@@ -374,6 +385,11 @@
         label.textContent = chk.checked ? 'Active' : 'Inactive';
     }
 
+    function onToggleFee(planId, chk) {
+        var label = document.getElementById('fee-label-' + planId);
+        label.textContent = chk.checked ? 'Free Fee' : 'Normal Fee';
+    }
+
     function savePlan(planId) {
         var statusEl = document.getElementById('status-' + planId);
         var btn = document.querySelector('#card-' + planId + ' .btn-save');
@@ -394,6 +410,7 @@
         var featuresRaw = document.getElementById('features-' + planId).value;
         var features    = featuresRaw.split('\n').map(function(f) { return f.trim(); }).filter(Boolean);
         var status      = document.getElementById('toggle-' + planId).checked ? 'ACTIVE' : 'INACTIVE';
+        var freeAdminFee = document.getElementById('fee-toggle-' + planId).checked;
 
         var csrf = document.getElementById('csrf-token-val').value;
         fetch('/admin/plans/save', {
@@ -404,7 +421,7 @@
                 price_idr: price, period_days: period,
                 max_qr: maxQr, max_storage_mb: maxStorage,
                 duration_discounts: { "1": disc1, "3": disc3, "6": disc6, "12": disc12 },
-                features: features, status: status
+                features: features, status: status, free_admin_fee: freeAdminFee
             })
         })
         .then(function(r) { return r.json(); })

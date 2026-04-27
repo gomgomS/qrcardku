@@ -1020,6 +1020,7 @@ def admin_plans_save():
         "features":        features_raw,
         "duration_discounts": duration_discounts,
         "status":          "ACTIVE" if data.get("status") == "ACTIVE" else "INACTIVE",
+        "free_admin_fee":  bool(data.get("free_admin_fee")),
         "updated_at":      time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
     }
     _db.db_plan_definition.update_one(
@@ -8734,7 +8735,7 @@ def _load_payment_methods_json(root_path):
         return json.load(f)
 
 
-def _enrich_payment_categories_with_fees(categories, duration_options):
+def _enrich_payment_categories_with_fees(categories, duration_options, free_fee=False):
     """Attach fee map per duration, method metadata for checkout."""
     out = []
     duration_options = duration_options or []
@@ -8853,7 +8854,7 @@ def user_plans_checkout():
         fee_label = _fee_string_for_payment_method(pm_categories, payment_method)
         if fee_label is None:
             return redirect(url_for("user_plans"))
-        admin_fee_idr = _compute_admin_fee_idr_for_payment(plan_price_idr, fee_label)
+        admin_fee_idr = 0 if plan_doc.get("free_admin_fee") else _compute_admin_fee_idr_for_payment(plan_price_idr, fee_label)
         plan_price_idr = max(0, plan_price_idr - voucher_discount_idr)
         amount_idr = plan_price_idr + admin_fee_idr
         
@@ -8961,7 +8962,8 @@ def user_plans_checkout():
         app.logger.error(f"Error loading payment methods JSON: {e}")
         raw_pm = []
     duration_options = _build_checkout_duration_options(plan_doc)
-    payment_methods_data = _enrich_payment_categories_with_fees(raw_pm, duration_options)
+    free_fee = bool(plan_doc.get("free_admin_fee"))
+    payment_methods_data = _enrich_payment_categories_with_fees(raw_pm, duration_options, free_fee)
     return render_template(
         "user/checkout.html",
         plan=plan_doc,
