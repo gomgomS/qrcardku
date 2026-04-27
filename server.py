@@ -8860,10 +8860,14 @@ def user_plans_checkout():
         
         user_doc = _db.db_user.find_one({"pkey": fk_user_id})
         user_email = user_doc.get("email", "user@qrkartu.com") if user_doc else "user@qrkartu.com"
+        customer_va_name = (user_email.split("@", 1)[0] or "User").strip()
         
-        sub_id = idgen._get_api_call_id()
         now_ts = int(time.time())
-        
+        date_str = time.strftime("%Y%m%d", time.gmtime())
+        today_start_str = time.strftime("%Y-%m-%d", time.gmtime())
+        daily_count = _db.db_user_subscription.count_documents({"created_at": {"$regex": f"^{today_start_str}"}})
+        sub_id = f"INV-{date_str}-{daily_count + 1:03d}"
+
         # --- Duitku API Integration ---
         import requests
         import hashlib
@@ -8883,6 +8887,7 @@ def user_plans_checkout():
             "merchantOrderId": sub_id,
             "productDetails": f"Subscription {plan_doc.get('name', plan_id)}",
             "email": user_email,
+            "customerVaName": customer_va_name,
             "paymentMethod": payment_method,
             "returnUrl": getattr(_cfg_plans, "G_BASE_URL", "http://127.0.0.1:5008") + "/user/plans/success",
             "callbackUrl": getattr(_cfg_plans, "G_DUIKU_CALLBACK_URL", ""),
@@ -8895,6 +8900,7 @@ def user_plans_checkout():
         
         try:
             headers = {"Content-Type": "application/json"}
+            print("[Duitku Payload]", json.dumps(payload, indent=2, ensure_ascii=False))
             resp = requests.post(base_api, json=payload, headers=headers)
             resp_data = resp.json()
             if resp_data.get("statusCode") == "00":
@@ -8904,12 +8910,7 @@ def user_plans_checkout():
                 return f"<b>Duitku API Error:</b> {resp_data.get('statusMessage', str(resp_data))}<br><br><b>Hint:</b> Make sure your 'DUITKU_MERCHANT_CODE' in config.py is correct!", 400
         except Exception as e:
             return f"<b>Exception contacting Duitku:</b> {str(e)}", 500
-            
-        date_str = time.strftime("%Y%m%d", time.gmtime())
-        today_start_str = time.strftime("%Y-%m-%d", time.gmtime())
-        daily_count = _db.db_user_subscription.count_documents({"created_at": {"$regex": f"^{today_start_str}"}})
-        invoice_number = f"INV-{date_str}-{daily_count + 1:03d}"
-        
+
         doc = {
             "subscription_id": sub_id,
             "fk_user_id": fk_user_id,
@@ -8936,7 +8937,7 @@ def user_plans_checkout():
             "voucher_discount_idr": voucher_discount_idr,
             "notes": "",
             "status": "PENDING",
-            "invoice_number": invoice_number,
+            "invoice_number": sub_id,
             "payment_due_timestamp": now_ts + 3600,
             "created_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             "timestamp": now_ts
