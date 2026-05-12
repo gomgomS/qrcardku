@@ -50,6 +50,7 @@ from user               import user_proc
 from auth               import auth_proc
 from admin              import admin_proc
 from admin              import admin_frame_proc
+from admin              import admin_payment_method_proc
 
 
 from view               import view_welcome
@@ -1029,6 +1030,88 @@ def admin_plans_save():
         upsert=True,
     )
     return jsonify({"ok": True})
+
+
+# ── Payment Methods Management ──────────────────────────────────────────────
+
+@app.route("/admin/payment-methods")
+def admin_payment_methods():
+    if "fk_admin_id" not in session:
+        return redirect(url_for("admin_login_view"))
+    categories = admin_payment_method_proc.admin_payment_method_proc(app).get_all_categories_with_methods()
+    # Auto-seed from JSON on first visit if DB is empty
+    if not categories:
+        result = admin_payment_method_proc.admin_payment_method_proc(app).seed_from_json(app.root_path)
+        if result.get("ok") and result.get("categories"):
+            categories = admin_payment_method_proc.admin_payment_method_proc(app).get_all_categories_with_methods()
+    return render_template("admin/payment_methods.html",
+        categories=categories,
+        admin_name=session.get("admin_name", ""),
+        admin_email=session.get("admin_email", ""),
+        admin_role=session.get("admin_role", ""),
+    )
+
+
+@app.route("/admin/payment-methods/category/save", methods=["POST"])
+@csrf.exempt
+def admin_payment_category_save():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True) or {}
+    result = admin_payment_method_proc.admin_payment_method_proc(app).save_category(data)
+    if not result["ok"]:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@app.route("/admin/payment-methods/category/delete", methods=["POST"])
+@csrf.exempt
+def admin_payment_category_delete():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True) or {}
+    cat_id = str(data.get("category_id", "")).strip()
+    if not cat_id:
+        return jsonify({"ok": False, "error": "Missing category_id"}), 400
+    result = admin_payment_method_proc.admin_payment_method_proc(app).delete_category(cat_id)
+    return jsonify(result)
+
+
+@app.route("/admin/payment-methods/method/save", methods=["POST"])
+@csrf.exempt
+def admin_payment_method_save():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True) or {}
+    result = admin_payment_method_proc.admin_payment_method_proc(app).save_method(data)
+    if not result["ok"]:
+        return jsonify(result), 400
+    return jsonify(result)
+
+
+@app.route("/admin/payment-methods/method/delete", methods=["POST"])
+@csrf.exempt
+def admin_payment_method_delete():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    data = request.get_json(force=True) or {}
+    method_id = str(data.get("method_id", "")).strip()
+    if not method_id:
+        return jsonify({"ok": False, "error": "Missing method_id"}), 400
+    result = admin_payment_method_proc.admin_payment_method_proc(app).delete_method(method_id)
+    return jsonify(result)
+
+
+@app.route("/admin/payment-methods/icon/upload", methods=["POST"])
+@csrf.exempt
+def admin_payment_icon_upload():
+    if "fk_admin_id" not in session:
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+    icon_file = request.files.get("icon")
+    result = admin_payment_method_proc.admin_payment_method_proc(app).upload_icon(icon_file)
+    if not result["ok"]:
+        return jsonify(result), 400
+    return jsonify(result)
 
 
 @app.route("/admin/subscriptions")
@@ -8727,12 +8810,32 @@ def _fee_part_idr(base_idr, part):
 
 
 def _load_payment_methods_json(root_path):
-    import os
-    json_path = os.path.join(root_path, "static", "json_file", "payment-methods.json")
-    if not os.path.exists(json_path):
-        return []
-    with open(json_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Load payment methods from MongoDB (db_payment_category + db_payment_method).
+    Returns the same shape as the old payment-methods.json file."""
+    try:
+        from pytavia_core import database as _db_pm, config as _cfg_pm
+        _db = _db_pm.get_db_conn(_cfg_pm.mainDB)
+        cats = list(_db.db_payment_category.find({"status": "ACTIVE"}).sort("order", 1))
+        if not cats:
+            return []
+        out = []
+        for cat in cats:
+            methods = list(_db.db_payment_method.find({
+                "fk_category_id": cat["category_id"],
+                "status": "ACTIVE",
+            }).sort("order", 1))
+            payments = []
+            for m in methods:
+                payments.append({
+                    "merchants": [{"id": m["merchant_id"], "name": m["merchant_name"], "icon": m["icon_url"]}],
+                    "fee": m["fee"],
+                    "free_admin_fee": bool(m.get("free_admin_fee")),
+                })
+            out.append({"name": cat["name"], "payments": payments})
+        return out
+    except Exception:
+        pass
+    return []
 
 
 def _enrich_payment_categories_with_fees(categories, duration_options, free_fee=False):
@@ -8759,6 +8862,7 @@ def _enrich_payment_categories_with_fees(categories, duration_options, free_fee=
                 "fee_idr_by_month": fee_map,
                 "method_code": code,
                 "display_label": label,
+                "free_admin_fee": bool(pay.get("free_admin_fee")),
             })
         out.append(row)
     return out

@@ -849,6 +849,31 @@ db = {
         "timestamp"     : 0,
     },
 
+    # Payment method categories (e.g. "Instant Payment", "Virtual Account")
+    "db_payment_category": {
+        "category_id"    : "",       # UUID hex
+        "name"           : "",       # display name
+        "order"          : 0,        # sort order
+        "status"         : "ACTIVE", # ACTIVE | INACTIVE
+        "created_at"     : "",
+        "timestamp"      : 0,
+    },
+
+    # Individual payment methods within a category
+    "db_payment_method": {
+        "method_id"      : "",       # UUID hex
+        "fk_category_id" : "",       # → db_payment_category.category_id
+        "merchant_id"    : "",       # Duitku payment method code e.g. "SP", "OV", "M2"
+        "merchant_name"  : "",       # e.g. "QRIS", "OVO", "Mandiri"
+        "icon_url"       : "",       # R2 public URL for merchant logo
+        "fee"            : "",       # fee label e.g. "1,67%", "Rp 4.000", "2,90% + Rp 2.500"
+        "free_admin_fee" : False,    # True = show fee as strikethrough with "Free" badge
+        "order"          : 0,        # sort order within category
+        "status"         : "ACTIVE", # ACTIVE | INACTIVE
+        "created_at"     : "",
+        "timestamp"      : 0,
+    },
+
     # User activity log (QR create / delete events)
     "db_user_activity_log": {
         "log_id"                    : "",       # generated UUID

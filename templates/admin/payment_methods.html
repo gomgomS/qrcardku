@@ -1,0 +1,536 @@
+{% extends "admin/base.html" %}
+{% block title %}Payment Methods — Admin{% endblock %}
+
+{% block content %}
+<style>
+    .pm-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .pm-page-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    /* Category Section */
+    .pm-category {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .pm-category-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        gap: 10px;
+    }
+    .pm-category-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-color);
+        flex: 1;
+    }
+    .pm-category-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Toggle switch */
+    .toggle-wrap { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+        position: absolute; cursor: pointer;
+        inset: 0; background: rgba(255,255,255,.15); border-radius: 20px;
+        transition: background .2s;
+    }
+    .toggle-slider:before {
+        content: ''; position: absolute;
+        width: 14px; height: 14px; left: 3px; bottom: 3px;
+        background: #fff; border-radius: 50%; transition: transform .2s;
+    }
+    input:checked + .toggle-slider { background: var(--primary); }
+    input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    /* Method Cards */
+    .pm-methods-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+        padding: 20px;
+    }
+    .pm-method-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        transition: border-color .15s;
+    }
+    .pm-method-card:hover {
+        border-color: rgba(255,255,255,0.15);
+    }
+    .pm-method-card.inactive {
+        opacity: 0.45;
+    }
+    .pm-method-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .pm-method-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        object-fit: contain;
+    }
+    .pm-method-icon img {
+        max-width: 36px;
+        max-height: 30px;
+        object-fit: contain;
+    }
+    .pm-method-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-color);
+        flex: 1;
+        margin-left: 10px;
+    }
+    .pm-method-fee {
+        font-size: 13px;
+        color: #aaa;
+    }
+    .pm-method-id {
+        font-size: 11px;
+        color: #666;
+        font-family: monospace;
+    }
+    .pm-method-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* Buttons */
+    .btn-sm {
+        padding: 6px 14px;
+        border-radius: 7px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        color: var(--text-color);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .btn-sm:hover { background: rgba(255,255,255,0.1); }
+    .btn-sm.primary {
+        background: var(--primary);
+        color: #111;
+        border-color: var(--primary);
+    }
+    .btn-sm.primary:hover { opacity: .88; }
+    .btn-sm.danger { color: #f87171; border-color: rgba(248,113,113,.3); }
+    .btn-sm.danger:hover { background: rgba(248,113,113,.1); }
+
+    .btn-add-method {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px;
+        border: 2px dashed rgba(255,255,255,0.12);
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .btn-add-method:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(235,168,27,.04);
+    }
+
+    /* Modal Overlay */
+    .pm-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .pm-modal-overlay.open {
+        display: flex;
+    }
+    .pm-modal {
+        background: #1a1a1a;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 14px;
+        padding: 28px;
+        width: 100%;
+        max-width: 440px;
+        margin: 16px;
+    }
+    .pm-modal h3 {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 20px;
+    }
+    .pm-modal .field-row {
+        margin-bottom: 14px;
+    }
+    .pm-modal label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #aaa;
+        margin-bottom: 5px;
+    }
+    .pm-modal input[type="text"],
+    .pm-modal input[type="file"],
+    .pm-modal select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.05);
+        color: var(--text-color);
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .pm-modal input[type="text"]:focus {
+        border-color: var(--primary);
+    }
+    .pm-modal input[type="file"] {
+        padding: 8px;
+    }
+    .pm-modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    .pm-modal-actions .btn-sm { padding: 8px 20px; font-size: 13px; }
+    .pm-icon-preview {
+        margin-top: 8px;
+    }
+    .pm-icon-preview img {
+        max-width: 60px;
+        max-height: 40px;
+        background: #fff;
+        border-radius: 6px;
+        padding: 4px;
+    }
+    .pm-hint {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+    }
+</style>
+
+<div class="pm-page-header">
+    <div class="pm-page-title">&#128179; Payment Methods</div>
+    <button class="btn-sm primary" onclick="openCategoryModal()">+ Add Category</button>
+</div>
+
+<div id="pm-categories-container">
+    {% for cat in categories %}
+    <div class="pm-category" data-category-id="{{ cat.category_id }}">
+        <div class="pm-category-header">
+            <div class="pm-category-title">
+                <span id="cat-name-{{ cat.category_id }}">{{ cat.name }}</span>
+                <span style="font-size:11px;color:#666;">({{ cat.methods|length }} methods)</span>
+            </div>
+            <div class="pm-category-actions">
+                <label class="toggle-wrap" title="Enable/Disable category">
+                    <input type="checkbox" {% if cat.status == 'ACTIVE' %}checked{% endif %}
+                           onchange="toggleCategory('{{ cat.category_id }}', this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+                <button class="btn-sm" onclick="openCategoryModal('{{ cat.category_id }}', '{{ cat.name }}')">Edit</button>
+                <button class="btn-sm danger" onclick="deleteCategory('{{ cat.category_id }}', '{{ cat.name }}')">Delete</button>
+            </div>
+        </div>
+        <div class="pm-methods-grid">
+            {% for m in cat.methods %}
+            <div class="pm-method-card {% if m.status != 'ACTIVE' %}inactive{% endif %}" id="method-{{ m.method_id }}">
+                <div class="pm-method-top">
+                    <div class="pm-method-icon">
+                        {% if m.icon_url %}
+                        <img src="{{ m.icon_url }}" alt="{{ m.merchant_name }}">
+                        {% else %}
+                        <span style="font-size:18px;">&#128179;</span>
+                        {% endif %}
+                    </div>
+                    <div style="flex:1; margin-left:10px;">
+                        <div class="pm-method-name">{{ m.merchant_name }}</div>
+                        <div class="pm-method-id">{{ m.merchant_id }}</div>
+                    </div>
+                    <label class="toggle-wrap" title="Enable/Disable">
+                        <input type="checkbox" {% if m.status == 'ACTIVE' %}checked{% endif %}
+                               onchange="toggleMethod('{{ m.method_id }}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="pm-method-fee">
+                    Fee: <strong>{{ m.fee or 'Free' }}</strong>
+                    {% if m.free_admin_fee %}
+                    <span class="fee-promo-badge" style="margin-left:6px;">Free Admin Fee</span>
+                    {% endif %}
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#8A8878;">
+                    <span>Free Fee</span>
+                    <label class="toggle-wrap" title="Free admin fee for this method">
+                        <input type="checkbox" {% if m.free_admin_fee %}checked{% endif %}
+                               onchange="toggleFreeFee('{{ m.method_id }}', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="pm-method-actions">
+                    <button class="btn-sm" onclick="openMethodModal('{{ cat.category_id }}', '{{ m.method_id }}', '{{ m.merchant_id }}', '{{ m.merchant_name }}', '{{ m.fee }}', '{{ m.icon_url }}')">Edit</button>
+                    <button class="btn-sm danger" onclick="deleteMethod('{{ m.method_id }}', '{{ m.merchant_name }}')">Delete</button>
+                </div>
+            </div>
+            {% endfor %}
+            <button class="btn-add-method" onclick="openMethodModal('{{ cat.category_id }}')">
+                + Add Method
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Category Modal -->
+<div class="pm-modal-overlay" id="modal-category">
+    <div class="pm-modal">
+        <h3 id="modal-category-title">Add Category</h3>
+        <div class="field-row">
+            <label>Category Name</label>
+            <input type="text" id="cat-name-input" placeholder="e.g. Virtual Account">
+        </div>
+        <input type="hidden" id="cat-edit-id" value="">
+        <div class="pm-modal-actions">
+            <button class="btn-sm" onclick="closeCategoryModal()">Cancel</button>
+            <button class="btn-sm primary" onclick="saveCategory()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Method Modal -->
+<div class="pm-modal-overlay" id="modal-method">
+    <div class="pm-modal">
+        <h3 id="modal-method-title">Add Payment Method</h3>
+        <div class="field-row">
+            <label>Duitku Payment Code <span style="color:#666;">(e.g. SP, OV, M2)</span></label>
+            <input type="text" id="method-merchant-id" placeholder="SP">
+            <div class="pm-hint">Must match Duitku's paymentMethod parameter exactly</div>
+        </div>
+        <div class="field-row">
+            <label>Display Name</label>
+            <input type="text" id="method-merchant-name" placeholder="e.g. QRIS">
+        </div>
+        <div class="field-row">
+            <label>Fee Label</label>
+            <input type="text" id="method-fee" placeholder="e.g. 1,67% or Rp 4.000 or 2,90% + Rp 2.500">
+            <div class="pm-hint">Formats: "1,67%", "Rp 4.000", "2,90% + Rp 2.500"</div>
+        </div>
+        <div class="field-row">
+            <label>Merchant Logo</label>
+            <input type="file" id="method-icon-file" accept=".png,.jpg,.jpeg,.webp,.svg">
+            <div class="pm-icon-preview" id="method-icon-preview"></div>
+        </div>
+        <input type="hidden" id="method-edit-id" value="">
+        <input type="hidden" id="method-category-id" value="">
+        <input type="hidden" id="method-existing-icon" value="">
+        <div class="pm-modal-actions">
+            <button class="btn-sm" onclick="closeMethodModal()">Cancel</button>
+            <button class="btn-sm primary" onclick="saveMethod()">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Category Modal ──
+    function openCategoryModal(catId, catName) {
+        document.getElementById('cat-edit-id').value = catId || '';
+        document.getElementById('cat-name-input').value = catName || '';
+        document.getElementById('modal-category-title').textContent = catId ? 'Edit Category' : 'Add Category';
+        document.getElementById('modal-category').classList.add('open');
+    }
+    function closeCategoryModal() {
+        document.getElementById('modal-category').classList.remove('open');
+    }
+    function saveCategory() {
+        var catId = document.getElementById('cat-edit-id').value;
+        var name = document.getElementById('cat-name-input').value.trim();
+        if (!name) return alert('Name is required');
+        fetch('/admin/payment-methods/category/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({category_id: catId, name: name})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) location.reload();
+            else alert(d.error || 'Save failed');
+        });
+    }
+    function toggleCategory(catId, active) {
+        fetch('/admin/payment-methods/category/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({category_id: catId, status: active ? 'ACTIVE' : 'INACTIVE'})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) { alert(d.error || 'Update failed'); location.reload(); }
+        });
+    }
+    function deleteCategory(catId, name) {
+        if (!confirm('Delete category "' + name + '" and all its methods?')) return;
+        fetch('/admin/payment-methods/category/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({category_id: catId})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) location.reload();
+            else alert(d.error || 'Delete failed');
+        });
+    }
+
+    // ── Method Modal ──
+    function openMethodModal(catId, methodId, merchantId, merchantName, fee, iconUrl) {
+        document.getElementById('method-category-id').value = catId || '';
+        document.getElementById('method-edit-id').value = methodId || '';
+        document.getElementById('method-merchant-id').value = merchantId || '';
+        document.getElementById('method-merchant-name').value = merchantName || '';
+        document.getElementById('method-fee').value = fee || '';
+        document.getElementById('method-existing-icon').value = iconUrl || '';
+        document.getElementById('method-icon-file').value = '';
+        var preview = document.getElementById('method-icon-preview');
+        if (iconUrl) {
+            preview.innerHTML = '<img src="' + iconUrl + '" alt="current">';
+        } else {
+            preview.innerHTML = '';
+        }
+        document.getElementById('modal-method-title').textContent = methodId ? 'Edit Payment Method' : 'Add Payment Method';
+        document.getElementById('modal-method').classList.add('open');
+    }
+    function closeMethodModal() {
+        document.getElementById('modal-method').classList.remove('open');
+    }
+    function saveMethod() {
+        var catId = document.getElementById('method-category-id').value;
+        var methodId = document.getElementById('method-edit-id').value;
+        var merchantId = document.getElementById('method-merchant-id').value.trim();
+        var merchantName = document.getElementById('method-merchant-name').value.trim();
+        var fee = document.getElementById('method-fee').value.trim();
+        var iconFile = document.getElementById('method-icon-file').files[0];
+
+        if (!merchantId || !merchantName) return alert('Code and Name are required');
+
+        if (iconFile) {
+            // Upload icon first, then save method
+            var fd = new FormData();
+            fd.append('icon', iconFile);
+            fetch('/admin/payment-methods/icon/upload', {method: 'POST', body: fd})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok) {
+                    doSaveMethod(catId, methodId, merchantId, merchantName, fee, d.url);
+                } else {
+                    alert(d.error || 'Icon upload failed');
+                }
+            });
+        } else {
+            var existingIcon = document.getElementById('method-existing-icon').value;
+            doSaveMethod(catId, methodId, merchantId, merchantName, fee, existingIcon);
+        }
+    }
+    function doSaveMethod(catId, methodId, merchantId, merchantName, fee, iconUrl) {
+        fetch('/admin/payment-methods/method/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                method_id: methodId,
+                fk_category_id: catId,
+                merchant_id: merchantId,
+                merchant_name: merchantName,
+                fee: fee,
+                icon_url: iconUrl || ''
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) location.reload();
+            else alert(d.error || 'Save failed');
+        });
+    }
+    function toggleMethod(methodId, active) {
+        fetch('/admin/payment-methods/method/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({method_id: methodId, status: active ? 'ACTIVE' : 'INACTIVE'})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) { alert(d.error || 'Update failed'); location.reload(); }
+            else {
+                var card = document.getElementById('method-' + methodId);
+                if (card) card.classList.toggle('inactive', !active);
+            }
+        });
+    }
+    function toggleFreeFee(methodId, freeFee) {
+        fetch('/admin/payment-methods/method/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({method_id: methodId, free_admin_fee: freeFee})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (!d.ok) { alert(d.error || 'Update failed'); location.reload(); }
+            else { location.reload(); }
+        });
+    }
+    function deleteMethod(methodId, name) {
+        if (!confirm('Delete "' + name + '"?')) return;
+        fetch('/admin/payment-methods/method/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({method_id: methodId})
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) location.reload();
+            else alert(d.error || 'Delete failed');
+        });
+    }
+</script>
+{% endblock %}

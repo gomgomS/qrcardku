@@ -563,14 +563,15 @@
                                  data-fee-map='{{ payment.fee_idr_by_month | tojson }}'
                                  data-label="{{ payment.display_label | e }}"
                                  data-icons='{{ payment.merchants | map(attribute="icon") | list | tojson }}'
+                                 data-free-fee="{{ 'true' if payment.free_admin_fee else 'false' }}"
                                  onclick="selectPayment(this)">
                                 <div class="pm-card-merchants">
                                     {% for m in payment.merchants %}
                                     <img src="{{ m.icon }}" alt="{{ m.name }}" title="{{ m.name }}">
                                     {% endfor %}
                                 </div>
-                                <div class="{% if plan.free_admin_fee %}fee-free{% else %}fee{% endif %}">
-                                    {% if plan.free_admin_fee %}
+                                <div class="{% if payment.free_admin_fee or plan.free_admin_fee %}fee-free{% else %}fee{% endif %}">
+                                    {% if payment.free_admin_fee or plan.free_admin_fee %}
                                     <span class="fee-struck">+ {{ payment.fee }}</span> <span class="fee-promo-badge">Free</span>
                                     {% else %}
                                     + {{ payment.fee }}
@@ -687,12 +688,14 @@
         var st = window.__checkoutState;
         var feeIdr = 0;
         var label = '';
+        var methodFreeFee = false;
         if (st.selectedPaymentEl) {
             var feeMapRaw = st.selectedPaymentEl.getAttribute('data-fee-map') || '{}';
             var feeMap = {};
             try { feeMap = JSON.parse(feeMapRaw); } catch (e) {}
             feeIdr = parseInt(feeMap[String(st.months)] || st.selectedPaymentEl.getAttribute('data-fee-idr') || '0', 10) || 0;
             label = st.selectedPaymentEl.getAttribute('data-label') || '';
+            methodFreeFee = st.selectedPaymentEl.getAttribute('data-free-fee') === 'true';
         }
         var voucherDiscountIdr = 0;
         if (st.voucher) {
@@ -703,7 +706,7 @@
             }
         }
         var afterVoucher = Math.max(0, st.basePrice - voucherDiscountIdr);
-        var effectiveFee = st.freeAdminFee ? 0 : feeIdr;
+        var effectiveFee = (st.freeAdminFee || methodFreeFee) ? 0 : feeIdr;
         var total = afterVoucher + effectiveFee;
         document.getElementById('summary-plan-price').textContent = formatIdr(st.subtotal);
         var dayKey = window.__co_days || (localStorage.getItem('lang') === 'en' ? 'Days' : 'Hari');
@@ -714,7 +717,7 @@
         document.getElementById('summary-discount').textContent = st.discountIdr > 0 ? ('-' + formatIdr(st.discountIdr) + ' (' + st.discountPct + '%)') : 'Rp 0';
         document.getElementById('summary-base-after-discount').textContent = formatIdr(st.basePrice);
 
-        if (st.freeAdminFee && feeIdr > 0) {
+        if ((st.freeAdminFee || methodFreeFee) && feeIdr > 0) {
             document.getElementById('summary-admin-fee').innerHTML =
                 '<span class="fee-struck">' + formatIdr(feeIdr) + '</span> <span class="fee-promo-badge">Free</span>';
         } else {
